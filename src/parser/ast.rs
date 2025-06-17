@@ -5,6 +5,8 @@ pub enum BuiltInFunction {
     Len,
     Number,
     Sum,
+    Range,
+    LastWord,
 }
 
 #[derive(Debug, Clone)]
@@ -12,11 +14,14 @@ pub enum Expr {
     String(String),
     Number(i64),
     Bool(bool),
+    Break,
+    Continue,
     If {
         condition: Box<Expr>,
         then_branch: Vec<Expr>,
         else_branch: Option<Vec<Expr>>,
     },
+
     MethodCall {
         target: Box<Expr>,
         method: String,

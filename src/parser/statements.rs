@@ -1,3 +1,5 @@
+use crate::parser::{function::parse_function_def, if_expr::parse_if_expr};
+
 use super::{Expr, Parser, Token}; // Token və Expr-i super (parser/mod.rs) vasitəsilə import edirik
 
 // Dəyişən elanlarını emal edir (dəyişən a:ədəd = 10; kimi)
@@ -65,7 +67,28 @@ pub fn parse_variable_declaration(parser: &mut Parser, kind: &str) -> Result<Opt
 }
 
 // Bu, proqramımızdakı "sətr"lər, yəni ifadələrdir
+
 pub fn parse_statement(parser: &mut Parser) -> Result<Option<Expr>, String> {
+    while let Some(token) = parser.peek() {
+        match token {
+            Token::Newline | Token::Semicolon => {
+                parser.next(); // Boş sətirləri və nöqtəli vergülləri keç
+            }
+            Token::Break => {
+                parser.next(); // consume `Break`
+                return Ok(Some(Expr::Break));
+            }
+            Token::Continue => {
+                parser.next(); // consume `Continue`
+                return Ok(Some(Expr::Continue));
+            }
+            Token::EOF => {
+                break;
+            }
+            _ => break,
+        }
+    }
+
     match parser.peek() {
         Some(Token::MutableDecl) | Some(Token::ConstantDecl) => {
             let kind = parser.next().unwrap();
@@ -74,15 +97,25 @@ pub fn parse_statement(parser: &mut Parser) -> Result<Option<Expr>, String> {
                 Token::ConstantDecl => "constant_decl",
                 _ => unreachable!(),
             };
-            parse_variable_declaration(parser, kind_str) // Bu modulun öz funksiyasını çağırırıq
+            parse_variable_declaration(parser, kind_str)
+        }
+        Some(Token::Conditional) => {
+            parser.next(); // consume Conditional
+            parse_if_expr(parser).map(Some)
+        }
+        Some(Token::ElseIf) | Some(Token::Else) => {
+            return Err(
+                "`ElseIf` və `Else` yalnız `əgər` (if) blokundan sonra istifadə oluna bilər."
+                    .to_string(),
+            );
         }
 
-        // Gələcəkdə bura yeni ifadə tipləri əlavə edə bilərik:
-        // Some(Token::If) => parse_if_statement(parser),
-        // Some(Token::For) => parse_for_loop(parser),
-        // Some(Token::While) => parse_while_loop(parser),
-        // Some(Token::Return) => parse_return_statement(parser),
-        _ => parse_expression_as_statement(parser), // Bu modulun öz funksiyasını çağırırıq
+        Some(Token::FunctionDef) => {
+            parser.next(); // consume FunctionDef
+            parse_function_def(parser).map(Some)
+        }
+        Some(Token::EOF) => Ok(None),
+        _ => parse_expression_as_statement(parser),
     }
 }
 
@@ -91,22 +124,33 @@ pub fn parse_expression_as_statement(parser: &mut Parser) -> Result<Option<Expr>
     let expr = parser.parse_expression()?; // Parser metodunu çağırırıq
 
     // input yalnız dəyişən mənimsədilməsində istifadə oluna bilər
-    if let Expr::FunctionCall { name, .. } = &expr {
-        if name == "input" {
-            return Err("input yalnız dəyişən mənimsədilməsində istifadə oluna bilər.".to_string());
+    if let Expr::BinaryOp { left: _, op, right } = &expr {
+        if op == "=" {
+            if let Expr::FunctionCall { name, .. } = &**right {
+                if name == "input" {
+                    return Err(
+                        "input yalnız dəyişən (mutable) mənimsədilməsində istifadə oluna bilər."
+                            .to_string(),
+                    );
+                }
+            }
         }
     }
 
-    // VariableRef varsa qeyd et
     record_variable_usage(&expr, &mut parser.used_variables);
 
     Ok(Some(expr))
 }
 
+/* İstifadə olunan dəyişənləri yoxlayır */
 fn record_variable_usage(expr: &Expr, used: &mut std::collections::HashSet<String>) {
     match expr {
         Expr::VariableRef(name) => {
             used.insert(name.clone());
+        }
+        Expr::BinaryOp { left, right, .. } => {
+            record_variable_usage(left, used);
+            record_variable_usage(right, used);
         }
         Expr::FunctionCall { args, .. } | Expr::BuiltInCall { args, .. } | Expr::List(args) => {
             for arg in args {
@@ -119,11 +163,11 @@ fn record_variable_usage(expr: &Expr, used: &mut std::collections::HashSet<Strin
                 record_variable_usage(arg, used);
             }
         }
-        Expr::Return(inner) | Expr::Index { target: inner, .. } => {
+        Expr::Return(inner)
+        | Expr::Index { target: inner, .. }
+        | Expr::MutableDecl { value: inner, .. }
+        | Expr::ConstantDecl { value: inner, .. } => {
             record_variable_usage(inner, used);
-        }
-        Expr::MutableDecl { value, .. } | Expr::ConstantDecl { value, .. } => {
-            record_variable_usage(value, used);
         }
         _ => {}
     }

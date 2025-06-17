@@ -177,18 +177,34 @@ pub fn get_expr_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
                 _ => None,
             }
         }
+
         Expr::FunctionCall { name, .. } => match name.as_str() {
             "print" => Some(Type::Metn),
             "input" => Some(Type::Metn),
             "number" => Some(Type::Integer),
             _ => None,
         },
-        Expr::BuiltInCall { func, .. } => match func {
+        Expr::BuiltInCall { func, args } => match func {
             BuiltInFunction::Print => Some(Type::Metn),
             BuiltInFunction::Len | BuiltInFunction::Number | BuiltInFunction::Sum => {
                 Some(Type::Integer)
             }
+            BuiltInFunction::LastWord => Some(Type::Metn),
             BuiltInFunction::Input => Some(Type::Metn),
+            BuiltInFunction::Range => {
+                if args.len() == 2 {
+                    let left = get_expr_type(&args[0], ctx)?;
+                    let right = get_expr_type(&args[1], ctx)?;
+
+                    if left == Type::Integer && right == Type::Integer {
+                        Some(Type::Siyahi(Box::new(Type::Integer)))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            }
         },
 
         Expr::BinaryOp { left, op, right } => {
@@ -240,7 +256,6 @@ pub fn transpile_builtin_sum(args: &[Expr], ctx: &mut TranspileContext) -> Resul
     };
 
     ctx.used_sum_fn = true;
-    println!("{}", list_code);
     if list_code.starts_with("[") && list_code.ends_with("]") {
         let stripped = &list_code[1..list_code.len() - 1];
         Ok(format!(
@@ -250,4 +265,19 @@ pub fn transpile_builtin_sum(args: &[Expr], ctx: &mut TranspileContext) -> Resul
     } else {
         Ok(format!("sum({}, {})", type_code, list_code))
     }
+}
+
+pub fn transpile_builtin_range(
+    args: &[Expr],
+    ctx: &mut TranspileContext,
+) -> Result<String, String> {
+    if args.len() != 2 {
+        return Err("range funksiyası 2 arqument qəbul etməlidir".to_string());
+    }
+
+    let start_code = transpile_expr(&args[0], ctx)?;
+    let end_code = transpile_expr(&args[1], ctx)?;
+
+    // Zig sintaksisi: `start..end`
+    Ok(format!("{}..{}", start_code, end_code))
 }

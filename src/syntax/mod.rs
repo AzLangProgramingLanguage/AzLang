@@ -21,6 +21,12 @@ pub struct Syntax {
     pub listtype: String,
     pub bool: String,
     pub return_name: String,
+    pub true_str: String,
+    pub false_str: String,
+    pub in_str: String,
+    pub break_str: String,
+    pub continue_str: String,
+    pub end_str: String,
 }
 
 impl Syntax {

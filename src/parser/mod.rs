@@ -11,7 +11,9 @@ pub use validation::validate_expr;
 pub mod call;
 pub mod expressions;
 pub mod function;
+pub mod if_expr;
 pub mod list;
+pub mod loop_expr;
 pub mod returnn;
 
 mod statements;
@@ -31,6 +33,13 @@ impl Parser {
             position: 0,
             declared_variables: HashSet::new(),
             used_variables: HashSet::new(),
+        }
+    }
+    pub fn next_if(&mut self, token: Token) -> Option<&Token> {
+        if self.peek() == Some(&token) {
+            self.next()
+        } else {
+            None
         }
     }
 
@@ -68,37 +77,38 @@ impl Parser {
     }
 
     pub fn parse_program(&mut self, ctx: &mut TranspileContext) -> Result<Vec<Expr>, String> {
+        // Boş sətirləri keç
+        while let Some(Token::Newline) = self.peek() {
+            self.next();
+        }
+
         let mut statements = Vec::new();
 
         while let Some(token) = self.peek() {
-            if let Some(stmt) = self.parse_statement()? {
-                validate_expr(&stmt, ctx)?;
-                statements.push(stmt);
-
-                match self.peek() {
-                    Some(Token::Semicolon) => {
-                        self.next(); // İstehlak et
-                    }
-                    Some(tok) => {
-                        return Err(format!(
-                            "İfadə nöqtəli vergüllə bitməlidir. Tapıldı: {:?}",
-                            tok
-                        ));
-                    }
-                    None => return Err("Faylın sonunda `;` gözlənilirdi.".to_string()),
+            match token {
+                Token::Indent | Token::Dedent | Token::Newline => {
+                    self.next(); // bu tokenləri buradan skip elə
+                    continue;
                 }
-            } else {
-                break;
+                Token::EOF => {
+                    break;
+                }
+
+                _ => {
+                    if let Some(stmt) = self.parse_statement()? {
+                        validate_expr(&stmt, ctx)?;
+                        statements.push(stmt);
+
+                        // Semicolon varsa keç
+                        if let Some(Token::Semicolon) = self.peek() {
+                            self.next();
+                        }
+                    } else {
+                        break;
+                    }
+                }
             }
         }
-
-        // 🛑 İstifadə olunmayan dəyişənləri yoxla
-        for var in &self.declared_variables {
-            if !self.used_variables.contains(var) {
-                return Err(format!("Dəyişən '{}' heç vaxt istifadə olunmayıb", var));
-            }
-        }
-
         Ok(statements)
     }
 }

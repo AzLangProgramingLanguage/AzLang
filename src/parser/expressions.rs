@@ -1,18 +1,26 @@
 use crate::builtin::match_builtin;
+use crate::parser::loop_expr::parse_loop;
 
 use super::{Expr, Parser, Token};
-use super::{
-    call::parse_function_call, function::parse_function_def, list::parse_list,
-    returnn::parse_return,
-};
+use super::{call::parse_function_call, list::parse_list};
 
 pub fn parse_expression(parser: &mut Parser, inside_function: bool) -> Result<Expr, String> {
-    // Əvvəlcə baz expression parse edək
+    while parser.peek() == Some(&Token::Newline) {
+        parser.next();
+    }
     parse_binary_op_expression(parser, inside_function, 1)
 }
 
 fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Result<Expr, String> {
     let mut expr = match parser.peek() {
+        Some(Token::True) => {
+            parser.next();
+            Expr::Bool(true)
+        }
+        Some(Token::False) => {
+            parser.next();
+            Expr::Bool(false)
+        }
         Some(Token::StringLiteral(_)) => {
             if let Some(Token::StringLiteral(s)) = parser.next() {
                 Expr::String(s.clone())
@@ -20,9 +28,6 @@ fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Resul
                 return Err("StringLiteral gözlənilirdi".to_string());
             }
         }
-        Some(Token::Conditional) => return parse_if_expr(parser),
-        Some(Token::Return) => return parse_return(parser, inside_function),
-        Some(Token::FunctionDef) => return parse_function_def(parser),
         Some(Token::Number(_)) => {
             if let Some(Token::Number(val)) = parser.next() {
                 Expr::FunctionCall {
@@ -45,6 +50,7 @@ fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Resul
         Some(Token::Identifier(_)) => {
             if let Some(Token::Identifier(id)) = parser.next().cloned() {
                 let next_token = parser.peek();
+
                 if let Some(Token::LParen) = next_token {
                     if match_builtin(&id).is_some() {
                         return parse_function_call(parser, &id);
@@ -108,6 +114,21 @@ fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Resul
             }
         }
 
+        Some(Token::Newline) => {
+            parser.next();
+            return parse_primary_expression(parser, inside_function);
+        }
+
+        Some(Token::Semicolon) => {
+            parser.next();
+            return parse_primary_expression(parser, inside_function);
+        }
+
+        Some(Token::RBrace) => {
+            // Blok sonu: normal halda xəta deyil, sadəcə yuxarıya ötür
+            parser.next();
+            return parse_primary_expression(parser, inside_function);
+        }
         other => return Err(format!("Dəyər gözlənilirdi, tapıldı: {:?}", other)),
     };
 
@@ -117,9 +138,7 @@ fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Resul
             Some(Token::Operator(op)) if op == "." => {
                 parser.next(); // consume Operator(".")
                 // Method adı gəlməlidir
-                println!("method_name: {:?}", parser.peek());
                 let method_name = if let Some(Token::Identifier(name)) = parser.next() {
-                    println!("method_name: {}", name);
                     name.clone()
                 } else {
                     return Err("Method adı gözlənilirdi".to_string());
@@ -161,46 +180,6 @@ fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Resul
     Ok(expr)
 }
 
-fn parse_loop(parser: &mut Parser) -> Result<Expr, String> {
-    parser.next(); // consume `gəz`
-
-    let var_name = if let Some(Token::Identifier(name)) = parser.next() {
-        name.clone()
-    } else {
-        return Err("Dəyişən adı gözlənilirdi".to_string());
-    };
-
-    let iterable = parse_expression(parser, false)?;
-
-    // Expect and consume the opening brace
-    if parser.peek() != Some(&Token::LBrace) {
-        return Err("Loop gövdəsi üçün '{' gözlənilirdi".to_string());
-    }
-    parser.next(); // consume {
-
-    let mut body = Vec::new();
-    while let Some(token) = parser.peek() {
-        if token == &Token::RBrace {
-            parser.next(); // consume }
-            break;
-        }
-
-        let stmt = parse_expression(parser, true)?;
-        body.push(stmt);
-
-        // Consume semicolon after each statement except before RBrace
-        if parser.peek() == Some(&Token::Semicolon) {
-            parser.next();
-        }
-    }
-
-    Ok(Expr::Loop {
-        var_name,
-        iterable: Box::new(iterable),
-        body,
-    })
-}
-
 pub fn parse_binary_op_expression(
     parser: &mut Parser,
     inside_function: bool,
@@ -221,7 +200,7 @@ pub fn parse_binary_op_expression(
 
         parser.next(); // consume operator
 
-        let mut right = parse_binary_op_expression(parser, inside_function, prec + 1)?;
+        let right = parse_binary_op_expression(parser, inside_function, prec + 1)?;
 
         left = Expr::BinaryOp {
             left: Box::new(left),
@@ -235,92 +214,13 @@ pub fn parse_binary_op_expression(
 
 fn get_precedence(op: &str) -> u8 {
     match op {
-        "||" => 1,
-        "&&" => 2,
-        "==" | "!=" => 3,
-        "<" | ">" | "<=" | ">=" => 4,
-        "+" | "-" => 5,
-        "*" | "/" => 6,
+        "=" => 1, // <-- Əvvəl 0 idi, indi 1 oldu!
+        "||" => 2,
+        "&&" => 3,
+        "==" | "!=" => 4,
+        "<" | ">" | "<=" | ">=" => 5,
+        "+" | "-" => 6,
+        "*" | "/" => 7,
         _ => 0,
     }
-}
-fn parse_if_expr(parser: &mut Parser) -> Result<Expr, String> {
-    // Token::Conditional (əgər) gözlənilir
-    match parser.next() {
-        Some(Token::Conditional) => {}
-        other => return Err(format!("'əgər' gözlənilirdi, tapıldı: {:?}", other)),
-    }
-
-    let condition = parse_expression(parser, false)?; // şərti ifadəni parse et
-
-    // LBrace gözlənilir
-    match parser.next() {
-        Some(Token::LBrace) => {}
-        other => return Err(format!("\n{{ gözlənilirdi, tapıldı: {:?}", other)),
-    }
-
-    let mut then_branch = Vec::new();
-
-    while let Some(token) = parser.peek() {
-        if token == &Token::RBrace {
-            parser.next(); // consume }
-            break;
-        }
-
-        let expr = parse_expression(parser, false)?;
-        then_branch.push(expr);
-
-        // opsional olaraq semicolon
-        if parser.peek() == Some(&Token::Semicolon) {
-            parser.next();
-        }
-    }
-
-    let else_branch = if parser.peek() == Some(&Token::Else) {
-        parser.next(); // consume `else`
-
-        match parser.peek() {
-            Some(Token::Conditional) => {
-                // else if üçün parse_if_expr çağır
-                let else_if_expr = parse_if_expr(parser)?;
-                Some(vec![else_if_expr])
-            }
-
-            Some(Token::LBrace) => {
-                parser.next(); // consume `{`
-
-                let mut else_branch = Vec::new();
-                while let Some(token) = parser.peek() {
-                    if token == &Token::RBrace {
-                        parser.next(); // consume }
-                        break;
-                    }
-
-                    let expr = parse_expression(parser, false)?;
-                    else_branch.push(expr);
-
-                    if parser.peek() == Some(&Token::Semicolon) {
-                        parser.next();
-                    }
-                }
-
-                Some(else_branch)
-            }
-
-            other => {
-                return Err(format!(
-                    "'əgər' və ya '{{' gözlənilirdi (else üçün), tapıldı: {:?}",
-                    other
-                ));
-            }
-        }
-    } else {
-        None
-    };
-
-    Ok(Expr::If {
-        condition: Box::new(condition),
-        then_branch,
-        else_branch,
-    })
 }

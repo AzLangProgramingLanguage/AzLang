@@ -9,16 +9,28 @@ pub fn parse_function_call(parser: &mut Parser, name: &str) -> Result<Expr, Stri
     }
 
     let mut args = Vec::new();
+
     match parser.peek() {
         Some(Token::RParen) => {
-            parser.next(); // consume ')'
+            parser.next(); // boş arqument siyahısı: `func()`
         }
         Some(_) => {
-            let arg = parse_expression(parser, false)?;
-            args.push(arg);
+            loop {
+                let arg = parse_expression(parser, false)?;
+                args.push(arg);
 
-            if parser.next() != Some(&Token::RParen) {
-                return Err("Function call üçün ')' gözlənilirdi".to_string());
+                match parser.peek() {
+                    Some(Token::Comma) => {
+                        parser.next(); // , -> növbəti arqumentə keç
+                    }
+                    Some(Token::RParen) => {
+                        parser.next(); // ) -> bitir
+                        break;
+                    }
+                    _ => {
+                        return Err("Function call üçün ',' və ya ')' gözlənilirdi".to_string());
+                    }
+                }
             }
         }
         None => return Err("Funksiya çağırışı bağlanmadı".to_string()),

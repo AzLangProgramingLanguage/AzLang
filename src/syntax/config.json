@@ -4,8 +4,8 @@
     "constant_decl": "sabit",
     "function_def": "funksiya",
     "conditional": "əgər",
-    "_else": "yoxsa",
-    "else_if": "yoxsa əgər",
+    "_else": "əks",
+    "else_if": "yoxsa",
     "drop": "sil",
     "_loop": "gəz",
     "biginteger": "böyük_ədəd",
@@ -20,5 +20,11 @@
     "and": "və",
     "or": "və_ya",
     "double_and": "&&",
-    "double_or": "||"
+    "double_or": "||",
+    "true_str": "doğru",
+    "false_str": "yanlış",
+    "in_str": "içində",
+    "break_str": "dayan",
+    "continue_str": "keç",
+    "end_str": "son"
 }

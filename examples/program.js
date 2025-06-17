@@ -1,13 +1,6 @@
-function böl(str, delim) {
-    return str.split(delim);
+for (let i = 0; i < 1000000; i++) {
+    console.log(i)
 }
 
-function cəm(arr) {
-    return arr.reduce((a, b) => a + b, 0);
-}
-
-for (let i = 0; i < 1_0000000; i++) {
-    const b = böl("S a l a m", " ");
-    const x = b[0];
-    const s = cəm([1, 2, 3]);
-}
+/* node examples/program.js  6,26s user 1,72s system 66% cpu 12,020 total */
+/* output  0,61s user 1,98s system 76% cpu 3,386 total */

@@ -21,11 +21,9 @@ pub fn validate_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<(), Stri
                     name, declared, inferred
                 ));
             }
-            println!("typ: {:?}", inferred);
 
             ctx.symbol_types.insert(name.clone(), declared);
 
-            println!(" types {:?}", ctx.symbol_types);
             validate_expr(value, ctx)?;
         }
         Expr::ConstantDecl { name, typ, value } => {
@@ -43,11 +41,9 @@ pub fn validate_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<(), Stri
                     name, declared, inferred
                 ));
             }
-            println!("typ: {:?}", inferred);
 
             ctx.symbol_types.insert(name.clone(), declared);
 
-            println!(" types {:?}", ctx.symbol_types);
             validate_expr(value, ctx)?;
         }
 
@@ -150,6 +146,8 @@ pub fn validate_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<(), Stri
                 // Dəyişəni kontekstə əlavə et
                 ctx.symbol_types.insert(var_name.clone(), *inner);
             } else {
+                println!("iterable type: {:?}", get_expr_type(iterable, ctx));
+                println!("iterable: {:?}", iterable);
                 return Err("Dövr üçün istifadə edilən obyekt siyahı olmalıdır".to_string());
             }
 
@@ -184,6 +182,8 @@ pub fn validate_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<(), Stri
                 validate_expr(item, ctx)?;
             }
         }
+        Expr::Break => {}
+        Expr::Continue => {}
 
         Expr::Index { target, index } => {
             validate_expr(target, ctx)?;
@@ -223,6 +223,12 @@ fn validate_method_call(method: &str, args: &[Expr]) -> Result<(), String> {
         "cəm" | "sum" => {
             if args.len() != 1 {
                 return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));
+            }
+        }
+
+        "aralıq" | "range" => {
+            if args.len() != 2 {
+                return Err(format!("{} metodu yalnız 2 arqument qəbul edir", method));
             }
         }
 

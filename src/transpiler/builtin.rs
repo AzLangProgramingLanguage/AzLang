@@ -7,6 +7,8 @@ pub fn match_builtin(name: &str) -> Option<BuiltInFunction> {
         "uzunluq" | "len" => Some(BuiltInFunction::Len),
         "ədəd" | "number" => Some(BuiltInFunction::Number),
         "cəm" | "sum" => Some(BuiltInFunction::Sum),
+        "aralıq" | "range" => Some(BuiltInFunction::Range),
+        "sonsöz" | "last_word" => Some(BuiltInFunction::LastWord),
         _ => None,
     }
 }
