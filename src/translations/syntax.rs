@@ -27,6 +27,7 @@ pub struct Syntax {
     pub break_str: String,
     pub continue_str: String,
     pub end_str: String,
+    pub object_str: String,
 }
 
 impl Syntax {

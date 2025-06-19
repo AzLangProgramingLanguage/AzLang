@@ -1,9 +1,19 @@
-use crate::parser::{function::parse_function_def, if_expr::parse_if_expr};
+use crate::{
+    context::TranspileContext,
+    parser::{
+        function::parse_function_def, if_expr::parse_if_expr, object::parse_struct_def,
+        types::get_type,
+    },
+};
 
 use super::{Expr, Parser, Token}; // Token və Expr-i super (parser/mod.rs) vasitəsilə import edirik
 
 // Dəyişən elanlarını emal edir (dəyişən a:ədəd = 10; kimi)
-pub fn parse_variable_declaration(parser: &mut Parser, kind: &str) -> Result<Option<Expr>, String> {
+pub fn parse_variable_declaration(
+    parser: &mut Parser,
+    kind: &str,
+    ctx: &mut TranspileContext,
+) -> Result<Option<Expr>, String> {
     let name = match parser.next() {
         Some(Token::Identifier(name)) => name.clone(),
         other => {
@@ -19,7 +29,7 @@ pub fn parse_variable_declaration(parser: &mut Parser, kind: &str) -> Result<Opt
     parser.declared_variables.insert(name.clone());
 
     parser.used_variables.insert(name.clone());
-    let typ = match parser.peek() {
+    let mut typ = match parser.peek() {
         Some(Token::Colon) => {
             parser.next(); // ':' consume
             Some(parser.parse_type()?)
@@ -37,7 +47,14 @@ pub fn parse_variable_declaration(parser: &mut Parser, kind: &str) -> Result<Opt
         }
     }
 
-    let value_expr = parser.parse_expression()?; // Parser metodunu çağırırıq
+    let value_expr = parser.parse_expression(ctx)?; // Parser metodunu çağırırıq
+
+    // ✨ Əgər istifadəçi tip göstərməyibsə, biz `value_expr`-dən onu təxminləyirik
+    if typ.is_none() {
+        if let Some(inferred_type) = get_type(&value_expr, &ctx) {
+            typ = Some(inferred_type);
+        }
+    }
 
     // constant ilə input istifadə olunmamalıdır
     if kind == "constant_decl" {
@@ -68,12 +85,16 @@ pub fn parse_variable_declaration(parser: &mut Parser, kind: &str) -> Result<Opt
 
 // Bu, proqramımızdakı "sətr"lər, yəni ifadələrdir
 
-pub fn parse_statement(parser: &mut Parser) -> Result<Option<Expr>, String> {
+pub fn parse_statement(
+    parser: &mut Parser,
+    ctx: &mut TranspileContext,
+) -> Result<Option<Expr>, String> {
     while let Some(token) = parser.peek() {
         match token {
             Token::Newline | Token::Semicolon => {
                 parser.next(); // Boş sətirləri və nöqtəli vergülləri keç
             }
+
             Token::Break => {
                 parser.next(); // consume `Break`
                 return Ok(Some(Expr::Break));
@@ -97,11 +118,11 @@ pub fn parse_statement(parser: &mut Parser) -> Result<Option<Expr>, String> {
                 Token::ConstantDecl => "constant_decl",
                 _ => unreachable!(),
             };
-            parse_variable_declaration(parser, kind_str)
+            parse_variable_declaration(parser, kind_str, ctx)
         }
         Some(Token::Conditional) => {
             parser.next(); // consume Conditional
-            parse_if_expr(parser).map(Some)
+            parse_if_expr(parser, ctx).map(Some)
         }
         Some(Token::ElseIf) | Some(Token::Else) => {
             return Err(
@@ -109,19 +130,26 @@ pub fn parse_statement(parser: &mut Parser) -> Result<Option<Expr>, String> {
                     .to_string(),
             );
         }
-
         Some(Token::FunctionDef) => {
             parser.next(); // consume FunctionDef
-            parse_function_def(parser).map(Some)
+            parse_function_def(parser, ctx).map(Some)
+        }
+        Some(Token::Object) => {
+            parser.next(); // consume `Obyekt`
+            let struct_def = parse_struct_def(parser, ctx)?; // struktur tərifini parse et
+            Ok(Some(struct_def))
         }
         Some(Token::EOF) => Ok(None),
-        _ => parse_expression_as_statement(parser),
+        _ => parse_expression_as_statement(parser, ctx),
     }
 }
 
 // parse_expression-dan gələn dəyəri sadəcə ifadə kimi emal edir
-pub fn parse_expression_as_statement(parser: &mut Parser) -> Result<Option<Expr>, String> {
-    let expr = parser.parse_expression()?; // Parser metodunu çağırırıq
+pub fn parse_expression_as_statement(
+    parser: &mut Parser,
+    ctx: &mut TranspileContext,
+) -> Result<Option<Expr>, String> {
+    let expr = parser.parse_expression(ctx)?; // Parser metodunu çağırırıq
 
     // input yalnız dəyişən mənimsədilməsində istifadə oluna bilər
     if let Expr::BinaryOp { left: _, op, right } = &expr {

@@ -1,7 +1,9 @@
+use crate::context::TranspileContext;
+
 use super::expressions::parse_expression;
 use super::{Expr, Parser, Token};
 
-pub fn parse_list(parser: &mut Parser) -> Result<Expr, String> {
+pub fn parse_list(parser: &mut Parser, ctx: &mut TranspileContext) -> Result<Expr, String> {
     let mut elements = Vec::new();
 
     loop {
@@ -11,7 +13,7 @@ pub fn parse_list(parser: &mut Parser) -> Result<Expr, String> {
                 break;
             }
             Some(_) => {
-                let expr = parse_expression(parser, false)?;
+                let expr = parse_expression(parser, false, ctx)?;
                 elements.push(expr);
 
                 match parser.peek() {

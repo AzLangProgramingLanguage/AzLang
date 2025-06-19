@@ -12,25 +12,22 @@ pub fn transpile_loop(
     let body_code = body
         .iter()
         .map(|stmt| transpile_expr(stmt, ctx))
-        .collect::<Result<Vec<String>, String>>()?;
+        .collect::<Result<Vec<String>, String>>()?
+        .join("\n");
 
-    // Əgər iterable `VariableRef`-dirsə və mutable siyahıdırsa `.items` istifadə et
     if let Expr::VariableRef(name) = iterable {
-        if ctx.mutable_symbols.contains(name) {
-            return Ok(format!(
-                "for ({}.items) |{}| {{\n{}\n}}",
-                iterable_code,
-                var_name,
-                body_code.join("\n")
-            ));
+        if let Some(symbol) = ctx.lookup_variable(name) {
+            if symbol.is_mutable {
+                return Ok(format!(
+                    "for ({}.items) |{}| {{\n{}\n}}",
+                    iterable_code, var_name, body_code
+                ));
+            }
         }
     }
 
-    // Normal dövr (buraya `range(start, end)` də daxil ola bilər)
     Ok(format!(
         "for ({}) |{}| {{\n{}\n}}",
-        iterable_code,
-        var_name,
-        body_code.join("\n")
+        iterable_code, var_name, body_code
     ))
 }

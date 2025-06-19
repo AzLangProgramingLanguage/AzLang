@@ -1,22 +1,5 @@
-gəz aralıq(1,1000000) içində eded
-    çap(eded)
-    əgər eded==10
-        dayan
-    yoxsa eded==2
-        dayan
-    əks
-        keç
-
-
-dəyişən a="Salam "
-gəz aralıq(1,5) içində i
-    a.birləşdir("Dünya ")
-    gəz aralıq(5,6) içində j
-        çap(j)
-    əgər i==2
-        a.böyüt()
-    yoxsa i>3
-        sonsöz("Dayan")
-    çap(i)
-çap(a)
-
+Obyekt Adam
+    ad: mətn
+    age: ədəd
+sabit adam = Adam{"Səbuhi", 19} 
+çap(adam.ad)

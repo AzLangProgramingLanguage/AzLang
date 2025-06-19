@@ -1,35 +1,66 @@
 use super::expr::transpile_expr;
-use crate::{context::TranspileContext, parser::Program};
+use crate::{
+    context::{Parameter, TranspileContext},
+    function::transpile_function_def,
+    parser::{Expr, Program},
+};
 
-pub fn generate_main_fn(program: &Program, ctx: &mut TranspileContext) -> Result<String, String> {
-    let mut body = String::new();
+pub fn generate_main_fn(
+    program: &Program,
+    ctx: &mut TranspileContext,
+    message: &dyn Fn(&str),
+) -> Result<String, String> {
+    let mut top_level_defs = String::new(); // Funksiya tərifləri buraya yazılacaq
+    let mut main_body = String::new(); // Yalnız çağırışlar, `main()` içi
 
     for expr in &program.expressions {
-        let line = transpile_expr(expr, ctx)?;
-        body.push_str("    ");
-        body.push_str(&line);
-        body.push_str("\n");
+        match expr {
+            Expr::FunctionDef {
+                name,
+                params,
+                body,
+                return_type,
+            } => {
+                let def = transpile_function_def(name, params, body, return_type.clone(), ctx)?;
+                top_level_defs.push_str(&def);
+                top_level_defs.push_str("\n\n");
+            }
+
+            other_expr => {
+                let line = transpile_expr(other_expr, ctx)?;
+                let line = if line.trim_end().ends_with(';') {
+                    line
+                } else {
+                    format!("{}", line)
+                };
+                main_body.push_str(&line);
+                main_body.push_str("\n");
+            }
+        }
     }
 
     let mut zig_code = String::new();
 
-    // 📦 Zig modülleri (`@import`) varsa ekle
-    if !ctx
-        .imports
-        .contains(&"const std = @import(\"std\");".to_string())
-    {
+    // 📦 Zig modüllerini (`@import`) əlavə et
+    if !ctx.imports.contains("const std = @import(\"std\");") {
         zig_code.push_str("const std = @import(\"std\");\n");
     }
+
     for import in &ctx.imports {
         if import != "const std = @import(\"std\");" {
             zig_code.push_str(import);
-            zig_code.push_str("\n");
+            zig_code.push('\n');
         }
     }
+
+    // ✨ Əlavə funksiya tərifləri
+    zig_code.push_str(&top_level_defs);
+
+    // Əlavə util funksiyalar (input, sum və s.)
     if ctx.used_input_fn {
         zig_code.push_str(
             r#"
- 
+
 pub fn input(prompt: []const u8, buf: []u8) ![]u8 {
     const stdin = std.io.getStdIn().reader();
     std.debug.print("{s} ", .{prompt});
@@ -39,21 +70,21 @@ pub fn input(prompt: []const u8, buf: []u8) ![]u8 {
         return error.EmptyInput;
     }
 }
-    "#,
+"#,
         );
     }
 
     if ctx.used_sum_fn {
         zig_code.push_str(
             r#"
-    pub fn sum(comptime T: type, list: []const T) T {
-        var total: T = 0;
-        for (list) |item| {
-            total += item;
-        }
-        return total;
+pub fn sum(comptime T: type, list: []const T) T {
+    var total: T = 0;
+    for (list) |item| {
+        total += item;
     }
-    "#,
+    return total;
+}
+"#,
         );
     }
 
@@ -94,26 +125,24 @@ pub fn splitAuto(allocator: std.mem.Allocator, input: []const u8, delimiter: u8)
     }
     return try list.toOwnedSlice();
 }
-"#
+"#,
         );
     }
 
-    // ✨ Zig'de main fonksiyonu
+    // ✨ Zig'de main funksiyası
     zig_code.push_str("\npub fn main() !void {\n");
+
     if ctx.needs_allocator {
         zig_code.push_str("    var gpa = std.heap.GeneralPurposeAllocator(.{}){};\n");
         zig_code.push_str("    const allocator = gpa.allocator();\n");
     }
-    if ctx.uses_stdout {
-        zig_code.push_str("    const stdout = std.io.getStdOut().writer();\n");
-    }
 
-    zig_code.push_str(&body);
+    zig_code.push_str(&main_body);
 
     for var_name in &ctx.cleanup_statements {
         zig_code.push_str("    ");
         zig_code.push_str(var_name);
-        zig_code.push_str("\n");
+        zig_code.push('\n');
     }
 
     zig_code.push_str("}\n");

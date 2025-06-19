@@ -1,3 +1,5 @@
+use crate::context::Parameter;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum BuiltInFunction {
     Print,
@@ -32,6 +34,21 @@ pub enum Expr {
         op: String,
         right: Box<Expr>,
     },
+    StructDef {
+        name: String,
+        fields: Vec<(String, Type)>,
+    },
+
+    StructInit {
+        name: String,
+        args: Vec<Expr>,
+    },
+
+    FieldAccess {
+        target: Box<Expr>,
+        field: String,
+    },
+
     Loop {
         var_name: String,
         iterable: Box<Expr>,
@@ -45,6 +62,11 @@ pub enum Expr {
     BuiltInCall {
         func: BuiltInFunction,
         args: Vec<Expr>,
+        resolved_type: Option<Type>,
+    },
+    Assignment {
+        name: String,
+        value: Box<Expr>,
     },
     MutableDecl {
         name: String,
@@ -64,8 +86,9 @@ pub enum Expr {
     List(Vec<Expr>),
     FunctionDef {
         name: String,
-        params: Vec<(String, Type, bool)>,
+        params: Vec<Parameter>,
         body: Vec<Expr>,
+        return_type: Option<Type>,
     },
 }
 
@@ -84,5 +107,6 @@ pub enum Type {
     LowInteger,
     Bool,
     Char,
+    Void,
     Any,
 }

@@ -1,14 +1,15 @@
 use crate::{
+    context::TranspileContext,
     lexer::Token,
     parser::{Expr, Parser, expressions::parse_expression, statements::parse_statement},
 };
-
-pub fn parse_if_expr(parser: &mut Parser) -> Result<Expr, String> {
-    let condition = parse_expression(parser, false)?;
+pub fn parse_if_expr(parser: &mut Parser, ctx: &mut TranspileContext) -> Result<Expr, String> {
+    let condition = parse_expression(parser, false, ctx)?;
 
     // Expect newline after condition
     match parser.next() {
         Some(Token::Newline) => {}
+
         other => return Err(format!("Yeni sətir gözlənilirdi, tapıldı: {:?}", other)),
     }
 
@@ -42,8 +43,11 @@ pub fn parse_if_expr(parser: &mut Parser) -> Result<Expr, String> {
             Some(Token::Newline) => {
                 parser.next();
             }
+            Some(Token::EOF) => {
+                break;
+            }
             Some(_) => {
-                if let Some(stmt) = parse_statement(parser)? {
+                if let Some(stmt) = parse_statement(parser, ctx)? {
                     then_branch.push(stmt);
                 }
 
@@ -70,7 +74,7 @@ pub fn parse_if_expr(parser: &mut Parser) -> Result<Expr, String> {
     let else_branch = match parser.peek() {
         Some(Token::ElseIf) => {
             parser.next(); // consume ElseIf
-            let else_if_expr = parse_if_expr(parser)?;
+            let else_if_expr = parse_if_expr(parser, ctx)?;
             // Represent elseif as an If expression in the else branch
             Some(vec![else_if_expr])
         }
@@ -109,11 +113,10 @@ pub fn parse_if_expr(parser: &mut Parser) -> Result<Expr, String> {
                         parser.next();
                     }
                     Some(_) => {
-                        if let Some(stmt) = parse_statement(parser)? {
+                        if let Some(stmt) = parse_statement(parser, ctx)? {
                             else_branch.push(stmt);
                         }
 
-                        // Handle optional newline after statement
                         match parser.peek() {
                             Some(Token::Dedent) | None => {}
                             _ => {

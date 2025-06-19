@@ -19,9 +19,8 @@ pub fn transpile_mutable_decl(
     let inferred_type = match typ {
         Some(t) => t.clone(),
         None => ctx
-            .symbol_types
-            .get(name)
-            .cloned()
+            .lookup_variable(name)
+            .map(|sym| sym.typ)
             .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
     };
 
@@ -67,7 +66,6 @@ try {name}.appendSlice(&[_]{inner_type}{{ {items_str} }});"#,
 
     Ok(decl)
 }
-
 pub fn transpile_constant_decl(
     name: &str,
     typ: &Option<Type>,
@@ -75,20 +73,17 @@ pub fn transpile_constant_decl(
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
     if let Some(args) = is_input_expr(value) {
-        // `giriş` funksiyasından daxil olan dəyərlər üçün
         return transpile_input_var(name, &Type::Metn, args, ctx, false);
     }
 
     let inferred_type = match typ {
         Some(t) => t.clone(),
         None => ctx
-            .symbol_types
-            .get(name)
-            .cloned()
+            .lookup_variable(name)
+            .map(|sym| sym.typ)
             .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
     };
 
-    // 🚀 Əgər value "böl(...)" funksiyasıdırsa
     if let Expr::MethodCall {
         target,
         method,
@@ -105,7 +100,7 @@ pub fn transpile_constant_decl(
 
             return Ok(format!(
                 r#"const {result} = splitN({target}, {delim}, 32);
-    const {name} = {result}.parts[0..{result}.len];"#,
+const {name} = {result}.parts[0..{result}.len];"#,
                 result = var_result,
                 target = target_code,
                 delim = delimiter_code,
@@ -114,7 +109,6 @@ pub fn transpile_constant_decl(
         }
     }
 
-    // Siyahı tipli konstant dəyərlər
     if let Expr::List(items) = value {
         let items_code: Result<Vec<String>, String> =
             items.iter().map(|item| transpile_expr(item, ctx)).collect();
@@ -145,7 +139,6 @@ pub fn transpile_constant_decl(
         }
     }
 
-    // Digər konstant dəyərlər üçün
     let value_code = transpile_expr(value, ctx)?;
     Ok(format!(
         "const {}: {} = {};",
@@ -157,11 +150,11 @@ pub fn transpile_constant_decl(
 
 fn is_input_expr(expr: &Expr) -> Option<&[Expr]> {
     match expr {
-        Expr::BuiltInCall { func, args }
-            if matches!(func, crate::parser::ast::BuiltInFunction::Input) =>
-        {
-            Some(args)
-        }
+        Expr::BuiltInCall {
+            func,
+            args,
+            resolved_type,
+        } if matches!(func, crate::parser::ast::BuiltInFunction::Input) => Some(args),
         Expr::FunctionCall { name, args } if name == "giriş" => Some(args),
         _ => None,
     }

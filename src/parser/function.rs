@@ -1,9 +1,11 @@
+use crate::context::{FunctionInfo, Parameter, TranspileContext};
+use crate::parser::ast::Type;
+use crate::parser::types::get_type;
+
 use super::expressions::parse_expression;
 use super::{Expr, Parser, Token};
 
-pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
-    parser.next(); // consume FunctionDef
-
+pub fn parse_function_def(parser: &mut Parser, ctx: &mut TranspileContext) -> Result<Expr, String> {
     let name = match parser.next() {
         Some(Token::Identifier(name)) => name.clone(),
         other => return Err(format!("Funksiya adı gözlənilirdi, tapıldı: {:?}", other)),
@@ -13,13 +15,14 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
         return Err("Funksiya parametr siyahısı '(' ilə başlamalıdır".to_string());
     }
 
-    let mut params = Vec::new();
+    let mut parameters: Vec<Parameter> = Vec::new();
+
     loop {
         match parser.peek() {
             Some(Token::ConstantDecl) | Some(Token::MutableDecl) | Some(Token::Identifier(_)) => {
                 let is_mutable = matches!(parser.peek(), Some(Token::MutableDecl));
                 if is_mutable || matches!(parser.peek(), Some(Token::ConstantDecl)) {
-                    parser.next();
+                    parser.next(); // consume const or mut
                 }
 
                 let param_name = match parser.next() {
@@ -40,7 +43,11 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
                     }
                 };
 
-                params.push((param_name, param_type, is_mutable));
+                parameters.push(Parameter {
+                    name: param_name,
+                    typ: param_type,
+                    is_mutable,
+                });
 
                 match parser.peek() {
                     Some(Token::Comma) => {
@@ -65,19 +72,50 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
         }
     }
 
-    if parser.next() != Some(&Token::RParen) || parser.next() != Some(&Token::LBrace) {
-        return Err("')' və ya '{' gözlənilirdi".to_string());
+    if parser.next() != Some(&Token::RParen) {
+        return Err("')' gözlənilirdi".to_string());
+    }
+
+    // Return tipi
+    let mut return_type = if parser.peek() == Some(&Token::Colon) {
+        parser.next(); // consume `:`
+        match parser.next() {
+            Some(Token::TypeName(t)) => Some(t.clone()),
+            other => {
+                return Err(format!(
+                    "Geri dönüş tipi gözlənilirdi, tapıldı: {:?}",
+                    other
+                ));
+            }
+        }
+    } else {
+        None
+    };
+
+    // Yeni sətir və girinti
+    match parser.next() {
+        Some(Token::Newline) => {}
+        _ => return Err("Yeni sətir gözlənilirdi".to_string()),
+    }
+
+    match parser.next() {
+        Some(Token::Indent) => {}
+        _ => return Err("Girinti gözlənilirdi".to_string()),
     }
 
     let mut body = Vec::new();
     loop {
         match parser.peek() {
-            Some(Token::RBrace) => {
-                parser.next();
+            Some(Token::End) | Some(Token::Dedent) => {
+                parser.next(); // 'bitir' və ya `Dedent`
                 break;
             }
+            Some(Token::Newline) => {
+                parser.next();
+                continue;
+            }
             Some(_) => {
-                let expr = parse_expression(parser, true)?;
+                let expr = parse_expression(parser, true, ctx)?;
                 body.push(expr);
                 if matches!(parser.peek(), Some(Token::Semicolon)) {
                     parser.next();
@@ -87,5 +125,45 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
         }
     }
 
-    Ok(Expr::FunctionDef { name, params, body })
+    // Tip avtomatik çıxarılırsa
+    if return_type.is_none() {
+        return_type = infer_function_return_type(&body, &TranspileContext::new());
+    }
+
+    // ✅ Funksiya konteksə əlavə olunur
+    ctx.declare_function(FunctionInfo {
+        name: name.clone(),
+        return_type: return_type.clone(),
+        parameters: parameters.clone(),
+        body: None,
+        scope_level: ctx.scopes.len(),
+        is_public: false,
+    });
+
+    Ok(Expr::FunctionDef {
+        name,
+        params: parameters,
+        body,
+        return_type,
+    })
+}
+
+fn infer_function_return_type(body: &[Expr], ctx: &TranspileContext) -> Option<Type> {
+    let mut return_types = vec![];
+
+    for expr in body {
+        if let Expr::Return(inner) = expr {
+            if let Some(t) = get_type(inner, ctx) {
+                return_types.push(t);
+            }
+        }
+    }
+
+    if return_types.is_empty() {
+        Some(Type::Void)
+    } else if return_types.iter().all(|t| t == &return_types[0]) {
+        Some(return_types[0].clone())
+    } else {
+        Some(Type::Any)
+    }
 }

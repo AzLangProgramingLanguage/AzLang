@@ -1,0 +1,111 @@
+use crate::parser::{Expr, ast::Type};
+use std::collections::{HashMap, HashSet};
+
+#[derive(Clone, Debug)]
+pub struct Location {
+    pub line: usize,
+    pub column: usize,
+    pub file: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Parameter {
+    pub name: String,
+    pub typ: Type,
+    pub is_mutable: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct FunctionInfo {
+    pub name: String,
+    pub return_type: Option<Type>,
+    pub parameters: Vec<Parameter>,
+    pub body: Option<Expr>, // ya tam AST bədəni, ya referans, ya da sənə lazım olan başqa tip
+    pub scope_level: usize,
+    pub is_public: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct Symbol {
+    pub typ: Type,
+    pub is_mutable: bool,
+    pub is_used: bool,
+    pub is_param: bool,
+    pub source_location: Option<Location>,
+}
+#[derive(Clone, Debug)]
+
+pub struct TranspileContext {
+    pub imports: HashSet<String>,
+    pub symbol_types: HashMap<String, Symbol>,
+    pub scopes: Vec<HashSet<String>>,
+    pub struct_defs: HashMap<String, Vec<(String, Type)>>,
+    pub functions: HashMap<String, FunctionInfo>,
+    pub needs_allocator: bool,
+    pub uses_stdout: bool,
+    pub used_input_fn: bool,
+    pub cleanup_statements: Vec<String>,
+    pub used_sum_fn: bool,
+    pub used_split_n_fn: bool,
+    pub used_split_auto_fn: bool,
+}
+
+impl TranspileContext {
+    pub fn new() -> Self {
+        Self {
+            imports: HashSet::new(),
+            symbol_types: HashMap::new(),
+            scopes: vec![HashSet::new()],
+            struct_defs: HashMap::new(),
+            functions: HashMap::new(),
+            needs_allocator: false,
+            uses_stdout: false,
+            used_input_fn: false,
+            cleanup_statements: Vec::new(),
+            used_sum_fn: false,
+            used_split_n_fn: false,
+            used_split_auto_fn: false,
+        }
+    }
+
+    pub fn declare_variable(&mut self, name: String, symbol: Symbol) {
+        self.symbol_types.insert(name.clone(), symbol);
+
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name);
+        }
+    }
+
+    pub fn lookup_variable(&self, name: &str) -> Option<Symbol> {
+        self.symbol_types.get(name).cloned()
+    }
+
+    pub fn declare_function(&mut self, func: FunctionInfo) {
+        self.functions.insert(func.name.clone(), func);
+    }
+
+    pub fn lookup_function(&self, name: &str) -> Option<FunctionInfo> {
+        self.functions.get(name).cloned()
+    }
+
+    pub fn push_scope(&mut self) {
+        self.scopes.push(HashSet::new());
+    }
+
+    pub fn pop_scope(&mut self) {
+        if let Some(scope) = self.scopes.pop() {
+            for name in scope {
+                self.symbol_types.remove(&name);
+            }
+        }
+    }
+
+    pub fn add_import(&mut self, import: &str) -> Option<String> {
+        if self.imports.contains(import) {
+            None
+        } else {
+            self.imports.insert(import.to_string());
+            Some(import.to_string())
+        }
+    }
+}

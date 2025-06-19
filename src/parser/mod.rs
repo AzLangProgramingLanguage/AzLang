@@ -1,23 +1,23 @@
 pub mod ast;
-pub mod validation;
 
 use std::collections::HashSet;
 
 use crate::{context::TranspileContext, lexer::Token, parser::ast::Type};
 pub use ast::{Expr, Program};
-pub use validation::validate_expr;
 
 // Digər modulları elan et
+pub mod builtin;
 pub mod call;
 pub mod expressions;
 pub mod function;
 pub mod if_expr;
 pub mod list;
 pub mod loop_expr;
+pub mod object;
 pub mod returnn;
 
 mod statements;
-mod types;
+pub mod types;
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -42,6 +42,22 @@ impl Parser {
             None
         }
     }
+    pub fn expect(&mut self, expected: &Token) -> Result<(), String> {
+        match self.peek() {
+            Some(t) if t == expected => {
+                self.next(); // Tokeni alır
+                Ok(())
+            }
+            Some(t) => Err(format!(
+                "'{:?}' gözlənilirdi, amma '{:?}' tapıldı",
+                expected, t
+            )),
+            None => Err(format!(
+                "'{:?}' gözlənilirdi, amma fayl sonuna çatıldı",
+                expected
+            )),
+        }
+    }
 
     pub fn peek(&self) -> Option<&Token> {
         let tok = self.tokens.get(self.position);
@@ -64,12 +80,12 @@ impl Parser {
         Ok(Program { expressions })
     }
 
-    fn parse_statement(&mut self) -> Result<Option<Expr>, String> {
-        statements::parse_statement(self)
+    fn parse_statement(&mut self, ctx: &mut TranspileContext) -> Result<Option<Expr>, String> {
+        statements::parse_statement(self, ctx)
     }
 
-    fn parse_expression(&mut self) -> Result<Expr, String> {
-        expressions::parse_expression(self, false)
+    fn parse_expression(&mut self, ctx: &mut TranspileContext) -> Result<Expr, String> {
+        expressions::parse_expression(self, false, ctx)
     }
 
     fn parse_type(&mut self) -> Result<Type, String> {
@@ -95,8 +111,7 @@ impl Parser {
                 }
 
                 _ => {
-                    if let Some(stmt) = self.parse_statement()? {
-                        validate_expr(&stmt, ctx)?;
+                    if let Some(stmt) = self.parse_statement(ctx)? {
                         statements.push(stmt);
 
                         // Semicolon varsa keç

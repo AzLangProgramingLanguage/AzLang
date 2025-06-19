@@ -15,7 +15,7 @@
     "len": "uzunluq",
     "input": "gir",
     "listtype": "siyahı",
-    "return_name": "çıxış",
+    "return_name": "qaytar",
     "bool": "şərt",
     "and": "və",
     "or": "və_ya",
@@ -26,5 +26,6 @@
     "in_str": "içində",
     "break_str": "dayan",
     "continue_str": "keç",
-    "end_str": "son"
+    "end_str": "son",
+    "object_str": "Obyekt"
 }

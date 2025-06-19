@@ -1,5 +1,5 @@
-use crate::Syntax;
 use crate::parser::ast::Type;
+use crate::translations::syntax::Syntax;
 use std::iter::Peekable;
 use std::str::Chars;
 
@@ -128,6 +128,10 @@ impl<'a> Lexer<'a> {
             _ => {
                 self.at_line_start = false;
                 match ch {
+                    '.' => {
+                        self.chars.next();
+                        Some(Token::Dot)
+                    }
                     '(' => self.consume_char_and_return(Token::LParen),
                     ')' => self.consume_char_and_return(Token::RParen),
                     '{' => self.consume_char_and_return(Token::LBrace),
@@ -172,6 +176,8 @@ impl<'a> Lexer<'a> {
             Some(Token::Return)
         } else if word == self.syntax.mutable_decl {
             Some(Token::MutableDecl)
+        } else if word == self.syntax.object_str {
+            Some(Token::Object)
         } else if word == self.syntax.end_str {
             Some(Token::End)
         } else if word == self.syntax.constant_decl {
@@ -266,7 +272,7 @@ impl<'a> Lexer<'a> {
                         // Önce içerideki content varsa onu döndür
                         if !content.is_empty() {
                             let part = Token::TemplatePart(content);
-                            content = String::new();
+                            /*   content = String::new(); */
                             self.chars.next(); // $
                             self.chars.next(); // {
                             self.push_back_token(Token::InterpolationStart);
