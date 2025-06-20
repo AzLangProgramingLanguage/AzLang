@@ -1,5 +1,13 @@
+sabit a = "S,a,l,a,m"
+dəyişən b = a.böl(",")
+sabit c = a.böl(",")
+çap(b[0])
+çap(c[1])
 Obyekt Adam
     ad: mətn
-    age: ədəd
-sabit adam = Adam{"Səbuhi", 19} 
-çap(adam.ad)
+    soyad: mətn
+    yas: ədəd
+    metod yasim()
+        çap(öz.yas)
+sabit adam = Adam{"Səbuhi", "Sarıyev", 19};
+adam.yasim()

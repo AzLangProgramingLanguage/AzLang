@@ -50,7 +50,7 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
         }
         Expr::FieldAccess { target, field } => {
             if let Some(Type::Istifadeci(struct_name)) = get_type(target, ctx) {
-                if let Some(fields) = ctx.struct_defs.get(&struct_name) {
+                if let Some((fields, _)) = ctx.struct_defs.get(&struct_name) {
                     for (f_name, f_type) in fields {
                         if f_name == field {
                             return Some(f_type.clone());
@@ -60,7 +60,7 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
             }
             None
         }
-        Expr::StructInit { name, args } => Some(Type::Istifadeci(name.clone())),
+        Expr::StructInit { name, args: _ } => Some(Type::Istifadeci(name.clone())),
         Expr::List(items) => {
             if items.is_empty() {
                 return Some(Type::Siyahi(Box::new(Type::Any))); // boş siyahı – tipi bilinmir
@@ -78,23 +78,52 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
             Some(Type::Siyahi(Box::new(item_type)))
         }
 
-        Expr::VariableRef(name) => ctx.lookup_variable(name).map(|symbol| symbol.typ.clone()),
+        Expr::VariableRef(name) => {
+            if name == "self" {
+                ctx.current_struct
+                    .as_ref()
+                    .map(|name| Type::Istifadeci(name.clone()))
+            } else {
+                ctx.lookup_variable(name).map(|sym| sym.typ.clone())
+            }
+        }
         Expr::String(_) => Some(Type::Metn),
         Expr::Number(_) => Some(Type::Integer),
         Expr::Bool(_) => Some(Type::Bool),
 
-        Expr::MethodCall { target, method, .. } => {
+        Expr::MethodCall {
+            target,
+            method,
+            args,
+        } => {
             let target_type = get_type(target, ctx);
             match target_type {
                 Some(Type::Siyahi(_)) => match method.as_str() {
                     "uzunluq" | "boşdur" => Some(Type::Integer),
+                    "sırala" | "əks_sırala" => Some(Type::Siyahi(Box::new(Type::Integer))),
                     _ => None,
                 },
                 Some(Type::Metn) => match method.as_str() {
                     "uzunluq" | "boşdur" => Some(Type::Integer),
                     "böyüt" | "kiçilt" | "kənar_təmizlə" => Some(Type::Metn),
+                    "birləşdir" => Some(Type::Metn),
+                    "kəs" => Some(Type::Metn),
+                    "əvəzlə" => Some(Type::Metn),
+                    "böl" => Some(Type::Siyahi(Box::new(Type::Metn))),
                     _ => None,
                 },
+                Some(Type::Istifadeci(struct_name)) => {
+                    // Struct metodlarını axtar
+                    if let Some((_fields, methods)) = ctx.struct_defs.get(&struct_name) {
+                        for (m_name, params, _body, ret_type) in methods {
+                            if m_name == method && args.len() == params.len() - 1 {
+                                // -1 çünki `self` avtomatik daxil edilir
+                                return ret_type.clone();
+                            }
+                        }
+                    }
+                    None
+                }
                 _ => None,
             }
         }

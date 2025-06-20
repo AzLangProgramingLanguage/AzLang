@@ -39,7 +39,14 @@ pub struct TranspileContext {
     pub imports: HashSet<String>,
     pub symbol_types: HashMap<String, Symbol>,
     pub scopes: Vec<HashSet<String>>,
-    pub struct_defs: HashMap<String, Vec<(String, Type)>>,
+    pub struct_defs: HashMap<
+        String,
+        (
+            Vec<(String, Type)>,
+            Vec<(String, Vec<Parameter>, Vec<Expr>, Option<Type>)>,
+        ),
+    >,
+    pub current_struct: Option<String>,
     pub functions: HashMap<String, FunctionInfo>,
     pub needs_allocator: bool,
     pub uses_stdout: bool,
@@ -48,6 +55,7 @@ pub struct TranspileContext {
     pub used_sum_fn: bool,
     pub used_split_n_fn: bool,
     pub used_split_auto_fn: bool,
+    pub used_split_alloc_fn: bool,
 }
 
 impl TranspileContext {
@@ -57,10 +65,12 @@ impl TranspileContext {
             symbol_types: HashMap::new(),
             scopes: vec![HashSet::new()],
             struct_defs: HashMap::new(),
+            current_struct: None,
             functions: HashMap::new(),
             needs_allocator: false,
             uses_stdout: false,
             used_input_fn: false,
+            used_split_alloc_fn: false,
             cleanup_statements: Vec::new(),
             used_sum_fn: false,
             used_split_n_fn: false,

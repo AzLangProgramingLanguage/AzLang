@@ -1,5 +1,5 @@
 use crate::array_methods::transpile_list_method_call;
-use crate::context::{Parameter, TranspileContext};
+use crate::context::TranspileContext;
 use crate::declaration::transpile_constant_decl;
 use crate::function::{transpile_function_call, transpile_function_def};
 use crate::r#loop::transpile_loop;
@@ -24,7 +24,13 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             let rhs = transpile_expr(value, ctx)?;
             Ok(format!("{} = {}", name, rhs))
         }
-        Expr::StructDef { name, fields } => {
+        Expr::StructDef {
+            name,
+            fields,
+            methods,
+        } => {
+            let old_struct = ctx.current_struct.clone();
+            ctx.current_struct = Some(name.clone());
             let field_lines: Vec<String> = fields
                 .iter()
                 .map(|(fname, ftype)| {
@@ -33,27 +39,78 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 })
                 .collect();
 
-            let body = field_lines.join("\n");
-            Ok(format!("const {} = struct {{\n{}\n}};", name, body))
+            let method_lines: Vec<String> = methods
+                .iter()
+                .map(|(method_name, params, body, return_type)| {
+                    let uses_self = body.iter().any(|expr| contains_self(expr));
+
+                    let param_list: Vec<String> = params
+                        .iter()
+                        .filter(|p| p.name != "self") // self ayrıca işlənəcək
+                        .map(|p| format!("{}: {}", p.name, map_type(&p.typ, true)))
+                        .collect();
+
+                    let self_prefix = if uses_self { "self: @This()" } else { "" };
+
+                    let params_zig = if !param_list.is_empty() {
+                        if uses_self {
+                            format!(", {}", param_list.join(", "))
+                        } else {
+                            param_list.join(", ")
+                        }
+                    } else {
+                        "".to_string()
+                    };
+
+                    let all_params = if self_prefix.is_empty() {
+                        params_zig
+                    } else if params_zig.is_empty() {
+                        self_prefix.to_string()
+                    } else {
+                        format!("{}{}", self_prefix, params_zig)
+                    };
+
+                    let ret_type = return_type
+                        .as_ref()
+                        .map(|t| map_type(t, true))
+                        .unwrap_or("void".to_string());
+
+                    let header =
+                        format!("    pub fn {}({}) {} {{", method_name, all_params, ret_type);
+                    let body_lines: Vec<String> = body
+                        .iter()
+                        .filter_map(|expr| transpile_expr(expr, ctx).ok())
+                        .map(|line| format!("        {}", line))
+                        .collect();
+                    format!("{}\n{}\n    }}", header, body_lines.join("\n"))
+                })
+                .collect::<Vec<_>>();
+            let mut all_lines = field_lines;
+            all_lines.push("".to_string()); // boş sətr
+            all_lines.extend(method_lines);
+            let full_body = all_lines.join("\n");
+            ctx.current_struct = old_struct;
+            Ok(format!("const {} = struct {{\n{}\n}};", name, full_body))
         }
+
         Expr::StructInit { name, args } => {
-            let struct_def = ctx
+            let (fields, _) = ctx
                 .struct_defs
                 .get(name)
                 .cloned()
                 .ok_or_else(|| format!("Struct '{}' tapılmadı", name))?;
 
-            if struct_def.len() != args.len() {
+            if fields.len() != args.len() {
                 return Err(format!(
                     "{} strukturu üçün {} sahə gözlənilirdi, amma {} verildi",
                     name,
-                    struct_def.len(),
+                    fields.len(),
                     args.len()
                 ));
             }
 
             let mut field_lines = Vec::new();
-            for ((field_name, _), arg_expr) in struct_def.iter().zip(args.iter()) {
+            for ((field_name, _), arg_expr) in fields.iter().zip(args.iter()) {
                 let value_code = transpile_expr(arg_expr, ctx)?;
                 field_lines.push(format!(".{} = {}", field_name, value_code));
             }
@@ -146,7 +203,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         Expr::BuiltInCall {
             func,
             args,
-            resolved_type,
+            resolved_type: _,
         } => match func {
             BuiltInFunction::Print => transpile_builtin_print(&args[0], ctx),
             BuiltInFunction::Sum => transpile_builtin_sum(&args, ctx),
@@ -187,7 +244,6 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 args.iter().map(|arg| transpile_expr(arg, ctx)).collect();
             let args_code = args_code?;
 
-            // Tipi tap
             let target_type = get_type(target, ctx);
 
             match target_type {
@@ -195,9 +251,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                     transpile_string_method_call(&target_code, method, &args_code, ctx)
                         .ok_or_else(|| format!("Dəstəklənməyən string metodu: {}", method))
                 }
-
                 Some(Type::Siyahi(_)) => {
-                    // is_mutable tapmaq üçün Symbol axtar
                     let is_mutable = match &**target {
                         Expr::VariableRef(name) => ctx
                             .lookup_variable(name)
@@ -205,10 +259,21 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                             .unwrap_or(false),
                         _ => false,
                     };
-
                     let code =
                         transpile_list_method_call(&target_code, method, &args_code, is_mutable)?;
                     Ok(code)
+                }
+
+                // ✅ Əlavə et: Struct tipli methodlar üçün
+                Some(Type::Istifadeci(_)) => {
+                    let joined_args = if args_code.is_empty() {
+                        "".to_string()
+                    } else {
+                        format!(", {}", args_code.join(", "))
+                    };
+
+                    // self argumenti ilə birgə
+                    Ok(format!("{}.{}({joined_args});", target_code, method))
                 }
 
                 _ => Err(format!(
@@ -217,6 +282,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 )),
             }
         }
+
         Expr::Return(e) => {
             let expr_code = transpile_expr(e, ctx)?;
             Ok(format!("return {}", expr_code))
@@ -239,5 +305,37 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             body,
             return_type,
         } => transpile_function_def(name, params, body, return_type.clone(), ctx),
+    }
+}
+
+fn contains_self(expr: &Expr) -> bool {
+    match expr {
+        Expr::VariableRef(name) => name == "self",
+        Expr::BinaryOp { left, right, .. } => contains_self(left) || contains_self(right),
+        Expr::MethodCall { target, args, .. } => {
+            contains_self(target) || args.iter().any(contains_self)
+        }
+        Expr::FunctionCall { args, .. } => args.iter().any(contains_self),
+        Expr::FieldAccess { target, .. } => contains_self(target),
+        Expr::Assignment { value, .. } => contains_self(value),
+        Expr::Index { target, index } => contains_self(target) || contains_self(index),
+        Expr::Loop { iterable, body, .. } => {
+            contains_self(iterable) || body.iter().any(contains_self)
+        }
+        Expr::If {
+            condition,
+            then_branch,
+            else_branch,
+        } => {
+            contains_self(condition)
+                || then_branch.iter().any(contains_self)
+                || else_branch
+                    .as_ref()
+                    .map(|b| b.iter().any(contains_self))
+                    .unwrap_or(false)
+        }
+        Expr::Return(inner) => contains_self(inner),
+        Expr::List(items) => items.iter().any(contains_self),
+        _ => false,
     }
 }

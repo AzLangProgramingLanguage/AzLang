@@ -11,8 +11,8 @@ pub fn transpile_mutable_decl(
     value: &Expr,
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
-    if let Some(args) = is_input_expr(value) {
-        return transpile_input_var(name, &Type::Metn, args, ctx, true);
+    if let Some(result) = transpile_special_case(name, typ, value, ctx, true) {
+        return result;
     }
 
     let value_code = transpile_expr(value, ctx)?;
@@ -28,7 +28,7 @@ pub fn transpile_mutable_decl(
         Type::Metn => {
             ctx.needs_allocator = true;
             format!(
-                "var {}: []u8 = try allocator.dupe(u8, {});",
+                "var {}: []u8 = try allocator.dupe(u8, {})",
                 name, value_code
             )
         }
@@ -56,7 +56,7 @@ try {name}.appendSlice(&[_]{inner_type}{{ {items_str} }});"#,
         }
         _ => {
             format!(
-                "var {}: {} = {};",
+                "var {}: {} = {}",
                 name,
                 map_type(&inferred_type, false),
                 value_code
@@ -72,8 +72,8 @@ pub fn transpile_constant_decl(
     value: &Expr,
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
-    if let Some(args) = is_input_expr(value) {
-        return transpile_input_var(name, &Type::Metn, args, ctx, false);
+    if let Some(result) = transpile_special_case(name, typ, value, ctx, false) {
+        return result;
     }
 
     let inferred_type = match typ {
@@ -83,31 +83,6 @@ pub fn transpile_constant_decl(
             .map(|sym| sym.typ)
             .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
     };
-
-    if let Expr::MethodCall {
-        target,
-        method,
-        args,
-    } = value
-    {
-        if method == "böl" {
-            println!("Böl funksiyası istifadə edildi");
-            ctx.used_split_n_fn = true;
-            let target_code = transpile_expr(target, ctx)?;
-            let mut delimiter_code = transpile_expr(&args[0], ctx)?;
-            let var_result = format!("result_{}", name);
-            delimiter_code = delimiter_code.replace("\"", "\'");
-
-            return Ok(format!(
-                r#"const {result} = splitN({target}, {delim}, 32);
-const {name} = {result}.parts[0..{result}.len];"#,
-                result = var_result,
-                target = target_code,
-                delim = delimiter_code,
-                name = name
-            ));
-        }
-    }
 
     if let Expr::List(items) = value {
         let items_code: Result<Vec<String>, String> =
@@ -119,14 +94,14 @@ const {name} = {result}.parts[0..{result}.len];"#,
         if let Type::Siyahi(inner_type) = actual_type {
             if items.is_empty() {
                 return Ok(format!(
-                    "const {} = &[_]{}{{}};",
+                    "const {} = &[_]{}{{}}",
                     name,
                     map_type(&*inner_type, true)
                 ));
             }
 
             return Ok(format!(
-                "const {}: {} = &[_]{}{{ {} }};",
+                "const {}: {} = &[_]{}{{ {} }}",
                 name,
                 map_type(&Type::Siyahi(inner_type.clone()), true),
                 map_type(&*inner_type, true),
@@ -135,13 +110,13 @@ const {name} = {result}.parts[0..{result}.len];"#,
         }
 
         if items.is_empty() && typ.is_none() {
-            return Ok(format!("const {} = &{{}};", name));
+            return Ok(format!("const {} = &{{}}", name));
         }
     }
 
     let value_code = transpile_expr(value, ctx)?;
     Ok(format!(
-        "const {}: {} = {};",
+        "const {}: {} = {}",
         name,
         map_type(&inferred_type, true),
         value_code
@@ -153,9 +128,72 @@ fn is_input_expr(expr: &Expr) -> Option<&[Expr]> {
         Expr::BuiltInCall {
             func,
             args,
-            resolved_type,
+            resolved_type: _,
         } if matches!(func, crate::parser::ast::BuiltInFunction::Input) => Some(args),
         Expr::FunctionCall { name, args } if name == "giriş" => Some(args),
         _ => None,
     }
+}
+pub fn transpile_special_case(
+    name: &str,
+    typ: &Option<Type>,
+    value: &Expr,
+    ctx: &mut TranspileContext,
+    is_mutable: bool,
+) -> Option<Result<String, String>> {
+    if let Some(args) = is_input_expr(value) {
+        return Some(transpile_input_var(
+            name,
+            &Type::Metn,
+            args,
+            ctx,
+            is_mutable,
+        ));
+    }
+
+    if let Expr::MethodCall {
+        target,
+        method,
+        args,
+    } = value
+    {
+        if method == "böl" {
+            let target_code = match transpile_expr(target, ctx) {
+                Ok(code) => code,
+                Err(e) => return Some(Err(e)),
+            };
+
+            let delimiter_code = match transpile_expr(&args[0], ctx) {
+                Ok(code) => code.replace("\"", "'"),
+                Err(e) => return Some(Err(e)),
+            };
+
+            let result_code = if is_mutable {
+                ctx.needs_allocator = true;
+                ctx.used_split_alloc_fn = true;
+                ctx.cleanup_statements.push(format!("{name}.deinit();"));
+                format!(
+                    "var {name} = try splitNAlloc(allocator, {target}, {delim});",
+                    name = name,
+                    target = target_code,
+                    delim = delimiter_code
+                )
+            } else {
+                let result_var = format!("result_{}", name);
+                ctx.used_split_n_fn = true;
+                format!(
+                    r#"const {result_var} = splitN({target}, {delim}, 32);
+const {name} = {result_var}.parts[0..{result_var}.len];"#,
+                    result_var = result_var,
+                    target = target_code,
+                    delim = delimiter_code,
+                    name = name
+                )
+            };
+
+            return Some(Ok(result_code));
+        }
+    }
+
+    None
 }

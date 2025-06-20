@@ -13,6 +13,7 @@ pub mod function;
 pub mod if_expr;
 pub mod list;
 pub mod loop_expr;
+pub mod method;
 pub mod object;
 pub mod returnn;
 
@@ -40,6 +41,15 @@ impl Parser {
             self.next()
         } else {
             None
+        }
+    }
+    pub fn next_identifier(&mut self) -> Result<String, String> {
+        match self.next() {
+            Some(Token::Identifier(name)) => Ok(name.clone()),
+            other => Err(format!(
+                "Tanıtıcı (identifier) gözlənilirdi, tapıldı: {:?}",
+                other
+            )),
         }
     }
     pub fn expect(&mut self, expected: &Token) -> Result<(), String> {

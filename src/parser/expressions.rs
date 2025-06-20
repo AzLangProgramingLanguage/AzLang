@@ -1,12 +1,8 @@
-use std::f32::consts::E;
-
 use crate::context::TranspileContext;
-use crate::parser::builtin::match_builtin;
 use crate::parser::loop_expr::parse_loop;
-use crate::parser::object::parse_struct_def;
 
+use super::list::parse_list;
 use super::{Expr, Parser, Token};
-use super::{call::parse_function_call, list::parse_list};
 
 pub fn parse_expression(
     parser: &mut Parser,
@@ -34,6 +30,10 @@ fn parse_primary_expression(
             parser.next(); // consume `qaytar`
             let expr = parse_expression(parser, true, ctx)?;
             Expr::Return(Box::new(expr))
+        }
+        Some(Token::This) => {
+            parser.next(); // consume 'öz'
+            Expr::VariableRef("self".to_string())
         }
         Some(Token::False) => {
             parser.next();

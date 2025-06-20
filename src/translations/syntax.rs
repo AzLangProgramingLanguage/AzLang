@@ -28,6 +28,8 @@ pub struct Syntax {
     pub continue_str: String,
     pub end_str: String,
     pub object_str: String,
+    pub method_str: String,
+    pub this_str: String,
 }
 
 impl Syntax {

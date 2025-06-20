@@ -41,21 +41,27 @@ pub fn validate_expr(
             validate_expr(value, ctx, message)?;
         }
 
-        Expr::StructDef { name, fields } => {
+        Expr::StructDef {
+            name,
+            fields,
+            methods,
+        } => {
             message(&format!("Struktur elan edilir: '{}'", name));
 
             // Eyni adda struktur varsa, xəta qaytar
-            println!("{:?}", ctx.struct_defs);
             if ctx.struct_defs.contains_key(name) {
                 return Err(format!("Struktur '{}' artıq mövcuddur", name));
             }
-            ctx.struct_defs.insert(name.clone(), fields.clone());
+
+            // Sadəcə sahələri yadda saxlayırıq — metodları ayrıca saxlamaq istəmirsənsə
+            ctx.struct_defs
+                .insert(name.clone(), (fields.clone(), methods.clone()));
         }
 
         Expr::StructInit { name, args } => {
             message(&format!("Struktur yaradılır: '{}'", name));
 
-            let struct_fields = ctx
+            let (struct_fields, _methods) = ctx
                 .struct_defs
                 .get(name)
                 .cloned()
@@ -71,15 +77,12 @@ pub fn validate_expr(
             }
 
             for ((field_name, expected_type), arg_expr) in struct_fields.iter().zip(args.iter()) {
-                // 1. Əvvəl type-ı al
                 let actual_type = get_type(arg_expr, ctx).ok_or_else(|| {
                     format!("'{}' sahəsi üçün tip təyin edilə bilmədi", field_name)
                 })?;
 
-                // 2. Sonra validasiyanı çağır
                 validate_expr(arg_expr, ctx, message)?;
 
-                // 3. Tipləri yoxla
                 if &actual_type != expected_type {
                     return Err(format!(
                         "'{}' sahəsi üçün tip uyğunsuzluğu: gözlənilən {:?}, tapılan {:?}",
@@ -88,6 +91,7 @@ pub fn validate_expr(
                 }
             }
         }
+
         Expr::FieldAccess { target, field } => {
             validate_expr(target, ctx, message)?;
 
@@ -100,7 +104,7 @@ pub fn validate_expr(
                 return Err("Sahəyə yalnız struktur növü üzərindən çıxış edilə bilər".to_string());
             };
 
-            let struct_fields = ctx
+            let (struct_fields, _methods) = ctx
                 .struct_defs
                 .get(&struct_name)
                 .ok_or_else(|| format!("Struktur '{}' tapılmadı", struct_name))?;
@@ -248,18 +252,19 @@ pub fn validate_expr(
         }
 
         Expr::MethodCall {
-            method,
             target,
+            method,
             args,
         } => {
-            message(&format!("Metod çağırışı: {}()", method));
-
             validate_expr(target, ctx, message)?;
             for arg in args {
                 validate_expr(arg, ctx, message)?;
             }
 
-            validate_method_call(method, args)?;
+            let target_type = get_type(target, ctx)
+                .ok_or_else(|| "MethodCall üçün tip təyin edilə bilmədi".to_string())?;
+
+            validate_method_call(&target_type, method, args, ctx)?;
         }
 
         Expr::FunctionCall { args, .. } => {
@@ -401,53 +406,94 @@ pub fn validate_expr(
     Ok(())
 }
 
-fn validate_method_call(method: &str, args: &[Expr]) -> Result<(), String> {
-    match method {
-        "əlavə_et" | "sil" | "sıralı_sil" => {
-            if args.len() != 1 {
-                return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));
+fn validate_method_call(
+    target_type: &Type,
+    method: &str,
+    args: &[Expr],
+    ctx: &TranspileContext,
+) -> Result<(), String> {
+    match target_type {
+        Type::Metn | Type::Siyahi(_) => {
+            // Built-in metodların yoxlanması
+            match method {
+                "əlavə_et" | "sil" | "sıralı_sil" => {
+                    if args.len() != 1 {
+                        return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));
+                    }
+                }
+
+                "sırala" | "əks_sırala" | "uzunluq" | "boşdur" => {
+                    if !args.is_empty() {
+                        return Err(format!("{} metodu arqumentsiz olmalıdır", method));
+                    }
+                }
+
+                "cəm" | "sum" => {
+                    if args.len() != 1 {
+                        return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));
+                    }
+                }
+
+                "aralıq" | "range" => {
+                    if args.len() != 2 {
+                        return Err(format!("{} metodu yalnız 2 arqument qəbul edir", method));
+                    }
+                }
+
+                "böyüt" | "kiçilt" | "kənar_təmizlə" => {
+                    if !args.is_empty() {
+                        return Err(format!("{} metodu arqumentsiz olmalıdır", method));
+                    }
+                }
+
+                "əvəzlə" | "kəs" => {
+                    if args.len() != 2 {
+                        return Err(format!("{} metodu 2 arqument qəbul edir", method));
+                    }
+                }
+
+                "birləşdir" | "böl" => {
+                    if args.len() != 1 {
+                        return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));
+                    }
+                }
+
+                _ => return Err(format!("Dəstəklənməyən metod: {}", method)),
             }
+
+            Ok(())
         }
 
-        "sırala" | "əks_sırala" | "uzunluq" | "boşdur" => {
-            if !args.is_empty() {
-                return Err(format!("{} metodu arqumentsiz olmalıdır", method));
+        Type::Istifadeci(struct_name) => {
+            // İstifadəçi tərəfindən təyin olunan metodları tap
+            let (_, methods) = ctx
+                .struct_defs
+                .get(struct_name)
+                .ok_or_else(|| format!("Struktur tapılmadı: {}", struct_name))?;
+
+            for (method_name, params, _body, _ret_type) in methods {
+                if method_name == method {
+                    // `self` avtomatik verilir, ona görə 1 çıxılır
+                    let expected_arg_count = params.iter().filter(|p| p.name != "self").count();
+                    if args.len() != expected_arg_count {
+                        return Err(format!(
+                            "'{}' metodu {} arqument qəbul edir, amma {} verildi",
+                            method,
+                            expected_arg_count,
+                            args.len()
+                        ));
+                    } else {
+                        return Ok(());
+                    }
+                }
             }
+
+            Err(format!(
+                "'{}' strukturu belə bir metoda sahib deyil: '{}'",
+                struct_name, method
+            ))
         }
 
-        "cəm" | "sum" => {
-            if args.len() != 1 {
-                return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));
-            }
-        }
-
-        "aralıq" | "range" => {
-            if args.len() != 2 {
-                return Err(format!("{} metodu yalnız 2 arqument qəbul edir", method));
-            }
-        }
-
-        "böyüt" | "kiçilt" | "kənar_təmizlə" => {
-            if !args.is_empty() {
-                return Err(format!("{} metodu arqumentsiz olmalıdır", method));
-            }
-        }
-
-        "əvəzlə" | "kəs" => {
-            if args.len() != 2 {
-                return Err(format!("{} metodu 2 arqument qəbul edir", method));
-            }
-        }
-
-        "birləşdir" | "böl" => {
-            if args.len() != 1 {
-                return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));
-            }
-        }
-
-        _ => {
-            return Err(format!("Dəstəklənməyən metod: {}", method));
-        }
+        _ => Err(format!("Tip metodları dəstəkləmir: {:?}", target_type)),
     }
-    Ok(())
 }

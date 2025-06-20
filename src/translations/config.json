@@ -27,5 +27,7 @@
     "break_str": "dayan",
     "continue_str": "keç",
     "end_str": "son",
-    "object_str": "Obyekt"
+    "object_str": "Obyekt",
+    "method_str": "metod",
+    "this_str": "öz"
 }

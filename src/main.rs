@@ -42,20 +42,21 @@ enum Commands {
 
 const QARDAS_PARSE: &str = "\x1b[36m[Böyük Qardaş Parserci]:\x1b[0m";
 const EMI_VALIDATOR: &str = "\x1b[33m[Dəmir Əmi Validator]:\x1b[0m";
-const XALA_OPTI: &str = "\x1b[32m[Validə Xala Optimizator]:\x1b[0m";
+/* const XALA_OPTI: &str = "\x1b[32m[Validə Xala Optimizator]:\x1b[0m";
+ */
 const SISTER_TRANSP: &str = "\x1b[35m[Kiçik Bacı Tərcüməçi]:\x1b[0m";
-
+/*
 fn qardas_parse(msg: &str) {
     println!("{} {}", QARDAS_PARSE, msg);
-}
+} */
 
 fn emi_validator(msg: &str) {
     println!("{} {}", EMI_VALIDATOR, msg);
 }
 
-fn xala_opti(msg: &str) {
+/* fn xala_opti(msg: &str) {
     println!("{} {}", XALA_OPTI, msg);
-}
+} */
 
 fn sister_transp(msg: &str) {
     println!("{} {}", SISTER_TRANSP, msg);
@@ -75,12 +76,12 @@ fn emi_validator_error(msg: &str) {
     );
 }
 
-fn xala_opti_error(msg: &str) {
+/* fn xala_opti_error(msg: &str) {
     eprintln!(
         "{} Cəza gəlir! \"Burda həqiqətən problem var, düzəlməsə sənə şillə vuracam! Xəta: {}\"",
         XALA_OPTI, msg
     );
-}
+} */
 
 fn baci_transp_error(msg: &str) {
     eprintln!(
@@ -147,7 +148,7 @@ fn build(input_path: &str) -> Result<()> {
 
     utils::write_file("output/output.zig", &zig_code)
         .map_err(|e| eyre!("Zig faylı yazıla bilmədi: {}", e))?;
-    if runner::compile_and_run("output/output.zig", "output/output").is_err() {
+    if runner::compile_and_run("output/output.zig").is_err() {
         eprintln!("❌ Proqram işləmədi.");
     }
     Ok(())

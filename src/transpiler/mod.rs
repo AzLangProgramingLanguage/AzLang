@@ -1,4 +1,5 @@
 pub mod array_methods;
+pub mod codegen;
 pub mod declaration;
 pub mod expr;
 pub mod function;

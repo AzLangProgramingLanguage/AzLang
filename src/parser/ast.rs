@@ -37,6 +37,7 @@ pub enum Expr {
     StructDef {
         name: String,
         fields: Vec<(String, Type)>,
+        methods: Vec<(String, Vec<Parameter>, Vec<Expr>, Option<Type>)>,
     },
 
     StructInit {

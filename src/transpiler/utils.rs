@@ -1,11 +1,7 @@
 use crate::{
     context::{Symbol, TranspileContext},
     expr::transpile_expr,
-    parser::{
-        Expr,
-        ast::{BuiltInFunction, Type},
-        types::get_type,
-    },
+    parser::{Expr, ast::Type, types::get_type},
 };
 
 pub fn map_type(typ: &Type, is_const: bool) -> String {
@@ -59,7 +55,7 @@ pub fn map_type(typ: &Type, is_const: bool) -> String {
 
 pub fn transpile_input_var(
     name: &str,
-    typ: &Type,
+    _typ: &Type,
     args: &[Expr],
     ctx: &mut TranspileContext,
     is_mutable: bool,
@@ -106,7 +102,7 @@ pub fn transpile_input_var(
 
 pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Result<String, String> {
     let expr_type = get_type(expr, ctx);
-    println!("Expr type: {:#?}", expr_type);
+
     if let Some(Type::Siyahi(_)) = expr_type {
         return Ok("".to_string());
     }
@@ -119,7 +115,6 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
     if let Expr::Index { target, .. } = expr {
         if let Expr::VariableRef(name) = &**target {
             if let Some(sym) = ctx.lookup_variable(name) {
-                // mutable olub-olmamasına baxırıq
                 if sym.is_mutable {
                     arg_code = arg_code.replace(name, &format!("{}.items", name));
                 } else {

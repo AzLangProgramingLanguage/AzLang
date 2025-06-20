@@ -1,7 +1,7 @@
 use std::io;
 use std::process::Command;
 
-pub fn compile_and_run(rust_file: &str, output_exe: &str) -> Result<(), io::Error> {
+pub fn compile_and_run(rust_file: &str) -> Result<(), io::Error> {
     let compile_status = Command::new("zig").arg("run").arg(rust_file).status()?;
 
     if compile_status.success() {

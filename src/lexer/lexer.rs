@@ -174,8 +174,12 @@ impl<'a> Lexer<'a> {
 
         if word == self.syntax.return_name {
             Some(Token::Return)
+        } else if word == self.syntax.this_str {
+            Some(Token::This)
         } else if word == self.syntax.mutable_decl {
             Some(Token::MutableDecl)
+        } else if word == self.syntax.method_str {
+            Some(Token::Method)
         } else if word == self.syntax.object_str {
             Some(Token::Object)
         } else if word == self.syntax.end_str {
@@ -232,10 +236,10 @@ impl<'a> Lexer<'a> {
         self.token_buffer.push(token);
     }
 
-    fn read_dollar(&mut self) -> Option<Token> {
+    /*   fn read_dollar(&mut self) -> Option<Token> {
         self.chars.next();
         self.read_template_string()
-    }
+    } */
 
     fn read_string(&mut self) -> Option<Token> {
         self.chars.next(); // Skip opening quote

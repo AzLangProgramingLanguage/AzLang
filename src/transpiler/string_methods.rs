@@ -1,6 +1,6 @@
 // string_methods.rs
 
-use crate::{context::TranspileContext, transpiler::utils::is_mutable_decl};
+use crate::context::TranspileContext;
 pub fn transpile_string_method_call(
     target_code: &str,
     method: &str,
@@ -37,6 +37,7 @@ pub fn transpile_string_method_call(
                 } else {
                     ctx.used_split_auto_fn = true;
                     ctx.needs_allocator = true;
+                    let delimiter = delimiter.replace("\"", "\'");
                     Some(format!(
                         r#"try splitAuto(allocator, {}, {})"#,
                         target_code, delimiter
