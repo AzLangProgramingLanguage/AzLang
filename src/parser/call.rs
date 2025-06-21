@@ -3,49 +3,18 @@ use crate::parser::builtin::match_builtin;
 
 use super::expressions::parse_expression;
 use super::{Expr, Parser, Token};
-
 pub fn parse_function_call(
     parser: &mut Parser,
     name: &str,
     ctx: &mut TranspileContext,
 ) -> Result<Expr, String> {
-    if parser.next() != Some(&Token::LParen) {
-        return Err("Function call üçün '(' gözlənilirdi".to_string());
-    }
-
-    let mut args = Vec::new();
-
-    match parser.peek() {
-        Some(Token::RParen) => {
-            parser.next(); // boş arqument siyahısı: `func()`
-        }
-        Some(_) => {
-            loop {
-                let arg = parse_expression(parser, false, ctx)?;
-                args.push(arg);
-
-                match parser.peek() {
-                    Some(Token::Comma) => {
-                        parser.next(); // , -> növbəti arqumentə keç
-                    }
-                    Some(Token::RParen) => {
-                        parser.next(); // ) -> bitir
-                        break;
-                    }
-                    _ => {
-                        return Err("Function call üçün ',' və ya ')' gözlənilirdi".to_string());
-                    }
-                }
-            }
-        }
-        None => return Err("Funksiya çağırışı bağlanmadı".to_string()),
-    }
+    let args = parse_call_arguments(parser, ctx)?;
 
     if let Some((builtin, typ)) = match_builtin(name) {
         Ok(Expr::BuiltInCall {
             func: builtin,
             args,
-            resolved_type: Some(typ), // ✅ artıq resolved_type parserdə yazılıb
+            resolved_type: Some(typ),
         })
     } else {
         Ok(Expr::FunctionCall {
@@ -53,4 +22,41 @@ pub fn parse_function_call(
             args,
         })
     }
+}
+
+pub fn parse_call_arguments(
+    parser: &mut Parser,
+    ctx: &mut TranspileContext,
+) -> Result<Vec<Expr>, String> {
+    if parser.next() != Some(&Token::LParen) {
+        return Err("Çağırış üçün '(' gözlənilirdi".to_string());
+    }
+
+    let mut args = Vec::new();
+
+    match parser.peek() {
+        Some(Token::RParen) => {
+            parser.next(); // ()
+        }
+        Some(_) => loop {
+            let arg = parse_expression(parser, false, ctx)?;
+            args.push(arg);
+
+            match parser.peek() {
+                Some(Token::Comma) => {
+                    parser.next();
+                }
+                Some(Token::RParen) => {
+                    parser.next();
+                    break;
+                }
+                _ => {
+                    return Err("Çağırış üçün ',' və ya ')' gözlənilirdi".to_string());
+                }
+            }
+        },
+        None => return Err("Funksiya/metod çağırışı bağlanmadı".to_string()),
+    }
+
+    Ok(args)
 }

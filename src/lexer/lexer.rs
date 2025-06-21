@@ -72,9 +72,9 @@ impl<'a> Lexer<'a> {
             None
         }
     }
+
     pub fn next_token(&mut self) -> Option<Token> {
         // Əvvəlcə gözləyən dedentləri yoxla
-
         if self.pending_dedents > 0 {
             self.pending_dedents -= 1;
             return Some(Token::Dedent);
@@ -87,9 +87,9 @@ impl<'a> Lexer<'a> {
 
         self.skip_whitespace();
 
-        let ch = *self.chars.peek()?;
+        let ch = *self.chars.peek()?; // EOF yoxlaması
 
-        // Sətir əvvəlində indentasiya emalı
+        // Sətir əvvəlində indent emalı
         if self.at_line_start && ch != '\n' {
             self.at_line_start = false;
 
@@ -100,7 +100,6 @@ impl<'a> Lexer<'a> {
             } else if self.current_indent < *self.indent_stack.last().unwrap() {
                 return self.handle_dedent();
             }
-            // Eyni səviyyədədirsə, heç nə etmə
         }
 
         match ch {
@@ -108,7 +107,6 @@ impl<'a> Lexer<'a> {
                 self.chars.next();
                 self.at_line_start = true;
 
-                // Yeni sətrin indentini oxu
                 let mut count = 0;
                 while let Some(&' ') = self.chars.peek() {
                     self.chars.next();
@@ -122,39 +120,29 @@ impl<'a> Lexer<'a> {
                     self.indent_stack.push(self.current_indent);
                     self.token_buffer.push(Token::Indent);
                 }
+
                 Some(Token::Newline)
             }
-            // ... digər token emalları eyni qalır ...
-            _ => {
-                self.at_line_start = false;
-                match ch {
-                    '.' => {
-                        self.chars.next();
-                        Some(Token::Dot)
-                    }
-                    '(' => self.consume_char_and_return(Token::LParen),
-                    ')' => self.consume_char_and_return(Token::RParen),
-                    '{' => self.consume_char_and_return(Token::LBrace),
-                    ';' => self.consume_char_and_return(Token::Semicolon),
-                    ':' => self.consume_char_and_return(Token::Colon),
-                    ',' => self.consume_char_and_return(Token::Comma),
-                    '[' => self.consume_char_and_return(Token::ListStart),
-                    ']' => self.consume_char_and_return(Token::ListEnd),
-                    '`' => {
-                        self.chars.next();
-                        self.read_template_string()
-                    }
-                    '$' => self.read_template_string(),
-                    '}' => {
-                        self.chars.next();
-                        Some(Token::RBrace)
-                    }
-                    '"' => self.read_string(),
-                    '0'..='9' => self.read_number(),
-                    _ if ch.is_alphabetic() || ch == '_' => self.read_word(),
-                    _ => self.read_operator(),
-                }
+            '.' => self.consume_char_and_return(Token::Dot),
+            '(' => self.consume_char_and_return(Token::LParen),
+            ')' => self.consume_char_and_return(Token::RParen),
+            '{' => self.consume_char_and_return(Token::LBrace),
+            '}' => self.consume_char_and_return(Token::RBrace),
+            ';' => self.consume_char_and_return(Token::Semicolon),
+            ':' => self.consume_char_and_return(Token::Colon),
+            ',' => self.consume_char_and_return(Token::Comma),
+            '[' => self.consume_char_and_return(Token::ListStart),
+            ']' => self.consume_char_and_return(Token::ListEnd),
+            '`' => {
+                self.chars.next(); // skip backtick
+                let tokens = self.read_template_string(); // Vec<Token>
+                self.token_buffer.extend(tokens.into_iter().rev());
+                self.next_token()
             }
+            '\'' | '"' => self.read_string(),
+            '0'..='9' => self.read_number(),
+            _ if ch.is_alphabetic() || ch == '_' => self.read_word(),
+            _ => self.read_operator(),
         }
     }
 
@@ -162,7 +150,7 @@ impl<'a> Lexer<'a> {
         let mut word = String::new();
 
         while let Some(&ch) = self.chars.peek() {
-            if ch.is_alphabetic() || ch == '_' {
+            if ch.is_alphanumeric() || ch == '_' {
                 word.push(ch);
                 self.chars.next();
             } else {
@@ -171,7 +159,6 @@ impl<'a> Lexer<'a> {
         }
 
         // Keyword yoxlamaları
-
         if word == self.syntax.return_name {
             Some(Token::Return)
         } else if word == self.syntax.this_str {
@@ -242,72 +229,74 @@ impl<'a> Lexer<'a> {
     } */
 
     fn read_string(&mut self) -> Option<Token> {
-        self.chars.next(); // Skip opening quote
+        let quote = self.chars.next()?;
         let mut string = String::new();
 
         while let Some(&ch) = self.chars.peek() {
-            if ch == '"' {
-                self.chars.next(); // Skip closing quote
+            if ch == quote {
+                self.chars.next();
                 return Some(Token::StringLiteral(string));
             }
+
+            if ch == '\\' {
+                self.chars.next();
+                if let Some(&escaped_ch) = self.chars.peek() {
+                    string.push(escaped_ch);
+                    self.chars.next();
+                }
+                continue;
+            }
+
             string.push(ch);
             self.chars.next();
         }
 
-        None // Unterminated string
+        None
     }
-    fn read_template_string(&mut self) -> Option<Token> {
-        let mut content = String::new();
 
-        while let Some(&ch) = self.chars.peek() {
+    fn read_template_string(&mut self) -> Vec<Token> {
+        let mut tokens = vec![Token::Backtick];
+        let mut current = String::new();
+
+        while let Some(ch) = self.chars.next() {
             match ch {
                 '`' => {
-                    self.chars.next(); // Bitirici backtick
-                    if !content.is_empty() {
-                        return Some(Token::TemplatePart(content));
-                    } else {
-                        return Some(Token::Backtick);
+                    if !current.is_empty() {
+                        tokens.push(Token::StringLiteral(current.clone()));
+                        current.clear();
                     }
+                    tokens.push(Token::Backtick);
+                    break;
                 }
                 '$' => {
-                    let mut lookahead = self.chars.clone();
-                    lookahead.next(); // $
-                    if let Some('{') = lookahead.next() {
-                        // Önce içerideki content varsa onu döndür
-                        if !content.is_empty() {
-                            let part = Token::TemplatePart(content);
-                            /*   content = String::new(); */
-                            self.chars.next(); // $
-                            self.chars.next(); // {
-                            self.push_back_token(Token::InterpolationStart);
-                            return Some(part);
+                    if let Some(&'{') = self.chars.peek() {
+                        self.chars.next(); // skip {
+                        if !current.is_empty() {
+                            tokens.push(Token::StringLiteral(current.clone()));
+                            current.clear();
                         }
-                        self.chars.next(); // $
-                        self.chars.next(); // {
-                        return Some(Token::InterpolationStart);
+                        tokens.push(Token::InterpolationStart);
+
+                        // 🔥 yeni expression oxuma
+                        let expr_tokens = self.read_interpolated_expr_tokens();
+                        tokens.extend(expr_tokens);
+
+                        tokens.push(Token::InterpolationEnd);
                     } else {
-                        // Normal $ karakteri
-                        content.push('$');
-                        self.chars.next();
+                        current.push(ch);
                     }
                 }
-                '}' => {
-                    self.chars.next(); // }
-                    return Some(Token::RBrace);
-                }
                 _ => {
-                    content.push(ch);
-                    self.chars.next();
+                    current.push(ch);
                 }
             }
         }
 
-        // Eğer döngü biterse ve hala content varsa
-        if !content.is_empty() {
-            Some(Token::TemplatePart(content))
-        } else {
-            None
+        if !current.is_empty() {
+            tokens.push(Token::StringLiteral(current));
         }
+
+        tokens
     }
 
     fn read_number(&mut self) -> Option<Token> {
@@ -350,5 +339,38 @@ impl<'a> Lexer<'a> {
         }
 
         Some(Token::Operator(op))
+    }
+
+    fn read_interpolated_expr_tokens(&mut self) -> Vec<Token> {
+        let mut expr = String::new();
+        let mut brace_level = 1;
+
+        while let Some(ch) = self.chars.next() {
+            match ch {
+                '{' => {
+                    brace_level += 1;
+                    expr.push(ch);
+                }
+                '}' => {
+                    brace_level -= 1;
+                    if brace_level == 0 {
+                        break;
+                    }
+                    expr.push(ch);
+                }
+                _ => expr.push(ch),
+            }
+        }
+
+        let mut tokens = Vec::new();
+        let mut inner_lexer = Lexer::new(&expr, self.syntax);
+        tokens.extend(
+            inner_lexer
+                .tokenize()
+                .into_iter()
+                .filter(|t| *t != Token::EOF),
+        );
+
+        tokens
     }
 }

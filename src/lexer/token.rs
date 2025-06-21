@@ -8,7 +8,7 @@ pub enum Token {
     Conditional,
     Backtick,
     InterpolationStart,
-    TemplatePart(String),
+    InterpolationEnd,
     SiyahiKeyword,
     Object,
     Else,

@@ -21,9 +21,16 @@ pub enum Expr {
     If {
         condition: Box<Expr>,
         then_branch: Vec<Expr>,
-        else_branch: Option<Vec<Expr>>,
+        else_branch: Vec<Expr>, // Else və ElseIf ardıcıllığı daxil olan blok
+    },
+    ElseIf {
+        condition: Box<Expr>,
+        then_branch: Vec<Expr>,
     },
 
+    Else {
+        then_branch: Vec<Expr>,
+    },
     MethodCall {
         target: Box<Expr>,
         method: String,
@@ -49,7 +56,7 @@ pub enum Expr {
         target: Box<Expr>,
         field: String,
     },
-
+    TemplateString(Vec<TemplateChunk>),
     Loop {
         var_name: String,
         iterable: Box<Expr>,
@@ -91,6 +98,12 @@ pub enum Expr {
         body: Vec<Expr>,
         return_type: Option<Type>,
     },
+}
+
+#[derive(Debug, Clone)]
+pub enum TemplateChunk {
+    Literal(String),
+    Expr(Box<Expr>),
 }
 
 #[derive(Debug)]

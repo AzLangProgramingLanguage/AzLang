@@ -1,7 +1,9 @@
 use crate::{
     context::TranspileContext,
     parser::{
-        function::parse_function_def, if_expr::parse_if_expr, object::parse_struct_def,
+        function::parse_function_def,
+        if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
+        object::parse_struct_def,
         types::get_type,
     },
 };
@@ -124,12 +126,18 @@ pub fn parse_statement(
             parser.next(); // consume Conditional
             parse_if_expr(parser, ctx).map(Some)
         }
-        Some(Token::ElseIf) | Some(Token::Else) => {
-            return Err(
-                "`ElseIf` və `Else` yalnız `əgər` (if) blokundan sonra istifadə oluna bilər."
-                    .to_string(),
-            );
+        /*    Some(Token::ElseIf) | Some(Token::Else) => {
+            parse_if_expr(parser, ctx).map(Some)
+        } */
+        Some(Token::ElseIf) => {
+            parser.next();
+            parse_else_if_expr(parser, ctx).map(Some)
         }
+        Some(Token::Else) => {
+            parser.next();
+            parse_else_expr(parser, ctx).map(Some)
+        }
+
         Some(Token::FunctionDef) => {
             parser.next(); // consume FunctionDef
             parse_function_def(parser, ctx).map(Some)

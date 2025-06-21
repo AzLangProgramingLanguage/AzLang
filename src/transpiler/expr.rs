@@ -125,18 +125,31 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
 
         Expr::BinaryOp { left, op, right } => {
-            if op == "=" {
-                return Err("Mənimsətmə (assignment) BinaryOp kimi saxlanmamalıdır, ayrı Expr::Assignment olmalıdır.".to_string());
-            }
-
             let left_code = transpile_expr(left, ctx)?;
             let right_code = transpile_expr(right, ctx)?;
 
             let zig_op = match op.as_str() {
                 "&&" => "and",
                 "||" => "or",
-                "==" => "==",
-                "!=" => "!=",
+                "==" | "!=" => {
+                    // 🔍 Hər iki tərəfin tipini tap
+                    let left_type = get_type(left, ctx).ok_or_else(|| format!("Tip tapılmadı"))?;
+                    let right_type =
+                        get_type(right, ctx).ok_or_else(|| format!("Tip tapılmadı"))?;
+
+                    // Əgər hər iki tip Metn-dirsə
+                    if matches!(left_type, Type::Metn) && matches!(right_type, Type::Metn) {
+                        let eql_expr = format!("std.mem.eql(u8, {}, {})", left_code, right_code);
+                        if op == "==" {
+                            return Ok(eql_expr);
+                        } else {
+                            return Ok(format!("!{}", eql_expr));
+                        }
+                    } else {
+                        // Sayısal və digər tiplər üçün adi operatoru qaytar
+                        op.as_str()
+                    }
+                }
                 "+" => "+",
                 "-" => "-",
                 "*" => "*",
@@ -150,6 +163,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
 
             Ok(format!("({} {} {})", left_code, zig_op, right_code))
         }
+
         Expr::If {
             condition,
             then_branch,
@@ -161,40 +175,69 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 .iter()
                 .map(|e| {
                     let code = transpile_expr(e, ctx)?;
-                    // Add semicolon for each statement in then branch
                     if !code.ends_with(';') {
-                        Ok(format!("{}", code))
+                        Ok(format!("{};", code))
                     } else {
                         Ok(code)
                     }
                 })
                 .collect();
-            let then_code = then_code?.join("\n    "); // Indent with 4 spaces
+            let then_code = then_code?.join("\n    ");
 
-            let else_code = if let Some(branch) = else_branch {
-                let else_lines: Result<Vec<String>, String> = branch
-                    .iter()
-                    .map(|e| {
-                        let code = transpile_expr(e, ctx)?;
-                        // Add semicolon for each statement in else branch
-                        if code.ends_with(';') {
-                            Ok(code)
-                        } else {
-                            Ok(format!("{}", code))
-                        }
-                    })
-                    .collect();
-                let else_code = else_lines?.join("\n    "); // Indent with 4 spaces
-                format!("\nelse {{\n    {}\n}}", else_code)
-            } else {
-                "".to_string()
-            };
+            // transpile each else_branch element (ElseIf or Else)
+            let mut else_code = String::new();
+            for expr in else_branch {
+                let code = transpile_expr(expr, ctx)?;
+                else_code.push_str(&format!("\n{}", code));
+            }
 
             Ok(format!(
                 "if ({}) {{\n    {}\n}}{}",
                 condition_code, then_code, else_code
             ))
         }
+        Expr::ElseIf {
+            condition,
+            then_branch,
+        } => {
+            let condition_code = transpile_expr(condition, ctx)?;
+
+            let then_code: Result<Vec<String>, String> = then_branch
+                .iter()
+                .map(|e| {
+                    let code = transpile_expr(e, ctx)?;
+                    if !code.ends_with(';') {
+                        Ok(format!("{};", code))
+                    } else {
+                        Ok(code)
+                    }
+                })
+                .collect();
+            let then_code = then_code?.join("\n    ");
+
+            Ok(format!(
+                "else if ({}) {{\n    {}\n}}",
+                condition_code, then_code
+            ))
+        }
+
+        Expr::Else { then_branch } => {
+            let else_code: Result<Vec<String>, String> = then_branch
+                .iter()
+                .map(|e| {
+                    let code = transpile_expr(e, ctx)?;
+                    if !code.ends_with(';') {
+                        Ok(format!("{};", code))
+                    } else {
+                        Ok(code)
+                    }
+                })
+                .collect();
+            let else_code = else_code?.join("\n    ");
+
+            Ok(format!("else {{\n    {}\n}}", else_code))
+        }
+        Expr::TemplateString(_) => Ok("".to_string()),
         Expr::Loop {
             var_name,
             iterable,
@@ -207,22 +250,41 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         } => match func {
             BuiltInFunction::Print => transpile_builtin_print(&args[0], ctx),
             BuiltInFunction::Sum => transpile_builtin_sum(&args, ctx),
-            BuiltInFunction::Number => match &args[0] {
-                Expr::String(s) => Ok(s.clone()),
-                Expr::FunctionCall { .. } | Expr::VariableRef(_) => {
-                    let inner = transpile_expr(&args[0], ctx)?;
-                    Ok(format!("{}.parse::<i32>().unwrap()", inner))
+            BuiltInFunction::Number => {
+                if args.len() != 1 {
+                    return Err("Ədəd() funksiyası yalnız 1 arqument qəbul edir".to_string());
                 }
-                _ => Ok("0".to_string()),
-            },
+                println!("Args {:?}", args);
+
+                let inner = transpile_expr(&args[0], ctx)?;
+                println!("Inner {}", inner);
+                Ok(format!("try std.fmt.parseInt(usize, {}, 10)", inner))
+            }
+
             BuiltInFunction::LastWord => {
                 let print_code = transpile_builtin_print(&args[0], ctx)?;
                 Ok(format!("{}\n    std.process.exit(0);", print_code))
             }
             BuiltInFunction::Range => transpile_builtin_range(&args, ctx),
 
-            BuiltInFunction::Input => Ok("".to_string()),
+            BuiltInFunction::Input => {
+                if args.len() != 1 {
+                    return Err("giriş() yalnız 1 arqument qəbul edir".to_string());
+                }
 
+                ctx.used_input_fn = true;
+                let prompt = transpile_expr(&args[0], ctx)?;
+                let buf_name = "buf_temp"; // sabit buffer adı
+
+                Ok(format!(
+                    r#"(blk: {{
+                var {buf}: [100]u8 = undefined;
+                break :blk try input({prompt}, &{buf});
+            }})"#,
+                    buf = buf_name,
+                    prompt = prompt
+                ))
+            }
             BuiltInFunction::Len => {
                 let arg_code = transpile_expr(&args[0], ctx)?;
                 Ok(format!("{}.len", arg_code))
@@ -311,17 +373,25 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
 fn contains_self(expr: &Expr) -> bool {
     match expr {
         Expr::VariableRef(name) => name == "self",
+
         Expr::BinaryOp { left, right, .. } => contains_self(left) || contains_self(right),
+
         Expr::MethodCall { target, args, .. } => {
             contains_self(target) || args.iter().any(contains_self)
         }
+
         Expr::FunctionCall { args, .. } => args.iter().any(contains_self),
+
         Expr::FieldAccess { target, .. } => contains_self(target),
+
         Expr::Assignment { value, .. } => contains_self(value),
+
         Expr::Index { target, index } => contains_self(target) || contains_self(index),
+
         Expr::Loop { iterable, body, .. } => {
             contains_self(iterable) || body.iter().any(contains_self)
         }
+
         Expr::If {
             condition,
             then_branch,
@@ -329,13 +399,20 @@ fn contains_self(expr: &Expr) -> bool {
         } => {
             contains_self(condition)
                 || then_branch.iter().any(contains_self)
-                || else_branch
-                    .as_ref()
-                    .map(|b| b.iter().any(contains_self))
-                    .unwrap_or(false)
+                || else_branch.iter().any(contains_self)
         }
+
+        Expr::ElseIf {
+            condition,
+            then_branch,
+        } => contains_self(condition) || then_branch.iter().any(contains_self),
+
+        Expr::Else { then_branch } => then_branch.iter().any(contains_self),
+
         Expr::Return(inner) => contains_self(inner),
+
         Expr::List(items) => items.iter().any(contains_self),
+
         _ => false,
     }
 }

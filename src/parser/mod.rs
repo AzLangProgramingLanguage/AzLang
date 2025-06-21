@@ -16,6 +16,7 @@ pub mod loop_expr;
 pub mod method;
 pub mod object;
 pub mod returnn;
+pub mod template;
 
 mod statements;
 pub mod types;

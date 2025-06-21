@@ -1,13 +1,15 @@
-sabit a = "S,a,l,a,m"
-dəyişən b = a.böl(",")
-sabit c = a.böl(",")
-çap(b[0])
-çap(c[1])
-Obyekt Adam
-    ad: mətn
-    soyad: mətn
-    yas: ədəd
-    metod yasim()
-        çap(öz.yas)
-sabit adam = Adam{"Səbuhi", "Sarıyev", 19};
-adam.yasim()
+sabit eded = Ədəd(giriş("ədəd girin: "))
+sabit isare = giriş("işarə girin: ")
+sabit eded2 = Ədəd(giriş("ədəd2 girin: "))
+dəyişən qiymet = 0
+əgər isare=="+"
+    qiymet = eded+eded2
+yoxsa isare=="-"
+    qiymet = eded-eded2
+yoxsa isare=="*"
+    qiymet = eded*eded2
+yoxsa isare=="/"
+    qiymet = eded/eded2
+əks
+    çap("yanlış işarə")
+çap(` Cavab: ${qiymet} `)

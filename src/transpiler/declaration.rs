@@ -130,13 +130,12 @@ fn is_input_expr(expr: &Expr) -> Option<&[Expr]> {
             args,
             resolved_type: _,
         } if matches!(func, crate::parser::ast::BuiltInFunction::Input) => Some(args),
-        Expr::FunctionCall { name, args } if name == "giriş" => Some(args),
         _ => None,
     }
 }
 pub fn transpile_special_case(
     name: &str,
-    typ: &Option<Type>,
+    _typ: &Option<Type>,
     value: &Expr,
     ctx: &mut TranspileContext,
     is_mutable: bool,

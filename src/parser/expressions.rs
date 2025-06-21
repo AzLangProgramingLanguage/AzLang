@@ -1,5 +1,7 @@
 use crate::context::TranspileContext;
+use crate::parser::call::{parse_call_arguments, parse_function_call};
 use crate::parser::loop_expr::parse_loop;
+use crate::parser::template::parse_template_string_expr;
 
 use super::list::parse_list;
 use super::{Expr, Parser, Token};
@@ -26,6 +28,11 @@ fn parse_primary_expression(
             parser.next();
             Expr::Bool(true)
         }
+        Some(Token::Backtick) => {
+            parser.next(); // consume Backtick
+            return parse_template_string_expr(parser, ctx);
+        }
+
         Some(Token::Return) => {
             parser.next(); // consume `qaytar`
             let expr = parse_expression(parser, true, ctx)?;
@@ -66,28 +73,7 @@ fn parse_primary_expression(
                 let next_token = parser.peek();
 
                 let mut expr = match next_token {
-                    Some(Token::LParen) => {
-                        // Function call
-                        parser.next(); // consume '('
-                        let mut args = Vec::new();
-                        loop {
-                            match parser.peek() {
-                                Some(Token::RParen) => {
-                                    parser.next();
-                                    break;
-                                }
-                                Some(_) => {
-                                    let arg = parse_expression(parser, false, ctx)?;
-                                    args.push(arg);
-                                    if let Some(Token::Comma) = parser.peek() {
-                                        parser.next();
-                                    }
-                                }
-                                None => return Err("Funksiya çağırışı bağlanmadı".to_string()),
-                            }
-                        }
-                        Expr::FunctionCall { name: id, args }
-                    }
+                    Some(Token::LParen) => parse_function_call(parser, &id, ctx)?,
 
                     Some(Token::LBrace) => {
                         // Struct init
@@ -146,7 +132,7 @@ fn parse_primary_expression(
                     }
                 };
 
-                // Dot operator chain
+                // Dot chain (field və ya method)
                 loop {
                     match parser.peek() {
                         Some(Token::Dot) => {
@@ -162,31 +148,10 @@ fn parse_primary_expression(
                             match parser.peek() {
                                 Some(Token::LParen) => {
                                     // Method call
-                                    parser.next(); // consume '('
-                                    let mut args = Vec::new();
-                                    loop {
-                                        match parser.peek() {
-                                            Some(Token::RParen) => {
-                                                parser.next();
-                                                break;
-                                            }
-                                            Some(_) => {
-                                                let arg = parse_expression(parser, false, ctx)?;
-                                                args.push(arg);
-                                                if let Some(Token::Comma) = parser.peek() {
-                                                    parser.next();
-                                                }
-                                            }
-                                            None => {
-                                                return Err("Metod çağırışı bağlanmadı".to_string());
-                                            }
-                                        }
-                                    }
-
                                     expr = Expr::MethodCall {
                                         target: Box::new(expr),
-                                        method: field_or_method,
-                                        args,
+                                        method: field_or_method.clone(),
+                                        args: parse_call_arguments(parser, ctx)?,
                                     };
                                 }
                                 _ => {
@@ -223,17 +188,20 @@ fn parse_primary_expression(
             parser.next();
             return parse_primary_expression(parser, inside_function, ctx);
         }
+
+        Some(Token::EOF) | None => {
+            // Əgər artıq expression gözləməyə ehtiyac yoxdursa, xəta qaytarmaya bilərik
+            return Err("Faylın sonunda əlavə ifadə gözlənilmirdi (EOF)".to_string());
+        }
+
         other => return Err(format!("Dəyər gözlənilirdi, tapıldı: {:?}", other)),
     };
 
     // İndi expr üzərində loop ilə .method() çağırışlarını parse edək
     loop {
-        println!("Dot operator gözlənilirdi"); //İsleyir 
-
         match parser.peek() {
             Some(Token::Dot) => {
                 parser.next(); // consume '.'
-                println!("Dot operator tapıldı"); //İslemir.
                 // .sonra Identifier olmalıdır
                 let field_or_method = if let Some(Token::Identifier(name)) = parser.next() {
                     name.clone()

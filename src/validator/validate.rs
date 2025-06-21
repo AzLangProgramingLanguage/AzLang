@@ -1,6 +1,6 @@
 use crate::context::{Symbol, TranspileContext};
 use crate::parser::Expr;
-use crate::parser::ast::{BuiltInFunction, Type};
+use crate::parser::ast::{BuiltInFunction, TemplateChunk, Type};
 use crate::parser::types::get_type;
 
 pub fn validate_expr(
@@ -88,6 +88,17 @@ pub fn validate_expr(
                         "'{}' sahəsi üçün tip uyğunsuzluğu: gözlənilən {:?}, tapılan {:?}",
                         field_name, expected_type, actual_type
                     ));
+                }
+            }
+        }
+        Expr::TemplateString(chunks) => {
+            message("Template string yoxlanılır");
+            for chunk in chunks {
+                match chunk {
+                    TemplateChunk::Literal(_) => {}
+                    TemplateChunk::Expr(expr) => {
+                        validate_expr(expr, ctx, message)?;
+                    }
                 }
             }
         }
@@ -201,11 +212,39 @@ pub fn validate_expr(
                 validate_expr(expr, ctx, message)?;
             }
 
-            if let Some(else_branch) = else_branch {
-                message("Else hissəsi də yoxlanılır");
-                for expr in else_branch {
-                    validate_expr(expr, ctx, message)?;
-                }
+            for expr in else_branch {
+                validate_expr(expr, ctx, message)?;
+            }
+        }
+
+        Expr::ElseIf {
+            condition,
+            then_branch,
+        } => {
+            message("Şərtə baxılır (else if)");
+
+            validate_expr(condition, ctx, message)?;
+
+            let cond_type =
+                get_type(condition, ctx).ok_or("Else if şərtinin tipi müəyyən edilə bilmədi")?;
+
+            if cond_type != Type::Bool {
+                return Err(format!(
+                    "`else if` şərti `bool` olmalıdır, tapıldı: {:?}",
+                    cond_type
+                ));
+            }
+
+            for expr in then_branch {
+                validate_expr(expr, ctx, message)?;
+            }
+        }
+
+        Expr::Else { then_branch } => {
+            message("Else hissəsi yoxlanılır");
+
+            for expr in then_branch {
+                validate_expr(expr, ctx, message)?;
             }
         }
 
