@@ -1,4 +1,15 @@
-use crate::context::Parameter;
+use crate::{context::Parameter, lexer::Token};
+
+#[derive(Debug, Clone)]
+pub struct EnumDecl {
+    pub name: String,
+    pub variants: Vec<String>,
+}
+#[derive(Debug, Clone)]
+pub struct MatchExpr {
+    pub target: Box<Expr>,             // uyğun dəyişən
+    pub arms: Vec<(Token, Vec<Expr>)>, // "variant adı" və ifadə bloku
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BuiltInFunction {
@@ -46,12 +57,13 @@ pub enum Expr {
         fields: Vec<(String, Type)>,
         methods: Vec<(String, Vec<Parameter>, Vec<Expr>, Option<Type>)>,
     },
+    EnumDecl(EnumDecl),
 
     StructInit {
         name: String,
         args: Vec<Expr>,
     },
-
+    Match(Box<MatchExpr>),
     FieldAccess {
         target: Box<Expr>,
         field: String,

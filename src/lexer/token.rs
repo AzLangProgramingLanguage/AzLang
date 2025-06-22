@@ -5,6 +5,7 @@ pub enum Token {
     MutableDecl,
     ConstantDecl,
     FunctionDef,
+    Underscore,
     Conditional,
     Backtick,
     InterpolationStart,
@@ -16,8 +17,12 @@ pub enum Token {
     End,
     Drop,
     TypeName(Type),
+    TipDecl, // tip
+    Match,   // uyğun
+    Arrow,   // ->
     Loop,
     Break,
+    Print,
     Continue,
     Newline,
     Whitespace,

@@ -2,8 +2,9 @@ use crate::array_methods::transpile_list_method_call;
 use crate::context::TranspileContext;
 use crate::declaration::transpile_constant_decl;
 use crate::function::{transpile_function_call, transpile_function_def};
+use crate::lexer::Token;
 use crate::r#loop::transpile_loop;
-use crate::parser::ast::Type;
+use crate::parser::ast::{EnumDecl, Type};
 use crate::parser::types::get_type;
 use crate::parser::{Expr, ast::BuiltInFunction};
 use crate::string_methods::transpile_string_method_call;
@@ -18,6 +19,75 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             let index_code = transpile_expr(index, ctx)?;
             Ok(format!("{}[{}]", target_code, index_code))
         }
+        Expr::EnumDecl(EnumDecl { name, variants }) => {
+            // Zig enum tərifi
+            let variants_code = variants
+                .iter()
+                .map(|v| format!("    {},", v))
+                .collect::<Vec<_>>()
+                .join("\n");
+
+            Ok(format!("const {} = enum {{\n{}\n}};", name, variants_code))
+        }
+        Expr::Match(match_expr) => {
+            let target_code = transpile_expr(&match_expr.target, ctx)?;
+
+            // `target` tipini tapırıq
+            let target_type = get_type(&match_expr.target, ctx);
+
+            // Enum olub-olmamasını yoxlayırıq
+            let is_enum = if let Some(Type::Istifadeci(enum_name)) = target_type {
+                ctx.enum_defs.contains_key(&enum_name)
+            } else {
+                false
+            };
+
+            let arms_code: Vec<String> = match_expr
+                .arms
+                .iter()
+                .map(|(variant_token, exprs)| {
+                    let variant_str = match variant_token {
+                        Token::Identifier(s) if s == "_" => {
+                            if is_enum {
+                                "_".to_string()
+                            } else {
+                                "else".to_string()
+                            }
+                        }
+                        Token::Identifier(s) => s.clone(),
+                        Token::Number(n) => n.to_string(),
+                        Token::StringLiteral(s) => format!("\"{}\"", s),
+                        Token::Underscore => {
+                            if is_enum {
+                                "_".to_string()
+                            } else {
+                                "else".to_string()
+                            }
+                        }
+                        _ => format!("{:?}", variant_token),
+                    };
+
+                    let variant_zig = if is_enum && variant_str != "else" {
+                        format!(".{}", variant_str)
+                    } else {
+                        variant_str
+                    };
+
+                    let block_code = exprs
+                        .iter()
+                        .filter_map(|e| transpile_expr(e, ctx).ok())
+                        .collect::<Vec<_>>()
+                        .join("\n");
+
+                    format!("{} => {{\n{}\n}},", variant_zig, indent(&block_code, 1))
+                })
+                .collect();
+
+            let arms_joined = arms_code.join("\n");
+
+            Ok(format!("switch ({}) {{\n{}\n}}", target_code, arms_joined))
+        }
+
         Expr::Break => Ok("break".to_string()),
         Expr::Continue => Ok("continue".to_string()),
         Expr::Assignment { name, value } => {
@@ -415,4 +485,12 @@ fn contains_self(expr: &Expr) -> bool {
 
         _ => false,
     }
+}
+
+fn indent(s: &str, level: usize) -> String {
+    let indent_str = "    ".repeat(level);
+    s.lines()
+        .map(|line| format!("{}{}", indent_str, line))
+        .collect::<Vec<_>>()
+        .join("\n")
 }

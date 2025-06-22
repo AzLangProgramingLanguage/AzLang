@@ -30,6 +30,9 @@ pub struct Syntax {
     pub object_str: String,
     pub method_str: String,
     pub this_str: String,
+    pub tipdecl_str: String,
+    pub match_str: String,
+    pub arrow_str: String,
 }
 
 impl Syntax {

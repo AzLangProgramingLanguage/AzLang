@@ -23,6 +23,14 @@ pub fn transpile_mutable_decl(
             .map(|sym| sym.typ)
             .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
     };
+    if let Type::Istifadeci(ref enum_name) = inferred_type {
+        if ctx.enum_defs.contains_key(enum_name) {
+            // enum dəyişəni üçün variant nöqtə ilə yazılır
+            if let Expr::VariableRef(variant_name) = value {
+                return Ok(format!("var {} = {}.{};", name, enum_name, variant_name));
+            }
+        }
+    }
 
     let decl = match &inferred_type {
         Type::Metn => {
@@ -32,6 +40,7 @@ pub fn transpile_mutable_decl(
                 name, value_code
             )
         }
+
         Type::Siyahi(inner) => {
             if let Expr::List(items) = value {
                 let items_code: Result<Vec<_>, _> =
@@ -83,6 +92,15 @@ pub fn transpile_constant_decl(
             .map(|sym| sym.typ)
             .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
     };
+
+    if let Type::Istifadeci(ref enum_name) = inferred_type {
+        if ctx.enum_defs.contains_key(enum_name) {
+            // enum dəyişəni üçün variant nöqtə ilə yazılır
+            if let Expr::VariableRef(variant_name) = value {
+                return Ok(format!("const {} = {}.{};", name, enum_name, variant_name));
+            }
+        }
+    }
 
     if let Expr::List(items) = value {
         let items_code: Result<Vec<String>, String> =

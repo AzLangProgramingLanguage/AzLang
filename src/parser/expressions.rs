@@ -1,6 +1,9 @@
 use crate::context::TranspileContext;
+use crate::parser::ast::{BuiltInFunction, Type};
 use crate::parser::call::{parse_call_arguments, parse_function_call};
+use crate::parser::r#enum::parse_enum_decl;
 use crate::parser::loop_expr::parse_loop;
+use crate::parser::r#match::parse_match_expr;
 use crate::parser::template::parse_template_string_expr;
 
 use super::list::parse_list;
@@ -32,7 +35,10 @@ fn parse_primary_expression(
             parser.next(); // consume Backtick
             return parse_template_string_expr(parser, ctx);
         }
-
+        Some(Token::Match) => {
+            return parse_match_expr(parser, ctx);
+        }
+        Some(Token::TipDecl) => parse_enum_decl(parser)?,
         Some(Token::Return) => {
             parser.next(); // consume `qaytar`
             let expr = parse_expression(parser, true, ctx)?;
@@ -68,6 +74,15 @@ fn parse_primary_expression(
             return Ok(loop_expr);
         }
 
+        Some(Token::Print) => {
+            parser.next();
+            let args = parse_call_arguments(parser, ctx)?;
+            return Ok(Expr::BuiltInCall {
+                func: BuiltInFunction::Print,
+                args,
+                resolved_type: Some(Type::Metn),
+            });
+        }
         Some(Token::Identifier(_)) => {
             if let Some(Token::Identifier(id)) = parser.next().cloned() {
                 let next_token = parser.peek();
@@ -190,7 +205,6 @@ fn parse_primary_expression(
         }
 
         Some(Token::EOF) | None => {
-            // Əgər artıq expression gözləməyə ehtiyac yoxdursa, xəta qaytarmaya bilərik
             return Err("Faylın sonunda əlavə ifadə gözlənilmirdi (EOF)".to_string());
         }
 

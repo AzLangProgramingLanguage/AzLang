@@ -38,6 +38,7 @@ pub struct Symbol {
 pub struct TranspileContext {
     pub imports: HashSet<String>,
     pub symbol_types: HashMap<String, Symbol>,
+
     pub scopes: Vec<HashSet<String>>,
     pub struct_defs: HashMap<
         String,
@@ -46,6 +47,7 @@ pub struct TranspileContext {
             Vec<(String, Vec<Parameter>, Vec<Expr>, Option<Type>)>,
         ),
     >,
+    pub enum_defs: HashMap<String, Vec<String>>,
     pub current_struct: Option<String>,
     pub functions: HashMap<String, FunctionInfo>,
     pub needs_allocator: bool,
@@ -65,6 +67,7 @@ impl TranspileContext {
             symbol_types: HashMap::new(),
             scopes: vec![HashSet::new()],
             struct_defs: HashMap::new(),
+            enum_defs: HashMap::new(),
             current_struct: None,
             functions: HashMap::new(),
             needs_allocator: false,

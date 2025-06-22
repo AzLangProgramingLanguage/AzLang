@@ -1,15 +1,7 @@
-sabit eded = Ədəd(giriş("ədəd girin: "))
-sabit isare = giriş("işarə girin: ")
-sabit eded2 = Ədəd(giriş("ədəd2 girin: "))
-dəyişən qiymet = 0
-əgər isare=="+"
-    qiymet = eded+eded2
-yoxsa isare=="-"
-    qiymet = eded-eded2
-yoxsa isare=="*"
-    qiymet = eded*eded2
-yoxsa isare=="/"
-    qiymet = eded/eded2
-əks
-    çap("yanlış işarə")
-çap(` Cavab: ${qiymet} `)
+növ Rengler
+    Qirmizi
+    Yasil
+sabit reng = Qirmizi
+uyğun reng
+    Qirmizi -> çap("Qirmizi")
+    Yasil -> çap("Yasil")

@@ -42,21 +42,21 @@ enum Commands {
 
 const QARDAS_PARSE: &str = "\x1b[36m[Böyük Qardaş Parserci]:\x1b[0m";
 const EMI_VALIDATOR: &str = "\x1b[33m[Dəmir Əmi Validator]:\x1b[0m";
-/* const XALA_OPTI: &str = "\x1b[32m[Validə Xala Optimizator]:\x1b[0m";
- */
+const XALA_OPTI: &str = "\x1b[32m[Validə Xala Optimizator]:\x1b[0m";
+
 const SISTER_TRANSP: &str = "\x1b[35m[Kiçik Bacı Tərcüməçi]:\x1b[0m";
-/*
+
 fn qardas_parse(msg: &str) {
     println!("{} {}", QARDAS_PARSE, msg);
-} */
+}
 
 fn emi_validator(msg: &str) {
     println!("{} {}", EMI_VALIDATOR, msg);
 }
 
-/* fn xala_opti(msg: &str) {
+fn xala_opti(msg: &str) {
     println!("{} {}", XALA_OPTI, msg);
-} */
+}
 
 fn sister_transp(msg: &str) {
     println!("{} {}", SISTER_TRANSP, msg);
@@ -121,15 +121,16 @@ fn build(input_path: &str) -> Result<()> {
     let mut ctx = TranspileContext::new();
     let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
 
-    /*     println!("Tokens: {:#?}", tokens); */
-
+    /*     println!("Tokens: {:#?}", tokens);
+     */
     let mut parser = parser::Parser::new(tokens);
     let parsed_program = parser.parse(&mut ctx).map_err(|e| {
         qardas_parse_error(&format!("Parser xətası: {}", e));
         eyre!("Parser xətası: {}", e)
     })?;
 
-    /*  println!("Parsed program: {:#?}", parsed_program); */
+    /*     println!("Parsed program: {:#?}", parsed_program);
+     */
     emi_validator("Yaxşı-yaxşı, sənin işini indi yoxlayıram!");
     for expr in &parsed_program.expressions {
         validator::validate_expr(expr, &mut ctx, &mut emi_validator).map_err(|e| {
@@ -146,11 +147,24 @@ fn build(input_path: &str) -> Result<()> {
         })?;
     /*     println!("Zig code: {}", zig_code); */
 
+    qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
+    qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
+    emi_validator("Gəlim yoxlayım görüm kodun harasında fırıldaq var.");
+    emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
+    xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
+
+    xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");
+    sister_transp("Hər şey 0-dan 1-ə keçdi. Çevirdim, çatdırdım, indi sən işlə!");
+    println!(
+        "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
+    );
+
     utils::write_file("output/output.zig", &zig_code)
         .map_err(|e| eyre!("Zig faylı yazıla bilmədi: {}", e))?;
     if runner::compile_and_run("output/output.zig").is_err() {
         eprintln!("❌ Proqram işləmədi.");
     }
+
     Ok(())
 }
 

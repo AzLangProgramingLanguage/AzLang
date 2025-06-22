@@ -161,6 +161,8 @@ impl<'a> Lexer<'a> {
         // Keyword yoxlamaları
         if word == self.syntax.return_name {
             Some(Token::Return)
+        } else if word == self.syntax.print {
+            Some(Token::Print)
         } else if word == self.syntax.this_str {
             Some(Token::This)
         } else if word == self.syntax.mutable_decl {
@@ -193,6 +195,12 @@ impl<'a> Lexer<'a> {
             Some(Token::Else)
         } else if word == self.syntax._loop {
             Some(Token::Loop)
+        } else if word == self.syntax.tipdecl_str {
+            Some(Token::TipDecl)
+        } else if word == self.syntax.match_str {
+            Some(Token::Match)
+        } else if word == self.syntax.arrow_str {
+            Some(Token::Arrow)
         } else if word == self.syntax.bool {
             return Some(Token::TypeName(Type::Bool));
         } else if word == self.syntax.listtype {
@@ -222,11 +230,6 @@ impl<'a> Lexer<'a> {
     pub fn push_back_token(&mut self, token: Token) {
         self.token_buffer.push(token);
     }
-
-    /*   fn read_dollar(&mut self) -> Option<Token> {
-        self.chars.next();
-        self.read_template_string()
-    } */
 
     fn read_string(&mut self) -> Option<Token> {
         let quote = self.chars.next()?;
@@ -316,11 +319,11 @@ impl<'a> Lexer<'a> {
 
     fn read_operator(&mut self) -> Option<Token> {
         let mut op = String::new();
-        op.push(self.chars.next()?);
+        let first = self.chars.next()?;
+        op.push(first);
 
-        // Çok karakterli operatörler için (örneğin ==, +=)
         if let Some(&next_ch) = self.chars.peek() {
-            match (op.chars().next().unwrap(), next_ch) {
+            match (first, next_ch) {
                 ('=', '=')
                 | ('!', '=')
                 | ('<', '=')
@@ -334,8 +337,21 @@ impl<'a> Lexer<'a> {
                     op.push(next_ch);
                     self.chars.next();
                 }
+                ('_', '_') => {
+                    op.push(next_ch);
+                    self.chars.next();
+                    return Some(Token::Underscore);
+                }
+                ('-', '>') => {
+                    op.push(next_ch);
+                    self.chars.next();
+                    return Some(Token::Arrow); // <<< Əsas düzəliş burada
+                }
                 _ => {}
             }
+        }
+        if op.len() == 1 && "+-*/".contains(op.as_str()) {
+            return Some(Token::StringLiteral(op));
         }
 
         Some(Token::Operator(op))

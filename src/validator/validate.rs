@@ -1,6 +1,7 @@
 use crate::context::{Symbol, TranspileContext};
+use crate::lexer::Token;
 use crate::parser::Expr;
-use crate::parser::ast::{BuiltInFunction, TemplateChunk, Type};
+use crate::parser::ast::{BuiltInFunction, EnumDecl, TemplateChunk, Type};
 use crate::parser::types::get_type;
 
 pub fn validate_expr(
@@ -9,6 +10,86 @@ pub fn validate_expr(
     message: &mut dyn FnMut(&str),
 ) -> Result<(), String> {
     match expr {
+        Expr::EnumDecl(EnumDecl { name, variants }) => {
+            message(&format!("Enum tərifi yoxlanılır: '{}'", name));
+
+            if ctx.enum_defs.contains_key(name) {
+                return Err(format!("Enum '{}' artıq mövcuddur", name));
+            }
+
+            ctx.enum_defs.insert(name.clone(), variants.clone());
+        }
+
+        Expr::Match(match_expr) => {
+            validate_expr(&match_expr.target, ctx, message)?;
+
+            let target_type = get_type(&match_expr.target, ctx)
+                .ok_or_else(|| "Match ifadəsində target tip təyin edilə bilmədi".to_string())?;
+
+            if let Type::Istifadeci(enum_name) = &target_type {
+                // Enum üçün xüsusi yoxlama
+                let enum_variants = ctx
+                    .enum_defs
+                    .get(enum_name)
+                    .ok_or_else(|| format!("Match üçün '{}' enum tərifi tapılmadı", enum_name))?
+                    .clone();
+
+                for (variant_token, expr_block) in &match_expr.arms {
+                    // Token-dən string çıxarırıq
+                    let variant_name = match variant_token {
+                        Token::Identifier(s) => s,
+                        Token::Underscore => "_",
+                        _ => {
+                            return Err(format!(
+                                "Enum match üçün uyğun olmayan pattern: {:?}",
+                                variant_token
+                            ));
+                        }
+                    };
+
+                    message(&format!("Match variantı yoxlanılır: '{}'", variant_name));
+
+                    if variant_name != "_" && !enum_variants.contains(&variant_name.to_string()) {
+                        return Err(format!(
+                            "'{}' enum variantı '{}' tapılmadı",
+                            enum_name, variant_name
+                        ));
+                    }
+
+                    for expr in expr_block {
+                        validate_expr(expr, ctx, message)?;
+                    }
+                }
+            } else {
+                // Sadə tiplər üçün: rəqəmlər, sətirlər və `_`
+                for (pattern_token, expr_block) in &match_expr.arms {
+                    match pattern_token {
+                        Token::Number(_) | Token::StringLiteral(_) | Token::Underscore => {
+                            // keçərli — əlavə yoxlamaya ehtiyac yoxdur
+                        }
+                        Token::Identifier(s) if s == "_" => {
+                            // "_" stringi olan identifier-ə də icazə veririk
+                        }
+
+                        Token::Identifier(s) => {
+                            // Enum olmayan match-da `Identifier` uyğun deyil
+                            return Err(format!(
+                                "Enum olmayan match üçün qeyri-qanuni identifier: '{}'",
+                                s
+                            ));
+                        }
+                        other => {
+                            return Err(format!("Match üçün tanınmayan token: {:?}", other));
+                        }
+                    }
+
+                    for expr in expr_block {
+                        validate_expr(expr, ctx, message)?;
+                    }
+                }
+            }
+        }
+
         Expr::MutableDecl { name, typ, value } => {
             message(&format!("Dəyişən yaradılır: '{}'", name));
 
@@ -132,9 +213,10 @@ pub fn validate_expr(
 
         Expr::ConstantDecl { name, typ, value } => {
             message(&format!("Sabit yaradılır: '{}'", name));
-
+            println!("tip {:?}", typ); //tip Some(Istifadeci("Rengler"))
+            println!("value {:?}", value); //value  VariableRef("Qirmizi")
             let inferred = get_type(value, ctx)
-                .ok_or_else(|| format!("'{}' üçün tip təyin edilə bilmədi", name))?;
+                .ok_or_else(|| format!("'{}' üçün tip təyin edilə bilmədi", name))?; //Burada erroru çıartdır.
 
             let declared = match typ {
                 Some(t) => t.clone(),
@@ -432,10 +514,22 @@ pub fn validate_expr(
 
         Expr::VariableRef(name) => {
             message(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
+
             if ctx.lookup_variable(name).is_none() {
-                let msg = format!("Dəyişən '{}' istifadə olunmadan əvvəl elan edilməyib", name);
-                message(&msg);
-                return Err(msg);
+                // Dəyişən tapılmadı, indi enum variantı olub olmadığını yoxla
+                let mut found_in_enum = false;
+                for (_enum_name, variants) in &ctx.enum_defs {
+                    if variants.contains(name) {
+                        found_in_enum = true;
+                        break;
+                    }
+                }
+
+                if !found_in_enum {
+                    let msg = format!("Dəyişən '{}' istifadə olunmadan əvvəl elan edilməyib", name);
+                    message(&msg);
+                    return Err(msg);
+                }
             }
         }
 

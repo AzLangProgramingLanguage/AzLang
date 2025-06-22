@@ -3,6 +3,7 @@ use crate::{
     lexer::Token,
     parser::{Expr, Parser, ast::TemplateChunk, expressions::parse_expression},
 };
+
 pub fn parse_template_string_expr(
     parser: &mut Parser,
     ctx: &mut TranspileContext,
@@ -16,15 +17,27 @@ pub fn parse_template_string_expr(
                 chunks.push(TemplateChunk::Literal(s));
             }
             Some(Token::InterpolationStart) => {
-                parser.next();
+                parser.next(); // ${ işarəsini keç
+
+                // Xüsusi hal: Əgər birbaşa } gəlsə, boş interpolasiya kimi qəbul et
+                if let Some(Token::InterpolationEnd) = parser.peek() {
+                    parser.next();
+                    chunks.push(TemplateChunk::Expr(Box::new(Expr::VariableRef(
+                        "".to_string(),
+                    ))));
+                    continue;
+                }
+
+                // İfadəni parse et
                 let expr = parse_expression(parser, false, ctx)?;
                 chunks.push(TemplateChunk::Expr(Box::new(expr)));
 
-                match parser.next().cloned() {
+                // } işarəsini yoxla
+                match parser.next() {
                     Some(Token::InterpolationEnd) => {}
                     other => {
                         return Err(format!(
-                            "Template interpolasiyası bağlanmalıdır: {:?}",
+                            "Template interpolasiyası bağlanmalıdır,  gözlənilirdi: {:?}",
                             other
                         ));
                     }

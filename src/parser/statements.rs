@@ -123,12 +123,10 @@ pub fn parse_statement(
             parse_variable_declaration(parser, kind_str, ctx)
         }
         Some(Token::Conditional) => {
-            parser.next(); // consume Conditional
+            parser.next();
             parse_if_expr(parser, ctx).map(Some)
         }
-        /*    Some(Token::ElseIf) | Some(Token::Else) => {
-            parse_if_expr(parser, ctx).map(Some)
-        } */
+
         Some(Token::ElseIf) => {
             parser.next();
             parse_else_if_expr(parser, ctx).map(Some)
@@ -143,8 +141,8 @@ pub fn parse_statement(
             parse_function_def(parser, ctx).map(Some)
         }
         Some(Token::Object) => {
-            parser.next(); // consume `Obyekt`
-            let struct_def = parse_struct_def(parser, ctx)?; // struktur tərifini parse et
+            parser.next();
+            let struct_def = parse_struct_def(parser, ctx)?;
             Ok(Some(struct_def))
         }
         Some(Token::EOF) => Ok(None),
@@ -157,22 +155,7 @@ pub fn parse_expression_as_statement(
     parser: &mut Parser,
     ctx: &mut TranspileContext,
 ) -> Result<Option<Expr>, String> {
-    let expr = parser.parse_expression(ctx)?; // Parser metodunu çağırırıq
-
-    // input yalnız dəyişən mənimsədilməsində istifadə oluna bilər
-    if let Expr::BinaryOp { left: _, op, right } = &expr {
-        if op == "=" {
-            if let Expr::FunctionCall { name, .. } = &**right {
-                if name == "input" {
-                    return Err(
-                        "input yalnız dəyişən (mutable) mənimsədilməsində istifadə oluna bilər."
-                            .to_string(),
-                    );
-                }
-            }
-        }
-    }
-
+    let expr = parser.parse_expression(ctx)?;
     record_variable_usage(&expr, &mut parser.used_variables);
 
     Ok(Some(expr))

@@ -29,5 +29,8 @@
     "end_str": "son",
     "object_str": "Obyekt",
     "method_str": "metod",
-    "this_str": "öz"
+    "this_str": "öz",
+    "tipdecl_str": "növ",
+    "match_str": "uyğun",
+    "arrow_str": "->"
 }

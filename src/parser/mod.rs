@@ -8,17 +8,18 @@ pub use ast::{Expr, Program};
 // Digər modulları elan et
 pub mod builtin;
 pub mod call;
+pub mod r#enum;
 pub mod expressions;
 pub mod function;
 pub mod if_expr;
 pub mod list;
 pub mod loop_expr;
+pub mod r#match;
 pub mod method;
 pub mod object;
 pub mod returnn;
-pub mod template;
-
 mod statements;
+pub mod template;
 pub mod types;
 
 pub struct Parser {
@@ -72,8 +73,6 @@ impl Parser {
 
     pub fn peek(&self) -> Option<&Token> {
         let tok = self.tokens.get(self.position);
-        /*         println!("peek() → position = {}, token = {:?}", self.position, tok);
-         */
         tok
     }
 

@@ -48,6 +48,32 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
                 _ => None,
             }
         }
+        Expr::Match(match_expr) => {
+            // target tipi yoxlaya bilərsən, lazım olsa
+            let _target_type = get_type(&match_expr.target, ctx)?;
+
+            let mut arm_types = Vec::new();
+
+            for (_variant, exprs) in &match_expr.arms {
+                if exprs.is_empty() {
+                    return None;
+                }
+
+                let last_expr = exprs.last().unwrap();
+                let t = get_type(last_expr, ctx)?;
+
+                arm_types.push(t);
+            }
+
+            let first_type = arm_types.first().cloned()?;
+
+            if arm_types.iter().all(|t| *t == first_type) {
+                Some(first_type)
+            } else {
+                Some(Type::Any)
+            }
+        }
+
         Expr::FieldAccess { target, field } => {
             if let Some(Type::Istifadeci(struct_name)) = get_type(target, ctx) {
                 if let Some((fields, _)) = ctx.struct_defs.get(&struct_name) {
@@ -84,7 +110,18 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
                     .as_ref()
                     .map(|name| Type::Istifadeci(name.clone()))
             } else {
-                ctx.lookup_variable(name).map(|sym| sym.typ.clone())
+                // Əvvəlcə dəyişənlərdə axtar
+                if let Some(sym) = ctx.lookup_variable(name) {
+                    return Some(sym.typ.clone());
+                }
+                // İndi enum variantı kimi yoxla
+                for (enum_name, variants) in &ctx.enum_defs {
+                    if variants.contains(name) {
+                        // Tapıldı, enumun tipi qaytarılır
+                        return Some(Type::Istifadeci(enum_name.clone()));
+                    }
+                }
+                None
             }
         }
         Expr::String(_) => Some(Type::Metn),
@@ -113,11 +150,9 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
                     _ => None,
                 },
                 Some(Type::Istifadeci(struct_name)) => {
-                    // Struct metodlarını axtar
                     if let Some((_fields, methods)) = ctx.struct_defs.get(&struct_name) {
                         for (m_name, params, _body, ret_type) in methods {
                             if m_name == method && args.len() == params.len() - 1 {
-                                // -1 çünki `self` avtomatik daxil edilir
                                 return ret_type.clone();
                             }
                         }
