@@ -17,10 +17,14 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         Expr::Index { target, index } => {
             let target_code = transpile_expr(target, ctx)?;
             let index_code = transpile_expr(index, ctx)?;
-            Ok(format!("{}[{}]", target_code, index_code))
+            let is_mutable = ctx.symbol_types.get(&target_code).unwrap().is_mutable;
+            if is_mutable {
+                Ok(format!("{}.items[{}]", target_code, index_code))
+            } else {
+                Ok(format!("{}[{}]", target_code, index_code))
+            }
         }
         Expr::EnumDecl(EnumDecl { name, variants }) => {
-            // Zig enum tərifi
             let variants_code = variants
                 .iter()
                 .map(|v| format!("    {},", v))
@@ -31,12 +35,12 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
         Expr::Match(match_expr) => {
             let target_code = transpile_expr(&match_expr.target, ctx)?;
-
+            println!("Target code: {}", target_code);
             // `target` tipini tapırıq
-            let target_type = get_type(&match_expr.target, ctx);
 
+            let target_type = get_type(&match_expr.target, ctx);
             // Enum olub-olmamasını yoxlayırıq
-            let is_enum = if let Some(Type::Istifadeci(enum_name)) = target_type {
+            let is_enum = if let Some(Type::Istifadeci(enum_name)) = target_type.clone() {
                 ctx.enum_defs.contains_key(&enum_name)
             } else {
                 false
@@ -56,7 +60,13 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                         }
                         Token::Identifier(s) => s.clone(),
                         Token::Number(n) => n.to_string(),
-                        Token::StringLiteral(s) => format!("\"{}\"", s),
+                        Token::StringLiteral(s) => {
+                            if s.len() == 1 {
+                                format!("'{}'", s)
+                            } else {
+                                format!("\"{}\"", s)
+                            }
+                        }
                         Token::Underscore => {
                             if is_enum {
                                 "_".to_string()
@@ -79,13 +89,19 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                         .collect::<Vec<_>>()
                         .join("\n");
 
-                    format!("{} => {{\n{}\n}},", variant_zig, indent(&block_code, 1))
+                    format!("{} => {{\n{}\n; }},", variant_zig, indent(&block_code, 1))
                 })
                 .collect();
 
             let arms_joined = arms_code.join("\n");
 
-            Ok(format!("switch ({}) {{\n{}\n}}", target_code, arms_joined))
+            match target_type {
+                Some(Type::Metn) => Ok(format!(
+                    "switch ({}[0]) {{\n{}\n}}",
+                    target_code, arms_joined
+                )),
+                _ => Ok(format!("switch ({}) {{\n{}\n}}", target_code, arms_joined)),
+            }
         }
 
         Expr::Break => Ok("break".to_string()),

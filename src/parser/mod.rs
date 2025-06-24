@@ -45,6 +45,9 @@ impl Parser {
             None
         }
     }
+    pub fn peek_n(&self, n: usize) -> Option<&Token> {
+        self.tokens.get(self.position + n)
+    }
     pub fn next_identifier(&mut self) -> Result<String, String> {
         match self.next() {
             Some(Token::Identifier(name)) => Ok(name.clone()),

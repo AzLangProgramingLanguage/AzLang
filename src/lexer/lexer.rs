@@ -153,6 +153,9 @@ impl<'a> Lexer<'a> {
             if ch.is_alphanumeric() || ch == '_' {
                 word.push(ch);
                 self.chars.next();
+                if ch == '_' {
+                    return Some(Token::Underscore);
+                }
             } else {
                 break;
             }
@@ -163,6 +166,14 @@ impl<'a> Lexer<'a> {
             Some(Token::Return)
         } else if word == self.syntax.print {
             Some(Token::Print)
+        } else if word == self.syntax.char_str {
+            Some(Token::TypeName(Type::Char))
+        } else if word == self.syntax.numberfn_str {
+            Some(Token::NumberFn)
+        } else if word == self.syntax.range_fn_str {
+            Some(Token::RangeFn)
+        } else if word == self.syntax.input {
+            Some(Token::Input)
         } else if word == self.syntax.this_str {
             Some(Token::This)
         } else if word == self.syntax.mutable_decl {
@@ -240,7 +251,10 @@ impl<'a> Lexer<'a> {
                 self.chars.next();
                 return Some(Token::StringLiteral(string));
             }
-
+            if ch == '_' {
+                self.chars.next();
+                return Some(Token::Underscore);
+            }
             if ch == '\\' {
                 self.chars.next();
                 if let Some(&escaped_ch) = self.chars.peek() {
@@ -337,11 +351,6 @@ impl<'a> Lexer<'a> {
                     op.push(next_ch);
                     self.chars.next();
                 }
-                ('_', '_') => {
-                    op.push(next_ch);
-                    self.chars.next();
-                    return Some(Token::Underscore);
-                }
                 ('-', '>') => {
                     op.push(next_ch);
                     self.chars.next();
@@ -350,10 +359,6 @@ impl<'a> Lexer<'a> {
                 _ => {}
             }
         }
-        if op.len() == 1 && "+-*/".contains(op.as_str()) {
-            return Some(Token::StringLiteral(op));
-        }
-
         Some(Token::Operator(op))
     }
 

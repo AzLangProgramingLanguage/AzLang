@@ -57,4 +57,7 @@ pub enum Token {
     Or,        // və ya
     DoubleAnd, // &&
     DoubleOr,  // ||
+    NumberFn,
+    RangeFn,
+    Input,
 }

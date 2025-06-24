@@ -74,13 +74,20 @@ fn parse_primary_expression(
             return Ok(loop_expr);
         }
 
-        Some(Token::Print) => {
-            parser.next();
+        Some(Token::Print) | Some(Token::NumberFn) | Some(Token::RangeFn) | Some(Token::Input) => {
+            let (func, return_type) = match parser.next().unwrap() {
+                Token::Print => (BuiltInFunction::Print, Type::Metn),
+                Token::NumberFn => (BuiltInFunction::Number, Type::Integer),
+                Token::RangeFn => (BuiltInFunction::Range, Type::Integer),
+                Token::Input => (BuiltInFunction::Input, Type::Metn),
+                _ => unreachable!(),
+            };
+
             let args = parse_call_arguments(parser, ctx)?;
             return Ok(Expr::BuiltInCall {
-                func: BuiltInFunction::Print,
+                func,
                 args,
-                resolved_type: Some(Type::Metn),
+                resolved_type: Some(return_type),
             });
         }
         Some(Token::Identifier(_)) => {

@@ -121,16 +121,16 @@ fn build(input_path: &str) -> Result<()> {
     let mut ctx = TranspileContext::new();
     let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
 
-    /*     println!("Tokens: {:#?}", tokens);
-     */
+    println!("Tokens: {:#?}", tokens);
+
     let mut parser = parser::Parser::new(tokens);
     let parsed_program = parser.parse(&mut ctx).map_err(|e| {
         qardas_parse_error(&format!("Parser xətası: {}", e));
         eyre!("Parser xətası: {}", e)
     })?;
 
-    /*     println!("Parsed program: {:#?}", parsed_program);
-     */
+    println!("Parsed program: {:#?}", parsed_program);
+
     emi_validator("Yaxşı-yaxşı, sənin işini indi yoxlayıram!");
     for expr in &parsed_program.expressions {
         validator::validate_expr(expr, &mut ctx, &mut emi_validator).map_err(|e| {

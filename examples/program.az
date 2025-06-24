@@ -1,7 +1,2 @@
-növ Rengler
-    Qirmizi
-    Yasil
-sabit reng = Qirmizi
-uyğun reng
-    Qirmizi -> çap("Qirmizi")
-    Yasil -> çap("Yasil")
+dəyişən a = [1,2,3,4]
+çap(a[0])

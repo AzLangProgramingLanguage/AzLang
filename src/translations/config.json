@@ -13,7 +13,8 @@
     "integer": "ədəd",
     "string": "mətn",
     "len": "uzunluq",
-    "input": "gir",
+    "input": "giriş",
+    "sum": "cəm",
     "listtype": "siyahı",
     "return_name": "qaytar",
     "bool": "şərt",
@@ -27,10 +28,14 @@
     "break_str": "dayan",
     "continue_str": "keç",
     "end_str": "son",
+    "last_word": "sonsöz",
     "object_str": "Obyekt",
     "method_str": "metod",
     "this_str": "öz",
     "tipdecl_str": "növ",
     "match_str": "uyğun",
-    "arrow_str": "->"
+    "arrow_str": "->",
+    "range_fn_str": "aralıq",
+    "numberfn_str": "Ədəd",
+    "char_str": "simvol"
 }

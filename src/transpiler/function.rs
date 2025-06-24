@@ -10,43 +10,31 @@ pub fn transpile_function_call(
     args: &[Expr],
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
-    if let Some((func, resolved_type)) = match_builtin(name) {
-        // Builtin funksiyanı xüsusi qaydada transpile et
-        transpile_expr(
-            &Expr::BuiltInCall {
-                func,
-                args: args.to_vec(),
-                resolved_type: Some(resolved_type),
-            },
-            ctx,
-        )
-    } else {
-        // Normal funksiya çağırışı
-        // Yeni simvollar varsa default olaraq Metn (string) tipində əlavə et
-        for arg in args {
-            if let Expr::VariableRef(var_name) = arg {
-                if !ctx.symbol_types.contains_key(var_name) {
-                    ctx.declare_variable(
-                        var_name.clone(),
-                        Symbol {
-                            typ: Type::Metn,
-                            is_mutable: false,
-                            is_used: false,
-                            is_param: false,
-                            source_location: None,
-                        },
-                    );
-                }
+    // Normal funksiya çağırışı
+    // Yeni simvollar varsa default olaraq Metn (string) tipində əlavə et
+    for arg in args {
+        if let Expr::VariableRef(var_name) = arg {
+            if !ctx.symbol_types.contains_key(var_name) {
+                ctx.declare_variable(
+                    var_name.clone(),
+                    Symbol {
+                        typ: Type::Metn,
+                        is_mutable: false,
+                        is_used: false,
+                        is_param: false,
+                        source_location: None,
+                    },
+                );
             }
         }
-
-        let args_code = args
-            .iter()
-            .map(|arg| transpile_expr(arg, ctx))
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(format!("{}({})", name, args_code.join(", ")))
     }
+
+    let args_code = args
+        .iter()
+        .map(|arg| transpile_expr(arg, ctx))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(format!("{}({})", name, args_code.join(", ")))
 }
 
 pub fn transpile_function_def(

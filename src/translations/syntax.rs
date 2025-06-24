@@ -33,6 +33,9 @@ pub struct Syntax {
     pub tipdecl_str: String,
     pub match_str: String,
     pub arrow_str: String,
+    pub numberfn_str: String,
+    pub range_fn_str: String,
+    pub char_str: String,
 }
 
 impl Syntax {

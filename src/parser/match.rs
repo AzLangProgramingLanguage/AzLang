@@ -9,8 +9,10 @@ pub fn parse_match_expr(parser: &mut Parser, ctx: &mut TranspileContext) -> Resu
 
     let target = Box::new(parse_expression(parser, false, ctx)?);
 
-    match parser.next() {
-        Some(Token::Newline) => {}
+    match parser.peek() {
+        Some(Token::Newline) => {
+            parser.next();
+        }
         other => {
             return Err(format!(
                 "Match ifadəsindən sonra yeni sətir gözlənilirdi, tapıldı: {:?}",
@@ -18,9 +20,10 @@ pub fn parse_match_expr(parser: &mut Parser, ctx: &mut TranspileContext) -> Resu
             ));
         }
     }
-
-    match parser.next() {
+    let next = parser.next();
+    match next {
         Some(Token::Indent) => {}
+
         other => {
             return Err(format!(
                 "Match arms üçün girinti gözlənilirdi, tapıldı: {:?}",
@@ -32,55 +35,29 @@ pub fn parse_match_expr(parser: &mut Parser, ctx: &mut TranspileContext) -> Resu
     let mut arms = Vec::new();
     loop {
         match parser.peek() {
-            Some(Token::Identifier(_))
+            Some(Token::StringLiteral(_))
             | Some(Token::Number(_))
-            | Some(Token::StringLiteral(_))
+            | Some(Token::Identifier(_))
             | Some(Token::Underscore) => {
-                let pattern_token = parser.next().cloned().unwrap();
-                match parser.peek() {
-                    Some(Token::Arrow) => {
-                        parser.next(); // yeyilir
-                    }
-                    other => {
-                        return Err(format!("'->' gözlənilirdi, tapıldı: {:?}", other));
-                    }
+                // ⚠️ Peek ikinci token: Arrow varmı?
+                let pattern = parser.peek_n(1);
+                if pattern != Some(&Token::Arrow) {
+                    break; // pattern deyil
                 }
+
+                let pattern_token = parser.next().cloned().unwrap();
+                parser.next(); // consume Arrow
 
                 let mut block = Vec::new();
-                loop {
-                    match parser.peek() {
-                        Some(Token::Identifier(_))
-                        | Some(Token::Number(_))
-                        | Some(Token::StringLiteral(_))
-                        | Some(Token::Underscore) => break,
-                        Some(Token::Dedent) | Some(Token::End) | Some(Token::EOF) => break,
-                        Some(_) => {
-                            let expr = parse_expression(parser, false, ctx)?;
-                            block.push(expr);
-                            if let Some(Token::Newline) = parser.peek() {
-                                parser.next();
-                            }
-                        }
-                        None => break,
-                    }
+
+                let expr = parse_expression(parser, false, ctx)?;
+                block.push(expr);
+
+                if let Some(Token::Newline) = parser.peek() {
+                    parser.next();
                 }
 
-                // Token birbaşa əlavə olunur (string çevrilmədən)
-                match &pattern_token {
-                    Token::Identifier(_)
-                    | Token::Number(_)
-                    | Token::Operator(_)
-                    | Token::StringLiteral(_)
-                    | Token::Underscore => {
-                        arms.push((pattern_token, block));
-                    }
-                    other => {
-                        return Err(format!(
-                            "Match arm üçün qeyri-qəbul edilən token: {:?}",
-                            other
-                        ));
-                    }
-                }
+                arms.push((pattern_token, block));
             }
 
             Some(Token::Dedent) => {
@@ -97,7 +74,9 @@ pub fn parse_match_expr(parser: &mut Parser, ctx: &mut TranspileContext) -> Resu
                 ));
             }
 
-            None => return Err("Match ifadəsi bitmədən EOF gəldi".to_string()),
+            None => {
+                return Err("Match ifadəsi bitmədən EOF gəldi".to_string());
+            }
         }
     }
 

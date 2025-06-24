@@ -124,7 +124,13 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
                 None
             }
         }
-        Expr::String(_) => Some(Type::Metn),
+        Expr::String(s) => {
+            if s.len() == 1 {
+                Some(Type::Char)
+            } else {
+                Some(Type::Metn)
+            }
+        }
         Expr::Number(_) => Some(Type::Integer),
         Expr::Bool(_) => Some(Type::Bool),
 

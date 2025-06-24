@@ -64,13 +64,20 @@ pub fn validate_expr(
                 // Sadə tiplər üçün: rəqəmlər, sətirlər və `_`
                 for (pattern_token, expr_block) in &match_expr.arms {
                     match pattern_token {
-                        Token::Number(_) | Token::StringLiteral(_) | Token::Underscore => {
+                        Token::Number(_) | Token::Underscore => {
                             // keçərli — əlavə yoxlamaya ehtiyac yoxdur
                         }
                         Token::Identifier(s) if s == "_" => {
                             // "_" stringi olan identifier-ə də icazə veririk
                         }
-
+                        Token::StringLiteral(s) => {
+                            if s.len() != 1 {
+                                return Err(format!(
+                                    "String literal match üçün yalnız 1 simvol gözlənilirdi, tapıldı: {}",
+                                    s
+                                ));
+                            }
+                        }
                         Token::Identifier(s) => {
                             // Enum olmayan match-da `Identifier` uyğun deyil
                             return Err(format!(

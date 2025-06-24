@@ -105,6 +105,12 @@ pub fn transpile_input_var(
 }
 
 pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Result<String, String> {
+    let expr_type = get_type(expr, ctx);
+
+    let format_str = expr_type
+        .map(|typ| get_format_str_from_type(&typ))
+        .unwrap_or("{}");
+
     match expr {
         Expr::TemplateString(chunks) => {
             let mut format_parts = String::new();
@@ -116,7 +122,11 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
                         format_parts.push_str(&s.replace("\\", "\\\\").replace("\"", "\\\""));
                     }
                     TemplateChunk::Expr(expr) => {
-                        format_parts.push_str("{}");
+                        let expr_type = get_type(expr, ctx);
+                        let format_str = expr_type
+                            .map(|typ| get_format_str_from_type(&typ))
+                            .unwrap_or("{}");
+                        format_parts.push_str(format_str);
                         args.push(transpile_expr(expr, ctx)?);
                     }
                 }
@@ -125,7 +135,7 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
             let args_code = if args.is_empty() {
                 "".to_string()
             } else {
-                format!(", .{{ {} }}", args.join(", "))
+                format!(", .{{ {}s }}", args.join(", "))
             };
 
             ctx.uses_stdout = true;
@@ -136,17 +146,12 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
         }
         _ => {
             // Mövcud kodu buraya gətir
-            let expr_type = get_type(expr, ctx);
-
-            let format_str = expr_type
-                .map(|typ| get_format_str_from_type(&typ))
-                .unwrap_or("{}");
 
             let arg_code = transpile_expr(expr, ctx)?;
 
             ctx.uses_stdout = true;
             Ok(format!(
-                "std.debug.print(\"{}\\n\", .{{{}}});",
+                "std.debug.print(\"{}\\n\", .{{{}}})",
                 format_str, arg_code
             ))
         }

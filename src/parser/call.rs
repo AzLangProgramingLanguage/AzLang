@@ -51,7 +51,7 @@ pub fn parse_call_arguments(
                     break;
                 }
                 _ => {
-                    return Err("Çağırış üçün ',' və ya ')' gözlənilirdi".to_string());
+                    return Err("Çağırış üçüd ',' və ya ')' gözlənilirdi".to_string());
                 }
             }
         },
