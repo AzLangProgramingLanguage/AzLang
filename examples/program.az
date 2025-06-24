@@ -1,2 +1,5 @@
-dəyişən a = [1,2,3,4]
-çap(a[0])
+dəyişən a = 4
+funksiya artir(dəyişən b: ədəd)
+    b = b + 1
+artir(a)
+çap(a)

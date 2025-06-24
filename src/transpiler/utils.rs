@@ -106,7 +106,6 @@ pub fn transpile_input_var(
 
 pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Result<String, String> {
     let expr_type = get_type(expr, ctx);
-
     let format_str = expr_type
         .map(|typ| get_format_str_from_type(&typ))
         .unwrap_or("{}");
@@ -121,13 +120,30 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
                     TemplateChunk::Literal(s) => {
                         format_parts.push_str(&s.replace("\\", "\\\\").replace("\"", "\\\""));
                     }
-                    TemplateChunk::Expr(expr) => {
-                        let expr_type = get_type(expr, ctx);
+                    TemplateChunk::Expr(inner_expr) => {
+                        let expr_type = get_type(inner_expr, ctx);
                         let format_str = expr_type
                             .map(|typ| get_format_str_from_type(&typ))
                             .unwrap_or("{}");
+
                         format_parts.push_str(format_str);
-                        args.push(transpile_expr(expr, ctx)?);
+
+                        let arg_code = match &**inner_expr {
+                            Expr::VariableRef(name) => {
+                                if let Some((_lvl, sym)) = ctx.lookup_variable_scoped(name) {
+                                    if sym.is_param && sym.is_mutable {
+                                        format!("{}.*", name)
+                                    } else {
+                                        name.clone()
+                                    }
+                                } else {
+                                    transpile_expr(inner_expr, ctx)?
+                                }
+                            }
+                            _ => transpile_expr(inner_expr, ctx)?,
+                        };
+
+                        args.push(arg_code);
                     }
                 }
             }
@@ -135,7 +151,7 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
             let args_code = if args.is_empty() {
                 "".to_string()
             } else {
-                format!(", .{{ {}s }}", args.join(", "))
+                format!(", .{{ {} }}", args.join(", "))
             };
 
             ctx.uses_stdout = true;
@@ -144,10 +160,22 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
                 format_parts, args_code
             ))
         }
-        _ => {
-            // Mövcud kodu buraya gətir
 
-            let arg_code = transpile_expr(expr, ctx)?;
+        _ => {
+            let arg_code = match &*expr {
+                Expr::VariableRef(name) => {
+                    if let Some((_lvl, sym)) = ctx.lookup_variable_scoped(name) {
+                        if sym.is_param && sym.is_mutable {
+                            format!("{}.*", name)
+                        } else {
+                            name.clone()
+                        }
+                    } else {
+                        transpile_expr(expr, ctx)?
+                    }
+                }
+                _ => transpile_expr(expr, ctx)?,
+            };
 
             ctx.uses_stdout = true;
             Ok(format!(
@@ -170,59 +198,59 @@ pub fn transpile_builtin_sum(args: &[Expr], ctx: &mut TranspileContext) -> Resul
     let list_expr = &args[0];
     let list_code = transpile_expr(list_expr, ctx)?;
 
-    match list_expr {
+    // Siyahının tipini təyin et
+    let inner_type = match list_expr {
         Expr::VariableRef(name) => {
-            let symbol = ctx.lookup_variable(name).ok_or("Dəyişən tapılmadı")?;
+            let (_, symbol) = ctx
+                .lookup_variable_scoped(name)
+                .ok_or("Dəyişən tapılmadı")?;
 
-            let inner_type = match symbol.typ {
+            match symbol.typ {
                 Type::Siyahi(ref boxed) => boxed.clone(),
                 _ => return Err("sum() yalnız siyahılar üçün keçərlidir".to_string()),
-            };
-
-            let type_code = match *inner_type {
-                Type::Integer => "usize",
-                Type::LowInteger => "u8",
-                Type::BigInteger => "i128",
-                _ => return Err("sum() yalnız rəqəm siyahıları üçün işləyir".to_string()),
-            };
-
-            ctx.used_sum_fn = true;
-
-            if symbol.is_mutable {
-                Ok(format!("sum({}, {}.items)", type_code, name))
-            } else {
-                Ok(format!("sum({}, {})", type_code, name))
             }
         }
-
         _ => {
             let list_type = get_type(list_expr, ctx).ok_or("sum() üçün tip təyin edilə bilmədi")?;
 
-            let inner_type = match list_type {
+            match list_type {
                 Type::Siyahi(boxed) => boxed,
                 _ => return Err("sum() yalnız siyahılar üçün keçərlidir".to_string()),
-            };
-
-            let type_code = match *inner_type {
-                Type::Integer => "usize",
-                Type::LowInteger => "u8",
-                Type::BigInteger => "i128",
-                _ => return Err("sum() yalnız rəqəm siyahıları üçün işləyir".to_string()),
-            };
-
-            ctx.used_sum_fn = true;
-
-            if list_code.starts_with('[') && list_code.ends_with(']') {
-                let stripped = &list_code[1..list_code.len() - 1];
-                Ok(format!(
-                    "sum({}, &[_]{}{{ {} }})",
-                    type_code, type_code, stripped
-                ))
-            } else {
-                Ok(format!("sum({}, {})", type_code, list_code))
             }
         }
-    }
+    };
+
+    // Tip kodunu müəyyən et
+    let type_code = match *inner_type {
+        Type::Integer => "usize",
+        Type::LowInteger => "u8",
+        Type::BigInteger => "i128",
+        _ => return Err("sum() yalnız rəqəm siyahıları üçün işləyir".to_string()),
+    };
+
+    ctx.used_sum_fn = true;
+
+    // Mutable siyahı isə `.items` əlavə et
+    let final_list_code = match list_expr {
+        Expr::VariableRef(name) => {
+            let (_, symbol) = ctx.lookup_variable_scoped(name).unwrap(); // Artıq yoxlanılıb
+            if symbol.is_mutable {
+                format!("{}.items", name)
+            } else {
+                name.clone()
+            }
+        }
+        _ => {
+            if list_code.starts_with('[') && list_code.ends_with(']') {
+                let stripped = &list_code[1..list_code.len() - 1];
+                format!("&[_]{}{{ {} }}", type_code, stripped)
+            } else {
+                list_code.clone()
+            }
+        }
+    };
+
+    Ok(format!("sum({}, {})", type_code, final_list_code))
 }
 
 pub fn transpile_builtin_range(

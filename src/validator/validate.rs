@@ -96,6 +96,61 @@ pub fn validate_expr(
                 }
             }
         }
+        Expr::ConstantDecl { name, typ, value } => {
+            message(&format!("Sabit yaradılır: '{}'", name));
+            println!("tip {:?}", typ); //tip Some(Istifadeci("Rengler"))
+            println!("value {:?}", value); //value  VariableRef("Qirmizi")
+            let inferred = get_type(value, ctx)
+                .ok_or_else(|| format!("'{}' üçün tip təyin edilə bilmədi", name))?; //Burada erroru çıartdır.
+
+            let declared = match typ {
+                Some(t) => t.clone(),
+                None => inferred.clone(),
+            };
+
+            if inferred != declared {
+                return Err(format!(
+                    "{} üçün tip uyğunsuzluğu: gözlənilən {:?}, tapılan {:?}",
+                    name, declared, inferred
+                ));
+            }
+
+            ctx.declare_variable(
+                name.clone(),
+                Symbol {
+                    typ: declared,
+                    is_mutable: false,
+                    is_used: false,
+                    is_param: false,
+                    source_location: None,
+                },
+            );
+            validate_expr(value, ctx, message)?;
+        }
+
+        Expr::Assignment { name, value } => {
+            message(&format!("Mənimsətmə yoxlanılır: {} = ...", name));
+
+            let (_level, symbol) = ctx
+                .lookup_variable_scoped(name)
+                .ok_or_else(|| format!("Dəyişən '{}' elan edilməyib", name))?;
+
+            if !symbol.is_mutable {
+                return Err(format!("Sabit '{}' dəyişdirilə bilməz", name));
+            }
+
+            let value_type = get_type(value, ctx)
+                .ok_or_else(|| format!("{} üçün tip təyin edilə bilmədi", name))?;
+
+            if value_type != symbol.typ {
+                return Err(format!(
+                    "Tip uyğunsuzluğu: '{}' üçün {:?} gözlənilirdi, lakin {:?} tapıldı",
+                    name, symbol.typ, value_type
+                ));
+            }
+
+            validate_expr(value, ctx, message)?;
+        }
 
         Expr::MutableDecl { name, typ, value } => {
             message(&format!("Dəyişən yaradılır: '{}'", name));
@@ -115,7 +170,7 @@ pub fn validate_expr(
                 ));
             }
 
-            ctx.symbol_types.insert(
+            ctx.declare_variable(
                 name.clone(),
                 Symbol {
                     typ: declared,
@@ -216,66 +271,6 @@ pub fn validate_expr(
                     struct_name, field
                 ));
             }
-        }
-
-        Expr::ConstantDecl { name, typ, value } => {
-            message(&format!("Sabit yaradılır: '{}'", name));
-            println!("tip {:?}", typ); //tip Some(Istifadeci("Rengler"))
-            println!("value {:?}", value); //value  VariableRef("Qirmizi")
-            let inferred = get_type(value, ctx)
-                .ok_or_else(|| format!("'{}' üçün tip təyin edilə bilmədi", name))?; //Burada erroru çıartdır.
-
-            let declared = match typ {
-                Some(t) => t.clone(),
-                None => inferred.clone(),
-            };
-
-            if inferred != declared {
-                return Err(format!(
-                    "{} üçün tip uyğunsuzluğu: gözlənilən {:?}, tapılan {:?}",
-                    name, declared, inferred
-                ));
-            }
-
-            ctx.symbol_types.insert(
-                name.clone(),
-                Symbol {
-                    typ: declared,
-                    is_mutable: false,
-                    is_used: false,
-                    is_param: false,
-                    source_location: None,
-                },
-            );
-
-            validate_expr(value, ctx, message)?;
-        }
-
-        Expr::Assignment { name, value } => {
-            message(&format!("Mənimsətmə yoxlanılır: {} = ...", name));
-
-            // Simvolun olub-olmadığını yoxla
-            let symbol = ctx
-                .lookup_variable(name)
-                .ok_or_else(|| format!("Dəyişən '{}' elan edilməyib", name))?;
-
-            // Əgər mutable deyilsə, xəta qaytar
-            if !symbol.is_mutable {
-                return Err(format!("Sabit '{}' dəyişdirilə bilməz", name));
-            }
-
-            // Tip uyğunsuzluğu varsa xəta qaytar
-            let value_type = get_type(value, ctx)
-                .ok_or_else(|| format!("{} üçün tip təyin edilə bilmədi", name))?;
-
-            if value_type != symbol.typ {
-                return Err(format!(
-                    "Tip uyğunsuzluğu: '{}' üçün {:?} gözlənilirdi, lakin {:?} tapıldı",
-                    name, symbol.typ, value_type
-                ));
-            }
-
-            validate_expr(value, ctx, message)?; // Dəyərin özünü də validasiya et
         }
 
         Expr::If {
@@ -522,7 +517,7 @@ pub fn validate_expr(
         Expr::VariableRef(name) => {
             message(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
-            if ctx.lookup_variable(name).is_none() {
+            if ctx.lookup_variable_scoped(name).is_none() {
                 // Dəyişən tapılmadı, indi enum variantı olub olmadığını yoxla
                 let mut found_in_enum = false;
                 for (_enum_name, variants) in &ctx.enum_defs {

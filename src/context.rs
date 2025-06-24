@@ -38,8 +38,7 @@ pub struct Symbol {
 pub struct TranspileContext {
     pub imports: HashSet<String>,
     pub symbol_types: HashMap<String, Symbol>,
-
-    pub scopes: Vec<HashSet<String>>,
+    pub scopes: Vec<HashMap<String, Symbol>>,
     pub struct_defs: HashMap<
         String,
         (
@@ -65,7 +64,7 @@ impl TranspileContext {
         Self {
             imports: HashSet::new(),
             symbol_types: HashMap::new(),
-            scopes: vec![HashSet::new()],
+            scopes: vec![HashMap::new()],
             struct_defs: HashMap::new(),
             enum_defs: HashMap::new(),
             current_struct: None,
@@ -82,15 +81,20 @@ impl TranspileContext {
     }
 
     pub fn declare_variable(&mut self, name: String, symbol: Symbol) {
-        self.symbol_types.insert(name.clone(), symbol);
+        self.symbol_types.insert(name.clone(), symbol.clone());
 
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name);
+            scope.insert(name, symbol); // ✅ həm adı, həm də symbol'u daxil et
         }
     }
 
-    pub fn lookup_variable(&self, name: &str) -> Option<Symbol> {
-        self.symbol_types.get(name).cloned()
+    pub fn lookup_variable_scoped(&self, name: &str) -> Option<(usize, Symbol)> {
+        for (level, scope) in self.scopes.iter().rev().enumerate() {
+            if let Some(symbol) = scope.get(name) {
+                return Some((self.scopes.len() - 1 - level, symbol.clone()));
+            }
+        }
+        None
     }
 
     pub fn declare_function(&mut self, func: FunctionInfo) {
@@ -102,12 +106,12 @@ impl TranspileContext {
     }
 
     pub fn push_scope(&mut self) {
-        self.scopes.push(HashSet::new());
+        self.scopes.push(HashMap::new());
     }
 
     pub fn pop_scope(&mut self) {
         if let Some(scope) = self.scopes.pop() {
-            for name in scope {
+            for (name, _) in scope {
                 self.symbol_types.remove(&name);
             }
         }

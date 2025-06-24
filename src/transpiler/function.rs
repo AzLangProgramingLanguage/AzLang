@@ -10,7 +10,6 @@ pub fn transpile_function_call(
     args: &[Expr],
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
-    // Normal funksiya çağırışı
     // Yeni simvollar varsa default olaraq Metn (string) tipində əlavə et
     for arg in args {
         if let Expr::VariableRef(var_name) = arg {
@@ -29,10 +28,28 @@ pub fn transpile_function_call(
         }
     }
 
-    let args_code = args
-        .iter()
-        .map(|arg| transpile_expr(arg, ctx))
-        .collect::<Result<Vec<_>, _>>()?;
+    let mut args_code = Vec::with_capacity(args.len());
+
+    for arg in args {
+        let code = match arg {
+            Expr::VariableRef(name) => {
+                if let Some((_, symbol)) = ctx.lookup_variable_scoped(name) {
+                    println!("symbol: {:?}", symbol);
+                    if symbol.is_mutable {
+                        // mutable dəyişən -> & ilə ötür
+                        format!("&{}", name)
+                    } else {
+                        name.to_string()
+                    }
+                } else {
+                    // Dəyişən tapılmadısa sadəcə adi kodu transpile et
+                    transpile_expr(arg, ctx)?
+                }
+            }
+            _ => transpile_expr(arg, ctx)?,
+        };
+        args_code.push(code);
+    }
 
     Ok(format!("{}({})", name, args_code.join(", ")))
 }
@@ -49,7 +66,11 @@ pub fn transpile_function_def(
         .iter()
         .map(|param| {
             let zig_type = map_type(&param.typ, !param.is_mutable);
-            format!("{}: {}", param.name, zig_type)
+            if param.is_mutable {
+                format!("{}: *{}", param.name, zig_type)
+            } else {
+                format!("{}: {}", param.name, zig_type)
+            }
         })
         .collect();
 

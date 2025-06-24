@@ -74,6 +74,28 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
             }
         }
 
+        Expr::VariableRef(name) => {
+            if name == "self" {
+                ctx.current_struct
+                    .as_ref()
+                    .map(|name| Type::Istifadeci(name.clone()))
+            } else {
+                // Yeni: scope ilə axtarış
+                if let Some((_level, sym)) = ctx.lookup_variable_scoped(name) {
+                    return Some(sym.typ.clone());
+                }
+
+                // Enum variantı kimi yoxla
+                for (enum_name, variants) in &ctx.enum_defs {
+                    if variants.contains(name) {
+                        return Some(Type::Istifadeci(enum_name.clone()));
+                    }
+                }
+
+                None
+            }
+        }
+
         Expr::FieldAccess { target, field } => {
             if let Some(Type::Istifadeci(struct_name)) = get_type(target, ctx) {
                 if let Some((fields, _)) = ctx.struct_defs.get(&struct_name) {
@@ -104,26 +126,6 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
             Some(Type::Siyahi(Box::new(item_type)))
         }
 
-        Expr::VariableRef(name) => {
-            if name == "self" {
-                ctx.current_struct
-                    .as_ref()
-                    .map(|name| Type::Istifadeci(name.clone()))
-            } else {
-                // Əvvəlcə dəyişənlərdə axtar
-                if let Some(sym) = ctx.lookup_variable(name) {
-                    return Some(sym.typ.clone());
-                }
-                // İndi enum variantı kimi yoxla
-                for (enum_name, variants) in &ctx.enum_defs {
-                    if variants.contains(name) {
-                        // Tapıldı, enumun tipi qaytarılır
-                        return Some(Type::Istifadeci(enum_name.clone()));
-                    }
-                }
-                None
-            }
-        }
         Expr::String(s) => {
             if s.len() == 1 {
                 Some(Type::Char)

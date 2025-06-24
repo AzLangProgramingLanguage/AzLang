@@ -108,7 +108,15 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         Expr::Continue => Ok("continue".to_string()),
         Expr::Assignment { name, value } => {
             let rhs = transpile_expr(value, ctx)?;
-            Ok(format!("{} = {}", name, rhs))
+            let is_param_pointer = ctx
+                .lookup_variable_scoped(name)
+                .map(|(_, sym)| sym.is_param && sym.is_mutable)
+                .unwrap_or(false);
+            if is_param_pointer {
+                Ok(format!("{}.* = {}", name, rhs))
+            } else {
+                Ok(format!("{} = {}", name, rhs))
+            }
         }
         Expr::StructDef {
             name,
@@ -211,19 +219,47 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
 
         Expr::BinaryOp { left, op, right } => {
-            let left_code = transpile_expr(left, ctx)?;
-            let right_code = transpile_expr(right, ctx)?;
+            // transpile_expr olmadan əvvəl mutable pointerləri kontrol edək
+            let left_code = match &**left {
+                Expr::VariableRef(name) => {
+                    let symbol = ctx.lookup_variable_scoped(name);
+                    if let Some((_lvl, sym)) = symbol {
+                        if sym.is_param && sym.is_mutable {
+                            format!("{}.*", name)
+                        } else {
+                            name.clone()
+                        }
+                    } else {
+                        transpile_expr(left, ctx)?
+                    }
+                }
+                _ => transpile_expr(left, ctx)?,
+            };
 
+            let right_code = match &**right {
+                Expr::VariableRef(name) => {
+                    let symbol = ctx.lookup_variable_scoped(name);
+                    if let Some((_lvl, sym)) = symbol {
+                        if sym.is_param && sym.is_mutable {
+                            format!("{}.*", name)
+                        } else {
+                            name.clone()
+                        }
+                    } else {
+                        transpile_expr(right, ctx)?
+                    }
+                }
+                _ => transpile_expr(right, ctx)?,
+            };
+
+            // 🔍 Operator tərcüməsi
             let zig_op = match op.as_str() {
                 "&&" => "and",
                 "||" => "or",
                 "==" | "!=" => {
-                    // 🔍 Hər iki tərəfin tipini tap
-                    let left_type = get_type(left, ctx).ok_or_else(|| format!("Tip tapılmadı"))?;
-                    let right_type =
-                        get_type(right, ctx).ok_or_else(|| format!("Tip tapılmadı"))?;
+                    let left_type = get_type(left, ctx).ok_or("Tip tapılmadı")?;
+                    let right_type = get_type(right, ctx).ok_or("Tip tapılmadı")?;
 
-                    // Əgər hər iki tip Metn-dirsə
                     if matches!(left_type, Type::Metn) && matches!(right_type, Type::Metn) {
                         let eql_expr = format!("std.mem.eql(u8, {}, {})", left_code, right_code);
                         if op == "==" {
@@ -232,7 +268,6 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                             return Ok(format!("!{}", eql_expr));
                         }
                     } else {
-                        // Sayısal və digər tiplər üçün adi operatoru qaytar
                         op.as_str()
                     }
                 }
@@ -402,8 +437,8 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 Some(Type::Siyahi(_)) => {
                     let is_mutable = match &**target {
                         Expr::VariableRef(name) => ctx
-                            .lookup_variable(name)
-                            .map(|sym| sym.is_mutable)
+                            .lookup_variable_scoped(name)
+                            .map(|(_, sym)| sym.is_mutable)
                             .unwrap_or(false),
                         _ => false,
                     };

@@ -12,22 +12,26 @@ pub fn transpile_loop(
     let body_code = body
         .iter()
         .map(|stmt| transpile_expr(stmt, ctx))
-        .collect::<Result<Vec<String>, String>>()?
+        .collect::<Result<Vec<_>, _>>()?
         .join("\n");
 
-    if let Expr::VariableRef(name) = iterable {
-        if let Some(symbol) = ctx.lookup_variable(name) {
-            if symbol.is_mutable {
-                return Ok(format!(
-                    "for ({}.items) |{}| {{\n{}\n}}",
-                    iterable_code, var_name, body_code
-                ));
+    let loop_expr = match iterable {
+        Expr::VariableRef(name) => {
+            if ctx
+                .lookup_variable_scoped(name)
+                .map(|(_, sym)| sym.is_mutable)
+                .unwrap_or(false)
+            {
+                format!("{}.items", iterable_code)
+            } else {
+                iterable_code.clone()
             }
         }
-    }
+        _ => iterable_code.clone(),
+    };
 
     Ok(format!(
         "for ({}) |{}| {{\n{}\n}}",
-        iterable_code, var_name, body_code
+        loop_expr, var_name, body_code
     ))
 }

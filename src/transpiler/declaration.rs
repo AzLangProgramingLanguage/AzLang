@@ -11,28 +11,33 @@ pub fn transpile_mutable_decl(
     value: &Expr,
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
+    // Xüsusi hal varsa, onu qaytar
     if let Some(result) = transpile_special_case(name, typ, value, ctx, true) {
         return result;
     }
 
     let value_code = transpile_expr(value, ctx)?;
+
+    // Tip təyin olunmayıbsa, kontekstdən axtar
     let inferred_type = match typ {
         Some(t) => t.clone(),
         None => ctx
-            .lookup_variable(name)
-            .map(|sym| sym.typ)
+            .lookup_variable_scoped(name)
+            .map(|(_, sym)| sym.typ)
             .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
     };
+
+    // Enum variantı kimi istifadə olunubsa
     if let Type::Istifadeci(ref enum_name) = inferred_type {
         if ctx.enum_defs.contains_key(enum_name) {
-            // enum dəyişəni üçün variant nöqtə ilə yazılır
             if let Expr::VariableRef(variant_name) = value {
                 return Ok(format!("var {} = {}.{};", name, enum_name, variant_name));
             }
         }
     }
 
-    let decl = match &inferred_type {
+    let decl_code = match &inferred_type {
+        // Mətndir — allocator istifadə olunmalı
         Type::Metn => {
             ctx.needs_allocator = true;
             format!(
@@ -41,8 +46,9 @@ pub fn transpile_mutable_decl(
             )
         }
 
-        Type::Siyahi(inner) => {
-            if let Expr::List(items) = value {
+        // Siyahıdır — ArrayList istifadə et
+        Type::Siyahi(inner) => match value {
+            Expr::List(items) => {
                 let items_code: Result<Vec<_>, _> =
                     items.iter().map(|i| transpile_expr(i, ctx)).collect();
                 let items_str = items_code?.join(", ");
@@ -50,58 +56,62 @@ pub fn transpile_mutable_decl(
                 ctx.needs_allocator = true;
                 ctx.cleanup_statements.push(format!("{}.deinit();", name));
 
-                let inner_type = map_type(inner, false);
+                let inner_code = map_type(inner, false);
+
                 format!(
-                    r#"var {name} = try std.ArrayList({inner_type}).initCapacity(allocator, {cap});
-try {name}.appendSlice(&[_]{inner_type}{{ {items_str} }});"#,
+                    r#"var {name} = try std.ArrayList({inner}).initCapacity(allocator, {cap});
+try {name}.appendSlice(&[_]{inner}{{ {items} }});"#,
                     name = name,
+                    inner = inner_code,
                     cap = items.len(),
-                    inner_type = inner_type,
-                    items_str = items_str
+                    items = items_str
                 )
-            } else {
-                return Err("Siyahı tipli dəyişən üçün dəyər siyahı olmalıdır.".to_string());
             }
-        }
-        _ => {
-            format!(
-                "var {}: {} = {}",
-                name,
-                map_type(&inferred_type, false),
-                value_code
-            )
-        }
+            _ => return Err("Siyahı tipli dəyişən üçün dəyər siyahı olmalıdır.".to_string()),
+        },
+
+        // Digər sadə tiplər
+        _ => format!(
+            "var {}: {} = {}",
+            name,
+            map_type(&inferred_type, false),
+            value_code
+        ),
     };
 
-    Ok(decl)
+    Ok(decl_code)
 }
+
 pub fn transpile_constant_decl(
     name: &str,
     typ: &Option<Type>,
     value: &Expr,
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
+    // Öncədən tanımlı xüsusi hal varsa onu qaytar
     if let Some(result) = transpile_special_case(name, typ, value, ctx, false) {
         return result;
     }
 
+    // Təyin olunmuşsa onu götür, əks halda mövcud kontekstdən tip çıxart
     let inferred_type = match typ {
         Some(t) => t.clone(),
         None => ctx
-            .lookup_variable(name)
-            .map(|sym| sym.typ)
+            .lookup_variable_scoped(name)
+            .map(|(_, sym)| sym.typ)
             .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
     };
 
+    // Əgər bu bir enum dəyişənidirsə və variant varsa onu ayrıca formatla
     if let Type::Istifadeci(ref enum_name) = inferred_type {
         if ctx.enum_defs.contains_key(enum_name) {
-            // enum dəyişəni üçün variant nöqtə ilə yazılır
             if let Expr::VariableRef(variant_name) = value {
                 return Ok(format!("const {} = {}.{};", name, enum_name, variant_name));
             }
         }
     }
 
+    // Əgər dəyər siyahıdırsa onu ayrıca formatla
     if let Expr::List(items) = value {
         let items_code: Result<Vec<String>, String> =
             items.iter().map(|item| transpile_expr(item, ctx)).collect();
@@ -110,21 +120,17 @@ pub fn transpile_constant_decl(
         let actual_type = typ.clone().unwrap_or_else(|| inferred_type.clone());
 
         if let Type::Siyahi(inner_type) = actual_type {
-            if items.is_empty() {
-                return Ok(format!(
-                    "const {} = &[_]{}{{}}",
-                    name,
-                    map_type(&*inner_type, true)
-                ));
-            }
+            let inner = map_type(&*inner_type, true);
+            let list_type = map_type(&Type::Siyahi(inner_type.clone()), true);
 
-            return Ok(format!(
-                "const {}: {} = &[_]{}{{ {} }}",
-                name,
-                map_type(&Type::Siyahi(inner_type.clone()), true),
-                map_type(&*inner_type, true),
-                items_str
-            ));
+            return if items.is_empty() {
+                Ok(format!("const {} = &[_]{}{{}}", name, inner))
+            } else {
+                Ok(format!(
+                    "const {}: {} = &[_]{}{{ {} }}",
+                    name, list_type, inner, items_str
+                ))
+            };
         }
 
         if items.is_empty() && typ.is_none() {
@@ -132,6 +138,7 @@ pub fn transpile_constant_decl(
         }
     }
 
+    // Əgər siyahı və enum deyilsə, normal constant olaraq formatla
     let value_code = transpile_expr(value, ctx)?;
     Ok(format!(
         "const {}: {} = {}",
