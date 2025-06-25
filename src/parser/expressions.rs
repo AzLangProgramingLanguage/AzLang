@@ -46,7 +46,10 @@ fn parse_primary_expression(
         }
         Some(Token::This) => {
             parser.next(); // consume 'öz'
-            Expr::VariableRef("self".to_string())
+            Expr::VariableRef {
+                name: "self".to_string(),
+                symbol: None,
+            }
         }
         Some(Token::False) => {
             parser.next();
@@ -122,7 +125,10 @@ fn parse_primary_expression(
 
                     _ => {
                         // VariableRef və index
-                        let mut expr = Expr::VariableRef(id.clone());
+                        let mut expr = Expr::VariableRef {
+                            name: id.clone(),
+                            symbol: None,
+                        };
 
                         loop {
                             match parser.peek() {
@@ -165,7 +171,7 @@ fn parse_primary_expression(
                                     name.clone()
                                 } else {
                                     return Err("Sahə və ya metod adı gözlənilirdi".to_string());
-                                };
+                                }; //Error buradan gəlir.
 
                             match parser.peek() {
                                 Some(Token::LParen) => {
@@ -296,10 +302,11 @@ pub fn parse_binary_op_expression(
         let right = parse_binary_op_expression(parser, inside_function, prec + 1, ctx)?;
 
         if op_token == "=" {
-            if let Expr::VariableRef(name) = left {
+            if let Expr::VariableRef { name, symbol: _ } = left {
                 return Ok(Expr::Assignment {
                     name,
                     value: Box::new(right),
+                    symbol: None,
                 });
             } else {
                 return Err("Mənimsətmənin sol tərəfində dəyişən olmalıdır".to_string());

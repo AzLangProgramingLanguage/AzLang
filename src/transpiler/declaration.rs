@@ -11,33 +11,29 @@ pub fn transpile_mutable_decl(
     value: &Expr,
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
-    // Xüsusi hal varsa, onu qaytar
     if let Some(result) = transpile_special_case(name, typ, value, ctx, true) {
         return result;
     }
 
     let value_code = transpile_expr(value, ctx)?;
 
-    // Tip təyin olunmayıbsa, kontekstdən axtar
-    let inferred_type = match typ {
-        Some(t) => t.clone(),
-        None => ctx
-            .lookup_variable_scoped(name)
-            .map(|(_, sym)| sym.typ)
-            .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
-    };
+    let typ = typ
+        .as_ref()
+        .ok_or_else(|| format!("Tip təyin olunmayıb: '{}'", name))?;
 
     // Enum variantı kimi istifadə olunubsa
-    if let Type::Istifadeci(ref enum_name) = inferred_type {
+    if let Type::Istifadeci(enum_name) = typ {
         if ctx.enum_defs.contains_key(enum_name) {
-            if let Expr::VariableRef(variant_name) = value {
+            if let Expr::VariableRef {
+                name: variant_name, ..
+            } = value
+            {
                 return Ok(format!("var {} = {}.{};", name, enum_name, variant_name));
             }
         }
     }
 
-    let decl_code = match &inferred_type {
-        // Mətndir — allocator istifadə olunmalı
+    let decl_code = match typ {
         Type::Metn => {
             ctx.needs_allocator = true;
             format!(
@@ -46,7 +42,6 @@ pub fn transpile_mutable_decl(
             )
         }
 
-        // Siyahıdır — ArrayList istifadə et
         Type::Siyahi(inner) => match value {
             Expr::List(items) => {
                 let items_code: Result<Vec<_>, _> =
@@ -70,13 +65,7 @@ try {name}.appendSlice(&[_]{inner}{{ {items} }});"#,
             _ => return Err("Siyahı tipli dəyişən üçün dəyər siyahı olmalıdır.".to_string()),
         },
 
-        // Digər sadə tiplər
-        _ => format!(
-            "var {}: {} = {}",
-            name,
-            map_type(&inferred_type, false),
-            value_code
-        ),
+        _ => format!("var {}: {} = {}", name, map_type(typ, false), value_code),
     };
 
     Ok(decl_code)
@@ -103,14 +92,6 @@ pub fn transpile_constant_decl(
     };
 
     // Əgər bu bir enum dəyişənidirsə və variant varsa onu ayrıca formatla
-    if let Type::Istifadeci(ref enum_name) = inferred_type {
-        if ctx.enum_defs.contains_key(enum_name) {
-            if let Expr::VariableRef(variant_name) = value {
-                return Ok(format!("const {} = {}.{};", name, enum_name, variant_name));
-            }
-        }
-    }
-
     // Əgər dəyər siyahıdırsa onu ayrıca formatla
     if let Expr::List(items) = value {
         let items_code: Result<Vec<String>, String> =

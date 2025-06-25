@@ -4,7 +4,6 @@ use crate::{
     parser::{
         Expr,
         ast::{TemplateChunk, Type},
-        types::get_type,
     },
 };
 
@@ -73,7 +72,7 @@ pub fn transpile_input_var(
             typ: Type::Metn,
             is_mutable,
             is_used: false,
-            is_param: false,
+            is_pointer: false,
             source_location: None,
         },
     );
@@ -105,11 +104,6 @@ pub fn transpile_input_var(
 }
 
 pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Result<String, String> {
-    let expr_type = get_type(expr, ctx);
-    let format_str = expr_type
-        .map(|typ| get_format_str_from_type(&typ))
-        .unwrap_or("{}");
-
     match expr {
         Expr::TemplateString(chunks) => {
             let mut format_parts = String::new();
@@ -121,28 +115,20 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
                         format_parts.push_str(&s.replace("\\", "\\\\").replace("\"", "\\\""));
                     }
                     TemplateChunk::Expr(inner_expr) => {
-                        let expr_type = get_type(inner_expr, ctx);
-                        let format_str = expr_type
-                            .map(|typ| get_format_str_from_type(&typ))
-                            .unwrap_or("{}");
+                        let format_str = match &**inner_expr {
+                            Expr::VariableRef {
+                                symbol: Some(sym), ..
+                            } => get_format_str_from_type(&sym.typ),
+                            Expr::BuiltInCall {
+                                resolved_type: Some(typ),
+                                ..
+                            } => get_format_str_from_type(typ),
+                            _ => "{}",
+                        };
 
                         format_parts.push_str(format_str);
 
-                        let arg_code = match &**inner_expr {
-                            Expr::VariableRef(name) => {
-                                if let Some((_lvl, sym)) = ctx.lookup_variable_scoped(name) {
-                                    if sym.is_param && sym.is_mutable {
-                                        format!("{}.*", name)
-                                    } else {
-                                        name.clone()
-                                    }
-                                } else {
-                                    transpile_expr(inner_expr, ctx)?
-                                }
-                            }
-                            _ => transpile_expr(inner_expr, ctx)?,
-                        };
-
+                        let arg_code = transpile_expr(inner_expr, ctx)?;
                         args.push(arg_code);
                     }
                 }
@@ -162,24 +148,22 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
         }
 
         _ => {
-            let arg_code = match &*expr {
-                Expr::VariableRef(name) => {
-                    if let Some((_lvl, sym)) = ctx.lookup_variable_scoped(name) {
-                        if sym.is_param && sym.is_mutable {
-                            format!("{}.*", name)
-                        } else {
-                            name.clone()
-                        }
-                    } else {
-                        transpile_expr(expr, ctx)?
-                    }
-                }
-                _ => transpile_expr(expr, ctx)?,
+            let format_str = match expr {
+                Expr::VariableRef {
+                    symbol: Some(sym), ..
+                } => get_format_str_from_type(&sym.typ),
+                Expr::BuiltInCall {
+                    resolved_type: Some(typ),
+                    ..
+                } => get_format_str_from_type(typ),
+                _ => "{}",
             };
+
+            let arg_code = transpile_expr(expr, ctx)?;
 
             ctx.uses_stdout = true;
             Ok(format!(
-                "std.debug.print(\"{}\\n\", .{{{}}})",
+                "std.debug.print(\"{}\\n\", .{{{}}});",
                 format_str, arg_code
             ))
         }
@@ -198,29 +182,27 @@ pub fn transpile_builtin_sum(args: &[Expr], ctx: &mut TranspileContext) -> Resul
     let list_expr = &args[0];
     let list_code = transpile_expr(list_expr, ctx)?;
 
-    // Siyahının tipini təyin et
+    // Siyahının tipini AST-dən oxuyuruq
     let inner_type = match list_expr {
-        Expr::VariableRef(name) => {
-            let (_, symbol) = ctx
-                .lookup_variable_scoped(name)
-                .ok_or("Dəyişən tapılmadı")?;
-
-            match symbol.typ {
-                Type::Siyahi(ref boxed) => boxed.clone(),
-                _ => return Err("sum() yalnız siyahılar üçün keçərlidir".to_string()),
-            }
-        }
+        Expr::VariableRef {
+            symbol: Some(sym), ..
+        } => match &sym.typ {
+            Type::Siyahi(boxed) => boxed.clone(),
+            _ => return Err("sum() yalnız siyahılar üçün keçərlidir".to_string()),
+        },
+        Expr::BuiltInCall {
+            resolved_type: Some(Type::Siyahi(boxed)),
+            ..
+        } => boxed.clone(),
         _ => {
-            let list_type = get_type(list_expr, ctx).ok_or("sum() üçün tip təyin edilə bilmədi")?;
-
-            match list_type {
-                Type::Siyahi(boxed) => boxed,
-                _ => return Err("sum() yalnız siyahılar üçün keçərlidir".to_string()),
-            }
+            return Err(
+                "sum() üçün siyahı tipi təyin edilə bilmədi və ya düzgün AST verilməyib"
+                    .to_string(),
+            );
         }
     };
 
-    // Tip kodunu müəyyən et
+    // İcazə verilən tip kodları
     let type_code = match *inner_type {
         Type::Integer => "usize",
         Type::LowInteger => "u8",
@@ -230,11 +212,13 @@ pub fn transpile_builtin_sum(args: &[Expr], ctx: &mut TranspileContext) -> Resul
 
     ctx.used_sum_fn = true;
 
-    // Mutable siyahı isə `.items` əlavə et
+    // Kod çıxarışı
     let final_list_code = match list_expr {
-        Expr::VariableRef(name) => {
-            let (_, symbol) = ctx.lookup_variable_scoped(name).unwrap(); // Artıq yoxlanılıb
-            if symbol.is_mutable {
+        Expr::VariableRef {
+            name,
+            symbol: Some(sym),
+        } => {
+            if sym.is_mutable {
                 format!("{}.items", name)
             } else {
                 name.clone()

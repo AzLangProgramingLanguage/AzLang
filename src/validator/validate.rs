@@ -1,11 +1,12 @@
-use crate::context::{Symbol, TranspileContext};
+use crate::context::{Parameter, Symbol, TranspileContext};
+use crate::helper::{find_used_outer_mutable_vars, validate_decl};
 use crate::lexer::Token;
 use crate::parser::Expr;
 use crate::parser::ast::{BuiltInFunction, EnumDecl, TemplateChunk, Type};
 use crate::parser::types::get_type;
 
 pub fn validate_expr(
-    expr: &Expr,
+    expr: &mut Expr,
     ctx: &mut TranspileContext,
     message: &mut dyn FnMut(&str),
 ) -> Result<(), String> {
@@ -21,8 +22,8 @@ pub fn validate_expr(
         }
 
         Expr::Match(match_expr) => {
-            validate_expr(&match_expr.target, ctx, message)?;
-
+            validate_expr(&mut match_expr.target, ctx, message)?;
+            message(&format!("Match ifadəsinin tipi: {:?}", match_expr.target));
             let target_type = get_type(&match_expr.target, ctx)
                 .ok_or_else(|| "Match ifadəsində target tip təyin edilə bilmədi".to_string())?;
 
@@ -34,7 +35,7 @@ pub fn validate_expr(
                     .ok_or_else(|| format!("Match üçün '{}' enum tərifi tapılmadı", enum_name))?
                     .clone();
 
-                for (variant_token, expr_block) in &match_expr.arms {
+                for (variant_token, expr_block) in &mut match_expr.arms {
                     // Token-dən string çıxarırıq
                     let variant_name = match variant_token {
                         Token::Identifier(s) => s,
@@ -56,13 +57,13 @@ pub fn validate_expr(
                         ));
                     }
 
-                    for expr in expr_block {
+                    for expr in expr_block.iter_mut() {
                         validate_expr(expr, ctx, message)?;
                     }
                 }
             } else {
                 // Sadə tiplər üçün: rəqəmlər, sətirlər və `_`
-                for (pattern_token, expr_block) in &match_expr.arms {
+                for (pattern_token, expr_block) in match_expr.arms.iter_mut() {
                     match pattern_token {
                         Token::Number(_) | Token::Underscore => {
                             // keçərli — əlavə yoxlamaya ehtiyac yoxdur
@@ -90,96 +91,48 @@ pub fn validate_expr(
                         }
                     }
 
-                    for expr in expr_block {
+                    for expr in expr_block.iter_mut() {
                         validate_expr(expr, ctx, message)?;
                     }
                 }
             }
         }
+
         Expr::ConstantDecl { name, typ, value } => {
-            message(&format!("Sabit yaradılır: '{}'", name));
-            println!("tip {:?}", typ); //tip Some(Istifadeci("Rengler"))
-            println!("value {:?}", value); //value  VariableRef("Qirmizi")
-            let inferred = get_type(value, ctx)
-                .ok_or_else(|| format!("'{}' üçün tip təyin edilə bilmədi", name))?; //Burada erroru çıartdır.
-
-            let declared = match typ {
-                Some(t) => t.clone(),
-                None => inferred.clone(),
-            };
-
-            if inferred != declared {
-                return Err(format!(
-                    "{} üçün tip uyğunsuzluğu: gözlənilən {:?}, tapılan {:?}",
-                    name, declared, inferred
-                ));
-            }
-
-            ctx.declare_variable(
-                name.clone(),
-                Symbol {
-                    typ: declared,
-                    is_mutable: false,
-                    is_used: false,
-                    is_param: false,
-                    source_location: None,
-                },
-            );
-            validate_expr(value, ctx, message)?;
+            validate_decl(name, typ, value, false, ctx, message)?;
         }
 
-        Expr::Assignment { name, value } => {
+        Expr::MutableDecl { name, typ, value } => {
+            validate_decl(name, typ, value, true, ctx, message)?;
+        }
+
+        Expr::Assignment {
+            name,
+            value,
+            symbol,
+        } => {
             message(&format!("Mənimsətmə yoxlanılır: {} = ...", name));
 
-            let (_level, symbol) = ctx
+            let (_level, sym) = ctx
                 .lookup_variable_scoped(name)
                 .ok_or_else(|| format!("Dəyişən '{}' elan edilməyib", name))?;
 
-            if !symbol.is_mutable {
+            if !sym.is_mutable {
                 return Err(format!("Sabit '{}' dəyişdirilə bilməz", name));
             }
 
             let value_type = get_type(value, ctx)
                 .ok_or_else(|| format!("{} üçün tip təyin edilə bilmədi", name))?;
 
-            if value_type != symbol.typ {
+            if value_type != sym.typ {
                 return Err(format!(
                     "Tip uyğunsuzluğu: '{}' üçün {:?} gözlənilirdi, lakin {:?} tapıldı",
-                    name, symbol.typ, value_type
+                    name, sym.typ, value_type
                 ));
             }
 
-            validate_expr(value, ctx, message)?;
-        }
-
-        Expr::MutableDecl { name, typ, value } => {
-            message(&format!("Dəyişən yaradılır: '{}'", name));
-
-            let inferred = get_type(value, ctx)
-                .ok_or_else(|| format!("'{}' üçün tip təyin edilə bilmədi", name))?;
-
-            let declared = match typ {
-                Some(t) => t.clone(),
-                None => inferred.clone(),
-            };
-
-            if inferred != declared {
-                return Err(format!(
-                    "{} üçün tip uyğunsuzluğu: gözlənilən {:?}, tapılan {:?}",
-                    name, declared, inferred
-                ));
-            }
-
-            ctx.declare_variable(
-                name.clone(),
-                Symbol {
-                    typ: declared,
-                    is_mutable: true,
-                    is_used: false,
-                    is_param: false,
-                    source_location: None,
-                },
-            );
+            // ✅ AST içində symbol-u güncəllə
+            *symbol = Some(sym.clone());
 
             validate_expr(value, ctx, message)?;
         }
@@ -219,12 +172,13 @@ pub fn validate_expr(
                 ));
             }
 
-            for ((field_name, expected_type), arg_expr) in struct_fields.iter().zip(args.iter()) {
+            for (i, (field_name, expected_type)) in struct_fields.iter().enumerate() {
+                let arg_expr = &mut args[i]; // ✅ `&mut Expr`
                 let actual_type = get_type(arg_expr, ctx).ok_or_else(|| {
                     format!("'{}' sahəsi üçün tip təyin edilə bilmədi", field_name)
                 })?;
 
-                validate_expr(arg_expr, ctx, message)?;
+                validate_expr(arg_expr, ctx, message)?; // ✅ Doğru borrow
 
                 if &actual_type != expected_type {
                     return Err(format!(
@@ -234,9 +188,10 @@ pub fn validate_expr(
                 }
             }
         }
+
         Expr::TemplateString(chunks) => {
             message("Template string yoxlanılır");
-            for chunk in chunks {
+            for chunk in chunks.iter_mut() {
                 match chunk {
                     TemplateChunk::Literal(_) => {}
                     TemplateChunk::Expr(expr) => {
@@ -356,7 +311,7 @@ pub fn validate_expr(
         } => {
             message(&format!("Daxili funksiya çağırılır: {:?}", func));
 
-            for arg in args {
+            for arg in args.iter_mut() {
                 validate_expr(arg, ctx, message)?;
             }
 
@@ -380,31 +335,85 @@ pub fn validate_expr(
             args,
         } => {
             validate_expr(target, ctx, message)?;
-            for arg in args {
+            for arg in args.iter_mut() {
                 validate_expr(arg, ctx, message)?;
             }
-
+            println!("Target: {:?}", target); //Target: VariableRef { name: "adam", symbol: None }
             let target_type = get_type(target, ctx)
                 .ok_or_else(|| "MethodCall üçün tip təyin edilə bilmədi".to_string())?;
 
             validate_method_call(&target_type, method, args, ctx)?;
         }
 
-        Expr::FunctionCall { args, .. } => {
-            message("Funksiya çağırışı yoxlanılır");
+        Expr::FunctionCall {
+            name,
+            args,
+            resolved_params,
+            return_type,
+        } => {
+            message(&format!("Funksiya çağırışı yoxlanılır: {}", name));
 
-            for arg in args {
+            // Funksiyanı konteksdən tap
+            let func = ctx
+                .lookup_function(name)
+                .ok_or_else(|| format!("Funksiya tapılmadı: '{}'", name))?;
+
+            println!("Func: {:?}", func);
+
+            // Pointer parametrlər üçün avtomatik dəyişən axtarışı
+            for param in &func.parameters {
+                if param.is_pointer {
+                    // Əgər artıq args-da varsa keç
+                    if args.iter().any(
+                        |arg| matches!(arg, Expr::VariableRef { name: n, .. } if n == &param.name),
+                    ) {
+                        continue;
+                    }
+                    // Kontekstdən həmin dəyişəni tap
+                }
+            }
+
+            // Artıq `args` doludur → onları yoxlayırıq
+            for arg in args.iter_mut() {
                 validate_expr(arg, ctx, message)?;
             }
+
+            *resolved_params = func.parameters.clone(); // funksiya parametrləri ilə eşlə
+            *return_type = func.return_type.clone(); // geri dönüş tipini də təyin et
         }
+
         Expr::FunctionDef {
-            name, params, body, ..
+            name,
+            params,
+            body,
+            return_type: _,
         } => {
             message(&format!("Funksiya tərifi: {}", name));
+            // 💡 Əvvəlcə scope daxilində olmayan `mutable` dəyişənləri tapırıq:
+            let outer_used_vars = find_used_outer_mutable_vars(body, ctx);
+
+            for outer_name in outer_used_vars {
+                // Əgər artıq parametr siyahısında varsa, atla
+                if params.iter().any(|p| p.name == outer_name) {
+                    continue;
+                }
+
+                if let Some((_level, symbol)) = ctx.lookup_variable_scoped(&outer_name) {
+                    if symbol.is_mutable {
+                        params.push(Parameter {
+                            name: outer_name.clone(),
+                            typ: symbol.typ.clone(),
+                            is_mutable: true,
+                            is_pointer: true,
+                        });
+                    }
+                }
+            }
 
             ctx.push_scope();
 
-            for param in params {
+            // ✅ Parametrləri kontekstə tanıt
+            for param in params.iter() {
                 message(&format!(
                     "Parametr əlavə edilir: {}: {:?}",
                     param.name, param.typ
@@ -414,16 +423,17 @@ pub fn validate_expr(
                     typ: param.typ.clone(),
                     is_mutable: param.is_mutable,
                     is_used: false,
-                    is_param: true,
+                    is_pointer: true,
                     source_location: None,
                 };
 
                 ctx.declare_variable(param.name.clone(), symbol);
             }
 
-            for stmt in body {
+            for stmt in body.iter_mut() {
                 validate_expr(stmt, ctx, message)?;
             }
+            ctx.update_function_body_and_params(name, params.clone(), body.clone());
 
             ctx.pop_scope();
             return Ok(());
@@ -447,7 +457,7 @@ pub fn validate_expr(
                     typ: *inner,
                     is_mutable: false,
                     is_used: false,
-                    is_param: false,
+                    is_pointer: false,
                     source_location: None,
                 };
 
@@ -477,16 +487,18 @@ pub fn validate_expr(
 
             if items.is_empty() {
                 message("Boş siyahı tapıldı, problem yoxdur.");
-                return Ok(()); // boş siyahı üçün problem yoxdur
+                return Ok(());
             }
 
+            // Burada `get_type`-ə readonly gərəkdir, o halda `items[0]` ola bilər
             let first_type = get_type(&items[0], ctx).ok_or_else(|| {
                 let msg = "Siyahının ilk elementi üçün tip təyin edilə bilmədi";
                 message(msg);
                 msg.to_string()
             })?;
 
-            for item in items.iter().skip(1) {
+            // ⛏️ `iter_mut` → dəyişmək üçün
+            for item in items.iter_mut().skip(1) {
                 let t = get_type(item, ctx).ok_or_else(|| {
                     let msg = "Siyahı elementi üçün tip təyin edilə bilmədi";
                     message(msg);
@@ -505,6 +517,7 @@ pub fn validate_expr(
                 validate_expr(item, ctx, message)?;
             }
         }
+
         Expr::Break => {}
         Expr::Continue => {}
 
@@ -514,11 +527,13 @@ pub fn validate_expr(
             validate_expr(index, ctx, message)?;
         }
 
-        Expr::VariableRef(name) => {
+        Expr::VariableRef { name, symbol } => {
             message(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
-            if ctx.lookup_variable_scoped(name).is_none() {
-                // Dəyişən tapılmadı, indi enum variantı olub olmadığını yoxla
+            if let Some((_level, found_symbol)) = ctx.lookup_variable_scoped(name) {
+                *symbol = Some(found_symbol); // 🧠 AST zənginləşdirilir!
+            } else {
+                // Enum variant olub olmadığını yoxla
                 let mut found_in_enum = false;
                 for (_enum_name, variants) in &ctx.enum_defs {
                     if variants.contains(name) {
@@ -530,7 +545,7 @@ pub fn validate_expr(
                 if !found_in_enum {
                     let msg = format!("Dəyişən '{}' istifadə olunmadan əvvəl elan edilməyib", name);
                     message(&msg);
-                    return Err(msg);
+                } else {
                 }
             }
         }

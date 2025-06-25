@@ -58,18 +58,6 @@ pub fn parse_variable_declaration(
         }
     }
 
-    // constant ilə input istifadə olunmamalıdır
-    if kind == "constant_decl" {
-        if let Expr::FunctionCall { name, .. } = &value_expr {
-            if name == "input" {
-                return Err(
-                    "input yalnız dəyişən (mutable) mənimsədilməsində istifadə oluna bilər."
-                        .to_string(),
-                );
-            }
-        }
-    }
-
     match kind {
         "mutable_decl" => Ok(Some(Expr::MutableDecl {
             name,
@@ -164,7 +152,7 @@ pub fn parse_expression_as_statement(
 /* İstifadə olunan dəyişənləri yoxlayır */
 fn record_variable_usage(expr: &Expr, used: &mut std::collections::HashSet<String>) {
     match expr {
-        Expr::VariableRef(name) => {
+        Expr::VariableRef { name, .. } => {
             used.insert(name.clone());
         }
         Expr::BinaryOp { left, right, .. } => {

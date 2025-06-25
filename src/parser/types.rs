@@ -74,24 +74,18 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
             }
         }
 
-        Expr::VariableRef(name) => {
+        Expr::VariableRef { name, .. } => {
             if name == "self" {
                 ctx.current_struct
                     .as_ref()
                     .map(|name| Type::Istifadeci(name.clone()))
             } else {
-                // Yeni: scope ilə axtarış
                 if let Some((_level, sym)) = ctx.lookup_variable_scoped(name) {
                     return Some(sym.typ.clone());
                 }
-
-                // Enum variantı kimi yoxla
-                for (enum_name, variants) in &ctx.enum_defs {
-                    if variants.contains(name) {
-                        return Some(Type::Istifadeci(enum_name.clone()));
-                    }
+                if ctx.enum_defs.contains_key(name) {
+                    return Some(Type::Istifadeci(name.clone()));
                 }
-
                 None
             }
         }
@@ -142,6 +136,7 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
             args,
         } => {
             let target_type = get_type(target, ctx);
+
             match target_type {
                 Some(Type::Siyahi(_)) => match method.as_str() {
                     "uzunluq" | "boşdur" => Some(Type::Integer),

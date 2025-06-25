@@ -13,6 +13,7 @@ pub struct Parameter {
     pub name: String,
     pub typ: Type,
     pub is_mutable: bool,
+    pub is_pointer: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -20,7 +21,7 @@ pub struct FunctionInfo {
     pub name: String,
     pub return_type: Option<Type>,
     pub parameters: Vec<Parameter>,
-    pub body: Option<Expr>, // ya tam AST bədəni, ya referans, ya da sənə lazım olan başqa tip
+    pub body: Option<Vec<Expr>>,
     pub scope_level: usize,
     pub is_public: bool,
 }
@@ -30,7 +31,7 @@ pub struct Symbol {
     pub typ: Type,
     pub is_mutable: bool,
     pub is_used: bool,
-    pub is_param: bool,
+    pub is_pointer: bool,
     pub source_location: Option<Location>,
 }
 #[derive(Clone, Debug)]
@@ -79,15 +80,6 @@ impl TranspileContext {
             used_split_auto_fn: false,
         }
     }
-
-    pub fn declare_variable(&mut self, name: String, symbol: Symbol) {
-        self.symbol_types.insert(name.clone(), symbol.clone());
-
-        if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name, symbol); // ✅ həm adı, həm də symbol'u daxil et
-        }
-    }
-
     pub fn lookup_variable_scoped(&self, name: &str) -> Option<(usize, Symbol)> {
         for (level, scope) in self.scopes.iter().rev().enumerate() {
             if let Some(symbol) = scope.get(name) {
@@ -95,6 +87,14 @@ impl TranspileContext {
             }
         }
         None
+    }
+
+    pub fn declare_variable(&mut self, name: String, symbol: Symbol) {
+        self.symbol_types.insert(name.clone(), symbol.clone());
+
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name, symbol); // ✅ həm adı, həm də symbol'u daxil et
+        }
     }
 
     pub fn declare_function(&mut self, func: FunctionInfo) {
@@ -114,6 +114,17 @@ impl TranspileContext {
             for (name, _) in scope {
                 self.symbol_types.remove(&name);
             }
+        }
+    }
+    pub fn update_function_body_and_params(
+        &mut self,
+        name: &str,
+        params: Vec<Parameter>,
+        body: Vec<Expr>,
+    ) {
+        if let Some(func) = self.functions.get_mut(name) {
+            func.parameters = params;
+            func.body = Some(body);
         }
     }
 

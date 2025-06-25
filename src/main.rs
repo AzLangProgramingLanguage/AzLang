@@ -5,6 +5,7 @@ pub mod parser;
 pub mod runner;
 pub mod translations;
 pub mod transpiler;
+
 pub mod utils;
 pub mod validator;
 use crate::context::TranspileContext;
@@ -13,6 +14,7 @@ use color_eyre::eyre::{Result, eyre};
 pub use runner::*;
 pub use translations::syntax::Syntax;
 pub use transpiler::*;
+
 pub use utils::*;
 pub use validator::*;
 #[derive(Parser)]
@@ -115,41 +117,50 @@ fn main() -> Result<()> {
 }
 
 fn build(input_path: &str) -> Result<()> {
+    qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
+
     let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
 
     let syntax = Syntax::load().map_err(|e| eyre!("Syntax xətası!: {}", e))?;
     let mut ctx = TranspileContext::new();
     let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
 
-    println!("Tokens: {:#?}", tokens);
-
+    /*     println!("Tokens: {:#?}", tokens);
+     */
     let mut parser = parser::Parser::new(tokens);
-    let parsed_program = parser.parse(&mut ctx).map_err(|e| {
+    let mut parsed_program = parser.parse(&mut ctx).map_err(|e| {
         qardas_parse_error(&format!("Parser xətası: {}", e));
         eyre!("Parser xətası: {}", e)
     })?;
-
-    println!("Parsed program: {:#?}", parsed_program);
-
-    emi_validator("Yaxşı-yaxşı, sənin işini indi yoxlayıram!");
-    for expr in &parsed_program.expressions {
+    qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
+    emi_validator("Gəlim yoxlayım görüm kodun harasında fırıldaq var.");
+    for expr in parsed_program.expressions.iter_mut() {
         validator::validate_expr(expr, &mut ctx, &mut emi_validator).map_err(|e| {
             emi_validator_error(&e);
             eyre!("Validator xətası: {}", e)
         })?;
     }
-    emi_validator("Əla, Dəmir Əmi razı qaldı. Kod təmizdi!");
-    let mut transpiler_ctx = ctx.clone();
-    let zig_code = transpiler::transpile(&parsed_program, &mut transpiler_ctx, &sister_transp)
-        .map_err(|e| {
+    emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
+    xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
+    xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");
+
+    /*     println!("Parsed program: {:#?}", parsed_program);
+     */
+    let zig_code =
+        transpiler::transpile(&parsed_program, &mut ctx, &sister_transp).map_err(|e| {
             baci_transp_error(&e);
             eyre!("Transpilasiya xətası: {}", e)
         })?;
+
+    sister_transp("Hər şey 0-dan 1-ə keçdi. Çevirdim, çatdırdım, indi sən işlə!");
+    println!(
+        "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
+    );
+
     /*     println!("Zig code: {}", zig_code); */
 
-    qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
+    /*     qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
     qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
-    emi_validator("Gəlim yoxlayım görüm kodun harasında fırıldaq var.");
     emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
     xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
 
@@ -157,7 +168,7 @@ fn build(input_path: &str) -> Result<()> {
     sister_transp("Hər şey 0-dan 1-ə keçdi. Çevirdim, çatdırdım, indi sən işlə!");
     println!(
         "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
-    );
+    ); */
 
     utils::write_file("output/output.zig", &zig_code)
         .map_err(|e| eyre!("Zig faylı yazıla bilmədi: {}", e))?;

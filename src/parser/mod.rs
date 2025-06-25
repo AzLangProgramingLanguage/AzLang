@@ -81,8 +81,6 @@ impl Parser {
 
     pub fn next(&mut self) -> Option<&Token> {
         let tok = self.tokens.get(self.position);
-        /*         println!("next() → position = {}, token = {:?}", self.position, tok);
-         */
         self.position += 1;
         tok
     }

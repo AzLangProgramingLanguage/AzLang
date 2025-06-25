@@ -22,9 +22,10 @@ pub fn parse_template_string_expr(
                 // Xüsusi hal: Əgər birbaşa } gəlsə, boş interpolasiya kimi qəbul et
                 if let Some(Token::InterpolationEnd) = parser.peek() {
                     parser.next();
-                    chunks.push(TemplateChunk::Expr(Box::new(Expr::VariableRef(
-                        "".to_string(),
-                    ))));
+                    chunks.push(TemplateChunk::Expr(Box::new(Expr::VariableRef {
+                        name: "".to_string(),
+                        symbol: None,
+                    })));
                     continue;
                 }
 

@@ -153,9 +153,9 @@ impl<'a> Lexer<'a> {
             if ch.is_alphanumeric() || ch == '_' {
                 word.push(ch);
                 self.chars.next();
-                if ch == '_' {
+                /*  if ch == '_' {
                     return Some(Token::Underscore);
-                }
+                } */
             } else {
                 break;
             }
@@ -164,6 +164,8 @@ impl<'a> Lexer<'a> {
         // Keyword yoxlamaları
         if word == self.syntax.return_name {
             Some(Token::Return)
+        } else if word == "_" {
+            Some(Token::Underscore)
         } else if word == self.syntax.print {
             Some(Token::Print)
         } else if word == self.syntax.char_str {
@@ -251,10 +253,10 @@ impl<'a> Lexer<'a> {
                 self.chars.next();
                 return Some(Token::StringLiteral(string));
             }
-            if ch == '_' {
+            /*    if ch == '_' {
                 self.chars.next();
                 return Some(Token::Underscore);
-            }
+            } */
             if ch == '\\' {
                 self.chars.next();
                 if let Some(&escaped_ch) = self.chars.peek() {

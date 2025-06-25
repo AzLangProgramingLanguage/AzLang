@@ -5,6 +5,7 @@ use crate::{
 };
 
 pub fn parse_struct_def(parser: &mut Parser, ctx: &mut TranspileContext) -> Result<Expr, String> {
+    println!("parse_struct_def");
     let name = match parser.next() {
         Some(Token::Identifier(n)) => n.clone(),
         other => return Err(format!("Struktur adı gözlənilirdi, tapıldı: {:?}", other)),

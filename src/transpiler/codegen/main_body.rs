@@ -24,7 +24,7 @@ pub fn generate_main_body(program: &Program, ctx: &mut TranspileContext) -> Resu
                 | Expr::FunctionCall { .. }
                 | Expr::BuiltInCall { .. }
                 | Expr::MethodCall { .. }
-                | Expr::VariableRef(_)
+                | Expr::VariableRef { .. }
                 | Expr::FieldAccess { .. }
                 | Expr::Index { .. }
                 | Expr::BinaryOp { .. }

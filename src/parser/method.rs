@@ -59,6 +59,7 @@ pub fn parse_method(
         name: "self".to_string(),
         typ: Type::Any,
         is_mutable: false,
+        is_pointer: false,
     }];
 
     Ok((name, params, body, return_type))

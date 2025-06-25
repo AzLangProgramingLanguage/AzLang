@@ -7,49 +7,21 @@ use crate::{
 
 pub fn transpile_function_call(
     name: &str,
-    args: &[Expr],
-    ctx: &mut TranspileContext,
+    _args: &[Expr], // İndi buna ehtiyac yoxdur
+    resolved_params: &[Parameter],
+    _return_type: Option<Type>,
+    _ctx: &mut TranspileContext, // Kontekstə də ehtiyac yoxdur əgər `transpile_expr` çağırmırıqsa
 ) -> Result<String, String> {
-    // Yeni simvollar varsa default olaraq Metn (string) tipində əlavə et
-    for arg in args {
-        if let Expr::VariableRef(var_name) = arg {
-            if !ctx.symbol_types.contains_key(var_name) {
-                ctx.declare_variable(
-                    var_name.clone(),
-                    Symbol {
-                        typ: Type::Metn,
-                        is_mutable: false,
-                        is_used: false,
-                        is_param: false,
-                        source_location: None,
-                    },
-                );
+    let args_code: Vec<String> = resolved_params
+        .iter()
+        .map(|param| {
+            if param.is_pointer {
+                format!("&{}", param.name)
+            } else {
+                param.name.clone()
             }
-        }
-    }
-
-    let mut args_code = Vec::with_capacity(args.len());
-
-    for arg in args {
-        let code = match arg {
-            Expr::VariableRef(name) => {
-                if let Some((_, symbol)) = ctx.lookup_variable_scoped(name) {
-                    println!("symbol: {:?}", symbol);
-                    if symbol.is_mutable {
-                        // mutable dəyişən -> & ilə ötür
-                        format!("&{}", name)
-                    } else {
-                        name.to_string()
-                    }
-                } else {
-                    // Dəyişən tapılmadısa sadəcə adi kodu transpile et
-                    transpile_expr(arg, ctx)?
-                }
-            }
-            _ => transpile_expr(arg, ctx)?,
-        };
-        args_code.push(code);
-    }
+        })
+        .collect();
 
     Ok(format!("{}({})", name, args_code.join(", ")))
 }
@@ -78,45 +50,17 @@ pub fn transpile_function_def(
     let ret_type = return_type.clone().unwrap_or(Type::Void);
     let ret_type_str = map_type(&ret_type, true);
 
-    // ✅ Yeni scope aç
-    ctx.push_scope();
-
-    // ✅ Parametrləri context-ə əlavə et
-    for param in params {
-        let symbol = Symbol {
-            typ: param.typ.clone(),
-            is_mutable: param.is_mutable,
-            is_used: false,
-            is_param: true,
-            source_location: None,
-        };
-        ctx.declare_variable(param.name.clone(), symbol);
-    }
-
-    // ✅ Bədəni transpile et
+    // Bədəni transpile et
     let mut body_lines = Vec::new();
     for expr in body {
-        let mut line = transpile_expr(expr, ctx)?;
+        let mut line = transpile_expr(expr, ctx)?; // ✨ ctx artıq lazım deyil
         if !line.trim_end().ends_with(';') && !line.trim_start().starts_with("//") {
             line.push(';');
         }
         body_lines.push(format!("    {}", line));
     }
 
-    // ✅ Scope-u təmizlə
-    ctx.pop_scope();
-
-    // ✅ Funksiyanı yadda saxla
-    ctx.declare_function(FunctionInfo {
-        name: name.to_string(),
-        return_type,
-        parameters: params.to_vec(),
-        body: None,
-        scope_level: ctx.scopes.len(),
-        is_public: false,
-    });
-
-    // ✅ Zig kodu qaytar
+    // Funksiya kodunu qaytar
     Ok(format!(
         "fn {}({}) {} {{\n{}\n}}",
         name,

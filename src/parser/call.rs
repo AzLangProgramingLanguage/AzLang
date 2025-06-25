@@ -20,6 +20,8 @@ pub fn parse_function_call(
         Ok(Expr::FunctionCall {
             name: name.to_string(),
             args,
+            resolved_params: Vec::new(),
+            return_type: None,
         })
     }
 }

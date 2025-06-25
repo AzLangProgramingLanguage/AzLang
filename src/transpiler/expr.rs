@@ -15,15 +15,30 @@ use crate::transpiler::utils::{
 pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String, String> {
     match expr {
         Expr::Index { target, index } => {
-            let target_code = transpile_expr(target, ctx)?;
+            let target_code = match &**target {
+                Expr::VariableRef {
+                    name,
+                    symbol: Some(sym),
+                } => {
+                    let base = if sym.is_pointer {
+                        format!("{}.*", name)
+                    } else {
+                        name.clone()
+                    };
+                    if sym.is_mutable {
+                        format!("{}.items", base)
+                    } else {
+                        base
+                    }
+                }
+                _ => transpile_expr(target, ctx)?,
+            };
+
             let index_code = transpile_expr(index, ctx)?;
-            let is_mutable = ctx.symbol_types.get(&target_code).unwrap().is_mutable;
-            if is_mutable {
-                Ok(format!("{}.items[{}]", target_code, index_code))
-            } else {
-                Ok(format!("{}[{}]", target_code, index_code))
-            }
+
+            Ok(format!("{}[{}]", target_code, index_code))
         }
+
         Expr::EnumDecl(EnumDecl { name, variants }) => {
             let variants_code = variants
                 .iter()
@@ -35,15 +50,13 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
         Expr::Match(match_expr) => {
             let target_code = transpile_expr(&match_expr.target, ctx)?;
-            println!("Target code: {}", target_code);
-            // `target` tipini tapırıq
 
-            let target_type = get_type(&match_expr.target, ctx);
-            // Enum olub-olmamasını yoxlayırıq
-            let is_enum = if let Some(Type::Istifadeci(enum_name)) = target_type.clone() {
-                ctx.enum_defs.contains_key(&enum_name)
-            } else {
-                false
+            let is_enum = match &*match_expr.target {
+                Expr::VariableRef {
+                    name,
+                    symbol: Some(sym),
+                } => matches!(sym.typ, Type::Istifadeci(_)),
+                _ => false,
             };
 
             let arms_code: Vec<String> = match_expr
@@ -51,20 +64,13 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 .iter()
                 .map(|(variant_token, exprs)| {
                     let variant_str = match variant_token {
-                        Token::Identifier(s) if s == "_" => {
+                        Token::Identifier(s) => {
                             if is_enum {
-                                "_".to_string()
-                            } else {
+                                format!(".{}", s)
+                            } else if s == "_" {
                                 "else".to_string()
-                            }
-                        }
-                        Token::Identifier(s) => s.clone(),
-                        Token::Number(n) => n.to_string(),
-                        Token::StringLiteral(s) => {
-                            if s.len() == 1 {
-                                format!("'{}'", s)
                             } else {
-                                format!("\"{}\"", s)
+                                s.clone()
                             }
                         }
                         Token::Underscore => {
@@ -74,50 +80,54 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                                 "else".to_string()
                             }
                         }
+                        Token::Number(n) => n.to_string(),
+                        Token::StringLiteral(s) => {
+                            if s.len() == 1 {
+                                format!("'{}'", s)
+                            } else {
+                                format!("\"{}\"", s)
+                            }
+                        }
                         _ => format!("{:?}", variant_token),
-                    };
-
-                    let variant_zig = if is_enum && variant_str != "else" {
-                        format!(".{}", variant_str)
-                    } else {
-                        variant_str
                     };
 
                     let block_code = exprs
                         .iter()
                         .filter_map(|e| transpile_expr(e, ctx).ok())
+                        .map(|line| format!("    {}", line))
                         .collect::<Vec<_>>()
                         .join("\n");
 
-                    format!("{} => {{\n{}\n; }},", variant_zig, indent(&block_code, 1))
+                    format!(
+                        "{variant} => {{\n{block}\n}}",
+                        variant = variant_str,
+                        block = block_code
+                    )
                 })
                 .collect();
 
-            let arms_joined = arms_code.join("\n");
+            let arms_joined = arms_code.join(",\n");
 
-            match target_type {
-                Some(Type::Metn) => Ok(format!(
-                    "switch ({}[0]) {{\n{}\n}}",
-                    target_code, arms_joined
-                )),
-                _ => Ok(format!("switch ({}) {{\n{}\n}}", target_code, arms_joined)),
-            }
+            Ok(format!("switch ({}) {{\n{}\n}}", target_code, arms_joined))
         }
 
         Expr::Break => Ok("break".to_string()),
         Expr::Continue => Ok("continue".to_string()),
-        Expr::Assignment { name, value } => {
-            let rhs = transpile_expr(value, ctx)?;
-            let is_param_pointer = ctx
-                .lookup_variable_scoped(name)
-                .map(|(_, sym)| sym.is_param && sym.is_mutable)
-                .unwrap_or(false);
-            if is_param_pointer {
-                Ok(format!("{}.* = {}", name, rhs))
-            } else {
-                Ok(format!("{} = {}", name, rhs))
-            }
+        Expr::Assignment {
+            name,
+            value,
+            symbol,
+        } => {
+            let value_code = transpile_expr(value, ctx)?;
+
+            let left = match symbol {
+                Some(sym) if sym.is_pointer => format!("{}.*", name),
+                _ => name.clone(),
+            };
+
+            Ok(format!("{} = {}", left, value_code))
         }
+
         Expr::StructDef {
             name,
             fields,
@@ -188,25 +198,11 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
 
         Expr::StructInit { name, args } => {
-            let (fields, _) = ctx
-                .struct_defs
-                .get(name)
-                .cloned()
-                .ok_or_else(|| format!("Struct '{}' tapılmadı", name))?;
-
-            if fields.len() != args.len() {
-                return Err(format!(
-                    "{} strukturu üçün {} sahə gözlənilirdi, amma {} verildi",
-                    name,
-                    fields.len(),
-                    args.len()
-                ));
-            }
-
             let mut field_lines = Vec::new();
-            for ((field_name, _), arg_expr) in fields.iter().zip(args.iter()) {
+
+            for (i, arg_expr) in args.iter().enumerate() {
                 let value_code = transpile_expr(arg_expr, ctx)?;
-                field_lines.push(format!(".{} = {}", field_name, value_code));
+                field_lines.push(format!(".field_{} = {}", i, value_code));
             }
 
             let body = field_lines.join(", ");
@@ -219,12 +215,11 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
 
         Expr::BinaryOp { left, op, right } => {
-            // transpile_expr olmadan əvvəl mutable pointerləri kontrol edək
+            // Sol tərəfi transpile et (pointer yoxla)
             let left_code = match &**left {
-                Expr::VariableRef(name) => {
-                    let symbol = ctx.lookup_variable_scoped(name);
-                    if let Some((_lvl, sym)) = symbol {
-                        if sym.is_param && sym.is_mutable {
+                Expr::VariableRef { name, symbol } => {
+                    if let Some(symbol) = symbol {
+                        if symbol.is_pointer {
                             format!("{}.*", name)
                         } else {
                             name.clone()
@@ -236,11 +231,11 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 _ => transpile_expr(left, ctx)?,
             };
 
+            // Sağ tərəfi transpile et (pointer yoxla)
             let right_code = match &**right {
-                Expr::VariableRef(name) => {
-                    let symbol = ctx.lookup_variable_scoped(name);
-                    if let Some((_lvl, sym)) = symbol {
-                        if sym.is_param && sym.is_mutable {
+                Expr::VariableRef { name, symbol } => {
+                    if let Some(symbol) = symbol {
+                        if symbol.is_pointer {
                             format!("{}.*", name)
                         } else {
                             name.clone()
@@ -252,25 +247,12 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 _ => transpile_expr(right, ctx)?,
             };
 
-            // 🔍 Operator tərcüməsi
+            // Operator transpilyasiyası (artıq sadədir)
             let zig_op = match op.as_str() {
                 "&&" => "and",
                 "||" => "or",
-                "==" | "!=" => {
-                    let left_type = get_type(left, ctx).ok_or("Tip tapılmadı")?;
-                    let right_type = get_type(right, ctx).ok_or("Tip tapılmadı")?;
-
-                    if matches!(left_type, Type::Metn) && matches!(right_type, Type::Metn) {
-                        let eql_expr = format!("std.mem.eql(u8, {}, {})", left_code, right_code);
-                        if op == "==" {
-                            return Ok(eql_expr);
-                        } else {
-                            return Ok(format!("!{}", eql_expr));
-                        }
-                    } else {
-                        op.as_str()
-                    }
-                }
+                "==" => "==",
+                "!=" => "!=",
                 "+" => "+",
                 "-" => "-",
                 "*" => "*",
@@ -423,11 +405,17 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             args,
         } => {
             let target_code = transpile_expr(target, ctx)?;
-            let args_code: Result<Vec<String>, String> =
+            let args_code: Result<Vec<String>, _> =
                 args.iter().map(|arg| transpile_expr(arg, ctx)).collect();
             let args_code = args_code?;
 
-            let target_type = get_type(target, ctx);
+            // Typeni artıq symboldan götürə bilərik
+            let target_type = match &**target {
+                Expr::VariableRef {
+                    symbol: Some(sym), ..
+                } => Some(&sym.typ),
+                _ => None,
+            };
 
             match target_type {
                 Some(Type::Metn) => {
@@ -436,18 +424,13 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 }
                 Some(Type::Siyahi(_)) => {
                     let is_mutable = match &**target {
-                        Expr::VariableRef(name) => ctx
-                            .lookup_variable_scoped(name)
-                            .map(|(_, sym)| sym.is_mutable)
-                            .unwrap_or(false),
+                        Expr::VariableRef {
+                            symbol: Some(sym), ..
+                        } => sym.is_mutable,
                         _ => false,
                     };
-                    let code =
-                        transpile_list_method_call(&target_code, method, &args_code, is_mutable)?;
-                    Ok(code)
+                    transpile_list_method_call(&target_code, method, &args_code, is_mutable)
                 }
-
-                // ✅ Əlavə et: Struct tipli methodlar üçün
                 Some(Type::Istifadeci(_)) => {
                     let joined_args = if args_code.is_empty() {
                         "".to_string()
@@ -455,14 +438,9 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                         format!(", {}", args_code.join(", "))
                     };
 
-                    // self argumenti ilə birgə
-                    Ok(format!("{}.{}({joined_args});", target_code, method))
+                    Ok(format!("{}.{}({})", target_code, method, joined_args))
                 }
-
-                _ => Err(format!(
-                    "MethodCall üçün dəstəklənməyən və ya məlum olmayan target tipi: {:?}",
-                    target_type
-                )),
+                _ => Err("MethodCall üçün naməlum və ya dəstəklənməyən tip.".to_string()),
             }
         }
 
@@ -470,7 +448,12 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             let expr_code = transpile_expr(e, ctx)?;
             Ok(format!("return {}", expr_code))
         }
-        Expr::FunctionCall { name, args } => transpile_function_call(name, args, ctx),
+        Expr::FunctionCall {
+            name,
+            args,
+            resolved_params,
+            return_type,
+        } => transpile_function_call(name, args, resolved_params, return_type.clone(), ctx),
 
         Expr::List(items) => {
             let items_code: Result<Vec<String>, String> =
@@ -480,8 +463,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
 
         Expr::String(s) => Ok(format!("\"{}\"", s.escape_default())),
-        Expr::VariableRef(name) => Ok(name.clone()),
-
+        Expr::VariableRef { name, .. } => Ok(name.clone()),
         Expr::FunctionDef {
             name,
             params,
@@ -493,7 +475,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
 
 fn contains_self(expr: &Expr) -> bool {
     match expr {
-        Expr::VariableRef(name) => name == "self",
+        Expr::VariableRef { name, .. } => name == "self",
 
         Expr::BinaryOp { left, right, .. } => contains_self(left) || contains_self(right),
 

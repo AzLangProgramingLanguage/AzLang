@@ -16,12 +16,10 @@ pub fn transpile_loop(
         .join("\n");
 
     let loop_expr = match iterable {
-        Expr::VariableRef(name) => {
-            if ctx
-                .lookup_variable_scoped(name)
-                .map(|(_, sym)| sym.is_mutable)
-                .unwrap_or(false)
-            {
+        Expr::VariableRef {
+            symbol: Some(sym), ..
+        } => {
+            if sym.is_mutable {
                 format!("{}.items", iterable_code)
             } else {
                 iterable_code.clone()

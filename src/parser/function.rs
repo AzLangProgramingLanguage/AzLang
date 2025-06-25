@@ -47,6 +47,7 @@ pub fn parse_function_def(parser: &mut Parser, ctx: &mut TranspileContext) -> Re
                     name: param_name,
                     typ: param_type,
                     is_mutable,
+                    is_pointer: false,
                 });
 
                 match parser.peek() {

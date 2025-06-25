@@ -1,5 +1,6 @@
-dəyişən a = 4
-funksiya artir(dəyişən b: ədəd)
-    b = b + 1
-artir(a)
+dəyişən a =0
+funksiya artir()
+    a=a+1
+
+artir()
 çap(a)
