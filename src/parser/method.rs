@@ -1,12 +1,11 @@
 use crate::{
-    context::{Parameter, TranspileContext},
+    Parameter,
     lexer::Token,
     parser::{Expr, Parser, ast::Type, expressions::parse_expression},
 };
 
 pub fn parse_method(
     parser: &mut Parser,
-    ctx: &mut TranspileContext,
 ) -> Result<(String, Vec<Parameter>, Vec<Expr>, Option<Type>), String> {
     parser.expect(&Token::Method)?;
 
@@ -44,8 +43,12 @@ pub fn parse_method(
             Token::Newline => {
                 parser.next();
             }
+            Token::EOF => {
+                parser.next();
+                break;
+            }
             _ => {
-                let expr = parse_expression(parser, true, ctx)?;
+                let expr = parse_expression(parser, true)?;
                 body.push(expr);
                 if matches!(parser.peek(), Some(Token::Semicolon)) {
                     parser.next();

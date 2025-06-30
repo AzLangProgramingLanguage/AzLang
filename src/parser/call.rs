@@ -1,14 +1,9 @@
-use crate::context::TranspileContext;
 use crate::parser::builtin::match_builtin;
 
 use super::expressions::parse_expression;
 use super::{Expr, Parser, Token};
-pub fn parse_function_call(
-    parser: &mut Parser,
-    name: &str,
-    ctx: &mut TranspileContext,
-) -> Result<Expr, String> {
-    let args = parse_call_arguments(parser, ctx)?;
+pub fn parse_function_call(parser: &mut Parser, name: &str) -> Result<Expr, String> {
+    let args = parse_call_arguments(parser)?;
 
     if let Some((builtin, typ)) = match_builtin(name) {
         Ok(Expr::BuiltInCall {
@@ -26,10 +21,7 @@ pub fn parse_function_call(
     }
 }
 
-pub fn parse_call_arguments(
-    parser: &mut Parser,
-    ctx: &mut TranspileContext,
-) -> Result<Vec<Expr>, String> {
+pub fn parse_call_arguments(parser: &mut Parser) -> Result<Vec<Expr>, String> {
     if parser.next() != Some(&Token::LParen) {
         return Err("Çağırış üçün '(' gözlənilirdi".to_string());
     }
@@ -41,7 +33,7 @@ pub fn parse_call_arguments(
             parser.next(); // ()
         }
         Some(_) => loop {
-            let arg = parse_expression(parser, false, ctx)?;
+            let arg = parse_expression(parser, false)?;
             args.push(arg);
 
             match parser.peek() {

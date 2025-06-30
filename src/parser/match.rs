@@ -1,13 +1,12 @@
 use crate::{
-    context::TranspileContext,
     lexer::Token,
     parser::{Expr, Parser, ast::MatchExpr, expressions::parse_expression},
 };
 
-pub fn parse_match_expr(parser: &mut Parser, ctx: &mut TranspileContext) -> Result<Expr, String> {
+pub fn parse_match_expr(parser: &mut Parser) -> Result<Expr, String> {
     parser.next(); // consume `uyğun`
 
-    let target = Box::new(parse_expression(parser, false, ctx)?);
+    let target = Box::new(parse_expression(parser, false)?);
 
     match parser.peek() {
         Some(Token::Newline) => {
@@ -50,7 +49,7 @@ pub fn parse_match_expr(parser: &mut Parser, ctx: &mut TranspileContext) -> Resu
 
                 let mut block = Vec::new();
 
-                let expr = parse_expression(parser, false, ctx)?;
+                let expr = parse_expression(parser, false)?;
                 block.push(expr);
 
                 if let Some(Token::Newline) = parser.peek() {

@@ -1,27 +1,39 @@
 use crate::{
-    context::{FunctionInfo, Parameter, Symbol, TranspileContext},
+    Parameter,
+    context::TranspileContext,
     expr::transpile_expr,
-    parser::{Expr, ast::Type, builtin::match_builtin},
+    parser::{Expr, ast::Type},
     transpiler::utils::map_type,
 };
 
 pub fn transpile_function_call(
     name: &str,
-    _args: &[Expr], // İndi buna ehtiyac yoxdur
-    resolved_params: &[Parameter],
+    args: &[Expr],
     _return_type: Option<Type>,
-    _ctx: &mut TranspileContext, // Kontekstə də ehtiyac yoxdur əgər `transpile_expr` çağırmırıqsa
+    ctx: &mut TranspileContext, // lazım ola bilər transpile_expr üçün
 ) -> Result<String, String> {
-    let args_code: Vec<String> = resolved_params
-        .iter()
-        .map(|param| {
-            if param.is_pointer {
-                format!("&{}", param.name)
-            } else {
-                param.name.clone()
+    let mut args_code = vec![];
+
+    for arg in args {
+        match arg {
+            Expr::VariableRef {
+                name,
+                symbol: Some(sym),
+            } => {
+                println!("Symboool  {:?}", sym);
+                if sym.is_pointer {
+                    args_code.push(format!("&{}", name));
+                } else {
+                    args_code.push(name.clone());
+                }
             }
-        })
-        .collect();
+            _ => {
+                // Digər hallarda transpile_expr çağır
+                let code = transpile_expr(arg, ctx)?;
+                args_code.push(code);
+            }
+        }
+    }
 
     Ok(format!("{}({})", name, args_code.join(", ")))
 }
@@ -30,37 +42,24 @@ pub fn transpile_function_def(
     name: &str,
     params: &[Parameter],
     body: &[Expr],
-    return_type: Option<Type>,
+    return_type: &Option<Type>,
+    _parent: &Option<String>,
     ctx: &mut TranspileContext,
 ) -> Result<String, String> {
-    // Parametrləri transpile et
-    let params_str: Vec<String> = params
-        .iter()
-        .map(|param| {
-            let zig_type = map_type(&param.typ, !param.is_mutable);
-            if param.is_mutable {
-                format!("{}: *{}", param.name, zig_type)
-            } else {
-                format!("{}: {}", param.name, zig_type)
-            }
-        })
-        .collect();
+    let params_str: Vec<String> = params.iter().map(transpile_param).collect();
 
-    // Geri dönüş tipi
     let ret_type = return_type.clone().unwrap_or(Type::Void);
     let ret_type_str = map_type(&ret_type, true);
 
-    // Bədəni transpile et
     let mut body_lines = Vec::new();
     for expr in body {
-        let mut line = transpile_expr(expr, ctx)?; // ✨ ctx artıq lazım deyil
-        if !line.trim_end().ends_with(';') && !line.trim_start().starts_with("//") {
+        let mut line = transpile_expr(expr, ctx)?;
+        if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
             line.push(';');
         }
         body_lines.push(format!("    {}", line));
     }
 
-    // Funksiya kodunu qaytar
     Ok(format!(
         "fn {}({}) {} {{\n{}\n}}",
         name,
@@ -68,4 +67,32 @@ pub fn transpile_function_def(
         ret_type_str,
         body_lines.join("\n")
     ))
+}
+
+pub fn is_semicolon_needed(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::Assignment { .. }
+            | Expr::Break
+            | Expr::Continue
+            | Expr::Return(_)
+            | Expr::MutableDecl { .. }
+            | Expr::ConstantDecl { .. }
+            | Expr::FunctionCall { .. }
+            | Expr::BuiltInCall { .. }
+            | Expr::MethodCall { .. }
+            | Expr::VariableRef { .. }
+            | Expr::FieldAccess { .. }
+            | Expr::Index { .. }
+            | Expr::BinaryOp { .. }
+    )
+}
+
+fn transpile_param(param: &Parameter) -> String {
+    let zig_type = map_type(&param.typ, !param.is_mutable);
+    if param.is_mutable {
+        format!("{}: *{}", param.name, zig_type)
+    } else {
+        format!("{}: {}", param.name, zig_type)
+    }
 }

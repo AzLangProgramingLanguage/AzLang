@@ -9,23 +9,15 @@ use crate::parser::template::parse_template_string_expr;
 use super::list::parse_list;
 use super::{Expr, Parser, Token};
 
-pub fn parse_expression(
-    parser: &mut Parser,
-    inside_function: bool,
-    ctx: &mut TranspileContext,
-) -> Result<Expr, String> {
+pub fn parse_expression(parser: &mut Parser, inside_function: bool) -> Result<Expr, String> {
     while parser.peek() == Some(&Token::Newline) {
         parser.next();
     }
 
-    parse_binary_op_expression(parser, inside_function, 1, ctx)
+    parse_binary_op_expression(parser, inside_function, 1)
 }
 
-fn parse_primary_expression(
-    parser: &mut Parser,
-    inside_function: bool,
-    ctx: &mut TranspileContext,
-) -> Result<Expr, String> {
+fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Result<Expr, String> {
     let mut expr = match parser.peek() {
         Some(Token::True) => {
             parser.next();
@@ -33,15 +25,15 @@ fn parse_primary_expression(
         }
         Some(Token::Backtick) => {
             parser.next(); // consume Backtick
-            return parse_template_string_expr(parser, ctx);
+            return parse_template_string_expr(parser);
         }
         Some(Token::Match) => {
-            return parse_match_expr(parser, ctx);
+            return parse_match_expr(parser);
         }
         Some(Token::TipDecl) => parse_enum_decl(parser)?,
         Some(Token::Return) => {
             parser.next(); // consume `qaytar`
-            let expr = parse_expression(parser, true, ctx)?;
+            let expr = parse_expression(parser, true)?;
             Expr::Return(Box::new(expr))
         }
         Some(Token::This) => {
@@ -70,10 +62,10 @@ fn parse_primary_expression(
 
         Some(Token::ListStart) => {
             parser.next(); // consume '['
-            return parse_list(parser, ctx);
+            return parse_list(parser);
         }
         Some(Token::Loop) => {
-            let loop_expr = parse_loop(parser, ctx)?;
+            let loop_expr = parse_loop(parser)?;
             return Ok(loop_expr);
         }
 
@@ -86,7 +78,7 @@ fn parse_primary_expression(
                 _ => unreachable!(),
             };
 
-            let args = parse_call_arguments(parser, ctx)?;
+            let args = parse_call_arguments(parser)?;
             return Ok(Expr::BuiltInCall {
                 func,
                 args,
@@ -98,7 +90,7 @@ fn parse_primary_expression(
                 let next_token = parser.peek();
 
                 let mut expr = match next_token {
-                    Some(Token::LParen) => parse_function_call(parser, &id, ctx)?,
+                    Some(Token::LParen) => parse_function_call(parser, &id)?,
 
                     Some(Token::LBrace) => {
                         // Struct init
@@ -111,7 +103,7 @@ fn parse_primary_expression(
                                     break;
                                 }
                                 Some(_) => {
-                                    let arg = parse_expression(parser, false, ctx)?;
+                                    let arg = parse_expression(parser, false)?;
                                     args.push(arg);
                                     if let Some(Token::Comma) = parser.peek() {
                                         parser.next();
@@ -134,8 +126,7 @@ fn parse_primary_expression(
                             match parser.peek() {
                                 Some(Token::ListStart) => {
                                     parser.next(); // consume '['
-                                    let index_expr =
-                                        parse_expression(parser, inside_function, ctx)?;
+                                    let index_expr = parse_expression(parser, inside_function)?;
                                     match parser.peek() {
                                         Some(Token::ListEnd) => {
                                             parser.next(); // consume ']'
@@ -179,7 +170,7 @@ fn parse_primary_expression(
                                     expr = Expr::MethodCall {
                                         target: Box::new(expr),
                                         method: field_or_method.clone(),
-                                        args: parse_call_arguments(parser, ctx)?,
+                                        args: parse_call_arguments(parser)?,
                                     };
                                 }
                                 _ => {
@@ -187,6 +178,7 @@ fn parse_primary_expression(
                                     expr = Expr::FieldAccess {
                                         target: Box::new(expr),
                                         field: field_or_method,
+                                        resolved_type: Type::Any,
                                     };
                                 }
                             }
@@ -203,18 +195,18 @@ fn parse_primary_expression(
 
         Some(Token::Newline) => {
             parser.next();
-            return parse_primary_expression(parser, inside_function, ctx);
+            return parse_primary_expression(parser, inside_function);
         }
 
         Some(Token::Semicolon) => {
             parser.next();
-            return parse_primary_expression(parser, inside_function, ctx);
+            return parse_primary_expression(parser, inside_function);
         }
 
         Some(Token::RBrace) => {
             // Blok sonu: normal halda xəta deyil, sadəcə yuxarıya ötür
             parser.next();
-            return parse_primary_expression(parser, inside_function, ctx);
+            return parse_primary_expression(parser, inside_function);
         }
 
         Some(Token::EOF) | None => {
@@ -247,7 +239,7 @@ fn parse_primary_expression(
                                     break;
                                 }
                                 Some(_) => {
-                                    let arg = parse_expression(parser, false, ctx)?;
+                                    let arg = parse_expression(parser, false)?;
                                     args.push(arg);
                                     if let Some(Token::Comma) = parser.peek() {
                                         parser.next();
@@ -267,6 +259,7 @@ fn parse_primary_expression(
                         expr = Expr::FieldAccess {
                             target: Box::new(expr),
                             field: field_or_method,
+                            resolved_type: Type::Any,
                         };
                     }
                 }
@@ -281,9 +274,8 @@ pub fn parse_binary_op_expression(
     parser: &mut Parser,
     inside_function: bool,
     min_prec: u8,
-    ctx: &mut TranspileContext,
 ) -> Result<Expr, String> {
-    let mut left = parse_primary_expression(parser, inside_function, ctx)?;
+    let mut left = parse_primary_expression(parser, inside_function)?;
 
     loop {
         // 🛑 "." operatorunu burda parse ETMƏ!
@@ -299,7 +291,7 @@ pub fn parse_binary_op_expression(
 
         parser.next(); // consume operator
 
-        let right = parse_binary_op_expression(parser, inside_function, prec + 1, ctx)?;
+        let right = parse_binary_op_expression(parser, inside_function, prec + 1)?;
 
         if op_token == "=" {
             if let Expr::VariableRef { name, symbol: _ } = left {

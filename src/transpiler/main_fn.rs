@@ -8,7 +8,6 @@ pub fn generate_main_fn(
     let imports = codegen::prelude::generate_imports(ctx);
     let defs = codegen::top_level::generate_top_level_defs(program, ctx)?;
     let main_body = codegen::main_body::generate_main_body(program, ctx)?;
-
     let utils = codegen::utils_fn::generate_util_functions(ctx);
 
     let allocator = if ctx.needs_allocator {

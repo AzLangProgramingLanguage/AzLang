@@ -1,13 +1,12 @@
 use crate::{
-    context::TranspileContext,
     lexer::Token,
     parser::{Expr, Parser, expressions::parse_expression, statements::parse_statement},
 };
-pub fn parse_loop(parser: &mut Parser, ctx: &mut TranspileContext) -> Result<Expr, String> {
+pub fn parse_loop(parser: &mut Parser) -> Result<Expr, String> {
     parser.next(); // consume `gəz`
 
     // Əvvəl iterable gəlməlidir (məs: ədədlər)
-    let iterable = parse_expression(parser, false, ctx)?;
+    let iterable = parse_expression(parser, false)?;
 
     // Sonra "içində" açar sözü
     if parser.next() != Some(&Token::In) {
@@ -43,7 +42,7 @@ pub fn parse_loop(parser: &mut Parser, ctx: &mut TranspileContext) -> Result<Exp
                 parser.next();
             }
             Some(_) => {
-                let stmt = parse_statement(parser, ctx)?;
+                let stmt = parse_statement(parser)?;
 
                 if let Some(stmt_expr) = stmt {
                     body.push(stmt_expr);

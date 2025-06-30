@@ -1,9 +1,10 @@
 use crate::{
-    context::{Symbol, TranspileContext},
+    context::TranspileContext,
     expr::transpile_expr,
     parser::{
         Expr,
         ast::{TemplateChunk, Type},
+        types::get_type,
     },
 };
 
@@ -63,20 +64,6 @@ pub fn transpile_input_var(
     ctx: &mut TranspileContext,
     is_mutable: bool,
 ) -> Result<String, String> {
-    // Validator buna görə artıq yoxlama aparmayacaq, ona görə sadəcə icra.
-
-    // Context-ə dəyişəni qeyd et (mutable və digər sahələri default qoyulur)
-    ctx.declare_variable(
-        name.to_string(),
-        Symbol {
-            typ: Type::Metn,
-            is_mutable,
-            is_used: false,
-            is_pointer: false,
-            source_location: None,
-        },
-    );
-
     // Prompt kodunu transpile et
     let prompt = transpile_expr(&args[0], ctx)?;
 
@@ -115,16 +102,8 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
                         format_parts.push_str(&s.replace("\\", "\\\\").replace("\"", "\\\""));
                     }
                     TemplateChunk::Expr(inner_expr) => {
-                        let format_str = match &**inner_expr {
-                            Expr::VariableRef {
-                                symbol: Some(sym), ..
-                            } => get_format_str_from_type(&sym.typ),
-                            Expr::BuiltInCall {
-                                resolved_type: Some(typ),
-                                ..
-                            } => get_format_str_from_type(typ),
-                            _ => "{}",
-                        };
+                        let typ = get_expr_type(inner_expr);
+                        let format_str = typ.map(|t| get_format_str_from_type(&t)).unwrap_or("{s}");
 
                         format_parts.push_str(format_str);
 
@@ -148,22 +127,15 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
         }
 
         _ => {
-            let format_str = match expr {
-                Expr::VariableRef {
-                    symbol: Some(sym), ..
-                } => get_format_str_from_type(&sym.typ),
-                Expr::BuiltInCall {
-                    resolved_type: Some(typ),
-                    ..
-                } => get_format_str_from_type(typ),
-                _ => "{}",
-            };
+            let format_str = get_expr_type(expr)
+                .map(|t| get_format_str_from_type(&t))
+                .unwrap_or("{s}");
 
             let arg_code = transpile_expr(expr, ctx)?;
 
             ctx.uses_stdout = true;
             Ok(format!(
-                "std.debug.print(\"{}\\n\", .{{{}}});",
+                "std.debug.print(\"{}\\n\", .{{{}}})",
                 format_str, arg_code
             ))
         }
@@ -248,7 +220,6 @@ pub fn transpile_builtin_range(
     let start_code = transpile_expr(&args[0], ctx)?;
     let end_code = transpile_expr(&args[1], ctx)?;
 
-    // Zig sintaksisi: `start..end`
     Ok(format!("{}..{}", start_code, end_code))
 }
 
@@ -262,5 +233,51 @@ pub fn get_format_str_from_type(typ: &Type) -> &'static str {
         Type::Any => "{any}",
         Type::Siyahi(_) => "{any} ", // Siyahıları yazdırmaq istəmirik, amma fallback
         Type::Istifadeci(_) => "{any}", // Custom tip varsa default yazdırma
+    }
+}
+
+pub fn get_expr_type(expr: &Expr) -> Option<Type> {
+    match expr {
+        Expr::VariableRef {
+            symbol: Some(sym), ..
+        } => Some(sym.typ.clone()),
+
+        Expr::BuiltInCall {
+            resolved_type: Some(typ),
+            ..
+        } => Some(typ.clone()),
+
+        Expr::FieldAccess { resolved_type, .. } => Some(resolved_type.clone()),
+
+        Expr::FunctionCall {
+            return_type: Some(typ),
+            ..
+        } => Some(typ.clone()),
+
+        Expr::Number(_) => Some(Type::Integer),
+
+        Expr::String(_) => Some(Type::Metn),
+
+        Expr::Bool(_) => Some(Type::Bool),
+
+        Expr::List(items) => {
+            if items.is_empty() {
+                return Some(Type::Siyahi(Box::new(Type::Any))); // boş siyahı – tipi bilinmir
+            }
+
+            let item_type = get_expr_type(&items[0])?;
+
+            for item in &items[1..] {
+                let t = get_expr_type(item)?;
+                if t != item_type {
+                    return Some(Type::Siyahi(Box::new(Type::Any))); // qarışıq tiplər
+                }
+            }
+
+            Some(Type::Siyahi(Box::new(item_type))) //item_type  mismatched types
+            // expected Type, found &Type (rustc E0308)
+        }
+
+        _ => None, // digər hallarda tip məlum deyil
     }
 }

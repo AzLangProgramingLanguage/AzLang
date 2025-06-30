@@ -1,6 +1,18 @@
-dəyişən a =0
-funksiya artir()
-    a=a+1
+dəyişən a = 5
+funksiya artir(dəyişən c: ədəd)
+    c = c + 1
+    əgər c == 18
+        çap("Artıq böyüksən!")
+        qaytar c
+    yoxsa c == 17
+        çap("Bir yaşın qalıb böyüməyə.")
+        qaytar c
+    əks
+        qaytar c
+sabit b = artir(a)  // Hər ikisidə eyni nəticə verir
+çap(c)              // 
 
-artir()
-çap(a)
+sabit a = a
+
+
+

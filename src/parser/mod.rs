@@ -1,8 +1,8 @@
 pub mod ast;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-use crate::{context::TranspileContext, lexer::Token, parser::ast::Type};
+use crate::{Symbol, lexer::Token, parser::ast::Type};
 pub use ast::{Expr, Program};
 
 // Digər modulları elan et
@@ -25,8 +25,9 @@ pub mod types;
 pub struct Parser {
     tokens: Vec<Token>,
     pub position: usize, // Testing üçün pub edək, sonra private ola bilər
-    pub declared_variables: HashSet<String>,
+    pub declared_variables: HashMap<String, Symbol>,
     pub used_variables: HashSet<String>,
+    pub current_function: Option<String>,
 }
 
 impl Parser {
@@ -34,8 +35,9 @@ impl Parser {
         Self {
             tokens,
             position: 0,
-            declared_variables: HashSet::new(),
+            declared_variables: HashMap::new(), //
             used_variables: HashSet::new(),
+            current_function: None,
         }
     }
     pub fn next_if(&mut self, token: Token) -> Option<&Token> {
@@ -86,24 +88,27 @@ impl Parser {
     }
 
     /// Yalnız parse_program çağırılır
-    pub fn parse(&mut self, ctx: &mut TranspileContext) -> Result<Program, String> {
-        let expressions = self.parse_program(ctx)?;
-        Ok(Program { expressions })
+    pub fn parse(&mut self) -> Result<Program, String> {
+        let expressions = self.parse_program()?;
+        Ok(Program {
+            expressions,
+            return_type: Some(Type::Void),
+        })
     }
 
-    fn parse_statement(&mut self, ctx: &mut TranspileContext) -> Result<Option<Expr>, String> {
-        statements::parse_statement(self, ctx)
+    fn parse_statement(&mut self) -> Result<Option<Expr>, String> {
+        statements::parse_statement(self)
     }
 
-    fn parse_expression(&mut self, ctx: &mut TranspileContext) -> Result<Expr, String> {
-        expressions::parse_expression(self, false, ctx)
+    fn parse_expression(&mut self) -> Result<Expr, String> {
+        expressions::parse_expression(self, false)
     }
 
     fn parse_type(&mut self) -> Result<Type, String> {
         types::parse_type(self)
     }
 
-    pub fn parse_program(&mut self, ctx: &mut TranspileContext) -> Result<Vec<Expr>, String> {
+    pub fn parse_program(&mut self) -> Result<Vec<Expr>, String> {
         // Boş sətirləri keç
         while let Some(Token::Newline) = self.peek() {
             self.next();
@@ -122,7 +127,7 @@ impl Parser {
                 }
 
                 _ => {
-                    if let Some(stmt) = self.parse_statement(ctx)? {
+                    if let Some(stmt) = self.parse_statement()? {
                         statements.push(stmt);
 
                         // Semicolon varsa keç

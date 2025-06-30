@@ -1,11 +1,9 @@
 use crate::{
-    context::TranspileContext,
     lexer::Token,
     parser::{Expr, Parser, method::parse_method, types::parse_type},
 };
 
-pub fn parse_struct_def(parser: &mut Parser, ctx: &mut TranspileContext) -> Result<Expr, String> {
-    println!("parse_struct_def");
+pub fn parse_struct_def(parser: &mut Parser) -> Result<Expr, String> {
     let name = match parser.next() {
         Some(Token::Identifier(n)) => n.clone(),
         other => return Err(format!("Struktur adı gözlənilirdi, tapıldı: {:?}", other)),
@@ -31,7 +29,7 @@ pub fn parse_struct_def(parser: &mut Parser, ctx: &mut TranspileContext) -> Resu
             }
 
             Token::Method => {
-                let method = parse_method(parser, ctx)?;
+                let method = parse_method(parser)?;
                 methods.push(method);
 
                 while matches!(parser.peek(), Some(Token::Newline)) {

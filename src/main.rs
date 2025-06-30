@@ -8,7 +8,10 @@ pub mod transpiler;
 
 pub mod utils;
 pub mod validator;
-use crate::context::TranspileContext;
+use crate::{
+    context::TranspileContext,
+    parser::{Expr, ast::Type},
+};
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 use color_eyre::eyre::{Result, eyre};
 pub use runner::*;
@@ -125,17 +128,23 @@ fn build(input_path: &str) -> Result<()> {
     let mut ctx = TranspileContext::new();
     let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
 
-    /*     println!("Tokens: {:#?}", tokens);
-     */
+    // println!("Tokens: {:#?}", tokens);
+
     let mut parser = parser::Parser::new(tokens);
-    let mut parsed_program = parser.parse(&mut ctx).map_err(|e| {
+    let mut parsed_program = parser.parse().map_err(|e| {
         qardas_parse_error(&format!("Parser xətası: {}", e));
         eyre!("Parser xətası: {}", e)
     })?;
     qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
     emi_validator("Gəlim yoxlayım görüm kodun harasında fırıldaq var.");
+    let mut validator_ctx = ValidatorContext::new();
     for expr in parsed_program.expressions.iter_mut() {
-        validator::validate_expr(expr, &mut ctx, &mut emi_validator).map_err(|e| {
+        validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator).map_err(|e| {
+            emi_validator_error(&e);
+            eyre!("Validator xətası: {}", e)
+        })?;
+
+        validate_top_level_expr(expr).map_err(|e| {
             emi_validator_error(&e);
             eyre!("Validator xətası: {}", e)
         })?;
@@ -143,9 +152,6 @@ fn build(input_path: &str) -> Result<()> {
     emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
     xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
     xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");
-
-    /*     println!("Parsed program: {:#?}", parsed_program);
-     */
     let zig_code =
         transpiler::transpile(&parsed_program, &mut ctx, &sister_transp).map_err(|e| {
             baci_transp_error(&e);
@@ -209,3 +215,20 @@ println!(
     "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
 );
  */
+
+pub fn validate_top_level_expr(expr: &mut Expr) -> Result<(), String> {
+    if let Expr::FunctionCall {
+        name,
+        return_type: Some(t),
+        ..
+    } = expr
+    {
+        if *t != Type::Void {
+            return Err(format!(
+                "Funksiya '{}' bir dəyər qaytarır ({:?}), amma nəticə istifadə olunmur. Onu dəyişənə mənimsətməlisiniz.",
+                name, t
+            ));
+        }
+    }
+    Ok(())
+}

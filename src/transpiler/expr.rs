@@ -1,11 +1,10 @@
 use crate::array_methods::transpile_list_method_call;
 use crate::context::TranspileContext;
 use crate::declaration::transpile_constant_decl;
-use crate::function::{transpile_function_call, transpile_function_def};
+use crate::function::{is_semicolon_needed, transpile_function_call, transpile_function_def};
 use crate::lexer::Token;
 use crate::r#loop::transpile_loop;
 use crate::parser::ast::{EnumDecl, Type};
-use crate::parser::types::get_type;
 use crate::parser::{Expr, ast::BuiltInFunction};
 use crate::string_methods::transpile_string_method_call;
 use crate::transpiler::declaration::transpile_mutable_decl;
@@ -40,6 +39,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
 
         Expr::EnumDecl(EnumDecl { name, variants }) => {
+            ctx.enum_defs.insert(name.clone(), variants.clone());
             let variants_code = variants
                 .iter()
                 .map(|v| format!("    {},", v))
@@ -134,6 +134,12 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             methods,
         } => {
             let old_struct = ctx.current_struct.clone();
+
+            ctx.enum_defs.insert(
+                name.clone(),
+                fields.iter().map(|(fname, _)| fname.clone()).collect(),
+            );
+
             ctx.current_struct = Some(name.clone());
             let field_lines: Vec<String> = fields
                 .iter()
@@ -146,8 +152,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             let method_lines: Vec<String> = methods
                 .iter()
                 .map(|(method_name, params, body, return_type)| {
-                    let uses_self = body.iter().any(|expr| contains_self(expr));
-
+                    let uses_self = true;
                     let param_list: Vec<String> = params
                         .iter()
                         .filter(|p| p.name != "self") // self ayrıca işlənəcək
@@ -183,7 +188,14 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                         format!("    pub fn {}({}) {} {{", method_name, all_params, ret_type);
                     let body_lines: Vec<String> = body
                         .iter()
-                        .filter_map(|expr| transpile_expr(expr, ctx).ok())
+                        .filter_map(|expr| {
+                            let line = transpile_expr(expr, ctx).ok()?;
+                            if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
+                                Some(format!("{};", line))
+                            } else {
+                                Some(line)
+                            }
+                        })
                         .map(|line| format!("        {}", line))
                         .collect();
                     format!("{}\n{}\n    }}", header, body_lines.join("\n"))
@@ -200,16 +212,26 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         Expr::StructInit { name, args } => {
             let mut field_lines = Vec::new();
 
+            // 💡 Burada ctx-yə immutable giriş veririk və dərhal bağlayırıq
+            let struct_fields = ctx.enum_defs.get(name).unwrap().clone();
+
             for (i, arg_expr) in args.iter().enumerate() {
+                // 💡 İndi ctx-ni mutable kimi verə bilərik
                 let value_code = transpile_expr(arg_expr, ctx)?;
-                field_lines.push(format!(".field_{} = {}", i, value_code));
+
+                let field_name = struct_fields
+                    .get(i)
+                    .map(|s| s.as_str())
+                    .unwrap_or("unknown");
+
+                field_lines.push(format!(".{} = {}", field_name, value_code));
             }
 
             let body = field_lines.join(", ");
-            Ok(format!("{}{{ {} }}", name, body))
+            Ok(format!("{}{{ {} }};", name, body))
         }
 
-        Expr::FieldAccess { target, field } => {
+        Expr::FieldAccess { target, field, .. } => {
             let target_code = transpile_expr(target, ctx)?;
             Ok(format!("{}.{}", target_code, field))
         }
@@ -349,7 +371,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         Expr::BuiltInCall {
             func,
             args,
-            resolved_type: _,
+            resolved_type,
         } => match func {
             BuiltInFunction::Print => transpile_builtin_print(&args[0], ctx),
             BuiltInFunction::Sum => transpile_builtin_sum(&args, ctx),
@@ -453,7 +475,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             args,
             resolved_params,
             return_type,
-        } => transpile_function_call(name, args, resolved_params, return_type.clone(), ctx),
+        } => transpile_function_call(name, args, return_type.clone(), ctx),
 
         Expr::List(items) => {
             let items_code: Result<Vec<String>, String> =
@@ -463,13 +485,34 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         }
 
         Expr::String(s) => Ok(format!("\"{}\"", s.escape_default())),
-        Expr::VariableRef { name, .. } => Ok(name.clone()),
+        Expr::VariableRef { name, symbol } => {
+            //name = "Qirmizi"
+
+            if ctx
+                .enum_defs
+                .values()
+                .any(|variants| variants.contains(name))
+            {
+                Ok(format!(".{}", name))
+            } else {
+                if let Some(sym) = symbol {
+                    if sym.is_pointer {
+                        Ok(format!("{}.*", name))
+                    } else {
+                        Ok(format!("{}", name))
+                    }
+                } else {
+                    Ok(format!("{}", name))
+                }
+            }
+        }
         Expr::FunctionDef {
             name,
             params,
             body,
             return_type,
-        } => transpile_function_def(name, params, body, return_type.clone(), ctx),
+            parent,
+        } => transpile_function_def(name, params, body, return_type, parent, ctx),
     }
 }
 

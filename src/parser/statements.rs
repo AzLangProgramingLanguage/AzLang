@@ -1,21 +1,13 @@
-use crate::{
-    context::TranspileContext,
-    parser::{
-        function::parse_function_def,
-        if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
-        object::parse_struct_def,
-        types::get_type,
-    },
+use crate::parser::{
+    function::parse_function_def,
+    if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
+    object::parse_struct_def,
 };
 
 use super::{Expr, Parser, Token}; // Token və Expr-i super (parser/mod.rs) vasitəsilə import edirik
 
 // Dəyişən elanlarını emal edir (dəyişən a:ədəd = 10; kimi)
-pub fn parse_variable_declaration(
-    parser: &mut Parser,
-    kind: &str,
-    ctx: &mut TranspileContext,
-) -> Result<Option<Expr>, String> {
+pub fn parse_variable_declaration(parser: &mut Parser, kind: &str) -> Result<Option<Expr>, String> {
     let name = match parser.next() {
         Some(Token::Identifier(name)) => name.clone(),
         other => {
@@ -25,13 +17,8 @@ pub fn parse_variable_declaration(
             ));
         }
     };
-    if parser.declared_variables.contains(&name) {
-        return Err(format!("Dəyişən '{}' artıq əvvəl təyin olunub", name));
-    }
-    parser.declared_variables.insert(name.clone());
 
-    parser.used_variables.insert(name.clone());
-    let mut typ = match parser.peek() {
+    let typ = match parser.peek() {
         Some(Token::Colon) => {
             parser.next(); // ':' consume
             Some(parser.parse_type()?)
@@ -49,14 +36,9 @@ pub fn parse_variable_declaration(
         }
     }
 
-    let value_expr = parser.parse_expression(ctx)?; // Parser metodunu çağırırıq
+    let value_expr = parser.parse_expression()?; // Parser metodunu çağırırıq
 
     // ✨ Əgər istifadəçi tip göstərməyibsə, biz `value_expr`-dən onu təxminləyirik
-    if typ.is_none() {
-        if let Some(inferred_type) = get_type(&value_expr, &ctx) {
-            typ = Some(inferred_type);
-        }
-    }
 
     match kind {
         "mutable_decl" => Ok(Some(Expr::MutableDecl {
@@ -75,10 +57,7 @@ pub fn parse_variable_declaration(
 
 // Bu, proqramımızdakı "sətr"lər, yəni ifadələrdir
 
-pub fn parse_statement(
-    parser: &mut Parser,
-    ctx: &mut TranspileContext,
-) -> Result<Option<Expr>, String> {
+pub fn parse_statement(parser: &mut Parser) -> Result<Option<Expr>, String> {
     while let Some(token) = parser.peek() {
         match token {
             Token::Newline | Token::Semicolon => {
@@ -108,42 +87,39 @@ pub fn parse_statement(
                 Token::ConstantDecl => "constant_decl",
                 _ => unreachable!(),
             };
-            parse_variable_declaration(parser, kind_str, ctx)
+            parse_variable_declaration(parser, kind_str)
         }
         Some(Token::Conditional) => {
             parser.next();
-            parse_if_expr(parser, ctx).map(Some)
+            parse_if_expr(parser).map(Some)
         }
 
         Some(Token::ElseIf) => {
             parser.next();
-            parse_else_if_expr(parser, ctx).map(Some)
+            parse_else_if_expr(parser).map(Some)
         }
         Some(Token::Else) => {
             parser.next();
-            parse_else_expr(parser, ctx).map(Some)
+            parse_else_expr(parser).map(Some)
         }
 
         Some(Token::FunctionDef) => {
             parser.next(); // consume FunctionDef
-            parse_function_def(parser, ctx).map(Some)
+            parse_function_def(parser).map(Some)
         }
         Some(Token::Object) => {
             parser.next();
-            let struct_def = parse_struct_def(parser, ctx)?;
+            let struct_def = parse_struct_def(parser)?;
             Ok(Some(struct_def))
         }
         Some(Token::EOF) => Ok(None),
-        _ => parse_expression_as_statement(parser, ctx),
+        _ => parse_expression_as_statement(parser),
     }
 }
 
 // parse_expression-dan gələn dəyəri sadəcə ifadə kimi emal edir
-pub fn parse_expression_as_statement(
-    parser: &mut Parser,
-    ctx: &mut TranspileContext,
-) -> Result<Option<Expr>, String> {
-    let expr = parser.parse_expression(ctx)?;
+pub fn parse_expression_as_statement(parser: &mut Parser) -> Result<Option<Expr>, String> {
+    let expr = parser.parse_expression()?;
     record_variable_usage(&expr, &mut parser.used_variables);
 
     Ok(Some(expr))

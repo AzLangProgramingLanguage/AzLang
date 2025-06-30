@@ -1,16 +1,40 @@
-use crate::context::{Parameter, Symbol, TranspileContext};
-use crate::helper::{find_used_outer_mutable_vars, validate_decl};
+use crate::helper::validate_decl;
 use crate::lexer::Token;
 use crate::parser::Expr;
 use crate::parser::ast::{BuiltInFunction, EnumDecl, TemplateChunk, Type};
 use crate::parser::types::get_type;
+use crate::{FunctionInfo, Parameter, Symbol, ValidatorContext};
 
 pub fn validate_expr(
     expr: &mut Expr,
-    ctx: &mut TranspileContext,
+    ctx: &mut ValidatorContext,
     message: &mut dyn FnMut(&str),
 ) -> Result<(), String> {
     match expr {
+        Expr::StructDef {
+            name,
+            fields,
+            methods,
+        } => {
+            message(&format!("Struktur elan edilir: '{}'", name));
+
+            // Eyni adda struktur varsa, xəta qaytar
+            if ctx.struct_defs.contains_key(name) {
+                return Err(format!("Struktur '{}' artıq mövcuddur", name));
+            }
+            ctx.struct_defs
+                .insert(name.to_string(), (fields.to_vec(), methods.to_vec()));
+            for (method_name, params, body, ret_type) in methods.iter_mut() {
+                ctx.current_struct = Some(name.clone());
+
+                for expr in body {
+                    validate_expr(expr, ctx, message)?;
+                }
+
+                ctx.current_struct = None;
+            }
+            // Sadəcə sahələri yadda saxlayırıq — metodları ayrıca saxlamaq istəmirsənsə
+        }
         Expr::EnumDecl(EnumDecl { name, variants }) => {
             message(&format!("Enum tərifi yoxlanılır: '{}'", name));
 
@@ -98,12 +122,39 @@ pub fn validate_expr(
             }
         }
 
+        Expr::VariableRef { name, symbol } => {
+            message(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
+            if let Some((_level, found_symbol)) = ctx.lookup_variable_scoped(name) {
+                println!(" Symbooooooool {:?} ", found_symbol);
+                *symbol = Some(found_symbol); // 🧠 AST zənginləşdirilir!
+            } else {
+                // Enum variant olub olmadığını yoxla
+                let mut found_in_enum = false;
+                for (_enum_name, variants) in &ctx.enum_defs {
+                    if variants.contains(name) {
+                        found_in_enum = true;
+                        break;
+                    }
+                }
+
+                if !found_in_enum {
+                    let msg = format!("Dəyişən '{}' istifadə olunmadan əvvəl elan edilməyib", name);
+                    message(&msg);
+                } else {
+                }
+            }
+        }
+
+        Expr::String(_) | Expr::Bool(_) | Expr::Number(_) => {}
+
         Expr::ConstantDecl { name, typ, value } => {
-            validate_decl(name, typ, value, false, ctx, message)?;
+            let resolved_type = validate_decl(name, typ, value, false, ctx, message)?;
+            *typ = Some(resolved_type);
         }
 
         Expr::MutableDecl { name, typ, value } => {
-            validate_decl(name, typ, value, true, ctx, message)?;
+            let resolved_type = validate_decl(name, typ, value, true, ctx, message)?;
+            *typ = Some(resolved_type);
         }
 
         Expr::Assignment {
@@ -132,26 +183,9 @@ pub fn validate_expr(
             }
 
             // ✅ AST içində symbol-u güncəllə
-            *symbol = Some(sym.clone());
+            *symbol = Some(sym);
 
             validate_expr(value, ctx, message)?;
-        }
-
-        Expr::StructDef {
-            name,
-            fields,
-            methods,
-        } => {
-            message(&format!("Struktur elan edilir: '{}'", name));
-
-            // Eyni adda struktur varsa, xəta qaytar
-            if ctx.struct_defs.contains_key(name) {
-                return Err(format!("Struktur '{}' artıq mövcuddur", name));
-            }
-
-            // Sadəcə sahələri yadda saxlayırıq — metodları ayrıca saxlamaq istəmirsənsə
-            ctx.struct_defs
-                .insert(name.clone(), (fields.clone(), methods.clone()));
         }
 
         Expr::StructInit { name, args } => {
@@ -201,12 +235,15 @@ pub fn validate_expr(
             }
         }
 
-        Expr::FieldAccess { target, field } => {
+        Expr::FieldAccess {
+            target,
+            field,
+            resolved_type,
+        } => {
             validate_expr(target, ctx, message)?;
-
+            println!("Current_struct {:?} ", ctx.current_struct);
             let target_type = get_type(target, ctx)
                 .ok_or_else(|| "FieldAccess üçün tip təyin edilə bilmədi".to_string())?;
-
             let struct_name = if let Type::Istifadeci(name) = target_type {
                 name
             } else {
@@ -218,9 +255,9 @@ pub fn validate_expr(
                 .get(&struct_name)
                 .ok_or_else(|| format!("Struktur '{}' tapılmadı", struct_name))?;
 
-            let found = struct_fields.iter().any(|(f, _)| f == field);
-
-            if !found {
+            if let Some((_fname, typ)) = struct_fields.iter().find(|(f, _)| f == field) {
+                *resolved_type = typ.clone();
+            } else {
                 return Err(format!(
                     "'{}' strukturu sahəyə sahib deyil: '{}'",
                     struct_name, field
@@ -348,95 +385,104 @@ pub fn validate_expr(
         Expr::FunctionCall {
             name,
             args,
-            resolved_params,
             return_type,
+            ..
         } => {
             message(&format!("Funksiya çağırışı yoxlanılır: {}", name));
-
-            // Funksiyanı konteksdən tap
             let func = ctx
                 .lookup_function(name)
                 .ok_or_else(|| format!("Funksiya tapılmadı: '{}'", name))?;
 
-            println!("Func: {:?}", func);
+            if func.parameters.len() != args.len() {
+                return Err(format!(
+                    "Funksiya '{}' üçün {} arqument gözlənilirdi, amma {} verildi.",
+                    name,
+                    func.parameters.len(),
+                    args.len()
+                ));
+            }
 
-            // Pointer parametrlər üçün avtomatik dəyişən axtarışı
-            for param in &func.parameters {
+            for arg in args.iter_mut() {
+                println!("FunctionCall arg: {:?}", arg);
+                validate_expr(arg, ctx, message)?;
+                println!("After validate_expr: {:?}", arg); //After validate_expr: VariableRef { name: "b", symbol: Some(Symbol { typ: Integer, is_mutable: true, is_used: false, is_pointer: false, source_location: None }) }
+            }
+
+            for (param, arg) in func.parameters.iter().zip(args.iter_mut()) {
                 if param.is_pointer {
-                    // Əgər artıq args-da varsa keç
-                    if args.iter().any(
-                        |arg| matches!(arg, Expr::VariableRef { name: n, .. } if n == &param.name),
-                    ) {
-                        continue;
+                    if let Expr::VariableRef {
+                        symbol: Some(sym), ..
+                    } = arg
+                    {
+                        sym.is_pointer = true;
                     }
-                    // Kontekstdən həmin dəyişəni tap
                 }
             }
-
-            // Artıq `args` doludur → onları yoxlayırıq
-            for arg in args.iter_mut() {
-                validate_expr(arg, ctx, message)?;
-            }
-
-            *resolved_params = func.parameters.clone(); // funksiya parametrləri ilə eşlə
-            *return_type = func.return_type.clone(); // geri dönüş tipini də təyin et
+            println!("function returned type: {:?}", func.return_type);
+            *return_type = func.return_type;
         }
 
         Expr::FunctionDef {
             name,
             params,
             body,
-            return_type: _,
+            return_type,
+            parent,
         } => {
             message(&format!("Funksiya tərifi: {}", name));
-            // 💡 Əvvəlcə scope daxilində olmayan `mutable` dəyişənləri tapırıq:
-            let outer_used_vars = find_used_outer_mutable_vars(body, ctx);
-
-            for outer_name in outer_used_vars {
-                // Əgər artıq parametr siyahısında varsa, atla
-                if params.iter().any(|p| p.name == outer_name) {
-                    continue;
-                }
-
-                if let Some((_level, symbol)) = ctx.lookup_variable_scoped(&outer_name) {
-                    if symbol.is_mutable {
-                        params.push(Parameter {
-                            name: outer_name.clone(),
-                            typ: symbol.typ.clone(),
-                            is_mutable: true,
-                            is_pointer: true,
-                        });
-                    }
-                }
+            ctx.current_function = Some(name.clone());
+            if parent.is_some() {
+                return Err(format!(
+                    "Funksiya '{}' içərisində başqa funksiya təyin etmək qadağandır. Onu xaricdə təyin edin.",
+                    name
+                ));
             }
+
+            // 💡 Scope xaricindəki mut dəyişənləri pointer kimi əlavə et
 
             ctx.push_scope();
 
-            // ✅ Parametrləri kontekstə tanıt
-            for param in params.iter() {
+            // Parametrləri kontekstə tanıt
+            for param in params.iter_mut() {
                 message(&format!(
-                    "Parametr əlavə edilir: {}: {:?}",
+                    "Parametr yoxlanır: {}: {:?}",
                     param.name, param.typ
                 ));
 
+                param.is_pointer = param.is_mutable;
                 let symbol = Symbol {
                     typ: param.typ.clone(),
                     is_mutable: param.is_mutable,
                     is_used: false,
-                    is_pointer: true,
+                    is_pointer: param.is_mutable,
                     source_location: None,
                 };
 
                 ctx.declare_variable(param.name.clone(), symbol);
             }
-
             for stmt in body.iter_mut() {
                 validate_expr(stmt, ctx, message)?;
             }
-            ctx.update_function_body_and_params(name, params.clone(), body.clone());
+
+            *return_type = if let Some(ret_expr) = &ctx.current_return {
+                get_type(ret_expr, ctx)
+            } else {
+                Some(Type::Void)
+            };
+            ctx.declare_function(FunctionInfo {
+                name: name.to_string(),
+                parameters: params.clone(),
+                body: Some(body.clone()),
+                return_type: return_type.clone(),
+                scope_level: 0,
+                is_public: false,
+                parent: None,
+            });
 
             ctx.pop_scope();
-            return Ok(());
+
+            ctx.current_function = None;
+            ctx.current_return = None
         }
 
         Expr::Loop {
@@ -479,7 +525,12 @@ pub fn validate_expr(
 
         Expr::Return(expr) => {
             message("Dəmir Əmi return ifadəsini yoxlayır...");
-            validate_expr(expr, ctx, message)?;
+            if let Some(_) = &ctx.current_function {
+                validate_expr(expr, ctx, message);
+                ctx.current_return = Some(*expr.clone())
+            } else {
+                return Err("Funksiya yoxdur".to_string());
+            }
         }
 
         Expr::List(items) => {
@@ -526,31 +577,6 @@ pub fn validate_expr(
             validate_expr(target, ctx, message)?;
             validate_expr(index, ctx, message)?;
         }
-
-        Expr::VariableRef { name, symbol } => {
-            message(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
-
-            if let Some((_level, found_symbol)) = ctx.lookup_variable_scoped(name) {
-                *symbol = Some(found_symbol); // 🧠 AST zənginləşdirilir!
-            } else {
-                // Enum variant olub olmadığını yoxla
-                let mut found_in_enum = false;
-                for (_enum_name, variants) in &ctx.enum_defs {
-                    if variants.contains(name) {
-                        found_in_enum = true;
-                        break;
-                    }
-                }
-
-                if !found_in_enum {
-                    let msg = format!("Dəyişən '{}' istifadə olunmadan əvvəl elan edilməyib", name);
-                    message(&msg);
-                } else {
-                }
-            }
-        }
-
-        Expr::String(_) | Expr::Bool(_) | Expr::Number(_) => {}
     }
 
     Ok(())
@@ -560,7 +586,7 @@ fn validate_method_call(
     target_type: &Type,
     method: &str,
     args: &[Expr],
-    ctx: &TranspileContext,
+    ctx: &ValidatorContext,
 ) -> Result<(), String> {
     match target_type {
         Type::Metn | Type::Siyahi(_) => {

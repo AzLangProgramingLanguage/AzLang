@@ -35,8 +35,7 @@ pub fn generate_main_body(program: &Program, ctx: &mut TranspileContext) -> Resu
         } else {
             line
         };
-
-        body.push_str("    ");
+        body.push_str("   ");
         body.push_str(&line);
         body.push('\n');
     }

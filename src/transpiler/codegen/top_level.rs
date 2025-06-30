@@ -16,9 +16,10 @@ pub fn generate_top_level_defs(
             params,
             body,
             return_type,
+            parent,
         } = expr
         {
-            let def = transpile_function_def(name, params, body, return_type.clone(), ctx)?;
+            let def = transpile_function_def(name, params, body, return_type, parent, ctx)?;
             code.push_str(&def);
             code.push_str("\n\n");
         }

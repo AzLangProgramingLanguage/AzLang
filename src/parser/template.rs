@@ -1,13 +1,9 @@
 use crate::{
-    context::TranspileContext,
     lexer::Token,
     parser::{Expr, Parser, ast::TemplateChunk, expressions::parse_expression},
 };
 
-pub fn parse_template_string_expr(
-    parser: &mut Parser,
-    ctx: &mut TranspileContext,
-) -> Result<Expr, String> {
+pub fn parse_template_string_expr(parser: &mut Parser) -> Result<Expr, String> {
     let mut chunks = Vec::new();
 
     loop {
@@ -30,7 +26,7 @@ pub fn parse_template_string_expr(
                 }
 
                 // İfadəni parse et
-                let expr = parse_expression(parser, false, ctx)?;
+                let expr = parse_expression(parser, false)?;
                 chunks.push(TemplateChunk::Expr(Box::new(expr)));
 
                 // } işarəsini yoxla

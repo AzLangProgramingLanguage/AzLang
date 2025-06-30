@@ -22,7 +22,7 @@ pub fn transpile_mutable_decl(
         .ok_or_else(|| format!("Tip təyin olunmayıb: '{}'", name))?;
 
     // Enum variantı kimi istifadə olunubsa
-    if let Type::Istifadeci(enum_name) = typ {
+    /*    if let Type::Istifadeci(enum_name) = typ {
         if ctx.enum_defs.contains_key(enum_name) {
             if let Expr::VariableRef {
                 name: variant_name, ..
@@ -31,7 +31,7 @@ pub fn transpile_mutable_decl(
                 return Ok(format!("var {} = {}.{};", name, enum_name, variant_name));
             }
         }
-    }
+    } */
 
     let decl_code = match typ {
         Type::Metn => {
@@ -85,14 +85,9 @@ pub fn transpile_constant_decl(
     // Təyin olunmuşsa onu götür, əks halda mövcud kontekstdən tip çıxart
     let inferred_type = match typ {
         Some(t) => t.clone(),
-        None => ctx
-            .lookup_variable_scoped(name)
-            .map(|(_, sym)| sym.typ)
-            .ok_or_else(|| format!("Tip kontekstdə tapılmadı: '{}'", name))?,
+        None => Type::Metn,
     };
 
-    // Əgər bu bir enum dəyişənidirsə və variant varsa onu ayrıca formatla
-    // Əgər dəyər siyahıdırsa onu ayrıca formatla
     if let Expr::List(items) = value {
         let items_code: Result<Vec<String>, String> =
             items.iter().map(|item| transpile_expr(item, ctx)).collect();
@@ -141,7 +136,7 @@ fn is_input_expr(expr: &Expr) -> Option<&[Expr]> {
 }
 pub fn transpile_special_case(
     name: &str,
-    _typ: &Option<Type>,
+    typ: &Option<Type>,
     value: &Expr,
     ctx: &mut TranspileContext,
     is_mutable: bool,
@@ -198,7 +193,16 @@ const {name} = {result_var}.parts[0..{result_var}.len];"#,
 
             return Some(Ok(result_code));
         }
-    }
+    } /* else if let Some(Type::Istifadeci(enum_name)) = typ {
+    let value_code = match transpile_expr(value, ctx) {
+    Ok(code) => code,
+    Err(e) => return Some(Err(e)),
+    };
+    return Some(Ok(format!(
+    "const {} = {}.{};",
+    name, enum_name, value_code
+    )));
+    } */
 
     None
 }

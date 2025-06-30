@@ -1,6 +1,6 @@
 use super::{Parser, Token};
 use crate::{
-    context::TranspileContext,
+    ValidatorContext,
     parser::{
         Expr,
         ast::{BuiltInFunction, Type},
@@ -37,7 +37,7 @@ pub fn parse_type(parser: &mut Parser) -> Result<Type, String> {
     Ok(base)
 }
 
-pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
+pub fn get_type(expr: &Expr, ctx: &ValidatorContext) -> Option<Type> {
     match expr {
         Expr::Index { target, .. } => {
             let target_type = get_type(target, ctx)?;
@@ -90,7 +90,7 @@ pub fn get_type(expr: &Expr, ctx: &TranspileContext) -> Option<Type> {
             }
         }
 
-        Expr::FieldAccess { target, field } => {
+        Expr::FieldAccess { target, field, .. } => {
             if let Some(Type::Istifadeci(struct_name)) = get_type(target, ctx) {
                 if let Some((fields, _)) = ctx.struct_defs.get(&struct_name) {
                     for (f_name, f_type) in fields {

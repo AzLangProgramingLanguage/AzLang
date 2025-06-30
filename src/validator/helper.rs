@@ -1,5 +1,5 @@
 use crate::{
-    context::{Symbol, TranspileContext},
+    Symbol, ValidatorContext,
     parser::{Expr, ast::Type, types::get_type},
     validate_expr,
 };
@@ -9,9 +9,9 @@ pub fn validate_decl(
     typ: &Option<Type>,
     value: &mut Expr,
     is_mutable: bool,
-    ctx: &mut TranspileContext,
+    ctx: &mut ValidatorContext,
     message: &mut dyn FnMut(&str),
-) -> Result<(), String> {
+) -> Result<Type, String> {
     message(&format!(
         "{} yaradılır: '{}'",
         if is_mutable { "Dəyişən" } else { "Sabit" },
@@ -66,7 +66,7 @@ pub fn validate_decl(
     ctx.declare_variable(
         name.to_string(),
         Symbol {
-            typ: declared,
+            typ: declared.clone(),
             is_mutable,
             is_used: false,
             is_pointer: false,
@@ -74,32 +74,7 @@ pub fn validate_decl(
         },
     );
 
-    validate_expr(&mut value.clone(), ctx, message)
-}
+    validate_expr(value, ctx, message)?;
 
-pub fn find_used_outer_mutable_vars(body: &[Expr], ctx: &TranspileContext) -> Vec<String> {
-    let mut used = Vec::new();
-
-    fn visit(expr: &Expr, used: &mut Vec<String>, ctx: &TranspileContext) {
-        match expr {
-            Expr::VariableRef { name, .. } | Expr::Assignment { name, .. } => {
-                if let Some((_lvl, symbol)) = ctx.lookup_variable_scoped(name) {
-                    if symbol.is_mutable && !symbol.is_pointer {
-                        used.push(name.clone());
-                    }
-                }
-            }
-            _ => {
-                for child in expr.children() {
-                    visit(child, used, ctx);
-                }
-            }
-        }
-    }
-
-    for expr in body {
-        visit(expr, &mut used, ctx);
-    }
-
-    used
+    Ok(declared)
 }
