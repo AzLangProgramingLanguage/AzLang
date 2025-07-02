@@ -27,6 +27,39 @@ Biz yeni bir proqramlaşdırma dili təqdim etmirik. Məqsədimiz — **təhlük
 - 🧬 **Transpiler hazırdır** – Lakin bəzi funksiyalar hələ tamamlanmayıb (mətn/siyahı funksiyaları)
 
 ---
+## 🧠 Tip Sistemi
+
+AzLang-in tip sistemi tamamilə avtomatik tip çıxarımı (type inference) ilə işləyir. Tip yazmaq optional olsa da:
+
+    növ (enum), Obyekt və bəzi spesifik hallar üçün tip yazmaq məcburidir.
+
+    Bu, həm oxunaqlılığı, həm də təhlükəsizliyi qoruyur.
+---
+
+## 👥 İcma və Töhfələr
+
+Bu layihə açıq mənbəlidir. Hər bir yardım və fikir dəyərlidir:
+
+    ✨ Yeni sintaksis təklifləri
+
+    🧪 Bug reportlar
+
+    📄 Sənədləşmə dəstəyi
+
+    💻 Kod töhfəsi (Pull Request-lər açıqdır!)
+
+---
+
+## 🛣️ Yol Xəritəsi
+
+✅ Sintaksis Dizaynı
+✅ AST və Parser
+✅ Tip Analizi
+✅ Transpiler
+❌ Optimallasdırma
+❌ Web IDE və playground 
+❌ Rəsmi sənədlər və tutorial 📘
+---
 
 ## 🔤 Sintaksisə Baxış
 
@@ -79,3 +112,4 @@ uyğun reng
 sabit ad = giriş("Adınızı girin.")
 sabit yas = Ədəd(giriş("Yaşınızı girin."))
 çap(`Mən ${ad} ${yas} `)
+
