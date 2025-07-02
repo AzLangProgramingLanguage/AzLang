@@ -3,9 +3,9 @@
 > **Python-un sadəliyi**, **Rust-un performansı**, və **TypeScript-in type-safety gücü** ilə hazırlanmış minimalist, güclü və oxunaqlı proqramlaşdırma dili.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="build">
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license">
-  <img src="https://img.shields.io/badge/language-AzLang-purple" alt="language">
+  <img src="https://img.shields.io/badge/build-passing-blue.svg" alt="build">
+  <img src="https://img.shields.io/badge/license-MIT-req.svg" alt="license">
+  <img src="https://img.shields.io/badge/language-AzLang-green.svg" alt="language">
 </p>
 
 ---
