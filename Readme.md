@@ -52,13 +52,20 @@ Bu layihə açıq mənbəlidir. Hər bir yardım və fikir dəyərlidir:
 
 ## 🛣️ Yol Xəritəsi
 
-✅ Sintaksis Dizaynı
-✅ AST və Parser
-✅ Tip Analizi
-✅ Transpiler
-❌ Optimallasdırma
-❌ Web IDE və playground 
-❌ Rəsmi sənədlər və tutorial 📘
+    ✅ Sintaksis Dizaynı
+
+    ✅ AST və Parser
+
+    ✅ Tip Analizi
+
+    ✅ Transpiler
+
+    ❌ Optimallasdırma
+
+    ❌ Web IDE və playground 
+
+    ❌ Rəsmi sənədlər və tutorial 📘
+    
 ---
 
 ## 🔤 Sintaksisə Baxış
