@@ -60,12 +60,14 @@ Bu layihə açıq mənbəlidir. Hər bir yardım və fikir dəyərlidir:
 
     ✅ Transpiler
 
+    ❌ Funksiyonallıq
+
     ❌ Optimallasdırma
 
     ❌ Web IDE və playground 
 
     ❌ Rəsmi sənədlər və tutorial 📘
-    
+
 ---
 
 ## 🔤 Sintaksisə Baxış
