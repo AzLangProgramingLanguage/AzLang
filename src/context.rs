@@ -12,6 +12,7 @@ pub struct TranspileContext {
     pub cleanup_statements: Vec<String>,
     pub used_sum_fn: bool,
     pub used_split_n_fn: bool,
+    pub struct_defs: HashMap<String, Vec<String>>,
     pub used_split_auto_fn: bool,
     pub used_split_alloc_fn: bool,
 }
@@ -27,6 +28,7 @@ impl TranspileContext {
             used_split_alloc_fn: false,
             enum_defs: HashMap::new(),
             cleanup_statements: Vec::new(),
+            struct_defs: HashMap::new(),
             used_sum_fn: false,
             used_split_n_fn: false,
             used_split_auto_fn: false,

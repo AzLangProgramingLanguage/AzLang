@@ -94,7 +94,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                     let block_code = exprs
                         .iter()
                         .filter_map(|e| transpile_expr(e, ctx).ok())
-                        .map(|line| format!("    {}", line))
+                        .map(|line| format!("    {};", line))
                         .collect::<Vec<_>>()
                         .join("\n");
 
@@ -135,10 +135,11 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         } => {
             let old_struct = ctx.current_struct.clone();
 
-            ctx.enum_defs.insert(
+            ctx.struct_defs.insert(
                 name.clone(),
                 fields.iter().map(|(fname, _)| fname.clone()).collect(),
-            );
+            ); //  The application panicked (crashed).
+            //  Message:  called `Option::unwrap()` on a `None` value
 
             ctx.current_struct = Some(name.clone());
             let field_lines: Vec<String> = fields
@@ -213,7 +214,11 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             let mut field_lines = Vec::new();
 
             // 💡 Burada ctx-yə immutable giriş veririk və dərhal bağlayırıq
-            let struct_fields = ctx.enum_defs.get(name).unwrap().clone();
+            let struct_fields = ctx
+                .struct_defs
+                .get(name)
+                .ok_or_else(|| format!("Struct `{}` tapılmadı", name))?
+                .clone();
 
             for (i, arg_expr) in args.iter().enumerate() {
                 // 💡 İndi ctx-ni mutable kimi verə bilərik
@@ -309,7 +314,6 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                 .collect();
             let then_code = then_code?.join("\n    ");
 
-            // transpile each else_branch element (ElseIf or Else)
             let mut else_code = String::new();
             for expr in else_branch {
                 let code = transpile_expr(expr, ctx)?;
@@ -373,7 +377,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             args,
             resolved_type,
         } => match func {
-            BuiltInFunction::Print => transpile_builtin_print(&args[0], ctx),
+            BuiltInFunction::Print => transpile_builtin_print(&args[0], &resolved_type, ctx),
             BuiltInFunction::Sum => transpile_builtin_sum(&args, ctx),
             BuiltInFunction::Number => {
                 if args.len() != 1 {
@@ -387,7 +391,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
             }
 
             BuiltInFunction::LastWord => {
-                let print_code = transpile_builtin_print(&args[0], ctx)?;
+                let print_code = transpile_builtin_print(&args[0], &resolved_type, ctx)?;
                 Ok(format!("{}\n    std.process.exit(0);", print_code))
             }
             BuiltInFunction::Range => transpile_builtin_range(&args, ctx),
@@ -421,6 +425,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
 
         Expr::Bool(b) => Ok(b.to_string()),
         Expr::Number(n) => Ok(n.to_string()),
+        Expr::Float(n) => Ok(n.to_string()),
         Expr::MethodCall {
             target,
             method,

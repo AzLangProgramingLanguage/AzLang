@@ -7,6 +7,7 @@ pub enum Token {
     FunctionDef,
     Underscore,
     Conditional,
+    Float(f64),
     Backtick,
     InterpolationStart,
     InterpolationEnd,

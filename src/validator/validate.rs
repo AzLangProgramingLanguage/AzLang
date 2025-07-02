@@ -124,28 +124,31 @@ pub fn validate_expr(
 
         Expr::VariableRef { name, symbol } => {
             message(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
-            if let Some((_level, found_symbol)) = ctx.lookup_variable_scoped(name) {
-                println!(" Symbooooooool {:?} ", found_symbol);
-                *symbol = Some(found_symbol); // 🧠 AST zənginləşdirilir!
-            } else {
-                // Enum variant olub olmadığını yoxla
-                let mut found_in_enum = false;
-                for (_enum_name, variants) in &ctx.enum_defs {
-                    if variants.contains(name) {
-                        found_in_enum = true;
-                        break;
-                    }
-                }
 
-                if !found_in_enum {
-                    let msg = format!("Dəyişən '{}' istifadə olunmadan əvvəl elan edilməyib", name);
-                    message(&msg);
-                } else {
-                }
+            // Əgər dəyişən scope içində tapılırsa, symbol əlavə olunur
+            if let Some((_level, found_symbol)) = ctx.lookup_variable_scoped(name) {
+                *symbol = Some(found_symbol);
+                return Ok(());
             }
+
+            if name == "self" && ctx.current_struct.is_some() {
+                return Ok(());
+            }
+
+            let is_enum_variant = ctx
+                .enum_defs
+                .values()
+                .any(|variants| variants.contains(name));
+            if !is_enum_variant {
+                return Err(format!(
+                    "'{}' istifadə olunmadan əvvəl elan edilməyib",
+                    name
+                ));
+            }
+            return Ok(());
         }
 
-        Expr::String(_) | Expr::Bool(_) | Expr::Number(_) => {}
+        Expr::String(_) | Expr::Float(_) | Expr::Bool(_) | Expr::Number(_) => {}
 
         Expr::ConstantDecl { name, typ, value } => {
             let resolved_type = validate_decl(name, typ, value, false, ctx, message)?;
@@ -171,15 +174,35 @@ pub fn validate_expr(
             if !sym.is_mutable {
                 return Err(format!("Sabit '{}' dəyişdirilə bilməz", name));
             }
-
-            let value_type = get_type(value, ctx)
-                .ok_or_else(|| format!("{} üçün tip təyin edilə bilmədi", name))?;
-
-            if value_type != sym.typ {
-                return Err(format!(
-                    "Tip uyğunsuzluğu: '{}' üçün {:?} gözlənilirdi, lakin {:?} tapıldı",
-                    name, sym.typ, value_type
-                ));
+            if let Type::Istifadeci(enum_name) = &sym.typ {
+                if let Expr::VariableRef {
+                    name: variant_name, ..
+                } = &**value
+                {
+                    if let Some(variants) = ctx.enum_defs.get(enum_name) {
+                        if variants.contains(variant_name) {
+                            Type::Istifadeci(enum_name.clone());
+                        } else {
+                            return Err(format!(
+                                "'{}' enum tipi üçün variant '{}' mövcud deyil",
+                                enum_name, variant_name
+                            ));
+                        }
+                    } else {
+                        return Err(format!("Enum '{}' tapılmadı", enum_name));
+                    }
+                } else {
+                    return Err("Dəyər enum variantı deyil".to_string());
+                }
+            } else {
+                let value_type = get_type(value, ctx)
+                    .ok_or_else(|| format!("{} üçün tip təyin edilə bilmədi", name))?;
+                if value_type != sym.typ {
+                    return Err(format!(
+                        "Tip uyğunsuzluğu: '{}' üçün {:?} gözlənilirdi, lakin {:?} tapıldı",
+                        name, sym.typ, value_type
+                    ));
+                }
             }
 
             // ✅ AST içində symbol-u güncəllə
@@ -241,7 +264,6 @@ pub fn validate_expr(
             resolved_type,
         } => {
             validate_expr(target, ctx, message)?;
-            println!("Current_struct {:?} ", ctx.current_struct);
             let target_type = get_type(target, ctx)
                 .ok_or_else(|| "FieldAccess üçün tip təyin edilə bilmədi".to_string())?;
             let struct_name = if let Type::Istifadeci(name) = target_type {
@@ -344,13 +366,9 @@ pub fn validate_expr(
         Expr::BuiltInCall {
             func,
             args,
-            resolved_type: _,
+            resolved_type,
         } => {
             message(&format!("Daxili funksiya çağırılır: {:?}", func));
-
-            for arg in args.iter_mut() {
-                validate_expr(arg, ctx, message)?;
-            }
 
             if *func == BuiltInFunction::Sum {
                 if let Some(t) = get_type(&args[0], ctx) {
@@ -363,7 +381,16 @@ pub fn validate_expr(
                         }
                     }
                 }
+            } else if *func == BuiltInFunction::Print {
+                if args.len() != 1 {
+                    return Err("print funksiyası yalnız bir arqument qəbul edir".to_string());
+                }
             }
+            for arg in args.iter_mut() {
+                validate_expr(arg, ctx, message)?;
+            }
+
+            *resolved_type = get_type(&args[0], ctx)
         }
 
         Expr::MethodCall {
@@ -375,7 +402,6 @@ pub fn validate_expr(
             for arg in args.iter_mut() {
                 validate_expr(arg, ctx, message)?;
             }
-            println!("Target: {:?}", target); //Target: VariableRef { name: "adam", symbol: None }
             let target_type = get_type(target, ctx)
                 .ok_or_else(|| "MethodCall üçün tip təyin edilə bilmədi".to_string())?;
 
@@ -403,9 +429,7 @@ pub fn validate_expr(
             }
 
             for arg in args.iter_mut() {
-                println!("FunctionCall arg: {:?}", arg);
                 validate_expr(arg, ctx, message)?;
-                println!("After validate_expr: {:?}", arg); //After validate_expr: VariableRef { name: "b", symbol: Some(Symbol { typ: Integer, is_mutable: true, is_used: false, is_pointer: false, source_location: None }) }
             }
 
             for (param, arg) in func.parameters.iter().zip(args.iter_mut()) {
@@ -418,7 +442,6 @@ pub fn validate_expr(
                     }
                 }
             }
-            println!("function returned type: {:?}", func.return_type);
             *return_type = func.return_type;
         }
 

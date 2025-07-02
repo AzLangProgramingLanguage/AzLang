@@ -1,18 +1,16 @@
 const std = @import("std");
 
-fn salam(ad: []const u8) usize {
-    std.debug.print("Salam, {s}! Xoş gəldin.\n", .{ ad });
+fn salam() usize {
+    std.debug.print("{s}\n", .{"Salam"});
     return 1;
 }
 
 fn artir(c: *usize) usize {
     c.* = (c.* + 1);
-    if ((c.* == 18)) {
-    std.debug.print("{s}\n", .{"Art\u{131}q b\u{f6}y\u{fc}ks\u{259}n!"});
+    if ((c.* == 6)) {
     return c.*;
 }
-else if ((c.* == 17)) {
-    std.debug.print("{s}\n", .{"Bir ya\u{15f}\u{131}n qal\u{131}b b\u{f6}y\u{fc}m\u{259}y\u{259}."});
+else if ((c.* == 7)) {
     return c.*;
 }
     else {
@@ -34,22 +32,47 @@ pub fn input(prompt: []const u8, buf: []u8) ![]u8 {
 
 
 pub fn main() !void {
-   std.debug.print("{}\n", .{1});
+   const a: usize = salam();
+   var b: usize = 5;
+   std.debug.print("{}\n", .{a});
+   for (1..1000) |i| {
+    std.debug.print("{}\n", .{i});
+}
+   const c: usize = artir(&b);
+   std.debug.print("{}\n", .{c});
    const Adam = struct {
     ad: []const u8,
     soyad: []const u8,
     yas: usize,
 
     pub fn qeydi(self: @This()) void {
-        std.debug.print("Mən {s} {s}, {} yaşım var.\n", .{ self.ad, self.soyad, self.yas });
+        std.debug.print("Mən {s} \n", .{ self.ad });
     }
 };
+   const adam: Adam = Adam{ .ad = "Prest", .soyad = "Guliyev", .yas = 17 };
+   adam.qeydi();
+   const Rengler = enum {
+    Qirmizi,
+    Yasil,
+    Qara,
+};
+   const reng: Rengler = .Qirmizi;
+   switch (reng) {
+.Qirmizi => {
+    std.debug.print("{s}\n", .{"Qirmizi"});
+},
+.Yasil => {
+    std.debug.print("{s}\n", .{"Yasil"});
+},
+.Qara => {
+    std.debug.print("{s}\n", .{"Qara"});
+}
+}
    var buf_ad: [100]u8 = undefined;
-const ad: []u8 = try input("Ad\u{131}n\u{131}z\u{131} daxil edin:", &buf_ad);
-   var buf_soyad: [100]u8 = undefined;
-const soyad: []u8 = try input("Soyad\u{131}n\u{131}z\u{131} daxil edin:", &buf_soyad);
+const ad: []u8 = try input("Ad\u{131}n\u{131}z\u{131} girin.", &buf_ad);
    const yas: usize = try std.fmt.parseInt(usize, (blk: {
                 var buf_temp: [100]u8 = undefined;
-                break :blk try input("Ya\u{15f}\u{131}n\u{131}z\u{131} daxil edin:", &buf_temp);
+                break :blk try input("Ya\u{15f}\u{131}n\u{131}z\u{131} girin.", &buf_temp);
             }), 10);
+   std.debug.print("Mən {s} {} \n", .{ ad, yas });
 }

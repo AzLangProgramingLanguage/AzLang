@@ -4,7 +4,6 @@ use crate::{
     parser::{
         Expr,
         ast::{TemplateChunk, Type},
-        types::get_type,
     },
 };
 
@@ -13,6 +12,7 @@ pub fn map_type(typ: &Type, is_const: bool) -> String {
         Type::Integer => "usize".to_string(), // Zig-də təxminən: unsigned native integer
         Type::Any => "any".to_string(),
         Type::Void => "void".to_string(),
+        Type::Float => "f64".to_string(),
         Type::BigInteger => {
             if is_const {
                 "const i128".to_string()
@@ -90,7 +90,11 @@ pub fn transpile_input_var(
     Ok(var_decl)
 }
 
-pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Result<String, String> {
+pub fn transpile_builtin_print(
+    expr: &Expr,
+    resolved_type: &Option<Type>,
+    ctx: &mut TranspileContext,
+) -> Result<String, String> {
     match expr {
         Expr::TemplateString(chunks) => {
             let mut format_parts = String::new();
@@ -103,7 +107,10 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
                     }
                     TemplateChunk::Expr(inner_expr) => {
                         let typ = get_expr_type(inner_expr);
-                        let format_str = typ.map(|t| get_format_str_from_type(&t)).unwrap_or("{s}");
+                        let format_str = typ
+                            .as_ref()
+                            .map(|t| get_format_str_from_type(t))
+                            .unwrap_or("{any}");
 
                         format_parts.push_str(format_str);
 
@@ -127,9 +134,10 @@ pub fn transpile_builtin_print(expr: &Expr, ctx: &mut TranspileContext) -> Resul
         }
 
         _ => {
-            let format_str = get_expr_type(expr)
+            let format_str = resolved_type
+                .as_ref()
                 .map(|t| get_format_str_from_type(&t))
-                .unwrap_or("{s}");
+                .unwrap_or("{any}");
 
             let arg_code = transpile_expr(expr, ctx)?;
 
@@ -229,6 +237,7 @@ pub fn get_format_str_from_type(typ: &Type) -> &'static str {
         Type::Integer | Type::BigInteger | Type::LowInteger => "{}",
         Type::Bool => "{}",
         Type::Char => "{c}",
+        Type::Float => "{d}",
         Type::Void => "",
         Type::Any => "{any}",
         Type::Siyahi(_) => "{any} ", // Siyahıları yazdırmaq istəmirik, amma fallback

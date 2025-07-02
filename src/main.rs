@@ -128,7 +128,7 @@ fn build(input_path: &str) -> Result<()> {
     let mut ctx = TranspileContext::new();
     let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
 
-    // println!("Tokens: {:#?}", tokens);
+    println!("Tokens: {:#?}", tokens);
 
     let mut parser = parser::Parser::new(tokens);
     let mut parsed_program = parser.parse().map_err(|e| {
@@ -149,6 +149,7 @@ fn build(input_path: &str) -> Result<()> {
             eyre!("Validator xətası: {}", e)
         })?;
     }
+    println!("Parser {:#?}", parsed_program);
     emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
     xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
     xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");

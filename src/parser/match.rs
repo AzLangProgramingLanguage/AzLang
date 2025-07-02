@@ -65,6 +65,9 @@ pub fn parse_match_expr(parser: &mut Parser) -> Result<Expr, String> {
             }
 
             Some(Token::EOF) => break,
+            Some(Token::Newline) => {
+                parser.next();
+            }
 
             Some(unexpected) => {
                 return Err(format!(

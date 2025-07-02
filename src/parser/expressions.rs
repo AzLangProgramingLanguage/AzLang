@@ -59,7 +59,11 @@ fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Resul
             parser.next();
             Expr::Number(val)
         }
-
+        Some(Token::Float(val)) => {
+            let val = val.clone();
+            parser.next();
+            Expr::Float(val)
+        }
         Some(Token::ListStart) => {
             parser.next(); // consume '['
             return parse_list(parser);
@@ -225,7 +229,7 @@ fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Resul
                 let field_or_method = if let Some(Token::Identifier(name)) = parser.next() {
                     name.clone()
                 } else {
-                    return Err("Sahə və ya metod adı gözlənilirdi".to_string());
+                    return Err("Sahə və ya metod adı gözlənilirdi".to_string()); //Xatanın yeri burası
                 };
 
                 match parser.peek() {

@@ -26,6 +26,7 @@ pub enum BuiltInFunction {
 pub enum Expr {
     String(String),
     Number(i64),
+    Float(f64),
     Bool(bool),
     Break,
     Continue,
@@ -143,4 +144,5 @@ pub enum Type {
     Char,
     Void,
     Any,
+    Float,
 }

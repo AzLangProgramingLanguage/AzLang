@@ -10,7 +10,6 @@ pub fn parse_struct_def(parser: &mut Parser) -> Result<Expr, String> {
     };
 
     parser.expect(&Token::Newline)?;
-    parser.expect(&Token::Indent)?;
 
     let mut fields = Vec::new();
     let mut methods = Vec::new();
@@ -36,9 +35,15 @@ pub fn parse_struct_def(parser: &mut Parser) -> Result<Expr, String> {
                     parser.next();
                 }
             }
+            Token::Indent => {
+                parser.next();
+            }
 
             Token::Dedent => {
                 parser.next(); // bağlanış
+                break;
+            }
+            Token::EOF => {
                 break;
             }
 

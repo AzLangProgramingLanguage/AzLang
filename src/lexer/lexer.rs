@@ -320,9 +320,14 @@ impl<'a> Lexer<'a> {
 
     fn read_number(&mut self) -> Option<Token> {
         let mut num_str = String::new();
+        let mut has_dot = false;
 
         while let Some(&ch) = self.chars.peek() {
             if ch.is_digit(10) {
+                num_str.push(ch);
+                self.chars.next();
+            } else if ch == '.' && !has_dot {
+                has_dot = true;
                 num_str.push(ch);
                 self.chars.next();
             } else {
@@ -330,7 +335,17 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        num_str.parse().ok().map(Token::Number)
+        if has_dot {
+            match num_str.parse::<f64>() {
+                Ok(f) => Some(Token::Float(f)),
+                Err(_) => None,
+            }
+        } else {
+            match num_str.parse::<i64>() {
+                Ok(n) => Some(Token::Number(n)),
+                Err(_) => None,
+            }
+        }
     }
 
     fn read_operator(&mut self) -> Option<Token> {

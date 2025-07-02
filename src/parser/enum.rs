@@ -17,11 +17,6 @@ pub fn parse_enum_decl(parser: &mut Parser) -> Result<Expr, String> {
         _ => return Err("Yeni sətir gözlənilirdi".to_string()),
     }
 
-    match parser.next() {
-        Some(Token::Indent) => {}
-        _ => return Err("Girinti (indent) gözlənilirdi".to_string()),
-    }
-
     let mut variants = Vec::new();
 
     loop {
@@ -37,6 +32,10 @@ pub fn parse_enum_decl(parser: &mut Parser) -> Result<Expr, String> {
                 parser.next(); // block bitdi
                 break;
             }
+            Some(Token::Indent) => {
+                parser.next();
+            } //TODO: Buna Baxarsan
+            Some(Token::EOF) => break,
             Some(unexpected) => {
                 return Err(format!(
                     "Enum variantında gözlənilməz token: {:?}",

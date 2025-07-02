@@ -1,18 +1,49 @@
-dəyişən a = 5
+funksiya salam()
+    çap("Salam")
+    qaytar 1
+
+sabit a = salam()
+dəyişən b = 5
+çap(a)
+
+gəz aralıq(1, 1000) içində i
+    çap(i)
+
 funksiya artir(dəyişən c: ədəd)
     c = c + 1
-    əgər c == 18
-        çap("Artıq böyüksən!")
+    əgər c == 6
         qaytar c
-    yoxsa c == 17
-        çap("Bir yaşın qalıb böyüməyə.")
+    yoxsa c == 7
         qaytar c
     əks
         qaytar c
-sabit b = artir(a)  // Hər ikisidə eyni nəticə verir
-çap(c)              // 
 
-sabit a = a
+sabit c = artir(b)
+çap(c)
+
+Obyekt Adam
+    ad: mətn
+    soyad: mətn
+    yas: ədəd
+    metod qeydi()
+        çap(`Mən ${öz.ad} `)
+
+sabit adam = Adam{"Prest", "Guliyev", 17}
+adam.qeydi()
 
 
+növ Rengler
+    Qirmizi
+    Yasil
+    Qara
 
+sabit reng: Rengler = Qirmizi
+
+uyğun reng
+    Qirmizi -> çap("Qirmizi")
+    Yasil -> çap("Yasil")
+    Qara -> çap("Qara")
+
+sabit ad = giriş("Adınızı girin.")
+sabit yas = Ədəd(giriş("Yaşınızı girin."))
+çap(`Mən ${ad} ${yas} `)

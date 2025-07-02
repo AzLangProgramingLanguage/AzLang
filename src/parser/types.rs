@@ -48,6 +48,7 @@ pub fn get_type(expr: &Expr, ctx: &ValidatorContext) -> Option<Type> {
                 _ => None,
             }
         }
+        Expr::Float(_) => Some(Type::Float),
         Expr::Match(match_expr) => {
             // target tipi yoxlaya bilərsən, lazım olsa
             let _target_type = get_type(&match_expr.target, ctx)?;
