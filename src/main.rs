@@ -5,7 +5,8 @@ pub mod parser;
 pub mod runner;
 pub mod translations;
 pub mod transpiler;
-
+use std::env;
+use std::path::PathBuf;
 pub mod utils;
 pub mod validator;
 use crate::{
@@ -33,12 +34,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// AzLang kodlarını compile edib işə salır
+    /// AzLang kodlarını çevirir.
     Build {
         /// Məs: examples/program.az
         path: String,
     },
-    /// Compile edilmiş output faylını işə sal
+    /// .az faylını işə salır.
     Run {
         /// Məs: output/output
         binary: String,
@@ -118,7 +119,7 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-
+#[allow(hidden_glob_reexports)]
 fn build(input_path: &str) -> Result<()> {
     qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
 
@@ -128,7 +129,7 @@ fn build(input_path: &str) -> Result<()> {
     let mut ctx = TranspileContext::new();
     let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
 
-    println!("Tokens: {:#?}", tokens);
+    /* println!("Tokens: {:#?}", tokens); */
 
     let mut parser = parser::Parser::new(tokens);
     let mut parsed_program = parser.parse().map_err(|e| {
@@ -149,7 +150,7 @@ fn build(input_path: &str) -> Result<()> {
             eyre!("Validator xətası: {}", e)
         })?;
     }
-    println!("Parser {:#?}", parsed_program);
+    /* println!("Parser {:#?}", parsed_program); */
     emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
     xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
     xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");
@@ -164,45 +165,71 @@ fn build(input_path: &str) -> Result<()> {
         "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
     );
 
-    /*     println!("Zig code: {}", zig_code); */
-
-    /*     qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
-    qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
-    emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
-    xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
-
-    xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");
-    sister_transp("Hər şey 0-dan 1-ə keçdi. Çevirdim, çatdırdım, indi sən işlə!");
-    println!(
-        "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
-    ); */
-
-    utils::write_file("output/output.zig", &zig_code)
+    let mut temp_path = env::temp_dir();
+    temp_path.push("azlang_output.zig");
+    utils::write_file(temp_path.to_str().unwrap(), &zig_code)
         .map_err(|e| eyre!("Zig faylı yazıla bilmədi: {}", e))?;
-    if runner::compile_and_run("output/output.zig").is_err() {
+    if runner::build(temp_path.to_str().unwrap(), input_path).is_err() {
         eprintln!("❌ Proqram işləmədi.");
     }
 
     Ok(())
 }
 
-fn run(binary: &str) -> Result<()> {
-    use std::path::Path;
-    use std::process::Command;
+fn run(input_path: &str) -> Result<()> {
+    qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
 
-    let binary_path = Path::new(binary);
-    if !binary_path.exists() {
-        return Err(eyre!("Fayl mövcud deyil: {}", binary));
+    let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
+
+    let syntax = Syntax::load().map_err(|e| eyre!("Syntax xətası!: {}", e))?;
+    let mut ctx = TranspileContext::new();
+    let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
+
+    /* println!("Tokens: {:#?}", tokens); */
+
+    let mut parser = parser::Parser::new(tokens);
+    let mut parsed_program = parser.parse().map_err(|e| {
+        qardas_parse_error(&format!("Parser xətası: {}", e));
+        eyre!("Parser xətası: {}", e)
+    })?;
+    qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
+    emi_validator("Gəlim yoxlayım görüm kodun harasında fırıldaq var.");
+    let mut validator_ctx = ValidatorContext::new();
+    for expr in parsed_program.expressions.iter_mut() {
+        validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator).map_err(|e| {
+            emi_validator_error(&e);
+            eyre!("Validator xətası: {}", e)
+        })?;
+
+        validate_top_level_expr(expr).map_err(|e| {
+            emi_validator_error(&e);
+            eyre!("Validator xətası: {}", e)
+        })?;
     }
+    /* println!("Parser {:#?}", parsed_program); */
+    emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
+    xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
+    xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");
+    let zig_code =
+        transpiler::transpile(&parsed_program, &mut ctx, &sister_transp).map_err(|e| {
+            baci_transp_error(&e);
+            eyre!("Transpilasiya xətası: {}", e)
+        })?;
 
-    let status = Command::new(binary_path).status()?;
-    if !status.success() {
-        eprintln!("⚠️ Proqram icrası zamanı xəta.");
+    sister_transp("Hər şey 0-dan 1-ə keçdi. Çevirdim, çatdırdım, indi sən işlə!");
+    println!(
+        "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
+    );
+    let mut temp_path = env::temp_dir();
+    temp_path.push("azlang_output.zig");
+    utils::write_file(temp_path.to_str().unwrap(), &zig_code)
+        .map_err(|e| eyre!("Zig faylı yazıla bilmədi: {}", e))?;
+    if runner::runner(temp_path.to_str().unwrap()).is_err() {
+        eprintln!("❌ Proqram işləmədi.");
     }
 
     Ok(())
 }
-
 /*
 qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
 qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
