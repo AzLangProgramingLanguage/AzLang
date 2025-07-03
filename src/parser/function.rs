@@ -99,6 +99,7 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
     // Return tipi
     let mut return_type = if parser.peek() == Some(&Token::Colon) {
         parser.next(); // consume `:`
+
         match parser.next() {
             Some(Token::TypeName(t)) => Some(t.clone()),
             other => {
@@ -111,17 +112,13 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
     } else {
         None
     };
-
     // Yeni sətir və girinti
     match parser.next() {
         Some(Token::Newline) => {}
         _ => return Err("Yeni sətir gözlənilirdi".to_string()),
     }
 
-    match parser.next() {
-        Some(Token::Indent) => {}
-        _ => return Err("Girinti gözlənilirdi".to_string()),
-    }
+    let _ = parser.expect(&Token::Indent);
 
     let mut body = Vec::new();
     loop {
@@ -147,9 +144,6 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
     }
 
     // Tip avtomatik çıxarılırsa
-    if return_type.is_none() {
-        return_type = infer_function_return_type(&body, &ValidatorContext::new());
-    }
 
     parser.current_function = prev_function;
 

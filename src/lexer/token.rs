@@ -15,6 +15,7 @@ pub enum Token {
     Object,
     Else,
     This,
+    Timer,
     End,
     Drop,
     TypeName(Type),

@@ -4,6 +4,7 @@ pub fn match_builtin(name: &str) -> Option<(BuiltInFunction, Type)> {
     match name {
         "çap" => Some((BuiltInFunction::Print, Type::Metn)),
         "giriş" => Some((BuiltInFunction::Input, Type::Metn)),
+        "vaxt_al" => Some((BuiltInFunction::Timer, Type::Integer)),
         "Ədəd" => Some((BuiltInFunction::Number, Type::Integer)),
         "cəm" => Some((BuiltInFunction::Sum, Type::Integer)),
         "uzunluq" => Some((BuiltInFunction::Len, Type::Integer)),

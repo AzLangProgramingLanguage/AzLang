@@ -37,5 +37,6 @@
     "arrow_str": "->",
     "range_fn_str": "aralıq",
     "numberfn_str": "Ədəd",
-    "char_str": "simvol"
+    "char_str": "simvol",
+    "time_str": "vaxt_al"
 }

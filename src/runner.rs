@@ -1,16 +1,16 @@
 use std::path::Path;
 use std::process::Command;
 use std::{env, io, path::PathBuf};
-fn get_zig_path() -> PathBuf {
+/* fn get_zig_path() -> PathBuf {
     let exe_path = env::current_exe().unwrap(); // azcli.exe tam yolu
     let bin_dir = exe_path.parent().unwrap(); // .azlang/bin
     bin_dir
         .join("dependencies")
         .join(if cfg!(windows) { "zig.exe" } else { "zig" })
-}
-/*  Development  fn get_zig_path() -> &'static str {
-    return "zig";
 } */
+fn get_zig_path() -> &'static str {
+    return "zig";
+}
 
 pub fn runner(rust_file: &str) -> Result<(), io::Error> {
     println!("🚀 Kompilyasiya uğurla tamamlandı. Proqram başladı:\n");

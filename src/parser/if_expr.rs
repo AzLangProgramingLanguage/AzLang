@@ -153,12 +153,12 @@ pub fn parse_else_if_expr(parser: &mut Parser) -> Result<Expr, String> {
 pub fn parse_else_expr(parser: &mut Parser) -> Result<Expr, String> {
     match parser.next() {
         Some(Token::Newline) => {}
-        other => return Err(format!("Yeni sətir gözlənilirdi, dd  tapıldı: {:?}", other)),
+        other => return Err(format!("Yeni sətir gözlənilirdi,   tapıldı: {:?}", other)),
     }
 
     match parser.next() {
         Some(Token::Indent) => {}
-        other => return Err(format!("Girinti gözlənilirdi, dd tapıldı: {:?}", other)),
+        other => return Err(format!("Girinti gözlənilirdi,  tapıldı: {:?}", other)),
     }
 
     let mut then_branch = Vec::new();
@@ -180,6 +180,7 @@ pub fn parse_else_expr(parser: &mut Parser) -> Result<Expr, String> {
             Some(Token::Newline) => {
                 parser.next();
             }
+
             Some(Token::EOF) => {
                 break;
             }

@@ -379,6 +379,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         } => match func {
             BuiltInFunction::Print => transpile_builtin_print(&args[0], &resolved_type, ctx),
             BuiltInFunction::Sum => transpile_builtin_sum(&args, ctx),
+            BuiltInFunction::Timer => Ok("@intCast(std.time.milliTimestamp());".to_string()),
             BuiltInFunction::Number => {
                 if args.len() != 1 {
                     return Err("Ədəd() funksiyası yalnız 1 arqument qəbul edir".to_string());

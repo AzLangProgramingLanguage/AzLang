@@ -36,6 +36,7 @@ pub struct Syntax {
     pub numberfn_str: String,
     pub range_fn_str: String,
     pub char_str: String,
+    pub time_str: String,
 }
 
 impl Syntax {

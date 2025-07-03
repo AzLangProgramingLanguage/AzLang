@@ -121,7 +121,7 @@ fn main() -> Result<()> {
 }
 #[allow(hidden_glob_reexports)]
 fn build(input_path: &str) -> Result<()> {
-    qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
+    qardas_parse("Başladım kodu yığmağa, hər kəsə salamlar!");
 
     let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
 
@@ -136,8 +136,8 @@ fn build(input_path: &str) -> Result<()> {
         qardas_parse_error(&format!("Parser xətası: {}", e));
         eyre!("Parser xətası: {}", e)
     })?;
-    qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
-    emi_validator("Gəlim yoxlayım görüm kodun harasında fırıldaq var.");
+    qardas_parse("Kodun sintaksisini uğurla anladım, davam edirəm...");
+    emi_validator("Kodun qaydalarını yoxlayıram, diqqətlə...");
     let mut validator_ctx = ValidatorContext::new();
     for expr in parsed_program.expressions.iter_mut() {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator).map_err(|e| {
@@ -151,9 +151,9 @@ fn build(input_path: &str) -> Result<()> {
         })?;
     }
     /* println!("Parser {:#?}", parsed_program); */
-    emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
-    xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
-    xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");
+    emi_validator("Validator tapmadı problem, amma yenə diqqətliyəm.");
+    xala_opti("Kodun optimizasiyası başladı, görüm nə dərəcədə təmizdir.");
+    xala_opti("Optimizasiya tamamlandı! Kod parıldayır, ulduzlar səninlə ⭐");
     let zig_code =
         transpiler::transpile(&parsed_program, &mut ctx, &sister_transp).map_err(|e| {
             baci_transp_error(&e);
@@ -162,7 +162,7 @@ fn build(input_path: &str) -> Result<()> {
 
     sister_transp("Hər şey 0-dan 1-ə keçdi. Çevirdim, çatdırdım, indi sən işlə!");
     println!(
-        "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
+        "\x1b[1;34m[Yığım Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
     );
 
     let mut temp_path = env::temp_dir();
@@ -177,7 +177,7 @@ fn build(input_path: &str) -> Result<()> {
 }
 
 fn run(input_path: &str) -> Result<()> {
-    qardas_parse("Gəlin, kodu yığışdırıram, hamıya salam deyirəm!");
+    qardas_parse("Proqramı işə salıram, uğurlar!");
 
     let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
 
@@ -192,8 +192,8 @@ fn run(input_path: &str) -> Result<()> {
         qardas_parse_error(&format!("Parser xətası: {}", e));
         eyre!("Parser xətası: {}", e)
     })?;
-    qardas_parse("Əla! Kodu didik-didik etdim, amma başa düşdüm!");
-    emi_validator("Gəlim yoxlayım görüm kodun harasında fırıldaq var.");
+    qardas_parse("Kodun sintaksisi yoxlandı, icra üçün hazıram.");
+    emi_validator("İcra öncəsi yoxlamalar davam edir...");
     let mut validator_ctx = ValidatorContext::new();
     for expr in parsed_program.expressions.iter_mut() {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator).map_err(|e| {
@@ -207,16 +207,16 @@ fn run(input_path: &str) -> Result<()> {
         })?;
     }
     /* println!("Parser {:#?}", parsed_program); */
-    emi_validator("Heç bir problem tapmadım... Amma tapacağım günü gözlə!");
-    xala_opti("Kod əlimə keçdi. İndi gör necə parıldayacaq");
-    xala_opti("Əla,Afərin! Səhv yoxdu, məndən sənə beş ulduz ⭐");
+    emi_validator("İcra üçün heç bir problem tapılmadı.");
+    xala_opti("Kod işləməyə hazırdır, başlayıram.");
+    xala_opti("İcra tamamlandı, nəticələri yoxla!");
     let zig_code =
         transpiler::transpile(&parsed_program, &mut ctx, &sister_transp).map_err(|e| {
             baci_transp_error(&e);
             eyre!("Transpilasiya xətası: {}", e)
         })?;
 
-    sister_transp("Hər şey 0-dan 1-ə keçdi. Çevirdim, çatdırdım, indi sən işlə!");
+    sister_transp("Transpilasiya uğurla başa çatdı, proqram işə düşür.");
     println!(
         "\x1b[1;34m[Ailə Komandası 👨‍👩‍👧‍👦]:\x1b[0m Kodun bütün ailə üzvləri tərəfindən yoxlanıldı və sevildi. Halaldı sənə!"
     );

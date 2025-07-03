@@ -1,49 +1,18 @@
-funksiya salam()
-    çap("Salam")
-    qaytar 1
-
-sabit a = salam()
-dəyişən b = 5
-çap(a)
-
-gəz aralıq(1, 1000) içində i
-    çap(i)
-
-funksiya artir(dəyişən c: ədəd)
-    c = c + 1
-    əgər c == 6
-        qaytar c
-    yoxsa c == 7
-        qaytar c
+funksiya factorial(n: ədəd): ədəd
+    əgər n <= 1
+        qaytar 1
     əks
-        qaytar c
+        qaytar n * factorial(n - 1)
 
-sabit c = artir(b)
-çap(c)
+funksiya hesabla(): ədəd
+    dəyişən cemi = 0
+    gəz aralıq(1, 5000000) içində i
+        cemi = cemi + factorial(15) + i
+    qaytar cemi
 
-Obyekt Adam
-    ad: mətn
-    soyad: mətn
-    yas: ədəd
-    metod qeydi()
-        çap(`Mən ${öz.ad} `)
+sabit baslat = vaxt_al()
+sabit netice = hesabla()
+sabit bitir = vaxt_al()
 
-sabit adam = Adam{"Prest", "Guliyev", 17}
-adam.qeydi()
-
-
-növ Rengler
-    Qirmizi
-    Yasil
-    Qara
-
-sabit reng: Rengler = Qirmizi
-
-uyğun reng
-    Qirmizi -> çap("Qirmizi")
-    Yasil -> çap("Yasil")
-    Qara -> çap("Qara")
-
-sabit ad = giriş("Adınızı girin.")
-sabit yas = Ədəd(giriş("Yaşınızı girin."))
-çap(`Mən ${ad} ${yas} `)
+çap(`Cəmi: ${netice}`)
+çap(`Vaxt: ${bitir - baslat} ms`)

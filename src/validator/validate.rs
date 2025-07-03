@@ -370,29 +370,42 @@ pub fn validate_expr(
         } => {
             message(&format!("Daxili funksiya çağırılır: {:?}", func));
 
-            if *func == BuiltInFunction::Sum {
-                if let Some(t) = get_type(&args[0], ctx) {
-                    match t {
-                        Type::Siyahi(inner) if *inner == Type::Integer => {}
-                        _ => {
-                            return Err(
-                                "sum funksiyası yalnız ədəd tipli siyahı qəbul edir".to_string()
-                            );
+            match func {
+                BuiltInFunction::Sum => {
+                    if let Some(t) = get_type(&args[0], ctx) {
+                        match t {
+                            Type::Siyahi(inner) if *inner == Type::Integer => {}
+                            _ => {
+                                return Err("sum funksiyası yalnız ədəd tipli siyahı qəbul edir"
+                                    .to_string());
+                            }
                         }
                     }
                 }
-            } else if *func == BuiltInFunction::Print {
-                if args.len() != 1 {
-                    return Err("print funksiyası yalnız bir arqument qəbul edir".to_string());
+                BuiltInFunction::Print => {
+                    if args.len() != 1 {
+                        return Err("print funksiyası yalnız bir arqument qəbul edir".to_string());
+                    }
                 }
+                BuiltInFunction::Range => {
+                    if args.len() != 2 {
+                        return Err("range funksiyası yalnız 2 arqument qəbul edir".to_string());
+                    }
+                }
+                BuiltInFunction::Timer => {
+                    // Timer üçün xüsusi davranış (validation yoxdur)
+                    *resolved_type = Some(Type::Integer); // ya da özün necə istəyirsənsə
+                    return Ok(());
+                }
+                _ => {}
             }
+
             for arg in args.iter_mut() {
                 validate_expr(arg, ctx, message)?;
             }
 
             *resolved_type = get_type(&args[0], ctx)
         }
-
         Expr::MethodCall {
             target,
             method,
@@ -418,6 +431,8 @@ pub fn validate_expr(
             let func = ctx
                 .lookup_function(name)
                 .ok_or_else(|| format!("Funksiya tapılmadı: '{}'", name))?;
+
+            println!("Funksiya çağırışı yoxlanıldı: {}", name);
 
             if func.parameters.len() != args.len() {
                 return Err(format!(
@@ -461,8 +476,6 @@ pub fn validate_expr(
                 ));
             }
 
-            // 💡 Scope xaricindəki mut dəyişənləri pointer kimi əlavə et
-
             ctx.push_scope();
 
             // Parametrləri kontekstə tanıt
@@ -486,12 +499,24 @@ pub fn validate_expr(
             for stmt in body.iter_mut() {
                 validate_expr(stmt, ctx, message)?;
             }
+            // dbg!(return_type) //Burada Integer gelir
+
+            ctx.declare_function(FunctionInfo {
+                name: name.to_string(),
+                parameters: params.clone(),
+                body: Some(body.clone()),
+                return_type: return_type.clone(),
+                scope_level: 0,
+                is_public: false,
+                parent: None,
+            });
 
             *return_type = if let Some(ret_expr) = &ctx.current_return {
                 get_type(ret_expr, ctx)
             } else {
                 Some(Type::Void)
             };
+
             ctx.declare_function(FunctionInfo {
                 name: name.to_string(),
                 parameters: params.clone(),

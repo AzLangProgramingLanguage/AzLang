@@ -184,6 +184,7 @@ pub fn get_type(expr: &Expr, ctx: &ValidatorContext) -> Option<Type> {
             BuiltInFunction::Len | BuiltInFunction::Number | BuiltInFunction::Sum => {
                 Some(Type::Integer)
             }
+            BuiltInFunction::Timer => Some(Type::Integer),
             BuiltInFunction::LastWord => Some(Type::Metn),
             BuiltInFunction::Input => Some(Type::Metn),
             BuiltInFunction::Range => {
@@ -209,8 +210,6 @@ pub fn get_type(expr: &Expr, ctx: &ValidatorContext) -> Option<Type> {
             if left_type != right_type {
                 return None;
             }
-
-            // Müqayisə operatorları üçün nəticə həmişə `Bool` olur
             let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
             let logic_ops = ["&&", "||"];
             if comparison_ops.contains(&op.as_str()) || logic_ops.contains(&op.as_str()) {

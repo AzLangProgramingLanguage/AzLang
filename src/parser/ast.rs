@@ -20,6 +20,7 @@ pub enum BuiltInFunction {
     Sum,
     Range,
     LastWord,
+    Timer,
 }
 
 #[derive(Debug, Clone)]
