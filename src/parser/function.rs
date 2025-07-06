@@ -1,8 +1,7 @@
 use super::{Expr, Parser, Token};
+use crate::Parameter;
 use crate::parser::ast::Type;
 use crate::parser::statements::parse_statement;
-use crate::parser::types::get_type;
-use crate::{Parameter, ValidatorContext};
 
 pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
     let name = match parser.next() {
@@ -97,7 +96,7 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
     }
 
     // Return tipi
-    let mut return_type = if parser.peek() == Some(&Token::Colon) {
+    let return_type = if parser.peek() == Some(&Token::Colon) {
         parser.next(); // consume `:`
 
         match parser.next() {
@@ -154,24 +153,4 @@ pub fn parse_function_def(parser: &mut Parser) -> Result<Expr, String> {
         return_type,
         parent,
     })
-}
-
-fn infer_function_return_type(body: &[Expr], ctx: &ValidatorContext) -> Option<Type> {
-    let mut return_types = vec![];
-
-    for expr in body {
-        if let Expr::Return(inner) = expr {
-            if let Some(t) = get_type(inner, ctx) {
-                return_types.push(t);
-            }
-        }
-    }
-
-    if return_types.is_empty() {
-        Some(Type::Void)
-    } else if return_types.iter().all(|t| t == &return_types[0]) {
-        Some(return_types[0].clone())
-    } else {
-        Some(Type::Any)
-    }
 }

@@ -1,4 +1,4 @@
-use crate::parser::builtin::match_builtin;
+use crate::lexer::words::match_builtin;
 
 use super::expressions::parse_expression;
 use super::{Expr, Parser, Token};

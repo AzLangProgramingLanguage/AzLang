@@ -11,7 +11,7 @@ pub enum Token {
     Backtick,
     InterpolationStart,
     InterpolationEnd,
-    SiyahiKeyword,
+    Array,
     Object,
     Else,
     This,

@@ -17,6 +17,18 @@ pub fn input(prompt: []const u8, buf: []u8) ![]u8 {
 "#,
         );
     }
+    if ctx.is_find_method {
+        code.push_str(
+            r#"
+fn find_index(list: []const []const u8, value: []const u8) i64 {
+    for (list, 0..) |item, i| {
+        if (std.mem.eql(u8, item, value)) return @intCast(i);
+    }
+    return -1;
+}
+"#,
+        );
+    }
 
     if ctx.used_sum_fn {
         code.push_str(

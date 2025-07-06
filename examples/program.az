@@ -1,18 +1,3 @@
-funksiya factorial(n: ədəd): ədəd
-    əgər n <= 1
-        qaytar 1
-    əks
-        qaytar n * factorial(n - 1)
-
-funksiya hesabla(): ədəd
-    dəyişən cemi = 0
-    gəz aralıq(1, 5000000) içində i
-        cemi = cemi + factorial(15) + i
-    qaytar cemi
-
-sabit baslat = vaxt_al()
-sabit netice = hesabla()
-sabit bitir = vaxt_al()
-
-çap(`Cəmi: ${netice}`)
-çap(`Vaxt: ${bitir - baslat} ms`)
+sabit a = ["Salam", "Xalid", "Xalid", "Xalid"]
+çap(a.axtar("Xalid"))
+çap(a[1])

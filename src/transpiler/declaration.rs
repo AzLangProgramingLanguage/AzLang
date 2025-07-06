@@ -102,10 +102,14 @@ pub fn transpile_constant_decl(
             return if items.is_empty() {
                 Ok(format!("const {} = &[_]{}{{}}", name, inner))
             } else {
-                Ok(format!(
-                    "const {}: {} = &[_]{}{{ {} }}",
-                    name, list_type, inner, items_str
-                ))
+                if let list_type = Type::Siyahi(Box::new(Type::Metn)) {
+                    Ok(format!("const {} = [_]{}{{ {} }}", name, inner, items_str))
+                } else {
+                    Ok(format!(
+                        "const {} = &[_]{}{{ {} }}",
+                        name, list_type, items_str
+                    ))
+                }
             };
         }
 

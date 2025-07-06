@@ -457,7 +457,7 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
                         } => sym.is_mutable,
                         _ => false,
                     };
-                    transpile_list_method_call(&target_code, method, &args_code, is_mutable)
+                    transpile_list_method_call(&target_code, method, &args_code, is_mutable, ctx)
                 }
                 Some(Type::Istifadeci(_)) => {
                     let joined_args = if args_code.is_empty() {

@@ -1,8 +1,11 @@
+use crate::context::TranspileContext;
+
 pub fn transpile_list_method_call(
     target_code: &str,
     method: &str,
     args_code: &[String],
     is_mutable: bool,
+    ctx: &mut TranspileContext,
 ) -> Result<String, String> {
     match method {
         "əlavə_et" => Ok(format!("try {}.append({});", target_code, args_code[0])),
@@ -25,6 +28,10 @@ pub fn transpile_list_method_call(
             } else {
                 Ok(format!("{}.len", target_code))
             }
+        }
+        "axtar" => {
+            ctx.is_find_method = true;
+            Ok(format!(" find_index(&{0}, {1})", target_code, args_code[0]))
         }
         "boşdur" => Ok(format!("{}.is_empty()", target_code)),
         _ => Err("dəstəklənmir".to_string()), // bu hissə parserdə yoxlanacaqsa, buranı da istəsən saxlamaya bilərik.

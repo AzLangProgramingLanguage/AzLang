@@ -1,4 +1,4 @@
-use crate::parser::ast::Type;
+use crate::lexer::words::tokenize_word;
 use crate::translations::syntax::Syntax;
 use std::iter::Peekable;
 use std::str::Chars;
@@ -160,9 +160,9 @@ impl<'a> Lexer<'a> {
                 break;
             }
         }
-
+        Some(tokenize_word(&word))
         // Keyword yoxlamaları
-        if word == self.syntax.return_name {
+        /*    if word == self.syntax.return_name {
             Some(Token::Return)
         } else if word == "_" {
             Some(Token::Underscore)
@@ -232,7 +232,7 @@ impl<'a> Lexer<'a> {
             return Some(Token::String);
         } else {
             Some(Token::Identifier(word))
-        }
+        } */
     }
 
     fn consume_char_and_return(&mut self, token: Token) -> Option<Token> {

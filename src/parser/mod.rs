@@ -6,7 +6,6 @@ use crate::{Symbol, lexer::Token, parser::ast::Type};
 pub use ast::{Expr, Program};
 
 // Digər modulları elan et
-pub mod builtin;
 pub mod call;
 pub mod r#enum;
 pub mod expressions;

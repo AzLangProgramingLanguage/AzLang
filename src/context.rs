@@ -15,6 +15,7 @@ pub struct TranspileContext {
     pub struct_defs: HashMap<String, Vec<String>>,
     pub used_split_auto_fn: bool,
     pub used_split_alloc_fn: bool,
+    pub is_find_method: bool,
 }
 
 impl TranspileContext {
@@ -32,6 +33,7 @@ impl TranspileContext {
             used_sum_fn: false,
             used_split_n_fn: false,
             used_split_auto_fn: false,
+            is_find_method: false,
         }
     }
 

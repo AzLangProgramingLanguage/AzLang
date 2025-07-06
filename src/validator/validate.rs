@@ -3,7 +3,7 @@ use crate::lexer::Token;
 use crate::parser::Expr;
 use crate::parser::ast::{BuiltInFunction, EnumDecl, TemplateChunk, Type};
 use crate::parser::types::get_type;
-use crate::{FunctionInfo, Parameter, Symbol, ValidatorContext};
+use crate::{FunctionInfo, Symbol, ValidatorContext};
 
 pub fn validate_expr(
     expr: &mut Expr,
@@ -24,7 +24,7 @@ pub fn validate_expr(
             }
             ctx.struct_defs
                 .insert(name.to_string(), (fields.to_vec(), methods.to_vec()));
-            for (method_name, params, body, ret_type) in methods.iter_mut() {
+            for (_method_name, _params, body, ret_type) in methods.iter_mut() {
                 ctx.current_struct = Some(name.clone());
 
                 for expr in body {
@@ -574,7 +574,7 @@ pub fn validate_expr(
         Expr::Return(expr) => {
             message("Dəmir Əmi return ifadəsini yoxlayır...");
             if let Some(_) = &ctx.current_function {
-                validate_expr(expr, ctx, message);
+                let _ = validate_expr(expr, ctx, message);
                 ctx.current_return = Some(*expr.clone())
             } else {
                 return Err("Funksiya yoxdur".to_string());
@@ -676,7 +676,7 @@ fn validate_method_call(
                     }
                 }
 
-                "birləşdir" | "böl" => {
+                "birləşdir" | "böl" | "axtar" => {
                     if args.len() != 1 {
                         return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));
                     }

@@ -1,4 +1,3 @@
-use crate::context::TranspileContext;
 use crate::parser::ast::{BuiltInFunction, Type};
 use crate::parser::call::{parse_call_arguments, parse_function_call};
 use crate::parser::r#enum::parse_enum_decl;
@@ -229,12 +228,12 @@ fn parse_primary_expression(parser: &mut Parser, inside_function: bool) -> Resul
                 let field_or_method = if let Some(Token::Identifier(name)) = parser.next() {
                     name.clone()
                 } else {
-                    return Err("Sahə və ya metod adı gözlənilirdi".to_string()); //Xatanın yeri burası
+                    return Err("Sahə və ya metod adı gözlənilirdi".to_string());
                 };
 
                 match parser.peek() {
                     Some(Token::LParen) => {
-                        parser.next(); // consume '('
+                        parser.next();
                         let mut args = Vec::new();
                         loop {
                             match parser.peek() {

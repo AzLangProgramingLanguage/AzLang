@@ -58,6 +58,11 @@ pub struct ValidatorContext {
     pub current_struct: Option<String>,
     pub current_return: Option<Expr>,
 }
+impl Default for ValidatorContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl ValidatorContext {
     pub fn new() -> Self {
         Self {

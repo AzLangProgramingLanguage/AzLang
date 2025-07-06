@@ -6,7 +6,6 @@ pub mod runner;
 pub mod translations;
 pub mod transpiler;
 use std::env;
-use std::path::PathBuf;
 pub mod utils;
 pub mod validator;
 use crate::{
@@ -53,32 +52,28 @@ const XALA_OPTI: &str = "\x1b[32m[Validə Xala Optimizator]:\x1b[0m";
 const SISTER_TRANSP: &str = "\x1b[35m[Kiçik Bacı Tərcüməçi]:\x1b[0m";
 
 fn qardas_parse(msg: &str) {
-    println!("{} {}", QARDAS_PARSE, msg);
+    println!("{QARDAS_PARSE} {msg}");
 }
 
 fn emi_validator(msg: &str) {
-    println!("{} {}", EMI_VALIDATOR, msg);
+    println!("{EMI_VALIDATOR} {msg}");
 }
 
 fn xala_opti(msg: &str) {
-    println!("{} {}", XALA_OPTI, msg);
+    println!("{XALA_OPTI} {msg}");
 }
 
 fn sister_transp(msg: &str) {
-    println!("{} {}", SISTER_TRANSP, msg);
+    println!("{SISTER_TRANSP} {msg}");
 }
 
 fn qardas_parse_error(msg: &str) {
-    eprintln!(
-        "{} Qardaş dedi: \"Dayı, burda iş bitmədi, yenidən bax! Səbəb: {}\"",
-        QARDAS_PARSE, msg
-    );
+    eprintln!("{QARDAS_PARSE} Qardaş dedi: \"Dayı, burda iş bitmədi, yenidən bax! Səbəb: {msg}\"",);
 }
 
 fn emi_validator_error(msg: &str) {
     eprintln!(
-        "{} Əmi xəbər verir: \"Kodun bura gəlməməli idi, bir az tərbiyə lazımdır! Problem: {}\"",
-        EMI_VALIDATOR, msg
+        "{EMI_VALIDATOR} Əmi xəbər verir: \"Kodun bura gəlməməli idi, bir az tərbiyə lazımdır! Problem: {msg}\"",
     );
 }
 
@@ -91,8 +86,7 @@ fn emi_validator_error(msg: &str) {
 
 fn baci_transp_error(msg: &str) {
     eprintln!(
-        "{} Transpilov qardaş: \"Yolda problem çıxdı, sabah səni zig-də gözləyirəm! Detal: {}\"",
-        SISTER_TRANSP, msg
+        "{SISTER_TRANSP} Transpilov qardaş: \"Yolda problem çıxdı, sabah səni zig-də gözləyirəm! Detal: {msg}\"",
     );
 }
 
@@ -133,8 +127,8 @@ fn build(input_path: &str) -> Result<()> {
 
     let mut parser = parser::Parser::new(tokens);
     let mut parsed_program = parser.parse().map_err(|e| {
-        qardas_parse_error(&format!("Parser xətası: {}", e));
-        eyre!("Parser xətası: {}", e)
+        qardas_parse_error(&format!("Parser xətası: {e}"));
+        eyre!("Parser xətası: {e}")
     })?;
     qardas_parse("Kodun sintaksisini uğurla anladım, davam edirəm...");
     emi_validator("Kodun qaydalarını yoxlayıram, diqqətlə...");
@@ -142,12 +136,12 @@ fn build(input_path: &str) -> Result<()> {
     for expr in parsed_program.expressions.iter_mut() {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator).map_err(|e| {
             emi_validator_error(&e);
-            eyre!("Validator xətası: {}", e)
+            eyre!("Validator xətası: {e}")
         })?;
 
         validate_top_level_expr(expr).map_err(|e| {
             emi_validator_error(&e);
-            eyre!("Validator xətası: {}", e)
+            eyre!("Validator xətası: {e}")
         })?;
     }
     /* println!("Parser {:#?}", parsed_program); */
@@ -157,7 +151,7 @@ fn build(input_path: &str) -> Result<()> {
     let zig_code =
         transpiler::transpile(&parsed_program, &mut ctx, &sister_transp).map_err(|e| {
             baci_transp_error(&e);
-            eyre!("Transpilasiya xətası: {}", e)
+            eyre!("Transpilasiya xətası: {e}")
         })?;
 
     sister_transp("Hər şey 0-dan 1-ə keçdi. Çevirdim, çatdırdım, indi sən işlə!");
@@ -189,8 +183,8 @@ fn run(input_path: &str) -> Result<()> {
 
     let mut parser = parser::Parser::new(tokens);
     let mut parsed_program = parser.parse().map_err(|e| {
-        qardas_parse_error(&format!("Parser xətası: {}", e));
-        eyre!("Parser xətası: {}", e)
+        qardas_parse_error(&format!("Parser xətası: {e}"));
+        eyre!("Parser xətası: {e}")
     })?;
     qardas_parse("Kodun sintaksisi yoxlandı, icra üçün hazıram.");
     emi_validator("İcra öncəsi yoxlamalar davam edir...");
@@ -198,12 +192,12 @@ fn run(input_path: &str) -> Result<()> {
     for expr in parsed_program.expressions.iter_mut() {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator).map_err(|e| {
             emi_validator_error(&e);
-            eyre!("Validator xətası: {}", e)
+            eyre!("Validator xətası: {e}")
         })?;
 
         validate_top_level_expr(expr).map_err(|e| {
             emi_validator_error(&e);
-            eyre!("Validator xətası: {}", e)
+            eyre!("Validator xətası: {e}")
         })?;
     }
     /* println!("Parser {:#?}", parsed_program); */
@@ -213,7 +207,7 @@ fn run(input_path: &str) -> Result<()> {
     let zig_code =
         transpiler::transpile(&parsed_program, &mut ctx, &sister_transp).map_err(|e| {
             baci_transp_error(&e);
-            eyre!("Transpilasiya xətası: {}", e)
+            eyre!("Transpilasiya xətası: {e}")
         })?;
 
     sister_transp("Transpilasiya uğurla başa çatdı, proqram işə düşür.");
@@ -253,8 +247,7 @@ pub fn validate_top_level_expr(expr: &mut Expr) -> Result<(), String> {
     {
         if *t != Type::Void {
             return Err(format!(
-                "Funksiya '{}' bir dəyər qaytarır ({:?}), amma nəticə istifadə olunmur. Onu dəyişənə mənimsətməlisiniz.",
-                name, t
+                "Funksiya '{name}' bir dəyər qaytarır ({t:?}), amma nəticə istifadə olunmur. Onu dəyişənə mənimsətməlisiniz."
             ));
         }
     }

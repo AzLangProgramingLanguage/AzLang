@@ -16,7 +16,7 @@ pub fn parse_type(parser: &mut Parser) -> Result<Type, String> {
         Some(Token::BigInteger) => Type::BigInteger,
         Some(Token::LowInteger) => Type::LowInteger,
         Some(Token::String) => Type::Metn,
-        Some(Token::SiyahiKeyword) => {
+        Some(Token::Array) => {
             match parser.next() {
                 Some(Token::Operator(op)) if op == "<" => (),
                 other => return Err(format!("'<' gözlənilirdi, tapıldı: {:?}", other)),
