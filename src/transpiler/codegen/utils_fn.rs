@@ -44,6 +44,41 @@ pub fn sum(comptime T: type, list: []const T) T {
         );
     }
 
+    if ctx.used_max_fn {
+        code.push_str(
+            r#"
+   pub fn max(comptime T: type, list: []const T) T {
+    if (list.len == 0) return 0;
+
+    var max_value: T = list[0];
+    for (list[1..]) |item| {
+        if (item > max_value) {
+            max_value = item;
+        }
+    }
+    return max_value;
+}
+    "#,
+        );
+    }
+    if ctx.used_min_fn {
+        code.push_str(
+            r#"
+   pub fn min(comptime T: type, list: []const T) T {
+    if (list.len == 0) return 0;
+
+    var min_value: T = list[0];
+    for (list[1..]) |item| {
+        if (item < min_value) {
+            min_value = item;
+        }
+    }
+    return min_value;
+}
+    "#,
+        );
+    }
+
     if ctx.used_split_n_fn {
         code.push_str(
             r#"

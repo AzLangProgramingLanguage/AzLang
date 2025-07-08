@@ -1,3 +1,2 @@
-sabit a = ["Salam", "Xalid", "Xalid", "Xalid"]
-çap(a.axtar("Xalid"))
-çap(a[1])
+sabit həsən = [1,2,3,4]
+çap(minimum(həsən))

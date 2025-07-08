@@ -127,7 +127,8 @@ pub fn validate_expr(
 
             // Əgər dəyişən scope içində tapılırsa, symbol əlavə olunur
             if let Some((_level, found_symbol)) = ctx.lookup_variable_scoped(name) {
-                *symbol = Some(found_symbol);
+                *symbol = Some(found_symbol.clone());
+                *name = found_symbol.transpile_name.clone();
                 return Ok(());
             }
 
@@ -151,13 +152,17 @@ pub fn validate_expr(
         Expr::String(_) | Expr::Float(_) | Expr::Bool(_) | Expr::Number(_) => {}
 
         Expr::ConstantDecl { name, typ, value } => {
-            let resolved_type = validate_decl(name, typ, value, false, ctx, message)?;
+            let (resolved_type, resolved_name) =
+                validate_decl(name, typ, value, false, ctx, message)?;
             *typ = Some(resolved_type);
+            *name = resolved_name;
         }
 
         Expr::MutableDecl { name, typ, value } => {
-            let resolved_type = validate_decl(name, typ, value, true, ctx, message)?;
+            let (resolved_type, resolved_name) =
+                validate_decl(name, typ, value, true, ctx, message)?;
             *typ = Some(resolved_type);
+            *name = resolved_name
         }
 
         Expr::Assignment {
@@ -486,12 +491,14 @@ pub fn validate_expr(
                 ));
 
                 param.is_pointer = param.is_mutable;
+
                 let symbol = Symbol {
                     typ: param.typ.clone(),
                     is_mutable: param.is_mutable,
                     is_used: false,
                     is_pointer: param.is_mutable,
                     source_location: None,
+                    transpile_name: param.name.clone(),
                 };
 
                 ctx.declare_variable(param.name.clone(), symbol);
@@ -553,6 +560,7 @@ pub fn validate_expr(
                     is_used: false,
                     is_pointer: false,
                     source_location: None,
+                    transpile_name: var_name.clone(),
                 };
 
                 ctx.declare_variable(var_name.clone(), symbol);
@@ -651,7 +659,6 @@ fn validate_method_call(
                         return Err(format!("{} metodu arqumentsiz olmalıdır", method));
                     }
                 }
-
                 "cəm" | "sum" => {
                     if args.len() != 1 {
                         return Err(format!("{} metodu yalnız 1 arqument qəbul edir", method));

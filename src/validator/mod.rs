@@ -28,6 +28,7 @@ pub struct Symbol {
     pub is_used: bool,
     pub is_pointer: bool,
     pub source_location: Option<Location>,
+    pub transpile_name: String,
 }
 #[derive(Clone, Debug)]
 pub struct FunctionInfo {

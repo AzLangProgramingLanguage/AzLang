@@ -21,6 +21,8 @@ pub enum BuiltInFunction {
     Range,
     LastWord,
     Timer,
+    Max,
+    Min,
 }
 
 #[derive(Debug, Clone)]

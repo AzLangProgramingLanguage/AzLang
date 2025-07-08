@@ -184,6 +184,7 @@ pub fn get_type(expr: &Expr, ctx: &ValidatorContext) -> Option<Type> {
             BuiltInFunction::Len | BuiltInFunction::Number | BuiltInFunction::Sum => {
                 Some(Type::Integer)
             }
+            BuiltInFunction::Max | BuiltInFunction::Min => Some(Type::Integer),
             BuiltInFunction::Timer => Some(Type::Integer),
             BuiltInFunction::LastWord => Some(Type::Metn),
             BuiltInFunction::Input => Some(Type::Metn),

@@ -1,4 +1,6 @@
 use crate::array_methods::transpile_list_method_call;
+use crate::builtinfunctions::max_min::{transpile_builtin_max, transpile_builtin_min};
+use crate::builtinfunctions::print::transpile_builtin_print;
 use crate::context::TranspileContext;
 use crate::declaration::transpile_constant_decl;
 use crate::function::{is_semicolon_needed, transpile_function_call, transpile_function_def};
@@ -8,9 +10,7 @@ use crate::parser::ast::{EnumDecl, Type};
 use crate::parser::{Expr, ast::BuiltInFunction};
 use crate::string_methods::transpile_string_method_call;
 use crate::transpiler::declaration::transpile_mutable_decl;
-use crate::transpiler::utils::{
-    map_type, transpile_builtin_print, transpile_builtin_range, transpile_builtin_sum,
-};
+use crate::transpiler::utils::{map_type, transpile_builtin_range, transpile_builtin_sum};
 pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String, String> {
     match expr {
         Expr::Index { target, index } => {
@@ -379,6 +379,8 @@ pub fn transpile_expr(expr: &Expr, ctx: &mut TranspileContext) -> Result<String,
         } => match func {
             BuiltInFunction::Print => transpile_builtin_print(&args[0], &resolved_type, ctx),
             BuiltInFunction::Sum => transpile_builtin_sum(&args, ctx),
+            BuiltInFunction::Max => transpile_builtin_max(&args, ctx),
+            BuiltInFunction::Min => transpile_builtin_min(&args, ctx),
             BuiltInFunction::Timer => Ok("@intCast(std.time.milliTimestamp());".to_string()),
             BuiltInFunction::Number => {
                 if args.len() != 1 {

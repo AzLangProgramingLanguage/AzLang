@@ -11,7 +11,7 @@ pub fn validate_decl(
     is_mutable: bool,
     ctx: &mut ValidatorContext,
     message: &mut dyn FnMut(&str),
-) -> Result<Type, String> {
+) -> Result<(Type, String), String> {
     message(&format!(
         "{} yaradılır: '{}'",
         if is_mutable { "Dəyişən" } else { "Sabit" },
@@ -62,7 +62,7 @@ pub fn validate_decl(
             name, declared, inferred
         ));
     }
-
+    let transpile_name = sanitize_name(name);
     ctx.declare_variable(
         name.to_string(),
         Symbol {
@@ -71,10 +71,25 @@ pub fn validate_decl(
             is_used: false,
             is_pointer: false,
             source_location: None,
+            transpile_name: transpile_name.clone(),
         },
     );
 
     validate_expr(value, ctx, message)?;
 
-    Ok(declared)
+    Ok((declared, transpile_name))
+}
+
+pub fn sanitize_name(name: &str) -> String {
+    let mut result = String::from("az_");
+
+    for ch in name.chars() {
+        if ch.is_ascii_alphanumeric() || ch == '_' {
+            result.push(ch);
+        } else {
+            result.push_str(&format!("_u{:x}", ch as u32));
+        }
+    }
+
+    result
 }
