@@ -12,8 +12,7 @@ pub fn parse_method(
     let name = parser.next_identifier()?.clone();
 
     parser.expect(&Token::LParen)?;
-    parser.expect(&Token::RParen)?; // Hələlik heç bir parametr, self avtomatikdir
-
+    parser.expect(&Token::RParen)?;
     // Return tipi varsa oxu
     let return_type = if parser.peek() == Some(&Token::Colon) {
         parser.next(); // ':'

@@ -1,13 +1,12 @@
 use crate::lexer::words::tokenize_word;
-use crate::translations::syntax::Syntax;
 use std::iter::Peekable;
+use std::mem;
 use std::str::Chars;
 
 use super::token::Token;
 
 pub struct Lexer<'a> {
     pub chars: Peekable<Chars<'a>>,
-    pub syntax: &'a Syntax,
     token_buffer: Vec<Token>,
     indent_stack: Vec<usize>, // İndentasiya səviyyələrini izləmək üçün
     current_indent: usize,    // Cari sətirin indentasiya səviyyəsi
@@ -16,10 +15,9 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str, syntax: &'a Syntax) -> Self {
+    pub fn new(input: &'a str) -> Self {
         Lexer {
             chars: input.chars().peekable(),
-            syntax,
             token_buffer: Vec::new(),
             indent_stack: vec![0],
             current_indent: 0,
@@ -161,78 +159,6 @@ impl<'a> Lexer<'a> {
             }
         }
         Some(tokenize_word(&word))
-        // Keyword yoxlamaları
-        /*    if word == self.syntax.return_name {
-            Some(Token::Return)
-        } else if word == "_" {
-            Some(Token::Underscore)
-        } else if word == self.syntax.print {
-            Some(Token::Print)
-        } else if word == self.syntax.char_str {
-            Some(Token::TypeName(Type::Char))
-        } else if word == self.syntax.numberfn_str {
-            Some(Token::NumberFn)
-        } else if word == self.syntax.range_fn_str {
-            Some(Token::RangeFn)
-        } else if word == self.syntax.input {
-            Some(Token::Input)
-        } else if word == self.syntax.this_str {
-            Some(Token::This)
-        } else if word == self.syntax.mutable_decl {
-            Some(Token::MutableDecl)
-        } else if word == self.syntax.method_str {
-            Some(Token::Method)
-        } else if word == self.syntax.object_str {
-            Some(Token::Object)
-        } else if word == self.syntax.end_str {
-            Some(Token::End)
-        } else if word == self.syntax.constant_decl {
-            Some(Token::ConstantDecl)
-        } else if word == self.syntax.break_str {
-            Some(Token::Break)
-        } else if word == self.syntax.continue_str {
-            Some(Token::Continue)
-        } else if word == self.syntax.true_str {
-            Some(Token::True)
-        } else if word == self.syntax.false_str {
-            Some(Token::False)
-        } else if word == self.syntax.in_str {
-            Some(Token::In)
-        } else if word == self.syntax.function_def {
-            Some(Token::FunctionDef)
-        } else if word == self.syntax.else_if {
-            Some(Token::ElseIf)
-        } else if word == self.syntax.conditional {
-            Some(Token::Conditional)
-        } else if word == self.syntax._else {
-            Some(Token::Else)
-        } else if word == self.syntax._loop {
-            Some(Token::Loop)
-        } else if word == self.syntax.tipdecl_str {
-            Some(Token::TipDecl)
-        } else if word == self.syntax.match_str {
-            Some(Token::Match)
-        } else if word == self.syntax.arrow_str {
-            Some(Token::Arrow)
-        } else if word == self.syntax.bool {
-            return Some(Token::TypeName(Type::Bool));
-        } else if word == self.syntax.listtype {
-            return Some(Token::SiyahiKeyword);
-        } else if word == self.syntax.biginteger {
-            return Some(Token::TypeName(Type::BigInteger));
-        } else if word == self.syntax.lowinteger {
-            return Some(Token::TypeName(Type::LowInteger));
-        } else if word == self.syntax.string {
-            return Some(Token::TypeName(Type::Metn));
-        } else if word == self.syntax.integer {
-            return Some(Token::TypeName(Type::Integer));
-        } else if self.syntax.is_type_str(&word) {
-            return Some(Token::TypeName(Type::Istifadeci(word)));
-        } else if word == self.syntax.string {
-            return Some(Token::String);
-        } else {
-            Some(Token::Identifier(word))
-        } */
     }
 
     fn consume_char_and_return(&mut self, token: Token) -> Option<Token> {
@@ -253,10 +179,6 @@ impl<'a> Lexer<'a> {
                 self.chars.next();
                 return Some(Token::StringLiteral(string));
             }
-            /*    if ch == '_' {
-                self.chars.next();
-                return Some(Token::Underscore);
-            } */
             if ch == '\\' {
                 self.chars.next();
                 if let Some(&escaped_ch) = self.chars.peek() {
@@ -281,8 +203,8 @@ impl<'a> Lexer<'a> {
             match ch {
                 '`' => {
                     if !current.is_empty() {
-                        tokens.push(Token::StringLiteral(current.clone()));
-                        current.clear();
+                        let takes = mem::take(&mut current);
+                        tokens.push(Token::StringLiteral(takes));
                     }
                     tokens.push(Token::Backtick);
                     break;
@@ -291,8 +213,8 @@ impl<'a> Lexer<'a> {
                     if let Some(&'{') = self.chars.peek() {
                         self.chars.next(); // skip {
                         if !current.is_empty() {
-                            tokens.push(Token::StringLiteral(current.clone()));
-                            current.clear();
+                            let takes = mem::take(&mut current);
+                            tokens.push(Token::StringLiteral(takes));
                         }
                         tokens.push(Token::InterpolationStart);
 
@@ -401,7 +323,7 @@ impl<'a> Lexer<'a> {
         }
 
         let mut tokens = Vec::new();
-        let mut inner_lexer = Lexer::new(&expr, self.syntax);
+        let mut inner_lexer = Lexer::new(&expr);
         tokens.extend(
             inner_lexer
                 .tokenize()

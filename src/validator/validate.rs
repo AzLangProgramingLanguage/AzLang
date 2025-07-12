@@ -128,7 +128,7 @@ pub fn validate_expr(
             // Əgər dəyişən scope içində tapılırsa, symbol əlavə olunur
             if let Some((_level, found_symbol)) = ctx.lookup_variable_scoped(name) {
                 *symbol = Some(found_symbol.clone());
-                *name = found_symbol.transpile_name.clone();
+                /*    *name = found_symbol.transpile_name.clone(); */
                 return Ok(());
             }
 
@@ -155,14 +155,15 @@ pub fn validate_expr(
             let (resolved_type, resolved_name) =
                 validate_decl(name, typ, value, false, ctx, message)?;
             *typ = Some(resolved_type);
-            *name = resolved_name;
+            /*     *name = resolved_name; */
         }
 
         Expr::MutableDecl { name, typ, value } => {
             let (resolved_type, resolved_name) =
                 validate_decl(name, typ, value, true, ctx, message)?;
             *typ = Some(resolved_type);
-            *name = resolved_name
+            /*             *name = resolved_name
+             */
         }
 
         Expr::Assignment {
@@ -353,11 +354,14 @@ pub fn validate_expr(
 
         Expr::BinaryOp { left, op, right } => {
             message(&format!("İki tərəfli əməliyyat: {:?}", op));
+            println!("Left2: {:?}", left);
 
             validate_expr(left, ctx, message)?;
             validate_expr(right, ctx, message)?;
 
             let left_type = get_type(left, ctx);
+            println!("Left: {:?}", left);
+            println!("Left type: {:?}", left_type);
             let right_type = get_type(right, ctx);
 
             if left_type != right_type {

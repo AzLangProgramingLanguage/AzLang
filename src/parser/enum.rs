@@ -7,7 +7,7 @@ pub fn parse_enum_decl(parser: &mut Parser) -> Result<Expr, String> {
     parser.next(); // consume `tip`
 
     let name = match parser.next() {
-        Some(Token::Identifier(name)) => name.clone(),
+        Some(Token::Identifier(s)) => s.clone(),
         _ => return Err("tip-dən sonra ad gözlənilirdi".to_string()),
     };
 

@@ -76,6 +76,7 @@ pub fn get_type(expr: &Expr, ctx: &ValidatorContext) -> Option<Type> {
         }
 
         Expr::VariableRef { name, .. } => {
+            println!("Variable name: {}", name);
             if name == "self" {
                 ctx.current_struct
                     .as_ref()

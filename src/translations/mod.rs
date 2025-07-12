@@ -1,1 +1,1 @@
-pub mod syntax;
+println!("Salam");

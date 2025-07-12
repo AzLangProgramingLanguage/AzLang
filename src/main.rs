@@ -15,7 +15,6 @@ use crate::{
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 use color_eyre::eyre::{Result, eyre};
 pub use runner::*;
-pub use translations::syntax::Syntax;
 pub use transpiler::*;
 
 pub use utils::*;
@@ -119,9 +118,8 @@ fn build(input_path: &str) -> Result<()> {
 
     let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
 
-    let syntax = Syntax::load().map_err(|e| eyre!("Syntax xətası!: {}", e))?;
     let mut ctx = TranspileContext::new();
-    let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
+    let tokens = lexer::Lexer::new(&input_code).tokenize();
 
     /* println!("Tokens: {:#?}", tokens); */
 
@@ -144,7 +142,6 @@ fn build(input_path: &str) -> Result<()> {
             eyre!("Validator xətası: {e}")
         })?;
     }
-    /* println!("Parser {:#?}", parsed_program); */
     emi_validator("Validator tapmadı problem, amma yenə diqqətliyəm.");
     xala_opti("Kodun optimizasiyası başladı, görüm nə dərəcədə təmizdir.");
     xala_opti("Optimizasiya tamamlandı! Kod parıldayır, ulduzlar səninlə ⭐");
@@ -175,9 +172,8 @@ fn run(input_path: &str) -> Result<()> {
 
     let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
 
-    let syntax = Syntax::load().map_err(|e| eyre!("Syntax xətası!: {}", e))?;
     let mut ctx = TranspileContext::new();
-    let tokens = lexer::Lexer::new(&input_code, &syntax).tokenize();
+    let tokens = lexer::Lexer::new(&input_code).tokenize();
 
     /* println!("Tokens: {:#?}", tokens); */
 

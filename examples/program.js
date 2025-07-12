@@ -11,7 +11,7 @@ function hesabla() {
     return cemi;
 }
 
-const baslat = Date.now(); // vaxt_al()
+const baslat = Date.now();
 const netice = hesabla();
 const bitir = Date.now();
 
