@@ -1,0 +1,111 @@
+use crate::{
+    lexer::Token,
+    parser::{
+        ast::{Expr, Type},
+        expression::parse_single_expr,
+    },
+};
+use color_eyre::eyre::{Result, eyre};
+use std::borrow::Cow;
+use std::iter::Peekable;
+
+pub fn parse_identifier<'a, I>(tokens: &mut Peekable<I>, s: &'a str) -> Result<Expr<'a>>
+where
+    I: Iterator<Item = &'a Token>,
+{
+    let mut expr = Expr::VariableRef {
+        name: Cow::Borrowed(s),
+        symbol: None,
+    };
+    tokens.next();
+    match tokens.next() {
+        Some(Token::ListStart) => {
+            let index_expr =
+                parse_single_expr(tokens).map_err(|e| eyre!("İndeks ifadəsi səhv: {}", e))?;
+
+            if matches!(tokens.next(), Some(Token::ListEnd)) {
+                Ok(Expr::Index {
+                    target: Box::new(expr),
+                    index: Box::new(index_expr),
+                })
+            } else {
+                Err(eyre!("Siyahı düzgün bağlanılmadı: ']' gözlənilirdi"))
+            }
+        }
+        Some(Token::LParen) => {
+            let mut args = Vec::new();
+
+            while let Some(token) = tokens.peek() {
+                match token {
+                    Token::RParen => {
+                        tokens.next();
+                        break;
+                    }
+                    Token::Comma => {
+                        tokens.next();
+                    }
+                    _ => {
+                        let arg = parse_single_expr(tokens)?;
+                        args.push(arg);
+                        tokens.next();
+                    }
+                }
+            }
+            expr = Expr::Call {
+                target: None,
+                name: s,
+                args,
+                returned_type: None,
+            };
+            Ok(expr)
+        }
+        Some(Token::Dot) => {
+            let field_or_method = match tokens.next() {
+                Some(Token::Identifier(name)) => (*name).as_str(),
+                _ => return Err(eyre!("Metod və ya sahə adı gözlənilirdi")),
+            };
+
+            match tokens.peek() {
+                Some(Token::LParen) => {
+                    tokens.next(); // consume '('
+                    let mut args = Vec::new();
+
+                    while let Some(token) = tokens.peek() {
+                        match token {
+                            Token::RParen => {
+                                tokens.next(); // consume ')'
+                                break;
+                            }
+                            Token::Comma => {
+                                tokens.next();
+                            }
+                            _ => {
+                                let arg = parse_single_expr(tokens)?;
+                                args.push(arg);
+                            }
+                        }
+                    }
+
+                    expr = Expr::Call {
+                        target: Some(Box::new(expr)),
+                        name: field_or_method,
+                        args,
+                        returned_type: Some(Type::Any),
+                    };
+                }
+                _ => {
+                    expr = Expr::Index {
+                        target: Box::new(expr),
+                        index: Box::new(Expr::String(field_or_method)),
+                    };
+                }
+            }
+            Ok(expr)
+        }
+        Some(_) => Ok(Expr::VariableRef {
+            name: Cow::Borrowed(s),
+            symbol: None,
+        }),
+        None => Err(eyre!("İdentifikator sonrası gözlənilməz EOF")),
+    }
+}
