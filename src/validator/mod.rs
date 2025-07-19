@@ -10,8 +10,6 @@ pub struct FunctionInfo<'a> {
     pub return_type: Option<Type<'a>>,
     pub parameters: Vec<Parameter<'a>>,
     pub body: Option<Vec<Expr<'a>>>,
-    pub scope_level: usize,
-    pub parent: Option<String>,
 }
 
 pub struct ValidatorContext<'a> {

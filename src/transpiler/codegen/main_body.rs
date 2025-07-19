@@ -1,0 +1,40 @@
+use crate::{
+    parser::ast::{Expr, Program},
+    transpiler::{TranspileContext, transpile::transpile_expr},
+};
+
+pub fn generate_main_body(program: &Program, ctx: &mut TranspileContext) -> String {
+    let mut body = String::new();
+
+    for expr in &program.expressions {
+        if matches!(expr, Expr::FunctionDef { .. }) {
+            continue;
+        }
+
+        let mut line = transpile_expr(expr, ctx);
+
+        let needs_semicolon = matches!(
+            expr,
+            Expr::Assignment { .. }
+                | Expr::Break
+                | Expr::Continue
+                | Expr::BuiltInCall { .. }
+                | Expr::Call { .. }
+                | Expr::VariableRef { .. }
+                | Expr::Index { .. }
+                | Expr::BinaryOp { .. }
+        );
+
+        let line = if needs_semicolon && !line.trim_end().ends_with(';') {
+            line.push(';');
+            line
+        } else {
+            line.to_string()
+        };
+        body.push_str("   ");
+        body.push_str(&line);
+        body.push('\n');
+    }
+
+    body
+}

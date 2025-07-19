@@ -1,4 +1,6 @@
 pub mod utils;
+use std::env;
+
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 use color_eyre::eyre::{Result, eyre};
 mod lexer;
@@ -7,8 +9,9 @@ pub mod translations;
 pub mod validator;
 pub use utils::*;
 pub use validator::validate_expr;
-
-use crate::{parser::ast::Expr, validator::ValidatorContext};
+pub mod runner;
+pub mod transpiler;
+use crate::{transpiler::TranspileContext, validator::ValidatorContext};
 #[derive(Parser)]
 #[command(
     name = "azcli",
@@ -157,31 +160,17 @@ fn run(input_path: &str) -> Result<()> {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator)
             .map_err(|e| eyre!("Validator xətası: {e}"))?;
     }
-    dbg!(parsed_program);
-    std::process::exit(0);
+    let mut ctx = TranspileContext::new();
 
-    //parsed_program ölmüş veya artıq onu istifade ede bilmirik.
-    /*
-
-      cannot borrow `expressions` as immutable because it is also borrowed as mutable
-    immutable borerow occurs her
-        */
-
-    /* cannot move out of `parsed_program` because it is borrowed
-    move out of `parsed_program` occurs here */
-
-    // for expr in parsed_program.expressions.iter_mut() {
-    //     validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator).map_err(|e| {
-    //         emi_validator_error(&e);
-    //         eyre!("Validator xətası: {e}")
-    //     })?;
-
-    //     validate_top_level_expr(expr).map_err(|e| {
-    //         emi_validator_error(&e);
-    //         eyre!("Validator xətası: {e}")
-    //     })?;
-    // }
-    /* println!("Parser {:#?}", parsed_program); */
+    let zig_code = ctx.transpile(&parsed_program);
+    let mut temp_path = env::temp_dir();
+    temp_path.push("azlang_output.zig");
+    utils::write_file(temp_path.to_str().unwrap(), &zig_code)
+        .map_err(|e| eyre!("Zig faylı yazıla bilmədi: {}", e))?;
+    if runner::runner(temp_path.to_str().unwrap()).is_err() {
+        eprintln!("❌ Proqram işləmədi.");
+    }
+    dbg!(&zig_code);
 
     Ok(())
 }

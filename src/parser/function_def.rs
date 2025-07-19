@@ -4,6 +4,7 @@ use crate::{
         ast::{Expr, Parameter, Type},
         expression::parse_single_expr,
         helper::expect_token,
+        types::parse_type,
     },
 };
 use color_eyre::eyre::{Result, eyre};
@@ -47,18 +48,15 @@ where
                 };
 
                 // Tip varsa oxu
-                let param_type = Type::Any;
-
-                params.push(Parameter {
-                    name: param_name.to_string(),
-                    typ: param_type,
-                    is_mutable,
-                    is_pointer: false,
-                });
+                let mut param_type = Type::Any;
 
                 match tokens.peek() {
                     Some(Token::Comma) => {
                         tokens.next();
+                    }
+                    Some(Token::Colon) => {
+                        tokens.next();
+                        param_type = parse_type(tokens)?;
                     }
                     Some(Token::RParen) => break,
                     other => {
@@ -68,6 +66,12 @@ where
                         ));
                     }
                 }
+                params.push(Parameter {
+                    name: param_name.to_string(),
+                    typ: param_type,
+                    is_mutable,
+                    is_pointer: false,
+                });
             }
             Token::RParen => break,
             other => {

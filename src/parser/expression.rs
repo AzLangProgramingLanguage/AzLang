@@ -32,6 +32,12 @@ where
                 tokens.next();
                 continue;
             }
+            Token::StringLiteral(_) | Token::Number(_) | Token::Float(_) => {
+                return Err(eyre!(
+                    "Bir başa mətn, rəqəm və ya kəsr ədəd istifadə edə bilməzsiniz"
+                ));
+            }
+
             Token::Eof => break,
             _ => {
                 let expr = parse_expression(tokens)?;

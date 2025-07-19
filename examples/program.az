@@ -1,4 +1,2 @@
-funksiya salam()
-    Çap("Salam")
-
-salam()
+sabit a = [1,2,3]
+Çap(a)

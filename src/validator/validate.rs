@@ -5,7 +5,7 @@ use color_eyre::eyre::Result;
 use crate::{
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
-    validator::{ValidatorContext, helpers::get_type},
+    validator::{FunctionInfo, ValidatorContext, helpers::get_type},
 };
 
 pub fn validate_expr<'a>(
@@ -288,9 +288,20 @@ pub fn validate_expr<'a>(
                 };
                 ctx.declare_variable(param.name.clone(), symbol);
             }
-            for expr in body {
+            let mut owned_body = std::mem::take(body);
+            for expr in owned_body.iter_mut() {
                 validate_expr(expr, ctx, log)?;
             }
+            ctx.functions.insert(
+                Cow::Borrowed(*name),
+                FunctionInfo {
+                    name: Cow::Borrowed(*name),
+                    parameters: params.clone(),
+                    body: Some(owned_body),
+                    return_type: return_type.clone(),
+                },
+            );
+
             ctx.pop_scope();
             ctx.current_function = None;
             ctx.current_return = None;

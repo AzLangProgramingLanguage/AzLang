@@ -146,6 +146,8 @@ pub enum Expr<'a> {
         op: &'a str,
         right: Box<Expr<'a>>,
     },
+    Break,
+    Continue,
     Match(Box<MatchExpr<'a>>),
 }
 
