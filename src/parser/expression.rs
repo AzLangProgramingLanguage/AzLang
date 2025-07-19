@@ -1,6 +1,6 @@
 use color_eyre::eyre::{Result, eyre};
+use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
-use std::iter::Peekable;
 
 use crate::{
     lexer::Token,
@@ -12,6 +12,8 @@ use crate::{
         function_def::parse_function_def,
         if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
         list::parse_list,
+        loops::parse_loop,
+        r#match::parse_match,
         object::parse_struct_def,
         op_expr::parse_binary_op_expr,
         parse_identifier::parse_identifier,
@@ -19,7 +21,7 @@ use crate::{
     },
 };
 
-pub fn parse_expression_block<'a, I>(tokens: &mut Peekable<I>) -> Result<Vec<Expr<'a>>>
+pub fn parse_expression_block<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Vec<Expr<'a>>>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -43,14 +45,14 @@ where
     Ok(ast)
 }
 
-pub fn parse_expression<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_expression<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
     parse_binary_op_expr(tokens, 0)
 }
 
-pub fn parse_single_expr<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_single_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -75,6 +77,9 @@ where
         Token::ListStart => Ok(parse_list(tokens)),
         Token::ConstantDecl => {
             tokens.next();
+
+            dbg!(tokens.peek());
+
             Ok(parse_decl(tokens, false).unwrap())
         }
         Token::MutableDecl => {
@@ -91,10 +96,12 @@ where
             }
             Ok(Expr::Return(Box::new(returned_value)))
         }
+        Token::Match => parse_match(tokens).map_err(|e| eyre!("Match parsing xətası: {}", e)),
         Token::FunctionDef => {
             tokens.next();
             parse_function_def(tokens).map_err(|e| eyre!("Funksiya parsing xətası: {}", e))
         }
+        Token::Loop => parse_loop(tokens).map_err(|e| eyre!("Loop parsing xətası: {}", e)),
         Token::Identifier(s) => {
             parse_identifier(tokens, s).map_err(|e| eyre!("Identifier parsing xətası: {}", e))
         }
@@ -117,7 +124,8 @@ where
         | Token::Round
         | Token::Floor
         | Token::Ceil => {
-            parse_builtin(tokens).map_err(|e| eyre!("Hazır funksiya parsing xətası {}", e))
+            let result = parse_builtin(tokens)?;
+            Ok(result)
         }
         Token::Eof | Token::Semicolon | Token::Newline => {
             Err(eyre!("Boş və ya gözlənilməz token: {:?}", token))

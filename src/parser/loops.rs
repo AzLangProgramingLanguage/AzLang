@@ -3,9 +3,9 @@ use crate::{
     parser::{ast::Expr, expression::parse_single_expr, helper::expect_token},
 };
 use color_eyre::eyre::{Result, eyre};
-use std::iter::Peekable;
+use peekmore::PeekMoreIterator;
 
-pub fn parse_loop<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_loop<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {

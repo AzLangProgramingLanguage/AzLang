@@ -1,30 +1,49 @@
-use std::iter::Peekable;
-
 use color_eyre::eyre::{Result, eyre};
+use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
     parser::{ast::Expr, expression::parse_single_expr},
 };
 
-pub fn parse_binary_op_expr<'a, I>(tokens: &mut Peekable<I>, min_prec: u8) -> Result<Expr<'a>>
+pub fn parse_binary_op_expr<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+    min_prec: u8,
+) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
     let mut left = parse_single_expr(tokens)?;
-    tokens.next();
+
+    //Bizim burada öyle birşey yapmamız lazımki eğer bir sonraki token newline gerlirse  hiçbirşey yapmasın amma başka bir element gelirse tokens.next() yapsın.  Bunun için bir sonraki tokene nasıl geçmeden baka biliriz?
+
+    /*    if let Some(Token::Newline) = tokens.peek_nth(1) {
+    } else {
+        tokens.next();
+    } */
     loop {
-        let op_token = match tokens.peek() {
-            Some(Token::Operator(op)) if op.as_str() != "." => op.as_str(),
-            _ => break,
+        let op_token = match tokens.peek_nth(1) {
+            Some(Token::Operator(op)) if op.as_str() != "." => {
+                tokens.next();
+                op.as_str()
+            }
+
+            _ => {
+                break;
+            }
         };
+
         let prec = get_precedence(op_token);
         if prec < min_prec {
             break;
         }
-        tokens.next();
+
+        tokens.next(); // operator yeyilir
+
         let mut right = parse_single_expr(tokens)?;
 
+        tokens.next();
+        // Sağ tərəfi daha yüksək prioritetlə yenidən yoxla
         loop {
             let next_prec = match tokens.peek() {
                 Some(Token::Operator(next_op)) => get_precedence(next_op.as_str()),
@@ -38,7 +57,7 @@ where
         }
 
         if op_token == "=" {
-            if let Expr::VariableRef { name, symbol: _ } = left {
+            if let Expr::VariableRef { name, .. } = left {
                 left = Expr::Assignment {
                     name,
                     value: Box::new(right),
@@ -55,9 +74,9 @@ where
             };
         }
     }
-    tokens.next();
     Ok(left)
 }
+
 pub fn get_precedence(op: &str) -> u8 {
     match op {
         "=" => 1,

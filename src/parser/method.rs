@@ -6,10 +6,10 @@ use crate::{
     },
 };
 use color_eyre::eyre::{Result, eyre};
-use std::iter::Peekable;
+use peekmore::PeekMoreIterator;
 
 pub fn parse_method<'a, I>(
-    tokens: &mut Peekable<I>,
+    tokens: &mut PeekMoreIterator<I>,
 ) -> Result<(&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>
 where
     I: Iterator<Item = &'a Token>,
@@ -65,7 +65,7 @@ where
     Ok((name, params, body, return_type))
 }
 
-fn expect_token<'a, I>(tokens: &mut Peekable<I>, expected: Token) -> Result<()>
+fn expect_token<'a, I>(tokens: &mut PeekMoreIterator<I>, expected: Token) -> Result<()>
 where
     I: Iterator<Item = &'a Token>,
 {

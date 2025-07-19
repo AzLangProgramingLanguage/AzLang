@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use crate::lexer::Token;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum BuiltInFunction {
     Print,
@@ -63,7 +65,7 @@ pub enum Type<'a> {
 #[derive(Debug)]
 pub struct EnumDecl<'a> {
     pub name: Cow<'a, str>,
-    pub variants: Vec<&'a str>,
+    pub variants: Vec<Cow<'a, str>>,
 }
 
 #[derive(Debug)]
@@ -124,15 +126,15 @@ pub enum Expr<'a> {
         fields: Vec<(&'a str, Type<'a>)>,
         methods: Vec<(&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>,
     },
+    StructInit {
+        name: &'a str,
+        args: Vec<Expr<'a>>,
+    },
     FunctionDef {
         name: &'a str,
         params: Vec<Parameter<'a>>,
         body: Vec<Expr<'a>>,
         return_type: Option<Type<'a>>,
-    },
-    StructInit {
-        name: String,
-        args: Vec<Expr<'a>>,
     },
     Assignment {
         name: Cow<'a, str>,
@@ -144,12 +146,19 @@ pub enum Expr<'a> {
         op: &'a str,
         right: Box<Expr<'a>>,
     },
+    Match(Box<MatchExpr<'a>>),
 }
 
 #[derive(Debug)]
 pub struct Program<'a> {
     pub expressions: Vec<Expr<'a>>,
-    pub return_type: Option<Type<'a>>,
+    /*     pub return_type: Option<Type<'a>>,
+     */
+}
+#[derive(Debug)]
+pub struct MatchExpr<'a> {
+    pub target: Box<Expr<'a>>,
+    pub arms: Vec<(Token, Vec<Expr<'a>>)>,
 }
 
 #[derive(Clone, Debug)]

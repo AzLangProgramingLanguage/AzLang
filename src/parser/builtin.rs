@@ -1,7 +1,5 @@
-use std::borrow::Cow;
-use std::iter::Peekable;
-
 use color_eyre::eyre::{Result, eyre};
+use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
@@ -11,7 +9,7 @@ use crate::{
     },
 };
 
-pub fn parse_builtin<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_builtin<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -41,16 +39,15 @@ where
     let mut args = Vec::new();
     tokens.next();
 
-    if let Some(Token::LParen) = tokens.peek() {
-        tokens.next();
+    if let Some(Token::LParen) = tokens.next() {
         while let Some(token) = tokens.peek() {
             match token {
                 Token::RParen => {
-                    tokens.next(); // Consume RParen
+                    tokens.next();
                     break;
                 }
                 Token::Comma => {
-                    tokens.next(); // skip comma
+                    tokens.next();
                 }
                 _ => {
                     let expr = parse_single_expr(tokens)?;

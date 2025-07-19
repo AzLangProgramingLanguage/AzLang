@@ -157,8 +157,10 @@ fn run(input_path: &str) -> Result<()> {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator)
             .map_err(|e| eyre!("Validator xətası: {e}"))?;
     }
+    dbg!(parsed_program);
+    std::process::exit(0);
 
-    dbg!(parsed_program);  //parsed_program ölmüş veya artıq onu istifade ede bilmirik.
+    //parsed_program ölmüş veya artıq onu istifade ede bilmirik.
     /*
 
       cannot borrow `expressions` as immutable because it is also borrowed as mutable

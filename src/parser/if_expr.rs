@@ -1,12 +1,12 @@
-use color_eyre::eyre::{Result, eyre};
-use std::iter::Peekable;
+use color_eyre::eyre::Result;
+use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
     parser::{ast::Expr, expression::parse_single_expr, op_expr::parse_binary_op_expr},
 };
 
-pub fn parse_if_expr<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -14,8 +14,19 @@ where
 
     let condition = parse_binary_op_expr(tokens, 0)?; //Problem burada
     //Buradan sonrası işə düşmür.
+    /*
+
+    condition = Number(
+        1,
+    )
+
+        Yanlış çıxtı verdi
+    */
+
     // expect_token(tokens, Token::Newline)?;
     // expect_token(tokens, Token::Indent)?;
+
+    tokens.next();
 
     let then_branch = parse_block(tokens)?;
 
@@ -37,7 +48,7 @@ where
         else_branch,
     })
 }
-pub fn parse_else_if_expr<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_else_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -53,7 +64,7 @@ where
     })
 }
 
-pub fn parse_else_expr<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_else_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -64,7 +75,7 @@ where
     let then_branch = parse_block(tokens)?;
     Ok(Expr::Else { then_branch })
 }
-fn parse_block<'a, I>(tokens: &mut Peekable<I>) -> Result<Vec<Expr<'a>>>
+fn parse_block<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Vec<Expr<'a>>>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -80,11 +91,13 @@ where
             Token::Dedent => {
                 indent_level -= 1;
                 tokens.next();
+
                 if indent_level == 0 {
                     break;
                 }
             }
             Token::Newline => {
+                indent_level = 1;
                 tokens.next();
             }
             Token::Eof => break,
@@ -96,14 +109,4 @@ where
     }
 
     Ok(block)
-}
-
-fn expect_token<'a, I>(tokens: &mut Peekable<I>, expected: Token) -> Result<()>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    match tokens.next() {
-        Some(t) if *t == expected => Ok(()),
-        other => Err(eyre!("Gözlənilirdi: {:?}, tapıldı: {:?}", expected, other)),
-    }
 }

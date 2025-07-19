@@ -3,13 +3,14 @@ use crate::{
     parser::ast::{EnumDecl, Expr},
 };
 use color_eyre::eyre::{Result, eyre};
-use std::{borrow::Cow, iter::Peekable};
+use peekmore::PeekMoreIterator;
+use std::borrow::Cow;
 
-pub fn parse_enum_decl<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_enum_decl<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
-    // 1. tip sözü artıq consume edilib
+    tokens.next();
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed((*name).as_str()),
         other => {
@@ -39,7 +40,7 @@ where
                 tokens.next(); // indent keçirik
             }
             Some(Token::Identifier(var)) => {
-                variants.push((*var).as_str());
+                variants.push(Cow::Borrowed((*var).as_str()));
                 tokens.next(); // consume name
             }
             Some(Token::Newline) => {

@@ -1,6 +1,6 @@
 use color_eyre::eyre::{Result, eyre};
+use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
-use std::iter::Peekable;
 
 use crate::{
     lexer::Token,
@@ -10,20 +10,21 @@ use crate::{
     },
 };
 
-pub fn parse_template_string_expr<'a, I>(tokens: &mut Peekable<I>) -> Result<Expr<'a>>
+pub fn parse_template_string_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
+    tokens.next();
     let mut chunks = Vec::new();
-
     loop {
         let token = tokens
-            .next()
+            .peek()
             .ok_or_else(|| eyre!("Template string bitmədi (EOF)"))?;
 
         match token {
             Token::StringLiteral(s) => {
                 chunks.push(TemplateChunk::Literal(s));
+                tokens.next();
             }
             Token::InterpolationStart => {
                 if matches!(tokens.peek(), Some(Token::InterpolationEnd)) {
@@ -34,7 +35,10 @@ where
                     })));
                     continue;
                 }
+                tokens.next();
+
                 let expr = parse_single_expr(tokens)?;
+                tokens.next();
                 chunks.push(TemplateChunk::Expr(Box::new(expr)));
 
                 match tokens.next() {
@@ -48,7 +52,6 @@ where
                 }
             }
             Token::Backtick => {
-                // Template bağlanışı
                 break;
             }
             other => {

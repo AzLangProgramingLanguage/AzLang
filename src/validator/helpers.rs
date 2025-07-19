@@ -1,4 +1,7 @@
-use crate::parser::ast::{Expr, Type};
+use crate::{
+    parser::ast::{Expr, Type},
+    validator::ValidatorContext,
+};
 
 /* pub fn validate_decl<'a>(
     name: &'a str,
@@ -84,15 +87,15 @@ use crate::parser::ast::{Expr, Type};
     result
 }
  */
-pub fn get_type<'a>(value: &Expr<'a>) -> Option<Type<'a>> {
+pub fn get_type<'a>(value: &Expr<'a>, ctx: &ValidatorContext<'a>) -> Option<Type<'a>> {
     match value {
         Expr::Number(_) => Some(Type::Integer),
         Expr::Bool(_) => Some(Type::Bool),
         Expr::String(_) => Some(Type::Metn),
         Expr::List(_) => Some(Type::Siyahi(Box::new(Type::Any))),
         Expr::Index { target, index } => {
-            let target_type = get_type(target);
-            let _index_type = get_type(index);
+            let target_type = get_type(target, ctx);
+            let _index_type = get_type(index, ctx);
             if let Some(target_type) = target_type {
                 if target_type == Type::Siyahi(Box::new(Type::Any)) {
                     return Some(Type::Any);
@@ -100,8 +103,44 @@ pub fn get_type<'a>(value: &Expr<'a>) -> Option<Type<'a>> {
             }
             None
         }
+        Expr::VariableRef { name, symbol } => {
+            if let Some(s) = ctx.lookup_variable(name) {
+                return Some(s.typ.clone());
+            }
+
+            None
+        }
         Expr::BuiltInCall { return_type, .. } => Some(return_type.clone()),
         Expr::Call { returned_type, .. } => returned_type.clone(),
+        Expr::BinaryOp { left, op, right } => {
+            let left_type = get_type(left, ctx)?;
+            let right_type = get_type(right, ctx)?;
+
+            // Əgər operandların tipi uyğun gəlmir
+            if left_type != right_type {
+                return None;
+            }
+
+            let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
+            let logic_ops = ["&&", "||"];
+            let arithmetic_ops = ["+", "-", "*", "/", "%"];
+
+            if comparison_ops.contains(&op) || logic_ops.contains(&op) {
+                return Some(Type::Bool);
+            }
+
+            if arithmetic_ops.contains(&op) {
+                // Sadəcə ədədlər üçün arifmetik operatorlar keçərlidir
+                if left_type == Type::Integer {
+                    return Some(Type::Integer);
+                } else {
+                    return None;
+                }
+            }
+
+            // Tanınmayan operatorlar üçün
+            None
+        }
         _ => None,
     }
 }

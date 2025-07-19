@@ -3,13 +3,14 @@ use crate::{
     parser::{
         ast::{Expr, Type},
         expression::parse_single_expr,
+        structs::parse_structs_init,
     },
 };
 use color_eyre::eyre::{Result, eyre};
+use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
-use std::iter::Peekable;
 
-pub fn parse_identifier<'a, I>(tokens: &mut Peekable<I>, s: &'a str) -> Result<Expr<'a>>
+pub fn parse_identifier<'a, I>(tokens: &mut PeekMoreIterator<I>, s: &'a str) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -17,9 +18,10 @@ where
         name: Cow::Borrowed(s),
         symbol: None,
     };
-    tokens.next();
-    match tokens.next() {
+
+    match tokens.peek_nth(1) {
         Some(Token::ListStart) => {
+            tokens.next();
             let index_expr =
                 parse_single_expr(tokens).map_err(|e| eyre!("İndeks ifadəsi səhv: {}", e))?;
 
@@ -33,24 +35,38 @@ where
             }
         }
         Some(Token::LParen) => {
+            tokens.next();
+            tokens.next(); // '(' yey
             let mut args = Vec::new();
 
-            while let Some(token) = tokens.peek() {
-                match token {
-                    Token::RParen => {
-                        tokens.next();
+            loop {
+                match tokens.peek() {
+                    Some(Token::RParen) => {
+                        tokens.next(); // ')' yey
                         break;
                     }
-                    Token::Comma => {
-                        tokens.next();
-                    }
+                    None => break,
                     _ => {
+                        // Arqumenti parse et
                         let arg = parse_single_expr(tokens)?;
                         args.push(arg);
                         tokens.next();
+                        // Vergül varsa yey, yoxdursa dayan
+                        // Düzəliş: Token növünü birbaşa yoxla
+                        if let Some(Token::Comma) = tokens.peek() {
+                            tokens.next(); // Vergülü yey
+                        } else {
+                            // Növbəti token ')' deyilsə xəta
+                            if !matches!(tokens.peek(), Some(Token::RParen)) {
+                                return Err(eyre!(
+                                    "Arqument siyahısında ',' və ya ')' gözlənilirdi"
+                                ));
+                            }
+                        }
                     }
                 }
             }
+
             expr = Expr::Call {
                 target: None,
                 name: s,
@@ -60,6 +76,7 @@ where
             Ok(expr)
         }
         Some(Token::Dot) => {
+            tokens.next();
             let field_or_method = match tokens.next() {
                 Some(Token::Identifier(name)) => (*name).as_str(),
                 _ => return Err(eyre!("Metod və ya sahə adı gözlənilirdi")),
@@ -102,10 +119,8 @@ where
             }
             Ok(expr)
         }
-        Some(_) => Ok(Expr::VariableRef {
-            name: Cow::Borrowed(s),
-            symbol: None,
-        }),
+        Some(Token::LBrace) => parse_structs_init(tokens, s),
+        Some(_) => Ok(expr),
         None => Err(eyre!("İdentifikator sonrası gözlənilməz EOF")),
     }
 }

@@ -7,20 +7,20 @@ pub mod helper;
 pub mod if_expr;
 pub mod list;
 pub mod loops;
+pub mod r#match;
 pub mod method;
 pub mod object;
 pub mod op_expr;
 pub mod parse_identifier;
+pub mod structs;
 pub mod template;
 pub mod types;
 use color_eyre::eyre::Result;
+use peekmore::PeekMore;
 
 use crate::{
     lexer::Token,
-    parser::{
-        ast::{Program, Type},
-        expression::parse_expression_block,
-    },
+    parser::{ast::Program, expression::parse_expression_block},
 };
 
 pub mod ast;
@@ -33,13 +33,13 @@ impl Parser {
         Self { tokens }
     }
     pub fn parse(&mut self) -> Result<Program> {
-        let tokens = &mut self.tokens.iter().peekable();
+        let tokens = &mut self.tokens.iter().peekmore();
 
         let ast = parse_expression_block(tokens)?;
 
         let program = Program {
-            expressions: ast,
-            return_type: Some(Type::Void),
+            expressions: ast, /*             return_type: Some(Type::Void),
+                               */
         };
         Ok(program)
     }

@@ -1,1 +1,4 @@
-Çap("Salam")
+funksiya salam()
+    Çap("Salam")
+
+salam()

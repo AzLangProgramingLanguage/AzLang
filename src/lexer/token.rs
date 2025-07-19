@@ -1,11 +1,10 @@
-use crate::parser::ast::Type;
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     MutableDecl,
     ConstantDecl,
     FunctionDef,
     Conditional,
+    Underscore,
     Float(f64),
     Backtick,
     InterpolationStart,

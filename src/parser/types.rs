@@ -1,8 +1,9 @@
 use crate::{lexer::Token, parser::ast::Type};
 use color_eyre::eyre::{Result, eyre};
-use std::{borrow::Cow, iter::Peekable};
+use peekmore::PeekMoreIterator;
+use std::borrow::Cow;
 
-pub fn parse_type<'a, I>(tokens: &mut Peekable<I>) -> Result<Type<'a>>
+pub fn parse_type<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Type<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {

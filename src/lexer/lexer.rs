@@ -127,6 +127,7 @@ impl<'a> Lexer<'a> {
             '{' => self.consume_char_and_return(Token::LBrace),
             '}' => self.consume_char_and_return(Token::RBrace),
             ';' => self.consume_char_and_return(Token::Semicolon),
+            '_' => self.consume_char_and_return(Token::Underscore),
             ':' => self.consume_char_and_return(Token::Colon),
             ',' => self.consume_char_and_return(Token::Comma),
             '[' => self.consume_char_and_return(Token::ListStart),
@@ -164,10 +165,6 @@ impl<'a> Lexer<'a> {
     fn consume_char_and_return(&mut self, token: Token) -> Option<Token> {
         self.chars.next();
         Some(token)
-    }
-
-    pub fn push_back_token(&mut self, token: Token) {
-        self.token_buffer.push(token);
     }
 
     fn read_string(&mut self) -> Option<Token> {

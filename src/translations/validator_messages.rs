@@ -24,6 +24,9 @@ pub enum ValidatorError<'a> {
     #[error("Dəyər enum variantı deyil")]
     NotAnEnumVariant,
 
+    #[error("Enum '{0}' artıq mövcuddur")]
+    DuplicateEnum(String),
+
     #[error("cəm funksiyası yalnız ədəd tipli siyahı qəbul edir")]
     InvalidSumArgumentType,
 
@@ -42,6 +45,39 @@ pub enum ValidatorError<'a> {
         expected: usize,
         found: usize,
     },
+    #[error("Dəyişən '{0}' elan edilməyib")]
+    UndefinedVariable(String),
+
+    #[error("Şərt tipi `bool` olmalıdır, tapıldı: {0:?}")]
+    IfConditionTypeMismatch(Type<'a>),
+
+    #[error("Şərt tipi müəyyən edilə bilmədi")]
+    IfConditionTypeUnknown,
+
+    #[error("`else if` şərti `bool` olmalıdır, tapıldı: {0:?}")]
+    ElseIfConditionTypeMismatch(Type<'a>),
+
+    #[error("Dövr üçün istifadə edilən obyektin tipi təyin edilə bilmədi")]
+    LoopIterableTypeNotFound,
+
+    #[error("Dövr üçün istifadə edilən obyekt siyahı (`list`) olmalıdır")]
+    LoopRequiresList,
+
+    #[error("Funksiya tapılmadı: '{0}'")]
+    FunctionNotFound(&'a str),
+
+    #[error("Funksiya '{name}' üçün {expected} arqument gözlənilirdi, lakin {found} verildi")]
+    FunctionArgCountMismatch {
+        name: String,
+        expected: usize,
+        found: usize,
+    },
+
+    #[error("İç funksiya təyin etmək qadağandır")]
+    NestedFunctionDefinition,
+
+    #[error("Funksiya '{name}' üçün tip təyin edilməyib")]
+    FunctionReturnTypeNotFound { name: String },
 }
 
 /* use thiserror::Error;

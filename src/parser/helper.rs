@@ -1,10 +1,10 @@
-use std::iter::Peekable;
+use peekmore::PeekMoreIterator;
 
 use color_eyre::eyre::{Result, eyre};
 
 use crate::lexer::Token;
 
-pub fn skip_newlines<'a, I>(tokens: &mut Peekable<I>) -> Result<()>
+pub fn skip_newlines<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<()>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -14,7 +14,7 @@ where
     Ok(())
 }
 
-pub fn expect_token<'a, I>(tokens: &mut Peekable<I>, expected: Token) -> Result<()>
+pub fn expect_token<'a, I>(tokens: &mut PeekMoreIterator<I>, expected: Token) -> Result<()>
 where
     I: Iterator<Item = &'a Token>,
 {
