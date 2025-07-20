@@ -1,5 +1,5 @@
 use crate::{
-    lexer::Token,
+    lexer::{Token, token},
     parser::{
         ast::{Expr, Type},
         expression::parse_single_expr,
@@ -42,7 +42,7 @@ where
             loop {
                 match tokens.peek() {
                     Some(Token::RParen) => {
-                        tokens.next(); // ')' yey
+                        tokens.next();
                         break;
                     }
                     None => break,
@@ -66,7 +66,7 @@ where
                     }
                 }
             }
-
+            tokens.next();
             expr = Expr::Call {
                 target: None,
                 name: s,

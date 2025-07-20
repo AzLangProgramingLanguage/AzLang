@@ -7,7 +7,7 @@ use crate::{
     },
 };
 
-pub fn transpile_print(expr: &Expr, ctx: &mut TranspileContext) -> String {
+pub fn transpile_print<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     match expr {
         Expr::TemplateString(chunks) => {
             let mut format_parts = String::new();

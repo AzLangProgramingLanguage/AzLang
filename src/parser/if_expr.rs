@@ -80,9 +80,10 @@ where
     I: Iterator<Item = &'a Token>,
 {
     let mut block = Vec::new();
-    let mut indent_level = 1;
+    let mut indent_level = 0;
 
     while let Some(token) = tokens.peek() {
+        println!("indent_level: {}", indent_level);
         match token {
             Token::Indent => {
                 indent_level += 1;
@@ -97,7 +98,7 @@ where
                 }
             }
             Token::Newline => {
-                indent_level = 1;
+                indent_level = 0;
                 tokens.next();
             }
             Token::Eof => break,

@@ -26,7 +26,9 @@ pub fn validate_expr<'a>(
                 if *is_mutable { "Dəyişən" } else { "Sabit" },
                 name
             ));
-            let inferred = get_type(value, ctx);
+
+            let inferred = get_type(value, ctx, typ.as_ref());
+
             if let Some(s) = inferred {
                 if let Some(typ_ref) = typ {
                     if *typ_ref != s {
@@ -70,7 +72,7 @@ pub fn validate_expr<'a>(
                     }
                 }
                 BuiltInFunction::Len => {
-                    if let Some(t) = get_type(&args[0], ctx) {
+                    if let Some(t) = get_type(&args[0], ctx, None) {
                         if t != Type::Siyahi(Box::new(Type::Any)) {
                             return Err(ValidatorError::TypeMismatch {
                                 expected: "Siyahi".to_string(),
@@ -84,7 +86,7 @@ pub fn validate_expr<'a>(
                         });
                     }
                 }
-                _ => todo!(),
+                _ => {}
             }
             for arg in args {
                 validate_expr(arg, ctx, log)?;
@@ -93,11 +95,12 @@ pub fn validate_expr<'a>(
         Expr::EnumDecl(EnumDecl { name, variants }) => {
             log(&format!("Enum tərifi yoxlanılır: '{}'", name));
 
-            if ctx.enum_defs.contains_key(&name.to_string()) {
+            if ctx.enum_defs.contains_key(name.as_ref()) {
                 return Err(ValidatorError::DuplicateEnum(name.to_string()));
             }
 
-            ctx.enum_defs.insert(name.to_string(), variants.clone());
+            ctx.enum_defs
+                .insert(Cow::Owned(name.to_string()), variants.clone());
         }
         Expr::VariableRef { name, symbol } => {
             log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
@@ -132,7 +135,7 @@ pub fn validate_expr<'a>(
             validate_expr(condition, ctx, log)?;
 
             let cond_type =
-                get_type(condition, ctx).ok_or(ValidatorError::IfConditionTypeUnknown)?;
+                get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
             if cond_type != Type::Bool {
                 return Err(ValidatorError::IfConditionTypeMismatch(cond_type));
             }
@@ -154,7 +157,7 @@ pub fn validate_expr<'a>(
             validate_expr(condition, ctx, log)?;
 
             let cond_type =
-                get_type(condition, ctx).ok_or(ValidatorError::IfConditionTypeUnknown)?;
+                get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
             if cond_type != Type::Bool {
                 return Err(ValidatorError::IfConditionTypeMismatch(cond_type));
             }
@@ -179,7 +182,7 @@ pub fn validate_expr<'a>(
             log("Dövr yoxlanılır");
             validate_expr(iterable, ctx, log)?;
             let iterable_type =
-                get_type(iterable, ctx).ok_or(ValidatorError::LoopIterableTypeNotFound)?;
+                get_type(iterable, ctx, None).ok_or(ValidatorError::LoopIterableTypeNotFound)?;
             if let Type::Siyahi(inner) = iterable_type {
                 let symbol = Symbol {
                     typ: *inner,
@@ -289,6 +292,7 @@ pub fn validate_expr<'a>(
                 ctx.declare_variable(param.name.clone(), symbol);
             }
             let mut owned_body = std::mem::take(body);
+
             for expr in owned_body.iter_mut() {
                 validate_expr(expr, ctx, log)?;
             }
@@ -297,7 +301,6 @@ pub fn validate_expr<'a>(
                 FunctionInfo {
                     name: Cow::Borrowed(*name),
                     parameters: params.clone(),
-                    body: Some(owned_body),
                     return_type: return_type.clone(),
                 },
             );
@@ -305,6 +308,7 @@ pub fn validate_expr<'a>(
             ctx.pop_scope();
             ctx.current_function = None;
             ctx.current_return = None;
+            *body = owned_body;
         }
         Expr::Return(value) => {
             validate_expr(value, ctx, log)?;

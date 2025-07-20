@@ -86,7 +86,9 @@ where
     expect_token(tokens, Token::RParen)?;
 
     // Return tipi varsa
-    let return_type = None;
+
+    expect_token(tokens, Token::Colon)?;
+    let return_type = Some(parse_type(tokens)?);
 
     expect_token(tokens, Token::Newline)?;
     expect_token(tokens, Token::Indent)?;

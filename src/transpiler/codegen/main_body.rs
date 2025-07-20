@@ -3,7 +3,7 @@ use crate::{
     transpiler::{TranspileContext, transpile::transpile_expr},
 };
 
-pub fn generate_main_body(program: &Program, ctx: &mut TranspileContext) -> String {
+pub fn generate_main_body<'a>(program: &Program<'a>, ctx: &mut TranspileContext<'a>) -> String {
     let mut body = String::new();
 
     for expr in &program.expressions {
@@ -19,6 +19,7 @@ pub fn generate_main_body(program: &Program, ctx: &mut TranspileContext) -> Stri
                 | Expr::Break
                 | Expr::Continue
                 | Expr::BuiltInCall { .. }
+                | Expr::Decl { .. }
                 | Expr::Call { .. }
                 | Expr::VariableRef { .. }
                 | Expr::Index { .. }

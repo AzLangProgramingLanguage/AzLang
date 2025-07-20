@@ -50,6 +50,8 @@ where
                     tokens.next();
                 }
                 _ => {
+                    println!("token {:?}", tokens.peek());
+
                     let expr = parse_single_expr(tokens)?;
                     args.push(expr);
                     tokens.next();
@@ -57,6 +59,7 @@ where
             }
         }
     }
+
     Ok(Expr::BuiltInCall {
         function,
         args,

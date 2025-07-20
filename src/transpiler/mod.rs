@@ -1,31 +1,32 @@
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
-use crate::parser::ast::Program;
+use crate::parser::ast::{Program, Type};
 mod builtinfunctions;
 mod codegen;
+mod decl;
 mod helpers;
 mod transpile;
 #[derive(Clone, Debug, Default)]
-
-pub struct TranspileContext {
+pub struct TranspileContext<'a> {
     pub imports: HashSet<String>,
-    pub current_struct: Option<String>,
+    pub current_struct: Option<&'a str>,
     pub needs_allocator: bool,
     pub uses_stdout: bool,
     pub used_min_fn: bool,
     pub used_max_fn: bool,
-    pub enum_defs: HashMap<String, Vec<String>>,
+    pub enum_defs: HashMap<Cow<'a, str>, Vec<Cow<'a, str>>>,
     pub used_input_fn: bool,
     pub cleanup_statements: Vec<String>,
     pub used_sum_fn: bool,
     pub used_split_n_fn: bool,
-    pub struct_defs: HashMap<String, Vec<String>>,
+    pub struct_defs: HashMap<Cow<'a, str>, Cow<'a, Vec<(&'a str, Type<'a>)>>>,
     pub used_split_auto_fn: bool,
     pub used_split_alloc_fn: bool,
     pub is_find_method: bool,
 }
 
-impl TranspileContext {
+impl<'a> TranspileContext<'a> {
     pub fn new() -> Self {
         Self {
             imports: HashSet::new(),
@@ -54,7 +55,7 @@ impl TranspileContext {
             Some(import.to_string())
         }
     }
-    pub fn transpile(&mut self, program: &Program) -> String {
+    pub fn transpile(&mut self, program: &Program<'a>) -> String {
         let imports = codegen::prelude::generate_imports(self);
         let defs = codegen::top_level::generate_top_level_defs(program, self);
         let main_body = codegen::main_body::generate_main_body(program, self);

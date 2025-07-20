@@ -87,15 +87,19 @@ use crate::{
     result
 }
  */
-pub fn get_type<'a>(value: &Expr<'a>, ctx: &ValidatorContext<'a>) -> Option<Type<'a>> {
+pub fn get_type<'a>(
+    value: &Expr<'a>,
+    ctx: &ValidatorContext<'a>,
+    typ: Option<&Type<'a>>,
+) -> Option<Type<'a>> {
     match value {
         Expr::Number(_) => Some(Type::Integer),
         Expr::Bool(_) => Some(Type::Bool),
         Expr::String(_) => Some(Type::Metn),
         Expr::List(_) => Some(Type::Siyahi(Box::new(Type::Any))),
         Expr::Index { target, index } => {
-            let target_type = get_type(target, ctx);
-            let _index_type = get_type(index, ctx);
+            let target_type = get_type(target, ctx, typ);
+            let _index_type = get_type(index, ctx, typ);
             if let Some(target_type) = target_type {
                 if target_type == Type::Siyahi(Box::new(Type::Any)) {
                     return Some(Type::Any);
@@ -107,14 +111,23 @@ pub fn get_type<'a>(value: &Expr<'a>, ctx: &ValidatorContext<'a>) -> Option<Type
             if let Some(s) = ctx.lookup_variable(name) {
                 return Some(s.typ.clone());
             }
+            if let Some(t) = typ {
+                if let Type::Istifadeci(enum_name) = t {
+                    if let Some(variants) = ctx.enum_defs.get(enum_name) {
+                        if variants.contains(name) {
+                            return Some(t.clone());
+                        }
+                    }
+                }
+            }
 
             None
         }
         Expr::BuiltInCall { return_type, .. } => Some(return_type.clone()),
         Expr::Call { returned_type, .. } => returned_type.clone(),
         Expr::BinaryOp { left, op, right } => {
-            let left_type = get_type(left, ctx)?;
-            let right_type = get_type(right, ctx)?;
+            let left_type = get_type(left, ctx, typ)?;
+            let right_type = get_type(right, ctx, typ)?;
 
             // Əgər operandların tipi uyğun gəlmir
             if left_type != right_type {

@@ -1,2 +1,5 @@
-sabit a = [1,2,3]
-Çap(a)
+funksiya factorial(n: ədəd): ədəd
+    qaytar n
+
+
+Çap(factorial(5))
