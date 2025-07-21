@@ -49,6 +49,9 @@ where
                 Token::Comma => {
                     tokens.next();
                 }
+                Token::Eof => {
+                    break;
+                }
                 _ => {
                     println!("token {:?}", tokens.peek());
 

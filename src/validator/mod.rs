@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 pub mod validate;
-use crate::parser::ast::{EnumDecl, Expr, Parameter, Symbol, Type};
+use crate::parser::ast::{Expr, Parameter, Symbol, Type};
 pub use validate::validate_expr;
 pub mod helpers;
 
@@ -16,8 +16,8 @@ pub struct ValidatorContext<'a> {
     pub struct_defs: HashMap<
         String,
         (
-            Vec<(String, Type<'a>)>,
-            Vec<(String, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>,
+            Vec<(&'a str, Type<'a>)>, // fields
+            Vec<(Cow<'a, str>, Option<Type<'a>>)>,
         ),
     >,
     pub enum_defs: HashMap<Cow<'a, str>, Vec<Cow<'a, str>>>,

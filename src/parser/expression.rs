@@ -68,6 +68,7 @@ where
         Token::StringLiteral(s) => Ok(Expr::String(s)),
         Token::True => Ok(Expr::Bool(true)),
         Token::False => Ok(Expr::Bool(false)),
+
         Token::Float(num) => Ok(Expr::Float(*num)),
         Token::Backtick => parse_template_string_expr(tokens)
             .map_err(|e| eyre!("Identifier parsing xətası: {}", e)),

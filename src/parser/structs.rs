@@ -13,8 +13,6 @@ pub fn parse_structs_init<'a, I>(
 where
     I: Iterator<Item = &'a Token>,
 {
-    tokens.next();
-    tokens.next();
     let mut args = Vec::new();
     loop {
         match tokens.peek() {

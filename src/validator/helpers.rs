@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::{
     parser::ast::{Expr, Type},
     validator::ValidatorContext,
@@ -96,17 +98,22 @@ pub fn get_type<'a>(
         Expr::Number(_) => Some(Type::Integer),
         Expr::Bool(_) => Some(Type::Bool),
         Expr::String(_) => Some(Type::Metn),
-        Expr::List(_) => Some(Type::Siyahi(Box::new(Type::Any))),
-        Expr::Index { target, index } => {
-            let target_type = get_type(target, ctx, typ);
-            let _index_type = get_type(index, ctx, typ);
-            if let Some(target_type) = target_type {
-                if target_type == Type::Siyahi(Box::new(Type::Any)) {
-                    return Some(Type::Any);
+        Expr::List(items) => {
+            let item_type = get_type(&items[0], ctx, typ)?;
+            for item in &items[1..] {
+                let t = get_type(item, ctx, typ)?;
+                if t != item_type {
+                    return Some(Type::Siyahi(Box::new(Type::Any))); // qarışıq tiplər
                 }
             }
-            None
+
+            Some(Type::Siyahi(Box::new(item_type)))
         }
+        Expr::Index {
+            target,
+            index,
+            target_type,
+        } => Some(target_type.clone()),
         Expr::VariableRef { name, symbol } => {
             if let Some(s) = ctx.lookup_variable(name) {
                 return Some(s.typ.clone());
@@ -122,6 +129,17 @@ pub fn get_type<'a>(
             }
 
             None
+        }
+        Expr::StructInit { name, args } => {
+            if let Some(struct_def) = ctx.struct_defs.get(*name) {
+                let mut arg_types = Vec::new();
+                for arg in args {
+                    arg_types.push(get_type(arg, ctx, typ));
+                }
+                Some(Type::Istifadeci(Cow::Owned(name.to_string())))
+            } else {
+                None
+            }
         }
         Expr::BuiltInCall { return_type, .. } => Some(return_type.clone()),
         Expr::Call { returned_type, .. } => returned_type.clone(),

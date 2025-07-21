@@ -78,6 +78,12 @@ pub enum ValidatorError<'a> {
 
     #[error("Funksiya '{name}' üçün tip təyin edilməyib")]
     FunctionReturnTypeNotFound { name: String },
+
+    #[error("Struct '{0}' artıq mövcuddur")]
+    DuplicateStruct(&'a str),
+
+    #[error("Indeksli ifadə üçün tip təyin edilməyib")]
+    IndexTargetTypeNotFound,
 }
 
 /* use thiserror::Error;

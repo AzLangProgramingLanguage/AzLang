@@ -93,7 +93,7 @@ where
                 indent_level -= 1;
                 tokens.next();
 
-                if indent_level == 0 {
+                if indent_level <= 0 {
                     break;
                 }
             }

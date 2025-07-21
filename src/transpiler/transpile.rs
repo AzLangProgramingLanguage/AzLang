@@ -7,9 +7,10 @@ use crate::{
         builtinfunctions::{
             min_max::{transpile_max, transpile_min},
             print::transpile_print,
+            sum::transpile_sum,
         },
         decl::transpile_decl,
-        helpers::{is_semicolon_needed, map_type, transpile_function_def},
+        helpers::{get_expr_type, is_semicolon_needed, map_type, transpile_function_def},
     },
 };
 
@@ -66,7 +67,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                 .iter()
                 .map(|e| {
                     let code = transpile_expr(e, ctx);
-                    if !code.ends_with(';') {
+                    if is_semicolon_needed(e) {
                         format!("{};", code)
                     } else {
                         code
@@ -114,7 +115,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                 .map(|e| {
                     let code = transpile_expr(e, ctx);
 
-                    if is_semicolon_needed(expr) && !code.trim_start().starts_with("//") {
+                    if is_semicolon_needed(e) && !code.trim_start().starts_with("//") {
                         format!("{};", code)
                     } else {
                         code
@@ -281,6 +282,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
         } => match function {
             BuiltInFunction::Print => transpile_print(&args[0], ctx),
             BuiltInFunction::Max => transpile_max(&args, ctx),
+            BuiltInFunction::Sum => transpile_sum(&args, ctx),
             BuiltInFunction::Min => transpile_min(&args, ctx),
             BuiltInFunction::Sqrt => {
                 format!("@sqrt({}.0)", transpile_expr(&args[0], ctx))
@@ -331,6 +333,36 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             format!("{}({})", name, args_code.join(", "))
         }
 
+        Expr::StructInit { name, args } => {
+            let mut field_lines: Vec<String> = Vec::new();
+            let struct_fields = ctx.struct_defs.get(*name).unwrap().clone();
+
+            for (i, arg_expr) in args.iter().enumerate() {
+                let value_code = transpile_expr(arg_expr, ctx);
+                let field_name = struct_fields.get(i).map(|s| s).unwrap();
+                field_lines.push(format!(".{} = {}", field_name.0, value_code));
+            }
+            let body = field_lines.join(", ");
+            format!("{}{{ {} }};", name, body)
+        }
+        Expr::Index {
+            target,
+            index,
+            target_type,
+        } => {
+            let target_code = transpile_expr(target, ctx);
+            let index_code = transpile_expr(index, ctx);
+
+            let index_type_expr = get_expr_type(index);
+            match index_type_expr {
+                Type::Metn => {
+                    format!("{}.{}", target_code, index_code.trim_matches('"'))
+                }
+                _ => {
+                    format!("{}[{}]", target_code, index_code)
+                }
+            }
+        }
         _ => {
             println!("not yet implemented");
             println!("{:?}", expr);

@@ -53,7 +53,7 @@ fn transpile_min_max<'a>(
     format!("{}({}, {})", fn_name, type_code, final_list_code)
 }
 
-fn inner_typer(inner_type: Type<'_>) -> &'static str {
+pub fn inner_typer(inner_type: Type<'_>) -> &'static str {
     match inner_type {
         Type::Siyahi(inner) => inner_typer(*inner),
         Type::Integer => "usize",

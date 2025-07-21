@@ -1,5 +1,7 @@
-funksiya factorial(n: ədəd): ədəd
-    qaytar n
+Obyekt Adam
+    ad: mətn
+    soyad: mətn
 
 
-Çap(factorial(5))
+sabit ads = Adam{"Prest", "Gül"}
+Çap(ads.ad)

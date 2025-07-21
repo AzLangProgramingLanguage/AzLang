@@ -30,20 +30,23 @@ pub fn transpile_decl<'a>(
                 let items_code: Vec<String> =
                     items.iter().map(|i| transpile_expr(i, ctx)).collect();
                 let items_str = items_code.join(", ");
+                if is_mutable {
+                    ctx.needs_allocator = true;
+                    ctx.cleanup_statements.push(format!("{}.deinit();", name));
 
-                ctx.needs_allocator = true;
-                ctx.cleanup_statements.push(format!("{}.deinit();", name));
+                    let inner_code = map_type(inner, false);
 
-                let inner_code = map_type(inner, false);
-
-                format!(
-                    r#"var {name} = try std.ArrayList({inner}).initCapacity(allocator, {cap});
+                    format!(
+                        r#"var {name} = try std.ArrayList({inner}).initCapacity(allocator, {cap});
 try {name}.appendSlice(&[_]{inner}{{ {items} }});"#,
-                    name = name,
-                    inner = inner_code,
-                    cap = items.len(),
-                    items = items_str
-                )
+                        name = name,
+                        inner = inner_code,
+                        cap = items.len(),
+                        items = items_str
+                    )
+                } else {
+                    format!("const {} = [_]{}{{ {} }}", name, type_str, items_str)
+                }
             }
             _ => todo!(),
         },

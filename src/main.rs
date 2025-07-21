@@ -160,8 +160,8 @@ fn run(input_path: &str) -> Result<()> {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator)
             .map_err(|e| eyre!("Validator xətası: {e}"))?;
     }
+
     let mut ctx = TranspileContext::new();
-    dbg!(&parsed_program);
     let zig_code = ctx.transpile(&parsed_program);
     let mut temp_path = env::temp_dir();
     temp_path.push("azlang_output.zig");

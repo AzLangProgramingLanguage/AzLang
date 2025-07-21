@@ -92,6 +92,35 @@ pub fn validate_expr<'a>(
                 validate_expr(arg, ctx, log)?;
             }
         }
+        Expr::StructDef {
+            name,
+            fields,
+            methods,
+        } => {
+            log(&format!("✅ Struct tərifi yoxlanılır: '{}'", name));
+            if ctx.struct_defs.contains_key(*name) {
+                return Err(ValidatorError::DuplicateStruct(name));
+            }
+
+            let method_infos = methods
+                .iter()
+                .map(|(method_name, _params, _body, ret_type)| {
+                    (Cow::Borrowed(*method_name), ret_type.clone())
+                })
+                .collect();
+
+            ctx.struct_defs
+                .insert(name.to_string(), (fields.to_vec(), method_infos));
+
+            for (_method_name, _params, body, _ret_type) in methods.iter_mut() {
+                ctx.current_struct = Some(name.to_string());
+                for expr in body {
+                    validate_expr(expr, ctx, log)?;
+                }
+                ctx.current_struct = None;
+            }
+        }
+
         Expr::EnumDecl(EnumDecl { name, variants }) => {
             log(&format!("Enum tərifi yoxlanılır: '{}'", name));
 
@@ -260,11 +289,66 @@ pub fn validate_expr<'a>(
             validate_expr(arg, ctx, log)?;
             } */
         }
-        Expr::Index { target, index } => {
+        Expr::Index {
+            target,
+            index,
+            target_type,
+        } => {
             log("Dəmir Əmi indeksləmə əməliyyatını yoxlayır...");
 
             validate_expr(target, ctx, log)?;
-            validate_expr(index, ctx, log)?;
+            /*             validate_expr(index, ctx, log)?;
+             */
+            let index_type = get_type(index, ctx, None);
+            if index_type.is_none() {
+                return Err(ValidatorError::IndexTargetTypeNotFound);
+            }
+            let index_type = index_type.unwrap();
+
+            if index_type == Type::Integer {
+                *target_type = Type::Integer;
+            } else {
+            }
+            log("Dəmir Əmi indeksləmə2  əməliyyatını yoxlayır...");
+            match index_type {
+                Type::Integer => {
+                    *target_type = Type::Integer;
+                }
+                Type::Metn => {
+                    log("Dəmir Əmi indeksləmə2  əməliyyatını yoxlayır...");
+                    let index_name = match &**index {
+                        Expr::String(s) => s,
+                        _ => return Err(ValidatorError::IndexTargetTypeNotFound),
+                    };
+                    let struct_type = get_type(target, ctx, None);
+                    if struct_type.is_none() {
+                        return Err(ValidatorError::IndexTargetTypeNotFound);
+                    }
+                    let struct_name = match struct_type {
+                        Some(Type::Istifadeci(name)) => name,
+                        _ => return Err(ValidatorError::IndexTargetTypeNotFound),
+                    };
+                    let struct_def = ctx
+                        .struct_defs
+                        .get(&struct_name.to_string())
+                        .unwrap()
+                        .0
+                        .clone();
+                    match &**index {
+                        Expr::String(index_name) => {
+                            log(&format!("Dəmir Əmi sindeksləmə əməliyyatını yoxlayır..."));
+                            for (fname, ftype) in struct_def {
+                                if fname == *index_name {
+                                    *target_type = ftype.clone();
+                                    break;
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
         }
         Expr::FunctionDef {
             name,

@@ -35,11 +35,14 @@ where
                     })));
                     continue;
                 }
-                tokens.next();
+                tokens.next(); // consume InterpolationStart
 
                 let expr = parse_single_expr(tokens)?;
-                tokens.next();
-                chunks.push(TemplateChunk::Expr(Box::new(expr)));
+
+                /* [src/parser/template.rs:42:17] expr = VariableRef {
+                    name: "self",
+                    symbol: None,
+                } */
 
                 match tokens.next() {
                     Some(Token::InterpolationEnd) => {}
@@ -50,6 +53,7 @@ where
                         ));
                     }
                 }
+                chunks.push(TemplateChunk::Expr(Box::new(expr)));
             }
             Token::Backtick => {
                 break;

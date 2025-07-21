@@ -19,23 +19,22 @@ where
         symbol: None,
     };
 
-    match tokens.peek_nth(1) {
+    match tokens.nth(1) {
         Some(Token::ListStart) => {
-            tokens.next();
             let index_expr =
                 parse_single_expr(tokens).map_err(|e| eyre!("İndeks ifadəsi səhv: {}", e))?;
-
+            tokens.next();
             if matches!(tokens.next(), Some(Token::ListEnd)) {
                 Ok(Expr::Index {
                     target: Box::new(expr),
                     index: Box::new(index_expr),
+                    target_type: Type::Any,
                 })
             } else {
                 Err(eyre!("Siyahı düzgün bağlanılmadı: ']' gözlənilirdi"))
             }
         }
         Some(Token::LParen) => {
-            tokens.next();
             tokens.next(); // '(' yey
             let mut args = Vec::new();
 
@@ -76,7 +75,6 @@ where
             Ok(expr)
         }
         Some(Token::Dot) => {
-            tokens.next();
             let field_or_method = match tokens.next() {
                 Some(Token::Identifier(name)) => (*name).as_str(),
                 _ => return Err(eyre!("Metod və ya sahə adı gözlənilirdi")),
@@ -114,6 +112,7 @@ where
                     expr = Expr::Index {
                         target: Box::new(expr),
                         index: Box::new(Expr::String(field_or_method)),
+                        target_type: Type::Any,
                     };
                 }
             }

@@ -26,7 +26,6 @@ impl BuiltInFunction {
         match self {
             BuiltInFunction::Print
             | BuiltInFunction::Len
-            | BuiltInFunction::Sum
             | BuiltInFunction::Sqrt
             | BuiltInFunction::Round
             | BuiltInFunction::Floor
@@ -38,7 +37,7 @@ impl BuiltInFunction {
             BuiltInFunction::Range => Some(2),
 
             BuiltInFunction::Timer => Some(0),
-
+            BuiltInFunction::Sum => None,
             BuiltInFunction::Input => None, // Special case
 
             BuiltInFunction::Max | BuiltInFunction::Min => None, // Flexible
@@ -73,12 +72,14 @@ pub enum Expr<'a> {
     String(&'a str),
     Bool(bool),
     Number(i64),
+    Char(char),
     EnumDecl(EnumDecl<'a>),
     Return(Box<Expr<'a>>),
     List(Vec<Expr<'a>>),
     Index {
         target: Box<Expr<'a>>,
         index: Box<Expr<'a>>,
+        target_type: Type<'a>,
     },
     Loop {
         var_name: &'a str,

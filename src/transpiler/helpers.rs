@@ -9,11 +9,17 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
+        Expr::Char(_) => Type::Char,
+        Expr::VariableRef { name: _, symbol } => symbol.as_ref().unwrap().typ.clone(),
+        Expr::Index {
+            target,
+            index,
+            target_type,
+        } => target_type.clone(),
         Expr::List(items) => {
             if items.is_empty() {
                 return Type::Siyahi(Box::new(Type::Any)); // boş siyahı – tipi bilinmir
             }
-
             let item_type = get_expr_type(&items[0]);
 
             for item in &items[1..] {
@@ -79,11 +85,7 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
         Type::Bool => Cow::Borrowed("bool"),
         Type::Siyahi(inner) => {
             let inner_str = map_type(inner, is_const);
-            if is_const {
-                Cow::Owned(format!("[]const {}", inner_str))
-            } else {
-                Cow::Owned(format!("[]{}", inner_str))
-            }
+            inner_str
         }
         Type::Istifadeci(name) => {
             Cow::Borrowed(name) // əgər `name: &'a str`-dirsə.
