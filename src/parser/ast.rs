@@ -76,6 +76,10 @@ pub enum Expr<'a> {
     EnumDecl(EnumDecl<'a>),
     Return(Box<Expr<'a>>),
     List(Vec<Expr<'a>>),
+    UnaryOp {
+        op: &'a str,
+        expr: Box<Expr<'a>>,
+    },
     Index {
         target: Box<Expr<'a>>,
         index: Box<Expr<'a>>,

@@ -32,12 +32,11 @@ where
                 tokens.next();
                 continue;
             }
-            Token::StringLiteral(_) | Token::Number(_) | Token::Float(_) => {
+            /*    Token::StringLiteral(_) | Token::Number(_) | Token::Float(_) => {
                 return Err(eyre!(
                     "Bir başa mətn, rəqəm və ya kəsr ədəd istifadə edə bilməzsiniz"
                 ));
-            }
-
+            } */
             Token::Eof => break,
             _ => {
                 let expr = parse_expression(tokens)?;
@@ -70,8 +69,9 @@ where
         Token::False => Ok(Expr::Bool(false)),
 
         Token::Float(num) => Ok(Expr::Float(*num)),
-        Token::Backtick => parse_template_string_expr(tokens)
-            .map_err(|e| eyre!("Identifier parsing xətası: {}", e)),
+        Token::Backtick => {
+            parse_template_string_expr(tokens).map_err(|e| eyre!("Sablon parsing xətası: {}", e))
+        }
         Token::Number(num) => Ok(Expr::Number(*num)),
         Token::This => Ok(Expr::VariableRef {
             name: Cow::Borrowed("self"),
@@ -85,8 +85,6 @@ where
         Token::ConstantDecl => {
             tokens.next();
 
-            dbg!(tokens.peek());
-
             Ok(parse_decl(tokens, false).unwrap())
         }
         Token::MutableDecl => {
@@ -97,19 +95,25 @@ where
             tokens.next();
             let returned_value =
                 parse_single_expr(tokens).map_err(|e| eyre!("Qaytarma  parsing xətası: {}", e))?;
-            tokens.next();
-            while matches!(tokens.peek(), Some(Token::Semicolon | Token::Newline)) {
-                tokens.next();
-            }
             Ok(Expr::Return(Box::new(returned_value)))
         }
         Token::Match => parse_match(tokens).map_err(|e| eyre!("Match parsing xətası: {}", e)),
         Token::FunctionDef => {
             tokens.next();
+
             parse_function_def(tokens).map_err(|e| eyre!("Funksiya parsing xətası: {}", e))
         }
+        Token::Operator(op) if op == "-" => {
+            tokens.next();
+            Ok(Expr::UnaryOp {
+                op,
+                expr: Box::new(parse_single_expr(tokens)?),
+            })
+        }
+
         Token::Loop => parse_loop(tokens).map_err(|e| eyre!("Loop parsing xətası: {}", e)),
         Token::Identifier(s) => {
+            println!("Identifier: {}", s);
             parse_identifier(tokens, s).map_err(|e| eyre!("Identifier parsing xətası: {}", e))
         }
         Token::Conditional => parse_if_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),

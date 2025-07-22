@@ -50,10 +50,16 @@ pub fn validate_expr<'a>(
                         is_pointer: false,
                     },
                 );
+            } else {
+                return Err(ValidatorError::DeclTypeUnknown);
             }
             validate_expr(value, ctx, log)?;
         }
-        Expr::String(_) | Expr::Float(_) | Expr::Bool(_) | Expr::Number(_) => {}
+        Expr::String(_)
+        | Expr::Float(_)
+        | Expr::Bool(_)
+        | Expr::Number(_)
+        | Expr::UnaryOp { .. } => {}
         Expr::BuiltInCall {
             function,
             args,
@@ -268,26 +274,6 @@ pub fn validate_expr<'a>(
             for arg in args.iter_mut() {
                 validate_expr(arg, ctx, log)?;
             }
-
-            /*     for (param, arg) in func.parameters.iter().zip(args.iter_mut()) {
-                if param.is_pointer {
-                    if let Expr::VariableRef {
-                        symbol: Some(sym), ..
-                    } = arg
-                    {
-                        sym.is_pointer = true;
-                    }
-                }
-            } */
-            /*             *returned_type = func.return_type.clone();
-             */ /*      log(&format!("Funksiya çağırış yoxlanılır: {}", target));
-            
-
-            validate_expr(target, ctx, log)?;
-
-            for arg in args {
-            validate_expr(arg, ctx, log)?;
-            } */
         }
         Expr::Index {
             target,
@@ -376,6 +362,15 @@ pub fn validate_expr<'a>(
                 ctx.declare_variable(param.name.clone(), symbol);
             }
             let mut owned_body = std::mem::take(body);
+
+            ctx.functions.insert(
+                Cow::Borrowed(*name),
+                FunctionInfo {
+                    name: Cow::Borrowed(*name),
+                    parameters: params.clone(),
+                    return_type: return_type.clone(),
+                },
+            );
 
             for expr in owned_body.iter_mut() {
                 validate_expr(expr, ctx, log)?;

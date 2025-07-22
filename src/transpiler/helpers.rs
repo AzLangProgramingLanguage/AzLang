@@ -56,7 +56,7 @@ use std::borrow::Cow;
 
 pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
     match typ {
-        Type::Integer => Cow::Borrowed("usize"),
+        Type::Integer => Cow::Borrowed("isize"),
         Type::Any => Cow::Borrowed("any"),
         Type::Void => Cow::Borrowed("void"),
         Type::Float => Cow::Borrowed("f64"),

@@ -15,19 +15,12 @@ where
 {
     let mut left = parse_single_expr(tokens)?;
 
-    //Bizim burada öyle birşey yapmamız lazımki eğer bir sonraki token newline gerlirse  hiçbirşey yapmasın amma başka bir element gelirse tokens.next() yapsın.  Bunun için bir sonraki tokene nasıl geçmeden baka biliriz?
-
-    /*    if let Some(Token::Newline) = tokens.peek_nth(1) {
-    } else {
-        tokens.next();
-    } */
     loop {
         let op_token = match tokens.peek_nth(1) {
             Some(Token::Operator(op)) if op.as_str() != "." => {
                 tokens.next();
                 op.as_str()
             }
-
             _ => {
                 break;
             }
@@ -42,10 +35,9 @@ where
 
         let mut right = parse_single_expr(tokens)?;
 
-        tokens.next();
         // Sağ tərəfi daha yüksək prioritetlə yenidən yoxla
         loop {
-            let next_prec = match tokens.peek() {
+            let next_prec = match tokens.peek_nth(1) {
                 Some(Token::Operator(next_op)) => get_precedence(next_op.as_str()),
                 _ => 0,
             };

@@ -5,7 +5,8 @@ use crate::{
     lexer::Token,
     parser::{
         ast::{BuiltInFunction, Expr, Type},
-        expression::parse_single_expr,
+        expression::{parse_expression, parse_single_expr},
+        helper::skip_newlines,
     },
 };
 
@@ -14,6 +15,7 @@ where
     I: Iterator<Item = &'a Token>,
 {
     let token = tokens.peek().ok_or_else(|| eyre!("EOF gözlənilməz"))?;
+
     let (function, return_type) = match token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
         Token::Input => (BuiltInFunction::Input, Type::Metn),
@@ -26,7 +28,7 @@ where
         ),
         Token::LastWord => (BuiltInFunction::LastWord, Type::Metn),
         Token::Sqrt => (BuiltInFunction::Sqrt, Type::Float),
-        Token::Timer => (BuiltInFunction::Timer, Type::Float),
+        Token::Timer => (BuiltInFunction::Timer, Type::Integer),
         Token::Max => (BuiltInFunction::Max, Type::Float),
         Token::Min => (BuiltInFunction::Min, Type::Float),
         Token::Mod => (BuiltInFunction::Mod, Type::Integer),
@@ -41,6 +43,8 @@ where
 
     if let Some(Token::LParen) = tokens.next() {
         while let Some(token) = tokens.peek() {
+            /*TODO:  Burada tokenleri düzgün match edilmeyib.  */
+
             match token {
                 Token::RParen => {
                     tokens.next();
@@ -52,9 +56,8 @@ where
                 Token::Eof => {
                     break;
                 }
-                _ => {
-                    println!("token {:?}", tokens.peek());
 
+                _ => {
                     let expr = parse_single_expr(tokens)?;
                     args.push(expr);
                     tokens.next();
@@ -62,7 +65,7 @@ where
             }
         }
     }
-
+    println!("args: {args:?}");
     Ok(Expr::BuiltInCall {
         function,
         args,

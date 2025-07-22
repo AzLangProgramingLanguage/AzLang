@@ -95,6 +95,8 @@ where
 
     let mut body = Vec::new();
     while let Some(token) = tokens.peek() {
+        println!("Tokens: {:#?}", token);
+
         match token {
             Token::Dedent => {
                 tokens.next();
@@ -107,13 +109,13 @@ where
             _ => {
                 let expr = parse_single_expr(tokens)?;
                 body.push(expr);
-
-                while matches!(tokens.peek(), Some(Token::Semicolon | Token::Newline)) {
-                    tokens.next();
-                }
+                tokens.next();
             }
         }
     }
+
+    println!("Tokens Yoxla: {:#?}", tokens.peek());
+
     Ok(Expr::FunctionDef {
         name,
         params,

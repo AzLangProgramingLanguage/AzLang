@@ -284,6 +284,14 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             BuiltInFunction::Max => transpile_max(&args, ctx),
             BuiltInFunction::Sum => transpile_sum(&args, ctx),
             BuiltInFunction::Min => transpile_min(&args, ctx),
+            BuiltInFunction::Range => {
+                let start_code = transpile_expr(&args[0], ctx);
+                let end_code = transpile_expr(&args[1], ctx);
+                format!("{}..{}", start_code, end_code)
+            }
+            BuiltInFunction::Timer => {
+                format!("@intCast(std.time.milliTimestamp())")
+            }
             BuiltInFunction::Sqrt => {
                 format!("@sqrt({}.0)", transpile_expr(&args[0], ctx))
             }
@@ -315,7 +323,6 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                         name,
                         symbol: Some(sym),
                     } => {
-                        println!("Symboool  {:?}", sym);
                         if sym.is_pointer {
                             args_code.push(format!("&{}", name));
                         } else {
@@ -344,6 +351,43 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             }
             let body = field_lines.join(", ");
             format!("{}{{ {} }};", name, body)
+        }
+
+        Expr::Loop {
+            var_name,
+            iterable,
+            body,
+        } => {
+            let iterable_code = transpile_expr(iterable, ctx);
+
+            let mut body_lines = Vec::new();
+            for expr in body {
+                let mut line = transpile_expr(expr, ctx);
+                if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
+                    line.push(';');
+                }
+                body_lines.push(format!("    {}", line));
+            }
+            let body_code = body_lines.join("\n");
+
+            let loop_expr = match &**iterable {
+                Expr::VariableRef {
+                    symbol: Some(sym), ..
+                } => {
+                    if sym.is_mutable {
+                        format!("{}.items", iterable_code)
+                    } else {
+                        iterable_code.clone()
+                    }
+                }
+                _ => iterable_code.clone(),
+            };
+
+            format!("for ({}) |{}| {{\n{}\n}}", loop_expr, var_name, body_code)
+        }
+        Expr::UnaryOp { op, expr } => {
+            let expr_code = transpile_expr(expr, ctx);
+            format!("{}{}", op, expr_code)
         }
         Expr::Index {
             target,

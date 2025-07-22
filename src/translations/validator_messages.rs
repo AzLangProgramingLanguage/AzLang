@@ -84,6 +84,9 @@ pub enum ValidatorError<'a> {
 
     #[error("Indeksli ifadə üçün tip təyin edilməyib")]
     IndexTargetTypeNotFound,
+
+    #[error("Dəyişənin tipi müəyyən edilməyib")]
+    DeclTypeUnknown,
 }
 
 /* use thiserror::Error;

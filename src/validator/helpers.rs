@@ -96,6 +96,14 @@ pub fn get_type<'a>(
 ) -> Option<Type<'a>> {
     match value {
         Expr::Number(_) => Some(Type::Integer),
+        Expr::UnaryOp { op, expr } => {
+            let expr_type = get_type(expr, ctx, typ)?;
+            match &**op {
+                "-" => Some(Type::Integer),
+                "!" => Some(Type::Bool),
+                _ => None,
+            }
+        }
         Expr::Bool(_) => Some(Type::Bool),
         Expr::String(_) => Some(Type::Metn),
         Expr::List(items) => {
