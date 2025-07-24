@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{eyre, Result};
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 
@@ -13,10 +13,10 @@ use crate::{
         if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
         list::parse_list,
         loops::parse_loop,
-        r#match::parse_match,
         object::parse_struct_def,
         op_expr::parse_binary_op_expr,
         parse_identifier::parse_identifier,
+        r#match::parse_match,
         template::parse_template_string_expr,
     },
 };
@@ -32,11 +32,11 @@ where
                 tokens.next();
                 continue;
             }
-            /*    Token::StringLiteral(_) | Token::Number(_) | Token::Float(_) => {
+            Token::StringLiteral(_) | Token::Number(_) | Token::Float(_) => {
                 return Err(eyre!(
                     "Bir başa mətn, rəqəm və ya kəsr ədəd istifadə edə bilməzsiniz"
                 ));
-            } */
+            }
             Token::Eof => break,
             _ => {
                 let expr = parse_expression(tokens)?;
@@ -61,7 +61,7 @@ pub fn parse_single_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr
 where
     I: Iterator<Item = &'a Token>,
 {
-    let token = tokens.peek().ok_or_else(|| eyre!("Gözlənilməz Eof"))?;
+    let token = tokens.next().ok_or_else(|| eyre!("Gözlənilməz Eof"))?;
 
     match token {
         Token::StringLiteral(s) => Ok(Expr::String(s)),
@@ -73,47 +73,30 @@ where
             parse_template_string_expr(tokens).map_err(|e| eyre!("Sablon parsing xətası: {}", e))
         }
         Token::Number(num) => Ok(Expr::Number(*num)),
-        Token::This => Ok(Expr::VariableRef {
-            name: Cow::Borrowed("self"),
-            symbol: None,
-        }),
+        Token::This => parse_identifier(tokens, "self"),
         Token::Object => parse_struct_def(tokens).map_err(|e| eyre!("Obyekt parsing xətası {}", e)),
         Token::Enum => {
             parse_enum_decl(tokens).map_err(|e| eyre!("Növləndirmə parsing xətası: {}", e))
         }
         Token::ListStart => Ok(parse_list(tokens)),
-        Token::ConstantDecl => {
-            tokens.next();
-
-            Ok(parse_decl(tokens, false).unwrap())
-        }
-        Token::MutableDecl => {
-            tokens.next();
-            Ok(parse_decl(tokens, true).unwrap())
-        }
+        Token::ConstantDecl => Ok(parse_decl(tokens, false).unwrap()),
+        Token::MutableDecl => Ok(parse_decl(tokens, true).unwrap()),
         Token::Return => {
-            tokens.next();
             let returned_value =
-                parse_single_expr(tokens).map_err(|e| eyre!("Qaytarma  parsing xətası: {}", e))?;
+                parse_expression(tokens).map_err(|e| eyre!("Qaytarma  parsing xətası: {}", e))?;
             Ok(Expr::Return(Box::new(returned_value)))
         }
         Token::Match => parse_match(tokens).map_err(|e| eyre!("Match parsing xətası: {}", e)),
         Token::FunctionDef => {
-            tokens.next();
-
             parse_function_def(tokens).map_err(|e| eyre!("Funksiya parsing xətası: {}", e))
         }
-        Token::Operator(op) if op == "-" => {
-            tokens.next();
-            Ok(Expr::UnaryOp {
-                op,
-                expr: Box::new(parse_single_expr(tokens)?),
-            })
-        }
+        Token::Operator(op) if op == "-" => Ok(Expr::UnaryOp {
+            op,
+            expr: Box::new(parse_single_expr(tokens)?),
+        }),
 
         Token::Loop => parse_loop(tokens).map_err(|e| eyre!("Loop parsing xətası: {}", e)),
         Token::Identifier(s) => {
-            println!("Identifier: {}", s);
             parse_identifier(tokens, s).map_err(|e| eyre!("Identifier parsing xətası: {}", e))
         }
         Token::Conditional => parse_if_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
@@ -135,7 +118,7 @@ where
         | Token::Round
         | Token::Floor
         | Token::Ceil => {
-            let result = parse_builtin(tokens)?;
+            let result = parse_builtin(tokens, token)?;
             Ok(result)
         }
         Token::Eof | Token::Semicolon | Token::Newline => {

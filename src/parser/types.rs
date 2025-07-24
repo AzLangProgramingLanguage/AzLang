@@ -17,6 +17,7 @@ where
         Token::BigIntegerType => Type::BigInteger,
         Token::LowIntegerType => Type::LowInteger,
         Token::BoolType => Type::Bool,
+        Token::NaturalType => Type::Natural,
         Token::StringType => Type::Metn,
         Token::CharType => Type::Char,
         Token::FloatType => Type::Float,

@@ -1,8 +1,31 @@
-Çap(Modul(-1))
-
 funksiya factorial(n: ədəd): ədəd
-    qaytar n
+    əgər n<=1    
+        qaytar 1
+    əks
+        qaytar n * factorial(n-1)
 
 sabit a = 5
 Çap(factorial(a))
 
+funksiya hesabla(): ədəd
+    dəyişən cemi = 0
+    gəz aralıq(1,5) içində i
+        cemi = cemi + factorial(i)+i
+    qaytar cemi
+
+sabit vaxt1 = VaxtAl()
+sabit netice = hesabla()
+sabit bitir = VaxtAl()
+Çap(`Cəmi ${netice} `)
+
+Çap(`Vaxt ${bitir-vaxt1}ms`)
+Obyekt Adam
+    ad: mətn
+    soyad: mətn
+    metod salamla()
+        Çap(öz.ad)
+    
+sabit men = Adam{"Sebuhi","Sariyev"}
+
+Çap(men.ad)
+men.salamla()

@@ -14,12 +14,9 @@ pub fn parse_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>
 where
     I: Iterator<Item = &'a Token>,
 {
-    tokens.next();
-
     let condition = parse_binary_op_expr(tokens, 0)?; //Problem burada
 
-    tokens.next();
-
+    dbg!(tokens.peek());
     let then_branch = parse_block(tokens)?;
 
     let else_branch = match tokens.peek() {
@@ -96,12 +93,12 @@ where
             }
             Token::Eof => break,
             _ => {
-                let expr = parse_single_expr(tokens)?;
+                let expr = parse_expression(tokens)?;
                 block.push(expr);
-                tokens.next();
             }
         }
     }
 
+    println!("buraya çatdim2 {:?}", tokens.peek());
     Ok(block)
 }

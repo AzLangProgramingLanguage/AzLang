@@ -7,14 +7,14 @@ use crate::{
         types::parse_type,
     },
 };
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{eyre, Result};
 use peekmore::PeekMoreIterator;
 
 pub fn parse_struct_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
-    tokens.next();
+    // tokens.next();
     // Struktur adını al
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => (*name).as_str(),

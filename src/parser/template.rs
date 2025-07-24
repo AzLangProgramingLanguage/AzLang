@@ -14,8 +14,6 @@ pub fn parse_template_string_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Re
 where
     I: Iterator<Item = &'a Token>,
 {
-    tokens.next();
-
     let mut chunks = Vec::new();
     loop {
         let token = tokens
@@ -57,5 +55,6 @@ where
         }
     }
 
+    tokens.next();
     Ok(Expr::TemplateString(chunks))
 }

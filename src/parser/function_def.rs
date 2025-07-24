@@ -2,7 +2,7 @@ use crate::{
     lexer::Token,
     parser::{
         ast::{Expr, Parameter, Type},
-        expression::parse_single_expr,
+        expression::{parse_expression, parse_single_expr},
         helper::expect_token,
         types::parse_type,
     },
@@ -20,7 +20,6 @@ where
         other => return Err(eyre!("Funksiya adı gözlənilirdi, tapıldı: {:?}", other)),
     };
 
-    // (
     expect_token(tokens, Token::LParen)?;
 
     let mut params = Vec::new();
@@ -107,9 +106,8 @@ where
             }
             Token::Eof => break,
             _ => {
-                let expr = parse_single_expr(tokens)?;
+                let expr = parse_expression(tokens)?;
                 body.push(expr);
-                tokens.next();
             }
         }
     }

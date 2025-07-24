@@ -53,6 +53,7 @@ pub enum Type<'a> {
     Siyahi(Box<Type<'a>>),
     Istifadeci(Cow<'a, str>),
     Integer,
+    Natural,
     BigInteger,
     LowInteger,
     Bool,
@@ -89,6 +90,11 @@ pub enum Expr<'a> {
         var_name: &'a str,
         iterable: Box<Expr<'a>>,
         body: Vec<Expr<'a>>,
+    },
+    Assingment {
+        name: &'a str,
+        value: Box<Expr<'a>>,
+        is_pointer: bool,
     },
     Float(f64),
     Decl {

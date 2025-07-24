@@ -46,31 +46,36 @@ impl<'a> Lexer<'a> {
                 self.current_indent += 1;
                 self.chars.next();
             } else if ch.is_whitespace() && ch != '\n' {
-                // Sətir əvvəlində olmayan boşluqları keç
                 self.chars.next();
             } else {
                 break;
             }
         }
     }
+
     fn handle_dedent(&mut self) -> Option<Token> {
+        if self.pending_dedents > 0 {
+            self.pending_dedents -= 1;
+            return Some(Token::Dedent);
+        }
+
         let current_level = *self.indent_stack.last().unwrap();
         if self.current_indent < current_level {
-            self.indent_stack.pop();
+            while let Some(&last) = self.indent_stack.last() {
+                if last > self.current_indent {
+                    self.indent_stack.pop();
+                    self.pending_dedents += 1;
+                } else {
+                    break;
+                }
+            }
 
-            // Yalnız 1 Dedent qaytar, qalanını pending_dedents-ə yaz
-            self.pending_dedents = self
-                .indent_stack
-                .iter()
-                .filter(|&&level| level > self.current_indent)
-                .count();
-
-            Some(Token::Dedent)
-        } else {
-            None
+            self.pending_dedents -= 1;
+            return Some(Token::Dedent);
         }
-    }
 
+        None
+    }
     pub fn next_token(&mut self) -> Option<Token> {
         // Əvvəlcə gözləyən dedentləri yoxla
         if self.pending_dedents > 0 {

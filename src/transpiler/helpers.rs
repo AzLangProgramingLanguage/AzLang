@@ -11,6 +11,11 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
         Expr::VariableRef { name: _, symbol } => symbol.as_ref().unwrap().typ.clone(),
+        Expr::BuiltInCall {
+            function,
+            args,
+            return_type,
+        } => return_type.clone(),
         Expr::Index {
             target,
             index,
@@ -18,23 +23,20 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         } => target_type.clone(),
         Expr::List(items) => {
             if items.is_empty() {
-                return Type::Siyahi(Box::new(Type::Any)); // boş siyahı – tipi bilinmir
+                return Type::Siyahi(Box::new(Type::Any));
             }
             let item_type = get_expr_type(&items[0]);
 
             for item in &items[1..] {
                 let t = get_expr_type(item);
                 if t != item_type {
-                    return Type::Siyahi(Box::new(Type::Any)); // qarışıq tiplər
+                    return Type::Siyahi(Box::new(Type::Any));
                 }
             }
 
-            Type::Siyahi(Box::new(item_type)) //item_type  mismatched types
-            // expected Type, found &Type (rustc E0308)
+            Type::Siyahi(Box::new(item_type))
         }
 
-        /*         Expr::StructInit(_) => Type::Istifadeci(),
-         */
         _ => Type::Any,
     }
 }
@@ -47,6 +49,7 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>) -> &'a str {
         Type::Char => "{c}",
         Type::Float => "{d}",
         Type::Void => "",
+        Type::Natural => "{}",
         Type::Any => "{any}",
         Type::Siyahi(_) => "{any} ",
         Type::Istifadeci(_) => "{any}",
@@ -57,6 +60,7 @@ use std::borrow::Cow;
 pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
     match typ {
         Type::Integer => Cow::Borrowed("isize"),
+        Type::Natural => Cow::Borrowed("usize"),
         Type::Any => Cow::Borrowed("any"),
         Type::Void => Cow::Borrowed("void"),
         Type::Float => Cow::Borrowed("f64"),

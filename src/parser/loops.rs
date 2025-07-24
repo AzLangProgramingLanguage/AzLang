@@ -9,8 +9,6 @@ pub fn parse_loop<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
-    expect_token(tokens, Token::Loop)?; // `gəz` açar sözü
-
     // iterable ifadə
     let iterable = parse_single_expr(tokens)?;
 

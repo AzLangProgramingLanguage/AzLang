@@ -16,7 +16,7 @@ where
     let mut left = parse_single_expr(tokens)?;
 
     loop {
-        let op_token = match tokens.peek_nth(1) {
+        let op_token = match tokens.peek() {
             Some(Token::Operator(op)) if op.as_str() != "." => {
                 tokens.next();
                 op.as_str()
@@ -30,8 +30,6 @@ where
         if prec < min_prec {
             break;
         }
-
-        tokens.next(); // operator yeyilir
 
         let mut right = parse_single_expr(tokens)?;
 

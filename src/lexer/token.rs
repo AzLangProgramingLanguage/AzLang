@@ -66,6 +66,7 @@ pub enum Token {
     RangeFn,
     Input,
     IntegerType,
+    NaturalType,
     StringType,
     CharType,
     BoolType,

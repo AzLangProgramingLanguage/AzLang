@@ -24,7 +24,7 @@ pub struct ValidatorContext<'a> {
 
     pub current_function: Option<String>,
     pub current_return: Option<Box<Expr<'a>>>,
-    pub current_struct: Option<String>,
+    pub current_struct: Option<&'a str>,
 }
 
 impl<'a> Default for ValidatorContext<'a> {

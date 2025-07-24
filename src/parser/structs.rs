@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{eyre, Result};
 use peekmore::PeekMoreIterator;
 
 use crate::{
@@ -24,7 +24,6 @@ where
             _ => {
                 let arg = parse_single_expr(tokens)?;
                 args.push(arg);
-                tokens.next();
                 if let Some(Token::Comma) = tokens.peek() {
                     tokens.next();
                 } else {

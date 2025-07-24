@@ -3,19 +3,12 @@ use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
-    parser::{
-        ast::{BuiltInFunction, Expr, Type},
-        expression::{parse_expression, parse_single_expr},
-        helper::skip_newlines,
-    },
-};
+    parser::{ast::{BuiltInFunction, Expr, Type}, expression::{parse_expression, parse_single_expr}}};
 
-pub fn parse_builtin<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_builtin<'a, I>(tokens: &mut PeekMoreIterator<I>, token: &Token) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
-    let token = tokens.peek().ok_or_else(|| eyre!("EOF gözlənilməz"))?;
-
     let (function, return_type) = match token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
         Token::Input => (BuiltInFunction::Input, Type::Metn),
@@ -35,40 +28,55 @@ where
         Token::Round => (BuiltInFunction::Round, Type::Float),
         Token::Floor => (BuiltInFunction::Floor, Type::Float),
         Token::Ceil => (BuiltInFunction::Ceil, Type::Float),
-        other => return Err(eyre!("Tanınmamış built-in function: {:?}", other)),
+        other => return Err(eyre!("Bilinməyən funksiya: {:?}", other)),
     };
 
     let mut args = Vec::new();
-    tokens.next();
 
-    if let Some(Token::LParen) = tokens.next() {
+    if let Some(Token::LParen) = tokens.peek() {
+        tokens.next();
         while let Some(token) = tokens.peek() {
-            /*TODO:  Burada tokenleri düzgün match edilmeyib.  */
-
             match token {
                 Token::RParen => {
                     tokens.next();
-                    break;
+                    break; //Burada dayanması lazımken dayanmır sıradaki Tokene keçir yeni NewLine
                 }
                 Token::Comma => {
                     tokens.next();
                 }
-                Token::Eof => {
-                    break;
-                }
-
                 _ => {
-                    let expr = parse_single_expr(tokens)?;
+                    println!("parse_builtin çıxır, növbəti token2 {:?}", tokens.peek()); //Burada NewLine Çıxır amma bu Newline ye çatmadan dayanması lazımdı
+                    let expr = parse_expression(tokens)?;
+                    println!("parse_builtin den sonra gelen, {:?}",tokens.peek());
                     args.push(expr);
-                    tokens.next();
                 }
             }
         }
     }
-    println!("args: {args:?}");
+
+    println!("parse_builtin çıxır, növbəti token {:?}", tokens.peek()); //parse_builtin çıxır, növbəti token Some(RParen)
+    /* : Parser xətası: Naməlum token: RParen */
     Ok(Expr::BuiltInCall {
         function,
         args,
         return_type,
     })
 }
+
+/* Tokens: [
+    Print,
+    LParen,
+    Mod,
+    LParen,
+    Operator(
+        "-",
+    ),
+    Number(
+        1,
+    ),
+    RParen,
+    RParen,
+    Newline,
+    Newline,
+    Eof,
+] */

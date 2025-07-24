@@ -1,14 +1,16 @@
 use crate::{
-    lexer::{Token, token},
+    lexer::{token, Token},
     parser::{
         ast::{Expr, Type},
         expression::parse_single_expr,
         structs::parse_structs_init,
     },
 };
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{eyre, Result};
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
+
+use super::expression::parse_expression;
 
 pub fn parse_identifier<'a, I>(tokens: &mut PeekMoreIterator<I>, s: &'a str) -> Result<Expr<'a>>
 where
@@ -19,9 +21,9 @@ where
         symbol: None,
     };
 
-    match tokens.peek_nth(1) {
+    match tokens.peek() {
         Some(Token::ListStart) => {
-            tokens.nth(1);
+            tokens.next();
             let index_expr =
                 parse_single_expr(tokens).map_err(|e| eyre!("İndeks ifadəsi səhv: {}", e))?;
             tokens.next();
@@ -36,9 +38,8 @@ where
             }
         }
         Some(Token::LParen) => {
-            tokens.nth(1);
+            tokens.next();
             let mut args = Vec::new();
-
             loop {
                 match tokens.peek() {
                     Some(Token::RParen) => {
@@ -47,16 +48,12 @@ where
                     }
                     None => break,
                     _ => {
-                        // Arqumenti parse et
-                        let arg = parse_single_expr(tokens)?;
+                        let arg = parse_expression(tokens)?;
                         args.push(arg);
-                        tokens.next();
-                        // Vergül varsa yey, yoxdursa dayan
-                        // Düzəliş: Token növünü birbaşa yoxla
+
                         if let Some(Token::Comma) = tokens.peek() {
-                            tokens.next(); // Vergülü yey
+                            tokens.next();
                         } else {
-                            // Növbəti token ')' deyilsə xəta
                             if !matches!(tokens.peek(), Some(Token::RParen)) {
                                 return Err(eyre!(
                                     "Arqument siyahısında ',' və ya ')' gözlənilirdi"
@@ -66,7 +63,6 @@ where
                     }
                 }
             }
-            tokens.next();
             expr = Expr::Call {
                 target: None,
                 name: s,
@@ -75,8 +71,17 @@ where
             };
             Ok(expr)
         }
+        Some(Token::Operator(op)) if op == "=" => {
+            tokens.next();
+            let value = parse_expression(tokens)?;
+            Ok(Expr::Assignment {
+                name: s.into(),
+                value: Box::new(value),
+                symbol: None,
+            })
+        }
         Some(Token::Dot) => {
-            tokens.nth(1);
+            tokens.next();
             let field_or_method = match tokens.next() {
                 Some(Token::Identifier(name)) => (*name).as_str(),
                 _ => return Err(eyre!("Metod və ya sahə adı gözlənilirdi")),
@@ -121,7 +126,7 @@ where
             Ok(expr)
         }
         Some(Token::LBrace) => {
-            tokens.nth(1);
+            tokens.next();
             parse_structs_init(tokens, s)
         }
         Some(_) => Ok(expr),

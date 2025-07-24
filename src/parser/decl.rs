@@ -10,6 +10,7 @@ pub fn parse_decl<'a, I>(tokens: &mut PeekMoreIterator<I>, is_mutable: bool) -> 
 where
     I: Iterator<Item = &'a Token>,
 {
+    println!("buraya çatdim {:?}", tokens.peek());
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
         other => return Err(eyre!("Dəyişən adı gözlənilirdi, tapıldı: {:?}", other)),
@@ -30,8 +31,6 @@ where
     let value_expr = parse_single_expr(tokens)?;
 
     let value = Box::new(value_expr);
-
-    tokens.next();
 
     Ok(Expr::Decl {
         name,

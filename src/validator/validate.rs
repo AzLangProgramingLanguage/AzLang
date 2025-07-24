@@ -5,7 +5,7 @@ use color_eyre::eyre::Result;
 use crate::{
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
-    validator::{FunctionInfo, ValidatorContext, helpers::get_type},
+    validator::{helpers::get_type, FunctionInfo, ValidatorContext},
 };
 
 pub fn validate_expr<'a>(
@@ -27,8 +27,9 @@ pub fn validate_expr<'a>(
                 name
             ));
 
+            validate_expr(value, ctx, log)?;
             let inferred = get_type(value, ctx, typ.as_ref());
-
+            dbg!(&inferred);
             if let Some(s) = inferred {
                 if let Some(typ_ref) = typ {
                     if *typ_ref != s {
@@ -53,7 +54,6 @@ pub fn validate_expr<'a>(
             } else {
                 return Err(ValidatorError::DeclTypeUnknown);
             }
-            validate_expr(value, ctx, log)?;
         }
         Expr::String(_)
         | Expr::Float(_)
@@ -119,7 +119,7 @@ pub fn validate_expr<'a>(
                 .insert(name.to_string(), (fields.to_vec(), method_infos));
 
             for (_method_name, _params, body, _ret_type) in methods.iter_mut() {
-                ctx.current_struct = Some(name.to_string());
+                ctx.current_struct = Some(name);
                 for expr in body {
                     validate_expr(expr, ctx, log)?;
                 }
@@ -148,6 +148,12 @@ pub fn validate_expr<'a>(
             }
 
             if name == "self" && ctx.current_struct.is_some() {
+                *symbol = Some(Symbol {
+                    typ: Type::Istifadeci(Cow::Borrowed(ctx.current_struct.unwrap())),
+                    is_mutable: false,
+                    is_used: true,
+                    is_pointer: false,
+                });
                 return Ok(());
             }
 
@@ -251,26 +257,27 @@ pub fn validate_expr<'a>(
             returned_type,
             name,
         } => {
-            if target.is_some() {
-                validate_expr(target.as_mut().unwrap(), ctx, log)?;
-                /*  let target_type = get_type(target.as_mut().unwrap(), ctx)
-                .ok_or(ValidatorError::FunctionTargetTypeNotFound)?; */
-            }
-            log(&format!("Funksiya çağırışı yoxlanılır: {}", name));
-            let func = ctx
-                .functions
-                .get(&Cow::Owned(name.to_string()))
-                .ok_or(ValidatorError::FunctionNotFound(&name))?;
+            match target {
+                Some(variable) => {
+                    validate_expr(variable, ctx, log)?;
+                }
+                _ => {
+                    let func = ctx
+                        .functions
+                        .get(&Cow::Owned(name.to_string()))
+                        .ok_or(ValidatorError::FunctionNotFound(name))?;
 
-            if func.parameters.len() != args.len() {
-                return Err(ValidatorError::FunctionArgCountMismatch {
-                    name: name.to_string(),
-                    expected: func.parameters.len(),
-                    found: args.len(),
-                });
+                    log(&format!("Funksiya çağırışı yoxlanılır: {}", name));
+                    if func.parameters.len() != args.len() {
+                        return Err(ValidatorError::FunctionArgCountMismatch {
+                            name: name.to_string(),
+                            expected: func.parameters.len(),
+                            found: args.len(),
+                        });
+                    }
+                    *returned_type = func.return_type.clone();
+                }
             }
-            *returned_type = func.return_type.clone();
-
             for arg in args.iter_mut() {
                 validate_expr(arg, ctx, log)?;
             }
@@ -285,7 +292,9 @@ pub fn validate_expr<'a>(
             validate_expr(target, ctx, log)?;
             /*             validate_expr(index, ctx, log)?;
              */
+            println!("Görek index nedir {:?}", index);
             let index_type = get_type(index, ctx, None);
+
             if index_type.is_none() {
                 return Err(ValidatorError::IndexTargetTypeNotFound);
             }
@@ -306,10 +315,10 @@ pub fn validate_expr<'a>(
                         Expr::String(s) => s,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
+
                     let struct_type = get_type(target, ctx, None);
-                    if struct_type.is_none() {
-                        return Err(ValidatorError::IndexTargetTypeNotFound);
-                    }
+
+                    println!("Sruktur tipi {target:?}");
                     let struct_name = match struct_type {
                         Some(Type::Istifadeci(name)) => name,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),

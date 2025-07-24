@@ -3,7 +3,6 @@ use std::borrow::Cow;
 use crate::{
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Parameter, Type},
     transpiler::{
-        TranspileContext,
         builtinfunctions::{
             min_max::{transpile_max, transpile_min},
             print::transpile_print,
@@ -11,6 +10,7 @@ use crate::{
         },
         decl::transpile_decl,
         helpers::{get_expr_type, is_semicolon_needed, map_type, transpile_function_def},
+        TranspileContext,
     },
 };
 
@@ -337,7 +337,12 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                 }
             }
 
-            format!("{}({})", name, args_code.join(", "))
+            match target.as_deref() {
+                Some(Expr::VariableRef {
+                    name: target_name, ..
+                }) => return format!("{}.{} ({})", target_name, name, args_code.join(", ")),
+                _ => format!("{}({})", name, args_code.join(", ")),
+            }
         }
 
         Expr::StructInit { name, args } => {
@@ -406,6 +411,14 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                     format!("{}[{}]", target_code, index_code)
                 }
             }
+        }
+        Expr::Assignment {
+            name,
+            value,
+            symbol,
+        } => {
+            let value_code = transpile_expr(value, ctx);
+            format!("{} = {}", name, value_code)
         }
         _ => {
             println!("not yet implemented");

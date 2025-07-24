@@ -2,7 +2,7 @@ pub mod utils;
 use std::{env, panic};
 
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{eyre, Result};
 mod lexer;
 mod parser;
 pub mod translations;
