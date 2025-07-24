@@ -27,5 +27,5 @@ Obyekt Adam
     
 sabit men = Adam{"Sebuhi","Sariyev"}
 
-Çap(men.ad)
-men.salamla()
+Çap(men["ad"])
+

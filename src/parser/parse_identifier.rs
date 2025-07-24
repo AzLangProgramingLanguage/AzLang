@@ -26,7 +26,6 @@ where
             tokens.next();
             let index_expr =
                 parse_single_expr(tokens).map_err(|e| eyre!("İndeks ifadəsi səhv: {}", e))?;
-            tokens.next();
             if matches!(tokens.next(), Some(Token::ListEnd)) {
                 Ok(Expr::Index {
                     target: Box::new(expr),
