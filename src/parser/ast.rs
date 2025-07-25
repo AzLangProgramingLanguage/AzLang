@@ -19,6 +19,7 @@ pub enum BuiltInFunction {
     Round,
     Floor,
     Ceil,
+    Zig,
 }
 
 impl BuiltInFunction {
@@ -31,6 +32,7 @@ impl BuiltInFunction {
             | BuiltInFunction::Floor
             | BuiltInFunction::Ceil
             | BuiltInFunction::Mod
+            | BuiltInFunction::Zig
             | BuiltInFunction::Number
             | BuiltInFunction::LastWord => Some(1),
 
@@ -41,7 +43,6 @@ impl BuiltInFunction {
             BuiltInFunction::Input => None, // Special case
 
             BuiltInFunction::Max | BuiltInFunction::Min => None, // Flexible
-
                                                                  //_ => None, (əgər başqa funksiyalar varsa da qeyd edə bilərsən)
         }
     }
@@ -139,7 +140,7 @@ pub enum Expr<'a> {
     },
     StructInit {
         name: &'a str,
-        args: Vec<Expr<'a>>,
+        args: Vec<(&'a str, Expr<'a>)>,
     },
     FunctionDef {
         name: &'a str,

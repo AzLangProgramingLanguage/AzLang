@@ -21,6 +21,9 @@ pub enum ValidatorError<'a> {
     #[error("Gözlənilməz ifadə")]
     UnknownExpression,
 
+    #[error(" '{0}' Dəyəri onsuzda var. ")]
+    AlreadyDecl(String),
+
     #[error("Dəyər enum variantı deyil")]
     NotAnEnumVariant,
 
@@ -87,6 +90,9 @@ pub enum ValidatorError<'a> {
 
     #[error("Dəyişənin tipi müəyyən edilməyib")]
     DeclTypeUnknown,
+
+    #[error("Import funksiyası yalnız string arqument qəbul edir")]
+    ImportError,
 }
 
 /* use thiserror::Error;

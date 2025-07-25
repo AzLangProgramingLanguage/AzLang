@@ -8,8 +8,6 @@ where
 {
     let mut elements = Vec::new();
 
-    tokens.next();
-
     for token in tokens.by_ref() {
         match token {
             Token::ListEnd => break,

@@ -23,6 +23,7 @@ where
         Token::Sqrt => (BuiltInFunction::Sqrt, Type::Float),
         Token::Timer => (BuiltInFunction::Timer, Type::Integer),
         Token::Max => (BuiltInFunction::Max, Type::Float),
+        Token::Zig => (BuiltInFunction::Zig, Type::Void),
         Token::Min => (BuiltInFunction::Min, Type::Float),
         Token::Mod => (BuiltInFunction::Mod, Type::Integer),
         Token::Round => (BuiltInFunction::Round, Type::Float),
@@ -62,21 +63,3 @@ where
         return_type,
     })
 }
-
-/* Tokens: [
-    Print,
-    LParen,
-    Mod,
-    LParen,
-    Operator(
-        "-",
-    ),
-    Number(
-        1,
-    ),
-    RParen,
-    RParen,
-    Newline,
-    Newline,
-    Eof,
-] */

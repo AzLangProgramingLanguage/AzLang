@@ -1,12 +1,12 @@
 use crate::{
-    lexer::{token, Token},
+    lexer::{Token, token},
     parser::{
         ast::{Expr, Type},
         expression::parse_single_expr,
         structs::parse_structs_init,
     },
 };
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 

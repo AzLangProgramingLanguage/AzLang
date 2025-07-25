@@ -1,6 +1,6 @@
 use crate::{
     parser::ast::{Expr, Parameter, Type},
-    transpiler::{TranspileContext, transpile::transpile_expr},
+    transpiler::{transpile::transpile_expr, TranspileContext},
 };
 
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {

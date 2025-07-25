@@ -2,7 +2,7 @@ pub mod utils;
 use std::{env, panic};
 
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 mod lexer;
 mod parser;
 pub mod translations;
@@ -154,7 +154,9 @@ fn run(input_path: &str) -> Result<()> {
     qardas_parse("Proqramı işə salıram, uğurlar!");
     let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
 
-    let tokens = lexer::Lexer::new(&input_code).tokenize();
+    let full_code =
+        utils::read_file_with_imports(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
+    let tokens = lexer::Lexer::new(&full_code).tokenize();
     println!("Tokens: {tokens:#?}");
 
     let mut parser = parser::Parser::new(tokens);

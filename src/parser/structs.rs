@@ -1,5 +1,6 @@
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
+use std::borrow::Cow;
 
 use crate::{
     lexer::Token,
@@ -22,8 +23,22 @@ where
             }
             None => break,
             _ => {
-                let arg = parse_single_expr(tokens)?;
-                args.push(arg);
+                let arg_name = match tokens.next() {
+                    Some(Token::Identifier(name)) => name.as_str(),
+                    _ => {
+                        return Err(eyre!(
+                            "Struct init argümentləri arasında ',' və ya '}}' gözlənilirdi"
+                        ));
+                    }
+                };
+                match tokens.next() {
+                    Some(Token::Colon) => {}
+                    _ => {
+                        return Err(eyre!("Struct init argümentləri arasında ':' gözlənilirdi"));
+                    }
+                }
+                let arg_value = parse_single_expr(tokens)?;
+                args.push((arg_name, arg_value));
                 if let Some(Token::Comma) = tokens.peek() {
                     tokens.next();
                 } else {
@@ -37,5 +52,8 @@ where
         }
     }
 
-    Ok(Expr::StructInit { name, args })
+    Ok(Expr::StructInit { name: name, args })
+
+    /* name `&str`
+    found enum `Cow<'a, str>` */
 }

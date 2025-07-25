@@ -1,9 +1,9 @@
-use color_eyre::eyre::{eyre, Result};
-use peekmore::PeekMoreIterator;
-use std::borrow::Cow;
+use color_eyre::eyre::{Result, eyre};
+use peekmore::{PeekMore, PeekMoreIterator};
+use std::{borrow::Cow, fs, path::Path};
 
 use crate::{
-    lexer::Token,
+    lexer::{self, Token},
     parser::{
         ast::Expr,
         builtin::parse_builtin,
@@ -13,10 +13,10 @@ use crate::{
         if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
         list::parse_list,
         loops::parse_loop,
+        r#match::parse_match,
         object::parse_struct_def,
         op_expr::parse_binary_op_expr,
         parse_identifier::parse_identifier,
-        r#match::parse_match,
         template::parse_template_string_expr,
     },
 };
@@ -31,6 +31,10 @@ where
             Token::Newline | Token::Semicolon => {
                 tokens.next();
                 continue;
+            }
+
+            Token::Import => {
+                tokens.nth(3);
             }
             Token::StringLiteral(_) | Token::Number(_) | Token::Float(_) => {
                 return Err(eyre!(
@@ -48,6 +52,9 @@ where
         }
     }
     Ok(ast)
+
+    /* cannot return value referencing local variable `newtokens`
+    returns a value referencing data owned by the current function */
 }
 
 pub fn parse_expression<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
@@ -86,6 +93,7 @@ where
                 parse_expression(tokens).map_err(|e| eyre!("Qaytarma  parsing xətası: {}", e))?;
             Ok(Expr::Return(Box::new(returned_value)))
         }
+
         Token::Match => parse_match(tokens).map_err(|e| eyre!("Match parsing xətası: {}", e)),
         Token::FunctionDef => {
             parse_function_def(tokens).map_err(|e| eyre!("Funksiya parsing xətası: {}", e))
@@ -114,6 +122,7 @@ where
         | Token::Timer
         | Token::Max
         | Token::Min
+        | Token::Zig
         | Token::Mod
         | Token::Round
         | Token::Floor

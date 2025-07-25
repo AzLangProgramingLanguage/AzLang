@@ -1,6 +1,11 @@
 use crate::{
     lexer::Token,
-    parser::{ast::Expr, expression::parse_single_expr, types::parse_type},
+    parser::{
+        ast::{Expr, Type},
+        expression::parse_single_expr,
+        structs::parse_structs_init,
+        types::parse_type,
+    },
 };
 use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;

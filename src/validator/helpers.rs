@@ -53,12 +53,8 @@ pub fn get_type<'a>(
             }
             return Some(symbol.as_ref().unwrap().typ.clone());
         }
-        Expr::StructInit { name, args } => {
-            if let Some(struct_def) = ctx.struct_defs.get(*name) {
-                let mut arg_types = Vec::new();
-                for arg in args {
-                    arg_types.push(get_type(arg, ctx, typ));
-                }
+        Expr::StructInit { name, .. } => {
+            if let Some(_) = ctx.struct_defs.get(*name) {
                 Some(Type::Istifadeci(Cow::Owned(name.to_string())))
             } else {
                 None

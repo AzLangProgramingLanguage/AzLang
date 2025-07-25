@@ -5,7 +5,7 @@ use color_eyre::eyre::Result;
 use crate::{
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
-    validator::{helpers::get_type, FunctionInfo, ValidatorContext},
+    validator::{FunctionInfo, ValidatorContext, helpers::get_type},
 };
 
 pub fn validate_expr<'a>(
@@ -26,6 +26,9 @@ pub fn validate_expr<'a>(
                 if *is_mutable { "Dəyişən" } else { "Sabit" },
                 name
             ));
+            if let Some(_) = ctx.lookup_variable(name) {
+                return Err(ValidatorError::AlreadyDecl(name.to_string()));
+            }
 
             validate_expr(value, ctx, log)?;
             let inferred = get_type(value, ctx, typ.as_ref());
@@ -77,6 +80,7 @@ pub fn validate_expr<'a>(
                         });
                     }
                 }
+
                 BuiltInFunction::Len => {
                     if let Some(t) = get_type(&args[0], ctx, None) {
                         if t != Type::Siyahi(Box::new(Type::Any)) {

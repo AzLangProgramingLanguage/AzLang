@@ -54,6 +54,8 @@ pub fn tokenize_word(word: &str) -> Token {
             "aralıq" => Token::RangeFn,
             "növ" => Token::Enum,
             "metod" => Token::Method,
+            "Zig" => Token::Zig,
+            "ƏlavəEt" => Token::Import,
             other => Token::Identifier(other.to_string()),
         },
     }
@@ -77,6 +79,7 @@ impl fmt::Display for BuiltInFunction {
             BuiltInFunction::Min => "Minimum",
             BuiltInFunction::Number => "Ədəd",
             BuiltInFunction::LastWord => "Sonsöz",
+            BuiltInFunction::Zig => "Zig",
         };
         write!(f, "{name}")
     }

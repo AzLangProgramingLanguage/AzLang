@@ -1,8 +1,9 @@
 use std::borrow::Cow;
 
 use crate::{
-    parser::ast::{BuiltInFunction, EnumDecl, Expr, Parameter, Type},
+    parser::ast::{BuiltInFunction, EnumDecl, Expr, Parameter, TemplateChunk, Type},
     transpiler::{
+        TranspileContext,
         builtinfunctions::{
             min_max::{transpile_max, transpile_min},
             print::transpile_print,
@@ -10,7 +11,6 @@ use crate::{
         },
         decl::transpile_decl,
         helpers::{get_expr_type, is_semicolon_needed, map_type, transpile_function_def},
-        TranspileContext,
     },
 };
 
@@ -269,6 +269,18 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
 
             format!("const {} = struct {{\n{}\n}};", name, full_body)
         }
+        Expr::TemplateString(template) => {
+            let mut lines = Vec::new();
+            for part in template {
+                match part {
+                    TemplateChunk::Literal(lit) => lines.push(format!("{}", lit)),
+                    TemplateChunk::Expr(expr) => {
+                        lines.push(format!("{}", transpile_expr(expr, ctx)))
+                    }
+                }
+            }
+            lines.join("\n")
+        }
         Expr::FunctionDef {
             name,
             params,
@@ -306,6 +318,28 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             }
             BuiltInFunction::Mod => {
                 format!("@abs({})", transpile_expr(&args[0], ctx))
+            }
+            BuiltInFunction::Zig => {
+                let code = transpile_expr(&args[0], ctx);
+                format!("{}", code)
+            }
+            BuiltInFunction::Input => {
+                ctx.used_input_fn = true;
+                let prompt = transpile_expr(&args[0], ctx);
+                let buf_name = "buf_temp";
+
+                format!(
+                    r#"(blk: {{
+                var {buf}: [100]u8 = undefined;
+                break :blk try input({prompt}, &{buf});
+            }})"#,
+                    buf = buf_name,
+                    prompt = prompt
+                )
+            }
+            BuiltInFunction::LastWord => {
+                let print_code = transpile_print(&args[0], ctx);
+                format!("{};\n    std.process.exit(0)", print_code)
             }
             _ => todo!(),
         },
@@ -347,12 +381,11 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
 
         Expr::StructInit { name, args } => {
             let mut field_lines: Vec<String> = Vec::new();
-            let struct_fields = ctx.struct_defs.get(*name).unwrap().clone();
 
             for (i, arg_expr) in args.iter().enumerate() {
-                let value_code = transpile_expr(arg_expr, ctx);
-                let field_name = struct_fields.get(i).map(|s| s).unwrap();
-                field_lines.push(format!(".{} = {}", field_name.0, value_code));
+                let value_code = transpile_expr(&arg_expr.1, ctx);
+                let field_name = arg_expr.0;
+                field_lines.push(format!(".{} = {}", field_name, value_code));
             }
             let body = field_lines.join(", ");
             format!("{}{{ {} }};", name, body)

@@ -12,6 +12,7 @@ pub enum Token {
     Array,
     Object,
     Else,
+    Import,
     This,
     Timer,
     Sqrt,
@@ -23,6 +24,7 @@ pub enum Token {
     LastWord,
     Sum,
     Drop,
+    Zig,
     Match, // uyğun
     Arrow, // ->
     Loop,
