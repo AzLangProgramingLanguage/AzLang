@@ -21,7 +21,7 @@ pub struct ValidatorContext<'a> {
         ),
     >,
     pub enum_defs: HashMap<Cow<'a, str>, Vec<Cow<'a, str>>>,
-
+    pub is_allocator_used: bool,
     pub current_function: Option<String>,
     pub current_return: Option<Box<Expr<'a>>>,
     pub current_struct: Option<&'a str>,
@@ -40,6 +40,7 @@ impl<'a> ValidatorContext<'a> {
             functions: HashMap::new(),
             struct_defs: HashMap::new(),
             enum_defs: HashMap::new(),
+            is_allocator_used: false,
             current_function: None,
             current_return: None,
             current_struct: None,

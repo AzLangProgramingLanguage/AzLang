@@ -7,8 +7,11 @@ pub fn generate_main_body<'a>(program: &Program<'a>, ctx: &mut TranspileContext<
     let mut body = String::new();
 
     for expr in &program.expressions {
-        if matches!(expr, Expr::FunctionDef { .. }) {
-            continue;
+        match expr {
+            Expr::FunctionDef { .. } | Expr::UnionType { .. } => {
+                continue;
+            }
+            _ => {}
         }
 
         let mut line = transpile_expr(expr, ctx);

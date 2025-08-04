@@ -1,11 +1,14 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, rc::Rc};
 
 use color_eyre::eyre::Result;
 
 use crate::{
-    parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
+    parser::ast::{BuiltInFunction, EnumDecl, Expr, Parameter, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
-    validator::{FunctionInfo, ValidatorContext, helpers::get_type},
+    validator::{
+        FunctionInfo, ValidatorContext,
+        helpers::{get_type, transpile_az_chars},
+    },
 };
 
 pub fn validate_expr<'a>(
@@ -16,6 +19,7 @@ pub fn validate_expr<'a>(
     match expr {
         Expr::Decl {
             name,
+            transpiled_name,
             typ,
             is_mutable,
             value,
@@ -26,15 +30,16 @@ pub fn validate_expr<'a>(
                 if *is_mutable { "Dəyişən" } else { "Sabit" },
                 name
             ));
-            if let Some(_) = ctx.lookup_variable(name) {
+            if ctx.lookup_variable(name).is_some() {
                 return Err(ValidatorError::AlreadyDecl(name.to_string()));
             }
 
+            let transpiled = transpile_az_chars(name);
             validate_expr(value, ctx, log)?;
-            let inferred = get_type(value, ctx, typ.as_ref());
+            let inferred = get_type(value, ctx, typ.as_deref());
             dbg!(&inferred);
             if let Some(s) = inferred {
-                if let Some(typ_ref) = typ {
+                if let Some(typ_ref) = typ.as_deref() {
                     if *typ_ref != s {
                         return Err(ValidatorError::DeclTypeMismatch {
                             name: name.to_string(),
@@ -43,12 +48,13 @@ pub fn validate_expr<'a>(
                         });
                     }
                 }
-                *typ = Some(s.clone());
-
+                *typ = Some(Rc::new(s.clone()));
+                *transpiled_name = Some(transpiled.to_string());
                 ctx.declare_variable(
                     name.to_string(),
                     Symbol {
                         typ: s,
+                        transpiled_name: Some(transpiled.to_string()),
                         is_mutable: *is_mutable,
                         is_used: false,
                         is_pointer: false,
@@ -56,6 +62,62 @@ pub fn validate_expr<'a>(
                 );
             } else {
                 return Err(ValidatorError::DeclTypeUnknown);
+            }
+        }
+        Expr::UnionType {
+            name,
+            fields,
+            methods,
+        } => {
+            log(&format!("✅ Union tərifi yoxlanılır: '{name}'"));
+            if ctx.struct_defs.contains_key(*name) {
+                return Err(ValidatorError::DuplicateStruct(name));
+            }
+
+            let method_infos = methods
+                .iter()
+                .map(|(method_name, _params, _body, ret_type)| {
+                    (Cow::Borrowed(*method_name), ret_type.clone())
+                })
+                .collect();
+
+            let newfields: Vec<(&str, Type)> = fields
+                .iter()
+                .map(|(name, typ)| (*name, typ.clone()))
+                .collect();
+
+            ctx.struct_defs
+                .insert(name.to_string(), (newfields, method_infos));
+
+            for (_method_name, _params, body, _ret_type) in methods.iter_mut() {
+                ctx.current_struct = Some(name);
+                for expr in body {
+                    validate_expr(expr, ctx, log)?;
+                }
+                log(&format!(
+                    "✅ Union metodları yoxlanılır: '{}'",
+                    ctx.is_allocator_used
+                ));
+
+                if ctx.is_allocator_used {
+                    _params.push(Parameter {
+                        name: "allocator".into(),
+                        typ: Type::Allocator,
+                        is_mutable: false,
+                        is_pointer: false,
+                    });
+                }
+                ctx.is_allocator_used = false;
+                ctx.current_struct = None;
+            }
+        }
+        Expr::Match { target, arms } => {
+            log(&format!("✅ Match ifadəsi yoxlanılır"));
+            validate_expr(target, ctx, log)?;
+            for arm in arms {
+                for expr in arm.1.iter_mut() {
+                    validate_expr(expr, ctx, log)?;
+                }
             }
         }
         Expr::String(_)
@@ -69,18 +131,39 @@ pub fn validate_expr<'a>(
             return_type,
         } => {
             log(&format!("✅ Built-in funksiya yoxlanılır: {function:?}"));
-            match function {
-                f if f.expected_arg_count().is_some() => {
-                    let expected = f.expected_arg_count().unwrap();
-                    if args.len() != expected {
-                        return Err(ValidatorError::InvalidArgumentCount {
-                            name: f.to_string(),
-                            expected,
-                            found: args.len(),
-                        });
-                    }
-                }
 
+            if function.expected_arg_count().is_some() {
+                let expected = function.expected_arg_count().unwrap();
+                if args.len() != expected {
+                    return Err(ValidatorError::InvalidArgumentCount {
+                        name: function.to_string(),
+                        expected,
+                        found: args.len(),
+                    });
+                }
+            }
+            match function {
+                BuiltInFunction::Allocator => {
+                    ctx.is_allocator_used = true;
+                }
+                BuiltInFunction::StrUpper => {
+                    log(&format!("✅ StrUpper funksiyası yoxlanılır"));
+                    ctx.is_allocator_used = true;
+
+                    /*    if let Some(t) = get_type(&args[0], ctx, None) {
+                        if t != Type::Metn {
+                            return Err(ValidatorError::TypeMismatch {
+                                expected: "Metn".to_string(),
+                                found: format!("{t:?}"),
+                            });
+                        }
+                    }
+                    if args.len() != 1 {
+                        return Err(ValidatorError::InvalidOneArgumentCount {
+                            name: "StrUpper".to_string(),
+                        });
+                    } */
+                }
                 BuiltInFunction::Len => {
                     if let Some(t) = get_type(&args[0], ctx, None) {
                         if t != Type::Siyahi(Box::new(Type::Any)) {
@@ -102,6 +185,13 @@ pub fn validate_expr<'a>(
                 validate_expr(arg, ctx, log)?;
             }
         }
+        Expr::StructInit { name, args } => {
+            log(&format!("✅ Struct yoxlanılır: '{}'", name));
+
+            for arg in args.iter_mut() {
+                validate_expr(&mut arg.1, ctx, log)?;
+            }
+        }
         Expr::StructDef {
             name,
             fields,
@@ -119,14 +209,33 @@ pub fn validate_expr<'a>(
                 })
                 .collect();
 
+            let newfields: Vec<(&str, Type)> = fields
+                .iter()
+                .map(|(name, typ, _)| (*name, typ.clone()))
+                .collect();
+
             ctx.struct_defs
-                .insert(name.to_string(), (fields.to_vec(), method_infos));
+                .insert(name.to_string(), (newfields, method_infos));
 
             for (_method_name, _params, body, _ret_type) in methods.iter_mut() {
                 ctx.current_struct = Some(name);
                 for expr in body {
                     validate_expr(expr, ctx, log)?;
                 }
+                log(&format!(
+                    "✅ Struct metodları yoxlanılır: '{}'",
+                    _method_name
+                ));
+
+                if ctx.is_allocator_used {
+                    _params.push(Parameter {
+                        name: "allocator".into(),
+                        typ: Type::Allocator,
+                        is_mutable: false,
+                        is_pointer: false,
+                    });
+                }
+                ctx.is_allocator_used = false;
                 ctx.current_struct = None;
             }
         }
@@ -141,13 +250,16 @@ pub fn validate_expr<'a>(
             ctx.enum_defs
                 .insert(Cow::Owned(name.to_string()), variants.clone());
         }
-        Expr::VariableRef { name, symbol } => {
+        Expr::VariableRef {
+            name,
+            transpiled_name,
+            symbol,
+        } => {
             log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
-            // Əgər dəyişən scope içində tapılırsa, symbol əlavə olunur
             if let Some(found_symbol) = ctx.lookup_variable(name) {
                 *symbol = Some(found_symbol.clone());
-                /*    *name = found_symbol.transpile_name.clone(); */
+                *transpiled_name = found_symbol.transpiled_name;
                 return Ok(());
             }
 
@@ -155,6 +267,7 @@ pub fn validate_expr<'a>(
                 *symbol = Some(Symbol {
                     typ: Type::Istifadeci(Cow::Borrowed(ctx.current_struct.unwrap())),
                     is_mutable: false,
+                    transpiled_name: Some("self".into()),
                     is_used: true,
                     is_pointer: false,
                 });
@@ -233,6 +346,7 @@ pub fn validate_expr<'a>(
                     typ: *inner,
                     is_mutable: false,
                     is_used: false,
+                    transpiled_name: Some("".into()),
                     is_pointer: false,
                 };
                 ctx.declare_variable(var_name.to_string(), symbol);
@@ -296,7 +410,6 @@ pub fn validate_expr<'a>(
             validate_expr(target, ctx, log)?;
             /*             validate_expr(index, ctx, log)?;
              */
-            println!("Görek index nedir {:?}", index);
             let index_type = get_type(index, ctx, None);
 
             if index_type.is_none() {
@@ -371,8 +484,17 @@ pub fn validate_expr<'a>(
                     is_mutable: param.is_mutable,
                     is_used: false,
                     is_pointer: param.is_pointer,
+                    transpiled_name: Some("".into()),
                 };
                 ctx.declare_variable(param.name.clone(), symbol);
+            }
+            if ctx.is_allocator_used {
+                params.push(Parameter {
+                    name: "allocator".into(),
+                    typ: Type::Allocator,
+                    is_mutable: false,
+                    is_pointer: false,
+                });
             }
             let mut owned_body = std::mem::take(body);
 
@@ -400,6 +522,7 @@ pub fn validate_expr<'a>(
             ctx.pop_scope();
             ctx.current_function = None;
             ctx.current_return = None;
+            ctx.is_allocator_used = false;
             *body = owned_body;
         }
         Expr::Return(value) => {

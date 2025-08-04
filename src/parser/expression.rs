@@ -1,9 +1,8 @@
 use color_eyre::eyre::{Result, eyre};
-use peekmore::{PeekMore, PeekMoreIterator};
-use std::{borrow::Cow, fs, path::Path};
+use peekmore::PeekMoreIterator;
 
 use crate::{
-    lexer::{self, Token},
+    lexer::Token,
     parser::{
         ast::Expr,
         builtin::parse_builtin,
@@ -20,6 +19,8 @@ use crate::{
         template::parse_template_string_expr,
     },
 };
+
+use super::parse_union_type::parse_union_type;
 
 pub fn parse_expression_block<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Vec<Expr<'a>>>
 where
@@ -107,6 +108,10 @@ where
         Token::Identifier(s) => {
             parse_identifier(tokens, s).map_err(|e| eyre!("Identifier parsing xətası: {}", e))
         }
+        Token::Type => {
+            parse_union_type(tokens).map_err(|e| eyre!("Tip yaradılmasında problem oldu: {}", e))
+        }
+
         Token::Conditional => parse_if_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
         Token::ElseIf => parse_else_if_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
         Token::Else => parse_else_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
@@ -121,6 +126,7 @@ where
         | Token::Sqrt
         | Token::Timer
         | Token::Max
+        | Token::StrUpper
         | Token::Min
         | Token::Zig
         | Token::Mod

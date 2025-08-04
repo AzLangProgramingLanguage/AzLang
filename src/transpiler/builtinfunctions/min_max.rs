@@ -32,6 +32,7 @@ fn transpile_min_max<'a>(
     let final_list_code = match list_expr {
         Expr::VariableRef {
             name,
+            transpiled_name,
             symbol: Some(sym),
         } => {
             if sym.is_mutable {

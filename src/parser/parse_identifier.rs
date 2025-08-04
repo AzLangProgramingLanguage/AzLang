@@ -1,5 +1,5 @@
 use crate::{
-    lexer::{Token, token},
+    lexer::Token,
     parser::{
         ast::{Expr, Type},
         expression::parse_single_expr,
@@ -18,6 +18,7 @@ where
 {
     let mut expr = Expr::VariableRef {
         name: Cow::Borrowed(s),
+        transpiled_name: None,
         symbol: None,
     };
 
@@ -126,7 +127,7 @@ where
         }
         Some(Token::LBrace) => {
             tokens.next();
-            parse_structs_init(tokens, s)
+            parse_structs_init(tokens, Cow::Borrowed(s))
         }
         Some(_) => Ok(expr),
         None => Err(eyre!("İdentifikator sonrası gözlənilməz EOF")),

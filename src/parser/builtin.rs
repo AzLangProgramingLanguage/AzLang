@@ -3,7 +3,11 @@ use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
-    parser::{ast::{BuiltInFunction, Expr, Type}, expression::{parse_expression, parse_single_expr}}};
+    parser::{
+        ast::{BuiltInFunction, Expr, Type},
+        expression::parse_expression,
+    },
+};
 
 pub fn parse_builtin<'a, I>(tokens: &mut PeekMoreIterator<I>, token: &Token) -> Result<Expr<'a>>
 where
@@ -29,6 +33,8 @@ where
         Token::Round => (BuiltInFunction::Round, Type::Float),
         Token::Floor => (BuiltInFunction::Floor, Type::Float),
         Token::Ceil => (BuiltInFunction::Ceil, Type::Float),
+        Token::Allocator => (BuiltInFunction::Allocator, Type::Void),
+        Token::StrUpper => (BuiltInFunction::StrUpper, Type::Metn),
         other => return Err(eyre!("Bilinməyən funksiya: {:?}", other)),
     };
 
@@ -40,23 +46,18 @@ where
             match token {
                 Token::RParen => {
                     tokens.next();
-                    break; //Burada dayanması lazımken dayanmır sıradaki Tokene keçir yeni NewLine
+                    break;
                 }
                 Token::Comma => {
                     tokens.next();
                 }
                 _ => {
-                    println!("parse_builtin çıxır, növbəti token2 {:?}", tokens.peek()); //Burada NewLine Çıxır amma bu Newline ye çatmadan dayanması lazımdı
                     let expr = parse_expression(tokens)?;
-                    println!("parse_builtin den sonra gelen, {:?}",tokens.peek());
                     args.push(expr);
                 }
             }
         }
     }
-
-    println!("parse_builtin çıxır, növbəti token {:?}", tokens.peek()); //parse_builtin çıxır, növbəti token Some(RParen)
-    /* : Parser xətası: Naməlum token: RParen */
     Ok(Expr::BuiltInCall {
         function,
         args,

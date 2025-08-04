@@ -9,13 +9,12 @@ use crate::{
 };
 use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
-use std::borrow::Cow;
+use std::{borrow::Cow, rc::Rc};
 
 pub fn parse_decl<'a, I>(tokens: &mut PeekMoreIterator<I>, is_mutable: bool) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
-    println!("buraya çatdim {:?}", tokens.peek());
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
         other => return Err(eyre!("Dəyişən adı gözlənilirdi, tapıldı: {:?}", other)),
@@ -23,7 +22,7 @@ where
 
     let typ = if let Some(Token::Colon) = tokens.peek() {
         tokens.next();
-        Some(parse_type(tokens)?)
+        Some(Rc::new(parse_type(tokens)?))
     } else {
         None
     };
@@ -32,15 +31,28 @@ where
         Some(Token::Operator(op)) if op == "=" => {}
         other => return Err(eyre!("'=' operatoru gözlənilirdi, tapıldı: {:?}", other)),
     }
+    let value_expr;
+    if let Some(Token::LBrace) = tokens.peek() {
+        let typ_clone = typ.clone().unwrap();
 
-    let value_expr = parse_single_expr(tokens)?;
+        if let Type::Istifadeci(ref n) = *typ_clone {
+            tokens.next();
+            value_expr = parse_structs_init(tokens, n.clone())?;
+        } else {
+            return Err(eyre!("Obyekt tipi gözlənilirdi"));
+        }
+    } else {
+        value_expr = parse_single_expr(tokens)?;
+    }
 
     let value = Box::new(value_expr);
 
-    Ok(Expr::Decl {
+    let expr: Expr<'_> = Expr::Decl {
         name,
+        transpiled_name: None,
         typ,
         is_mutable,
         value,
-    })
+    };
+    Ok(expr)
 }

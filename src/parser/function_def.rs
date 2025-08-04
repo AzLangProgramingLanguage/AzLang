@@ -2,7 +2,7 @@ use crate::{
     lexer::Token,
     parser::{
         ast::{Expr, Parameter, Type},
-        expression::{parse_expression, parse_single_expr},
+        expression::parse_expression,
         helper::expect_token,
         types::parse_type,
     },
@@ -94,8 +94,6 @@ where
 
     let mut body = Vec::new();
     while let Some(token) = tokens.peek() {
-        println!("Tokens: {:#?}", token);
-
         match token {
             Token::Dedent => {
                 tokens.next();
@@ -111,8 +109,6 @@ where
             }
         }
     }
-
-    println!("Tokens Yoxla: {:#?}", tokens.peek());
 
     Ok(Expr::FunctionDef {
         name,

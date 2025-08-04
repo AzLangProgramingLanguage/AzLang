@@ -1,5 +1,5 @@
 use crate::{
-    parser::ast::{Expr, TemplateChunk, Type},
+    parser::ast::{Expr, TemplateChunk},
     transpiler::{
         TranspileContext,
         helpers::{get_expr_type, get_format_str_from_type},

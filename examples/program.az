@@ -1,6 +1,4 @@
-
 ƏlavəEt("program1.az")
-ƏlavəEt("cap.az")
 funksiya factorial(n: ədəd): ədəd
     əgər n<=1
         qaytar 1
@@ -27,9 +25,15 @@ Obyekt Adam
     soyad: mətn
     metod salamla()
         Çap(öz.ad)
+
+
 sabit adam: Adam = Adam{ad: "SAbuhi",soyad: "Sariyev"}
+
 Çap(adam.ad)
-Çap(Cəm(1,2,3,4))
+Çap(Cəm(1,2,3,4,5,6,7))
+sabit adim = Giriş("Adım nedir? ")
+Çap(adim)
+
+Zig(`std.debug.print("Salam asdasda {}\n", .{1});`)
 
 
-Zig(`std.debug.print("Salam {}\n", .{1});`)

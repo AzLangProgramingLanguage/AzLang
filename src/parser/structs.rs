@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{eyre, Result};
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 
@@ -9,7 +9,7 @@ use crate::{
 
 pub fn parse_structs_init<'a, I>(
     tokens: &mut PeekMoreIterator<I>,
-    name: &'a str,
+    name: Cow<'a, str>,
 ) -> Result<Expr<'a>>
 where
     I: Iterator<Item = &'a Token>,
@@ -24,7 +24,7 @@ where
             None => break,
             _ => {
                 let arg_name = match tokens.next() {
-                    Some(Token::Identifier(name)) => name.as_str(),
+                    Some(Token::Identifier(s)) => s.as_str(),
                     _ => {
                         return Err(eyre!(
                             "Struct init argümentləri arasında ',' və ya '}}' gözlənilirdi"
@@ -52,8 +52,5 @@ where
         }
     }
 
-    Ok(Expr::StructInit { name: name, args })
-
-    /* name `&str`
-    found enum `Cow<'a, str>` */
+    Ok(Expr::StructInit { name, args })
 }

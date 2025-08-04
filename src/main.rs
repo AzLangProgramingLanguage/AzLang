@@ -59,11 +59,10 @@ fn main() -> Result<()> {
 
     panic::set_hook(Box::new(|panic_info| {
         println!("❌ Xüsusi Xəta: Yaddaş limiti keçildi!");
-        println!("Əlavə məlumat: {}", panic_info);
+        println!("Əlavə məlumat: {panic_info}");
     }));
 
     let mut cmd = Cli::command();
-
     cmd = cmd.help_template(
         "\x1b[36m{before-help}AzCLI — {about}\x1b[0m\n\n\
          \x1b[33mİstifadə:\x1b[0m {usage}\n\n\
@@ -121,8 +120,7 @@ fn build(input_path: &str) -> Result<()> {
     let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
 
     let tokens = lexer::Lexer::new(&input_code).tokenize();
-    dbg!(tokens);
-    /* println!("Tokens: {:#?}", tokens); */
+    println!("Tokens: {:#?}", tokens);
 
     // let mut parser = parser::Parser::new(tokens);
     // let mut parsed_program = parser.parse().map_err(|e| {
@@ -157,8 +155,8 @@ fn run(input_path: &str) -> Result<()> {
     let full_code =
         utils::read_file_with_imports(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
     let tokens = lexer::Lexer::new(&full_code).tokenize();
-    println!("Tokens: {tokens:#?}");
-
+    /*     println!("Tokens: {tokens:#?}");
+     */
     let mut parser = parser::Parser::new(tokens);
     let mut parsed_program = parser.parse().map_err(|e| {
         qardas_parse_error(&format!("Parser xətası: {e}"));
@@ -170,6 +168,7 @@ fn run(input_path: &str) -> Result<()> {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator)
             .map_err(|e| eyre!("Validator xətası: {e}"))?;
     }
+    println!("Parser {:#?}", parsed_program);
 
     let mut ctx = TranspileContext::new();
     let zig_code = ctx.transpile(&parsed_program);
@@ -180,7 +179,7 @@ fn run(input_path: &str) -> Result<()> {
     if runner::runner(temp_path.to_str().unwrap()).is_err() {
         eprintln!("❌ Proqram işləmədi.");
     }
-    dbg!(&zig_code);
-
+    /*     dbg!(&zig_code);
+     */
     Ok(())
 }

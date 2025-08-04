@@ -1,6 +1,6 @@
 use crate::{
     parser::ast::{Expr, Parameter, Type},
-    transpiler::{transpile::transpile_expr, TranspileContext},
+    transpiler::{TranspileContext, transpile::transpile_expr},
 };
 
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
@@ -10,15 +10,19 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
-        Expr::VariableRef { name: _, symbol } => symbol.as_ref().unwrap().typ.clone(),
+        Expr::VariableRef {
+            name: _,
+            transpiled_name,
+            symbol,
+        } => symbol.as_ref().unwrap().typ.clone(),
         Expr::BuiltInCall {
-            function,
-            args,
+            function: _,
+            args: _,
             return_type,
         } => return_type.clone(),
         Expr::Index {
-            target,
-            index,
+            target: _,
+            index: _,
             target_type,
         } => target_type.clone(),
         Expr::List(items) => {
@@ -50,9 +54,12 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>) -> &'a str {
         Type::Float => "{d}",
         Type::Void => "",
         Type::Natural => "{}",
+        Type::Allocator => "",
         Type::Any => "{any}",
         Type::Siyahi(_) => "{any} ",
         Type::Istifadeci(_) => "{any}",
+        Type::ZigString => "{s}",
+        Type::ZigConstString => "{s}",
     }
 }
 use std::borrow::Cow;
@@ -86,6 +93,8 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
                 Cow::Borrowed("[]u8")
             }
         }
+        Type::ZigString => Cow::Borrowed("[]u8"),
+        Type::ZigConstString => Cow::Borrowed("[]const u8"),
         Type::Bool => Cow::Borrowed("bool"),
         Type::Siyahi(inner) => {
             let inner_str = map_type(inner, is_const);
@@ -94,6 +103,7 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
         Type::Istifadeci(name) => {
             Cow::Borrowed(name) // əgər `name: &'a str`-dirsə.
         }
+        Type::Allocator => Cow::Borrowed("std.mem.Allocator"),
     }
 }
 
@@ -118,7 +128,7 @@ pub fn transpile_function_def<'a>(
     params: &'_ [Parameter<'a>],
     body: &'_ [Expr<'a>],
     return_type: &Option<Type<'_>>,
-    parent: Option<&'a str>,
+    _parent: Option<&'a str>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let params_str: Vec<String> = params.iter().map(transpile_param).collect();

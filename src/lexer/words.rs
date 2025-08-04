@@ -17,6 +17,8 @@ pub fn tokenize_word(word: &str) -> Token {
             "öz" => Token::This,
             "uyğun" => Token::Match,
             "dayan" => Token::Break,
+            "davam" => Token::Continue,
+
             "gəz" => Token::Loop,
             "son" => Token::End,
             "->" => Token::Arrow,
@@ -31,8 +33,10 @@ pub fn tokenize_word(word: &str) -> Token {
             "||" => Token::DoubleOr,
             "ədəd" => Token::NaturalType,
             "tam" => Token::IntegerType,
-            "mətn" => Token::StringType,
-            "simvol" => Token::CharType,
+            "yazı" => Token::StringType,
+            "zigsabityazı" => Token::ZigConstString,
+            "zigyazı" => Token::ZigString,
+            "işarə" => Token::CharType,
             "böyük_ədəd" => Token::BigIntegerType,
             "kiçik_ədəd" => Token::LowIntegerType,
             "kəsr" => Token::FloatType,
@@ -41,6 +45,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "Giriş" => Token::Input,
             "Maksimum" => Token::Max,
             "Minimum" => Token::Min,
+            "YazıBöyüt" => Token::StrUpper,
             "VaxtAl" => Token::Timer,
             "Modul" => Token::Mod,
             "Ədəd" => Token::NumberFn,
@@ -56,6 +61,8 @@ pub fn tokenize_word(word: &str) -> Token {
             "metod" => Token::Method,
             "Zig" => Token::Zig,
             "ƏlavəEt" => Token::Import,
+            "tip" => Token::Type,
+            "YaddaşAl" => Token::Allocator,
             other => Token::Identifier(other.to_string()),
         },
     }
@@ -72,6 +79,7 @@ impl fmt::Display for BuiltInFunction {
             BuiltInFunction::Sum => "Cəm",
             BuiltInFunction::Sqrt => "Kvadrat kök",
             BuiltInFunction::Round => "Yuvarlama",
+            BuiltInFunction::StrUpper => "YazıBöyüt",
             BuiltInFunction::Floor => "Yuvarlama",
             BuiltInFunction::Ceil => "Yuvarlama",
             BuiltInFunction::Mod => "Modul",
@@ -80,6 +88,7 @@ impl fmt::Display for BuiltInFunction {
             BuiltInFunction::Number => "Ədəd",
             BuiltInFunction::LastWord => "Sonsöz",
             BuiltInFunction::Zig => "Zig",
+            BuiltInFunction::Allocator => "YaddaşAl",
         };
         write!(f, "{name}")
     }

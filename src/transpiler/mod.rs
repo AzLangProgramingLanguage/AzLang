@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
-
+mod union_def;
 use crate::parser::ast::{Program, Type};
 mod builtinfunctions;
 mod codegen;
@@ -75,6 +75,14 @@ impl<'a> TranspileContext<'a> {
 
         format!(
             r#"{imports}
+
+
+
+            pub fn str_uppercase(allocator: std.mem.Allocator, self: []const u8) ![]u8 {{
+                const output = try allocator.alloc(u8, self.len);
+                return std.ascii.upperString(output, self);
+            }}
+
 {defs}
 {utils}
 

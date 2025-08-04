@@ -3,17 +3,17 @@ use crate::{
     parser::{
         ast::{Expr, Parameter, Type},
         expression::parse_single_expr,
+        types::parse_type,
     },
 };
 use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
-
-pub fn parse_method<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
-) -> Result<(&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>
+type MethodResultType<'a> = (&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>);
+pub fn parse_method<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<MethodResultType<'a>>
 where
     I: Iterator<Item = &'a Token>,
 {
+    println!("Method parsing");
     expect_token(tokens, Token::Method)?;
 
     // Metod adı
@@ -27,8 +27,14 @@ where
     expect_token(tokens, Token::RParen)?;
 
     // Return tipi varsa oxu
-    let return_type = None;
-
+    let mut return_type = None;
+    match tokens.next() {
+        Some(Token::Colon) => {
+            return_type = Some(parse_type(tokens).unwrap());
+        }
+        None => {}
+        _ => {}
+    }
     expect_token(tokens, Token::Newline)?;
     expect_token(tokens, Token::Indent)?;
 

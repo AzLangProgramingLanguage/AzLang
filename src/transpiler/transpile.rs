@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    parser::ast::{BuiltInFunction, EnumDecl, Expr, Parameter, TemplateChunk, Type},
+    parser::ast::{BuiltInFunction, EnumDecl, Expr, TemplateChunk, Type},
     transpiler::{
         TranspileContext,
         builtinfunctions::{
@@ -14,6 +14,8 @@ use crate::{
     },
 };
 
+use super::union_def::transpile_union_def;
+
 pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     match expr {
         Expr::String(s) => format!("\"{}\"", s.escape_default()),
@@ -23,27 +25,43 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
         Expr::Break => "break".to_string(),
         Expr::Continue => "continue".to_string(),
         Expr::Decl {
-            name,
+            name: _,
+            transpiled_name,
             typ,
             is_mutable,
             value,
-        } => transpile_decl(name, typ.as_ref(), *is_mutable, value, ctx),
+        } => transpile_decl(
+            transpiled_name.as_ref().unwrap(),
+            typ.as_deref(),
+            *is_mutable,
+            value,
+            ctx,
+        ),
         Expr::Return(expr) => {
             let arg_code = transpile_expr(expr, ctx);
             format!("return {arg_code}")
         }
-        Expr::VariableRef { name, symbol } => {
+        Expr::VariableRef {
+            name,
+            transpiled_name,
+            symbol,
+        } => {
+            let transpiled_name: Cow<str> = match transpiled_name {
+                Some(transled_name) => Cow::Borrowed(transled_name),
+                None => Cow::Owned(name.to_string()),
+            };
+
             if ctx
                 .enum_defs
                 .values()
                 .any(|variants| variants.contains(&name))
             {
-                format!(".{name}")
+                format!(".{transpiled_name}")
             } else if let Some(sym) = symbol {
                 if sym.is_pointer {
-                    format!("{name}.*")
+                    format!("{transpiled_name}.*")
                 } else {
-                    format!("{name}")
+                    format!("{transpiled_name}")
                 }
             } else {
                 format!("{name}")
@@ -79,13 +97,10 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             let mut else_code = String::new();
             for expr in else_branch {
                 let code = transpile_expr(expr, ctx);
-                else_code.push_str(&format!("\n{}", code));
+                else_code.push_str(&format!("\n{code}"));
             }
 
-            format!(
-                "if ({}) {{\n    {}\n}}{}",
-                condition_code, then_code, else_code
-            )
+            format!("if ({condition_code}) {{\n    {then_code}\n}}{else_code}",)
         }
         Expr::ElseIf {
             condition,
@@ -98,7 +113,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                 .map(|e| {
                     let code = transpile_expr(e, ctx);
                     if !code.ends_with(';') {
-                        format!("{};", code)
+                        format!("{code};")
                     } else {
                         code
                     }
@@ -140,7 +155,11 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
         Expr::BinaryOp { left, op, right } => {
             // Sol tərəfi transpile et (pointer yoxla)
             let left_code = match &**left {
-                Expr::VariableRef { name, symbol } => {
+                Expr::VariableRef {
+                    name,
+                    transpiled_name,
+                    symbol,
+                } => {
                     if let Some(symbol) = symbol {
                         if symbol.is_pointer {
                             format!("{}.*", name)
@@ -156,7 +175,11 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
 
             // Sağ tərəfi transpile et (pointer yoxla)
             let right_code = match &**right {
-                Expr::VariableRef { name, symbol } => {
+                Expr::VariableRef {
+                    name,
+                    transpiled_name,
+                    symbol,
+                } => {
                     if let Some(symbol) = symbol {
                         if symbol.is_pointer {
                             format!("{}.*", name)
@@ -196,21 +219,26 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
         } => {
             let old_struct = ctx.current_struct.clone();
 
-            ctx.struct_defs
-                .insert(Cow::Borrowed(name), Cow::Owned(fields.clone()));
+            // ctx.struct_defsc
+            // .insert(Cow::Borrowed(name), Cow::Owned(fields.clone()));
 
             ctx.current_struct = Some(name);
             let field_lines: Vec<String> = fields
                 .iter()
-                .map(|(fname, ftype)| {
+                .map(|(fname, ftype, value)| {
                     let zig_type = map_type(ftype, true);
-                    format!("    {}: {},", fname, zig_type)
+                    if let Some(val) = value {
+                        let transpiled = transpile_expr(val, ctx);
+                        format!("    {}: {}={},", fname, zig_type, transpiled)
+                    } else {
+                        format!("    {}: {},", fname, zig_type)
+                    }
                 })
                 .collect();
 
             let method_lines: Vec<String> = methods
                 .iter()
-                .map(|(method_name, params, body, return_type)| {
+                .map(|(method_name, params, body, _return_type)| {
                     let uses_self = true;
                     let param_list: Vec<String> = params
                         .iter()
@@ -238,26 +266,25 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                         format!("{}{}", self_prefix, params_zig)
                     };
 
-                    let ret_type = return_type
-                        .as_ref()
-                        .map(|t| map_type(t, true))
-                        .unwrap_or(Cow::Borrowed("void"));
-
-                    let header =
-                        format!("    pub fn {}({}) {} {{", method_name, all_params, ret_type);
+                    /*  let ret_type = return_type
+                                           .as_ref()
+                                           .map(|t| map_type(t, true))
+                                           .unwrap_or(Cow::Borrowed("void"));
+                    */
+                    let header = format!("pub fn {method_name}({all_params}) {{return_type}}");
                     let body_lines: Vec<String> = body
                         .iter()
                         .filter_map(|expr| {
                             let line = transpile_expr(expr, ctx);
                             if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
-                                Some(format!("{};", line))
+                                Some(format!("{line};"))
                             } else {
                                 Some(line)
                             }
                         })
-                        .map(|line| format!("        {}", line))
+                        .map(|line| format!("        {line}"))
                         .collect();
-                    format!("{}\n{}\n    }}", header, body_lines.join("\n"))
+                    format!("{header}\n{}\n    }}", body_lines.join("\n"))
                 })
                 .collect::<Vec<_>>();
 
@@ -267,8 +294,13 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             let full_body = all_lines.join("\n");
             ctx.current_struct = old_struct;
 
-            format!("const {} = struct {{\n{}\n}};", name, full_body)
+            format!("const {name} = struct {{\n{full_body}\n}};")
         }
+        Expr::UnionType {
+            name,
+            fields,
+            methods,
+        } => transpile_union_def(name, fields, methods, ctx),
         Expr::TemplateString(template) => {
             let mut lines = Vec::new();
             for part in template {
@@ -290,7 +322,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
         Expr::BuiltInCall {
             function,
             args,
-            return_type,
+            return_type: _,
         } => match function {
             BuiltInFunction::Print => transpile_print(&args[0], ctx),
             BuiltInFunction::Max => transpile_max(&args, ctx),
@@ -323,6 +355,10 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                 let code = transpile_expr(&args[0], ctx);
                 format!("{}", code)
             }
+            BuiltInFunction::StrUpper => {
+                let code = transpile_expr(&args[0], ctx);
+                format!("str_uppercase(allocator, {})", code)
+            }
             BuiltInFunction::Input => {
                 ctx.used_input_fn = true;
                 let prompt = transpile_expr(&args[0], ctx);
@@ -347,7 +383,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             target,
             name,
             args,
-            returned_type,
+            returned_type: _,
         } => {
             let mut args_code = vec![];
 
@@ -355,6 +391,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                 match arg {
                     Expr::VariableRef {
                         name,
+                        transpiled_name,
                         symbol: Some(sym),
                     } => {
                         if sym.is_pointer {
@@ -430,7 +467,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
         Expr::Index {
             target,
             index,
-            target_type,
+            target_type: _,
         } => {
             let target_code = transpile_expr(target, ctx);
             let index_code = transpile_expr(index, ctx);
@@ -445,10 +482,26 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                 }
             }
         }
+        Expr::Match { target, arms } => {
+            let target_code = transpile_expr(target, ctx);
+            let mut arms_code = Vec::new();
+            for arm in arms {
+                let pattern_code = transpile_expr(&arm.0, ctx);
+                let mut expr_code = String::from(" { ");
+                for expr in &arm.1 {
+                    expr_code.push_str(&transpile_expr(&expr, ctx));
+                }
+                expr_code.push('}');
+                expr_code.push(',');
+
+                arms_code.push(format!(".{} => {}", pattern_code, expr_code));
+            }
+            format!("switch ({}) {{\n{}\n}}", target_code, arms_code.join("\n"))
+        }
         Expr::Assignment {
             name,
             value,
-            symbol,
+            symbol: _,
         } => {
             let value_code = transpile_expr(value, ctx);
             format!("{} = {}", name, value_code)

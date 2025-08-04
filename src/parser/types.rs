@@ -1,5 +1,5 @@
 use crate::{lexer::Token, parser::ast::Type};
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{eyre, Result};
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 
@@ -21,6 +21,8 @@ where
         Token::StringType => Type::Metn,
         Token::CharType => Type::Char,
         Token::FloatType => Type::Float,
+        Token::ZigConstString => Type::ZigConstString,
+        Token::ZigString => Type::ZigString,
         Token::Array => {
             match tokens.next() {
                 Some(Token::Operator(op)) if op == "<" => {}

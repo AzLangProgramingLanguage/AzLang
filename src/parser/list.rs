@@ -18,6 +18,7 @@ where
             Token::Number(num) => elements.push(Expr::Number(*num)),
             Token::This => elements.push(Expr::VariableRef {
                 name: Cow::Borrowed("self"),
+                transpiled_name: Some("self".to_string()),
                 symbol: None,
             }),
             Token::Comma => continue,

@@ -4,7 +4,7 @@ use crate::{
 };
 
 pub fn transpile_decl<'a>(
-    name: &str,
+    name: &String,
     typ: Option<&Type<'a>>,
     is_mutable: bool,
     value: &Expr<'a>,

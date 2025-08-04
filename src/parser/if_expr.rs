@@ -3,11 +3,7 @@ use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
-    parser::{
-        ast::Expr,
-        expression::{parse_expression, parse_single_expr},
-        op_expr::parse_binary_op_expr,
-    },
+    parser::{ast::Expr, expression::parse_expression, op_expr::parse_binary_op_expr},
 };
 
 pub fn parse_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
@@ -72,8 +68,6 @@ where
     let mut indent_level = 0;
 
     while let Some(token) = tokens.peek() {
-        println!("indent_level: {indent_level}");
-        println!("token: {token:?}");
         match token {
             Token::Indent => {
                 indent_level += 1;
@@ -99,6 +93,5 @@ where
         }
     }
 
-    println!("buraya çatdim2 {:?}", tokens.peek());
     Ok(block)
 }

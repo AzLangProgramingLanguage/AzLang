@@ -29,6 +29,7 @@ pub fn transpile_sum<'a>(args: &[Expr<'a>], ctx: &mut TranspileContext<'a>) -> S
     let final_list_code = match &args[0] {
         Expr::VariableRef {
             name,
+            transpiled_name: _,
             symbol: Some(sym),
         } => {
             if sym.is_mutable {

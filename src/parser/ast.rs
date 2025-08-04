@@ -1,6 +1,5 @@
 use std::borrow::Cow;
-
-use crate::lexer::Token;
+use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BuiltInFunction {
@@ -20,6 +19,8 @@ pub enum BuiltInFunction {
     Floor,
     Ceil,
     Zig,
+    StrUpper,
+    Allocator,
 }
 
 impl BuiltInFunction {
@@ -34,16 +35,16 @@ impl BuiltInFunction {
             | BuiltInFunction::Mod
             | BuiltInFunction::Zig
             | BuiltInFunction::Number
+            | BuiltInFunction::Allocator
             | BuiltInFunction::LastWord => Some(1),
 
             BuiltInFunction::Range => Some(2),
 
             BuiltInFunction::Timer => Some(0),
             BuiltInFunction::Sum => None,
-            BuiltInFunction::Input => None, // Special case
-
-            BuiltInFunction::Max | BuiltInFunction::Min => None, // Flexible
-                                                                 //_ => None, (əgər başqa funksiyalar varsa da qeyd edə bilərsən)
+            BuiltInFunction::Input => None,
+            BuiltInFunction::StrUpper => Some(1),
+            BuiltInFunction::Max | BuiltInFunction::Min => None,
         }
     }
 }
@@ -51,6 +52,8 @@ impl BuiltInFunction {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type<'a> {
     Metn,
+    ZigString,
+    ZigConstString,
     Siyahi(Box<Type<'a>>),
     Istifadeci(Cow<'a, str>),
     Integer,
@@ -59,10 +62,12 @@ pub enum Type<'a> {
     LowInteger,
     Bool,
     Char,
+    Allocator,
     Void,
     Any,
     Float,
 }
+type MethodType<'a> = Vec<(&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>;
 #[derive(Debug)]
 pub struct EnumDecl<'a> {
     pub name: Cow<'a, str>,
@@ -94,18 +99,21 @@ pub enum Expr<'a> {
     },
     Assingment {
         name: &'a str,
+        transpiled_name: &'a str,
         value: Box<Expr<'a>>,
         is_pointer: bool,
     },
     Float(f64),
     Decl {
         name: Cow<'a, str>,
-        typ: Option<Type<'a>>,
+        transpiled_name: Option<String>,
+        typ: Option<Rc<Type<'a>>>,
         is_mutable: bool,
         value: Box<Expr<'a>>,
     },
     VariableRef {
         name: Cow<'a, str>,
+        transpiled_name: Option<String>,
         symbol: Option<Symbol<'a>>,
     },
     TemplateString(Vec<TemplateChunk<'a>>),
@@ -135,11 +143,16 @@ pub enum Expr<'a> {
     },
     StructDef {
         name: &'a str,
+        fields: Vec<(&'a str, Type<'a>, Option<Expr<'a>>)>,
+        methods: MethodType<'a>,
+    },
+    UnionType {
+        name: &'a str,
         fields: Vec<(&'a str, Type<'a>)>,
-        methods: Vec<(&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>,
+        methods: MethodType<'a>,
     },
     StructInit {
-        name: &'a str,
+        name: Cow<'a, str>,
         args: Vec<(&'a str, Expr<'a>)>,
     },
     FunctionDef {
@@ -160,7 +173,10 @@ pub enum Expr<'a> {
     },
     Break,
     Continue,
-    Match(Box<MatchExpr<'a>>),
+    Match {
+        target: Box<Expr<'a>>,
+        arms: Vec<(Expr<'a>, Vec<Expr<'a>>)>,
+    },
 }
 
 #[derive(Debug)]
@@ -169,11 +185,6 @@ pub struct Program<'a> {
     /*     pub return_type: Option<Type<'a>>,
      */
 }
-#[derive(Debug)]
-pub struct MatchExpr<'a> {
-    pub target: Box<Expr<'a>>,
-    pub arms: Vec<(Token, Vec<Expr<'a>>)>,
-}
 
 #[derive(Clone, Debug)]
 pub struct Symbol<'a> {
@@ -181,6 +192,7 @@ pub struct Symbol<'a> {
     pub is_mutable: bool,
     pub is_used: bool,
     pub is_pointer: bool,
+    pub transpiled_name: Option<String>,
     //pub source_location: Option<Location>,
 }
 

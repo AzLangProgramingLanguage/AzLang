@@ -23,25 +23,34 @@ pub fn get_type<'a>(
         Expr::Bool(_) => Some(Type::Bool),
         Expr::String(_) => Some(Type::Metn),
         Expr::List(items) => {
-            let item_type = get_type(&items[0], ctx, typ)?;
-            for item in &items[1..] {
-                let t = get_type(item, ctx, typ)?;
-                if t != item_type {
-                    return Some(Type::Siyahi(Box::new(Type::Any))); // qarışıq tiplər
+            if (items.len() > 0) {
+                let item_type = get_type(&items[0], ctx, typ)?;
+                for item in &items[1..] {
+                    let t = get_type(item, ctx, typ)?;
+                    if t != item_type {
+                        return Some(Type::Siyahi(Box::new(Type::Any))); // qarışıq tiplər
+                    }
                 }
-            }
 
-            Some(Type::Siyahi(Box::new(item_type)))
+                Some(Type::Siyahi(Box::new(item_type)))
+            } else {
+                Some(Type::Any)
+            }
         }
         Expr::Index {
-            target,
-            index,
+            target: _,
+            index: _,
             target_type,
         } => Some(target_type.clone()),
-        Expr::VariableRef { name, symbol } => {
+        Expr::VariableRef {
+            name,
+            transpiled_name: _,
+            symbol,
+        } => {
             if let Some(s) = ctx.lookup_variable(name) {
                 return Some(s.typ.clone());
             }
+
             if let Some(t) = typ {
                 if let Type::Istifadeci(enum_name) = t {
                     if let Some(variants) = ctx.enum_defs.get(enum_name) {
@@ -54,7 +63,7 @@ pub fn get_type<'a>(
             return Some(symbol.as_ref().unwrap().typ.clone());
         }
         Expr::StructInit { name, .. } => {
-            if let Some(_) = ctx.struct_defs.get(*name) {
+            if let Some(_) = ctx.struct_defs.get(name.as_ref()) {
                 Some(Type::Istifadeci(Cow::Owned(name.to_string())))
             } else {
                 None
@@ -97,4 +106,32 @@ pub fn get_type<'a>(
         }
         _ => None,
     }
+}
+
+// AST-də və ya parse modulunun hər hansı yerinə əlavə edin
+pub fn transpile_az_chars<'a>(name: &'a str) -> Cow<'a, str> {
+    // ASCII olmayan hərflərin hamısı 2 bayt olduğu üçün
+    // 16 simvoldan uzun string-lər üçün də 1-2 dəfə alloc olacaq.
+    if name.bytes().all(|b| b.is_ascii()) {
+        return Cow::Borrowed(name); // kopyalamırıq
+    }
+
+    // 1:1 translit cədvəli
+    let azlang = "azlang";
+    let mut out = String::with_capacity(name.len() + azlang.len());
+    out.push_str(azlang);
+
+    for ch in name.chars() {
+        match ch {
+            'ə' => out.push('e'),
+            'ö' => out.push('o'),
+            'ü' => out.push('u'),
+            'ğ' => out.push('g'),
+            'ç' => out.push('c'),
+            'ş' => out.push('s'),
+            'ı' => out.push('i'),
+            _ => out.push(ch),
+        }
+    }
+    Cow::Owned(out)
 }
