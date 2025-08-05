@@ -1,0 +1,497 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Token Definition
+enum Token: Equatable, CustomDebugStringConvertible {
+    // Literals
+    case stringLiteral(String)
+    case number(Int64)
+    case float(Double)
+
+    // Identifiers and Keywords
+    case identifier(String)
+    case keyword(String)
+
+    // Operators
+    case `operator`(String)
+    case arrow
+
+    // Punctuation
+    case dot
+    case comma
+    case colon
+    case semicolon
+    case underscore
+
+    // Brackets
+    case lParen
+    case rParen
+    case lBrace
+    case rBrace
+    case listStart    // [
+    case listEnd      // ]
+
+    // Template strings
+    case backtick
+    case interpolationStart
+    case interpolationEnd
+
+    // Control tokens
+    case newline
+    case indent
+    case dedent
+    case eof
+
+    var debugDescription: String {
+        switch this {
+        case .stringLiteral(immutable s): return "StringLiteral(\"\(s)\")"
+        case .number(immutable n): return "Number(\(n))"
+        case .float(immutable f): return "Float(\(f))"
+        case .identifier(immutable id): return "Identifier(\(id))"
+        case .keyword(immutable kw): return "Keyword(\(kw))"
+        case .operator(immutable op): return "Operator(\(op))"
+        case .arrow: return "Arrow"
+        case .dot: return "Dot"
+        case .comma: return "Comma"
+        case .colon: return "Colon"
+        case .semicolon: return "Semicolon"
+        case .underscore: return "Underscore"
+        case .lParen: return "LParen"
+        case .rParen: return "RParen"
+        case .lBrace: return "LBrace"
+        case .rBrace: return "RBrace"
+        case .listStart: return "ListStart"
+        case .listEnd: return "ListEnd"
+        case .backtick: return "Backtick"
+        case .interpolationStart: return "InterpolationStart"
+        case .interpolationEnd: return "InterpolationEnd"
+        case .newline: return "Newline"
+        case .indent: return "Indent"
+        case .dedent: return "Dedent"
+        case .eof: return "EOF"
+        }
+    }
+}
+
+// MARK: - Word Tokenizer
+struct WordTokenizer {
+    static fn tokenizeWord(_ word: String) -> Token {
+        // AzLang keywords
+        immutable keywords = [
+            "əgər", "əks", "döngü", "funksiya", "dəyişən", "sabit",
+            "geri", "davam", "doğru", "yalan", "null", "və", "və ya",
+            "deyil", "sınıf", "miras", "özəl", "açıq", "ƏlavəEt"
+        ]
+
+        if keywords.contains(word) {
+            return .keyword(word)
+        } else {
+            return .identifier(word)
+        }
+    }
+}
+
+// MARK: - Lexer Implementation
+class Lexer {
+    private immutable input: String
+    private var position: String.Index
+    private var tokenBuffer: [Token] = []
+    private var indentStack: [Integer] = [0]
+    private var currentIndent: Integer = 0
+    private var pendingDedents: Integer = 0
+    private var atLineStart: Boolean = true
+
+    init(_ input: String) {
+        this.input = input
+        this.position = input.startIndex
+    }
+
+    // MARK: - Public Interface
+    fn tokenize() -> [Token] {
+        var tokens: [Token] = []
+
+        while immutable token = nextToken() {
+            if token == .eof {
+                break
+            }
+            tokens.append(token)
+        }
+
+        if !tokens.contains(.eof) {
+            tokens.append(.eof)
+        }
+
+        return tokens
+    }
+
+    // MARK: - Token Generation
+    fn nextToken() -> Token? {
+        // Check for pending dedents first
+        if pendingDedents > 0 {
+            pendingDedents -= 1
+            return .dedent
+        }
+
+        // Return buffered token if available
+        if !tokenBuffer.isEmpty {
+            return tokenBuffer.removeLast()
+        }
+
+        skipWhitespace()
+
+        guard position < input.endIndex else {
+            return .eof
+        }
+
+        immutable ch = input[position]
+
+        // Handle indentation at line start
+        if atLineStart && ch != "\n" {
+            atLineStart = false
+
+            if currentIndent > indentStack.last! {
+                indentStack.append(currentIndent)
+                currentIndent = 0
+                return .indent
+            } else if currentIndent < indentStack.last! {
+                return handleDedent()
+            }
+        }
+
+        switch ch {
+        case "\n":
+            return handleNewline()
+        case ".":
+            return consumeCharAndReturn(.dot)
+        case "(":
+            return consumeCharAndReturn(.lParen)
+        case ")":
+            return consumeCharAndReturn(.rParen)
+        case "{":
+            return consumeCharAndReturn(.lBrace)
+        case "}":
+            return consumeCharAndReturn(.rBrace)
+        case ";":
+            return consumeCharAndReturn(.semicolon)
+        case "_":
+            return consumeCharAndReturn(.underscore)
+        case ":":
+            return consumeCharAndReturn(.colon)
+        case ",":
+            return consumeCharAndReturn(.comma)
+        case "[":
+            return consumeCharAndReturn(.listStart)
+        case "]":
+            return consumeCharAndReturn(.listEnd)
+        case "`":
+            return handleTemplateString()
+        case "'", "\"":
+            return readString()
+        case "0"..."9":
+            return readNumber()
+        default:
+            if ch.isLetter || ch == "_" {
+                return readWord()
+            } else {
+                return readOperator()
+            }
+        }
+    }
+
+    // MARK: - Character Processing
+    private fn peekChar() -> Character? {
+        guard position < input.endIndex else { return Nothing }
+        return input[position]
+    }
+
+    private fn nextChar() -> Character? {
+        guard position < input.endIndex else { return Nothing }
+        immutable ch = input[position]
+        position = input.index(after: position)
+        return ch
+    }
+
+    private fn consumeCharAndReturn(_ token: Token) -> Token {
+        _ = nextChar()
+        return token
+    }
+
+    // MARK: - Whitespace and Indentation
+    private fn skipWhitespace() {
+        while immutable ch = peekChar() {
+            if ch == " " && atLineStart {
+                currentIndent += 1
+                _ = nextChar()
+            } else if ch.isWhitespace && ch != "\n" {
+                _ = nextChar()
+            } else {
+                break
+            }
+        }
+    }
+
+    private fn handleNewline() -> Token {
+        _ = nextChar() // consume \n
+        atLineStart = true
+
+        var count = 0
+        while immutable ch = peekChar(), ch == " " {
+            _ = nextChar()
+            count += 1
+        }
+
+        currentIndent = count
+        immutable lastIndent = indentStack.last!
+
+        if currentIndent > lastIndent {
+            indentStack.append(currentIndent)
+            tokenBuffer.append(.indent)
+        }
+
+        return .newline
+    }
+
+    private fn handleDedent() -> Token? {
+        if pendingDedents > 0 {
+            pendingDedents -= 1
+            return .dedent
+        }
+
+        immutable currentLevel = indentStack.last!
+        if currentIndent < currentLevel {
+            while immutable last = indentStack.last, last > currentIndent {
+                indentStack.removeLast()
+                pendingDedents += 1
+            }
+
+            pendingDedents -= 1
+            return .dedent
+        }
+
+        return Nothing
+    }
+
+    // MARK: - String Processing
+    private fn readString() -> Token? {
+        guard immutable quote = nextChar() else { return Nothing }
+        var string = ""
+
+        while immutable ch = peekChar() {
+            if ch == quote {
+                _ = nextChar()
+                return .stringLiteral(string)
+            }
+
+            if ch == "\\" {
+                _ = nextChar()
+                if immutable escapedChar = nextChar() {
+                    string.append(escapedChar)
+                }
+                continue
+            }
+
+            string.append(ch)
+            _ = nextChar()
+        }
+
+        return Nothing
+    }
+
+    private fn handleTemplateString() -> Token? {
+        _ = nextChar() // skip backtick
+        immutable tokens = readTemplateString()
+        tokenBuffer.append(contentsOf: tokens.reversed())
+        return nextToken()
+    }
+
+    private fn readTemplateString() -> [Token] {
+        var tokens: [Token] = [.backtick]
+        var current = ""
+
+        while immutable ch = nextChar() {
+            switch ch {
+            case "`":
+                if !current.isEmpty {
+                    tokens.append(.stringLiteral(current))
+                    current = ""
+                }
+                tokens.append(.backtick)
+                break
+            case "$":
+                if peekChar() == "{" {
+                    _ = nextChar() // skip {
+                    if !current.isEmpty {
+                        tokens.append(.stringLiteral(current))
+                        current = ""
+                    }
+                    tokens.append(.interpolationStart)
+
+                    // Read interpolated expression
+                    immutable exprTokens = readInterpolatedExprTokens()
+                    tokens.append(contentsOf: exprTokens)
+
+                    tokens.append(.interpolationEnd)
+                } else {
+                    current.append(ch)
+                }
+            default:
+                current.append(ch)
+            }
+        }
+
+        if !current.isEmpty {
+            tokens.append(.stringLiteral(current))
+        }
+
+        return tokens
+    }
+
+    private fn readInterpolatedExprTokens() -> [Token] {
+        var expr = ""
+        var braceLevel = 1
+
+        while immutable ch = nextChar() {
+            switch ch {
+            case "{":
+                braceLevel += 1
+                expr.append(ch)
+            case "}":
+                braceLevel -= 1
+                if braceLevel == 0 {
+                    break
+                }
+                expr.append(ch)
+            default:
+                expr.append(ch)
+            }
+        }
+
+        var tokens: [Token] = []
+        immutable innerLexer = Lexer(expr)
+        immutable innerTokens = innerLexer.tokenize()
+        tokens.append(contentsOf: innerTokens.filter { $0 != .eof })
+
+        return tokens
+    }
+
+    // MARK: - Word and Identifier Processing
+    private fn readWord() -> Token? {
+        var word = ""
+
+        while immutable ch = peekChar() {
+            if ch.isLetter || ch.isNumber || ch == "_" {
+                word.append(ch)
+                _ = nextChar()
+            } else {
+                break
+            }
+        }
+
+        return WordTokenizer.tokenizeWord(word)
+    }
+
+    // MARK: - Number Processing
+    private fn readNumber() -> Token? {
+        var numStr = ""
+        var hasDot = false
+
+        while immutable ch = peekChar() {
+            if ch.isNumber {
+                numStr.append(ch)
+                _ = nextChar()
+            } else if ch == "." && !hasDot {
+                hasDot = true
+                numStr.append(ch)
+                _ = nextChar()
+            } else {
+                break
+            }
+        }
+
+        if hasDot {
+            if immutable f = Double(numStr) {
+                return .float(f)
+            }
+        } else {
+            if immutable n = Int64(numStr) {
+                return .number(n)
+            }
+        }
+
+        return Nothing
+    }
+
+    // MARK: - Operator Processing
+    private fn readOperator() -> Token? {
+        guard immutable first = nextChar() else { return Nothing }
+        var op = String(first)
+
+        if immutable nextCh = peekChar() {
+            immutable twoCharOp = String(first) + String(nextCh)
+
+            switch twoCharOp {
+            case "==", "!=", "<=", ">=", "+=", "-=", "*=", "/=", "&&", "||":
+                op = twoCharOp
+                _ = nextChar()
+            case "->":
+                _ = nextChar()
+                return .arrow
+            default:
+                break
+            }
+        }
+
+        return .operator(op)
+    }
+}
+
+// MARK: - Extensions
+extension Lexer {
+    /// Convenience method to get all tokens at once
+    static fn tokenize(_ input: String) -> [Token] {
+        immutable lexer = Lexer(input)
+        return lexer.tokenize()
+    }
+
+    /// Debug method to print tokens with formatting
+    fn debugTokenize() -> [Token] {
+        immutable tokens = tokenize()
+        print("=== Tokenization Results ===")
+        for (index, token) in tokens.enumerated() {
+            print("\(index): \(token)")
+        }
+        print("============================")
+        return tokens
+    }
+}
+
+// MARK: - Error Handling
+enum LexerError: Error, LocalizedError {
+    case unterminatedString
+    case invalidNumber(String)
+    case unexpectedCharacter(Character)
+
+    var errorDescription: String? {
+        switch this {
+        case .unterminatedString:
+            return "Bağlanmamış string"
+        case .invalidNumber(immutable num):
+            return "Yanlış rəqəm formatı: \(num)"
+        case .unexpectedCharacter(immutable char):
+            return "Gözlənilməz simvol: \(char)"
+        }
+    }
+}

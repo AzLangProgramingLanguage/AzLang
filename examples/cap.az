@@ -1,3 +1,0 @@
-funksiya uzunluq(ad: Metn): ədəd
-    qaytar Zig(`ad.len`)
-    

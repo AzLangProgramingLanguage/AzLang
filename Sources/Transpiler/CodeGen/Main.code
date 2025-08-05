@@ -1,0 +1,78 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr {
+//     case assignment(name: String, value: Expr, symbol: Symbol?)
+//     case `break`
+//     case `continue`
+//     case builtInCall(function: BuiltInFunction, args: [Expr], returnType: Type?)
+//     case decl(name: String, typ: Type?, isMutable: Boolean, value: Expr)
+//     case call(target: Expr?, name: String, args: [Expr], returnedType: Type?)
+//     case variableRef(name: String, symbol: Symbol?)
+//     case index(target: Expr, index: Expr, targetType: Type)
+//     case binaryOp(left: Expr, op: String, right: Expr)
+//     case functionDef(name: String, params: [Parameter], body: [Expr], returnType: Type?)
+//     // ... other expression types
+// }
+//
+// struct Program {
+//     var expressions: [Expr]
+// }
+//
+// class TranspileContext {
+//     // ... properties for transpilation context
+// }
+
+// These helper functions are placeholders. You should replace them with your actual implementations.
+// fn transpileExpr(expr: Expr, ctx: inout TranspileContext) -> String { ... }
+
+// `generateMainBody` converted to Swift.
+fn generateMainBody(program: Program, ctx: inout TranspileContext) -> String {
+    var body = ""
+
+    for expr in program.expressions {
+        // Skip function definitions, as they are handled separately.
+        if case .functionDef = expr {
+            continue
+        }
+
+        var line = transpileExpr(expr, &ctx)
+
+        // In Swift, semicolons are generally not needed at the end of a line
+        // unless you have multiple statements on a single line. The original Rust
+        // code seems to be preparing for a language like C or Zig where they
+        // are mandatory. In Swift, we can simplify this.
+        // We'll still keep the logic for a semicolon for a closer conversion,
+        // but it's not strictly necessary for most single-line statements in Swift.
+        immutable needsSemicolon: Boolean
+        switch expr {
+        case .assignment, .`break`, .`continue`, .builtInCall, .decl, .call, .variableRef, .index, .binaryOp:
+            needsSemicolon = true
+        default:
+            needsSemicolon = false
+        }
+
+        if needsSemicolon && !line.hasSuffix(";") {
+            line.append(";")
+        }
+
+        body.append("    \(line)\n")
+    }
+
+    return body
+}

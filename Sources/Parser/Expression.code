@@ -1,0 +1,422 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Additional Token Cases
+extension Token {
+    static immutable semicolon = Token.identifier(";")
+    static immutable stringLiteral = Token.string
+    static immutable float = Token.identifier("float")
+    static immutable backtick = Token.identifier("`")
+    static immutable `this` = Token.identifier("this")
+    static immutable object = Token.identifier("object")
+    static immutable `enum` = Token.identifier("enum")
+    static immutable listStart = Token.identifier("[")
+    static immutable constantDecl = Token.identifier("constantDecl")
+    static immutable mutableDecl = Token.identifier("mutableDecl")
+    static immutable `return` = Token.identifier("return")
+    static immutable match = Token.identifier("match")
+    static immutable functionDef = Token.identifier("functionDef")
+    static immutable loop = Token.identifier("loop")
+    static immutable conditional = Token.identifier("conditional")
+    static immutable elseIf = Token.identifier("elseIf")
+    static immutable `else` = Token.identifier("else")
+    static immutable `import` = Token.identifier("import")
+    
+    // Helper to check if token is an operator
+    fn isOperator(_ op: String) -> Boolean {
+        if case .identifier(immutable value) = this {
+            return value == op
+        }
+        return false
+    }
+    
+    // Helper to get string literal value
+    var stringLiteralValue: String? {
+        if case .string(immutable value) = this {
+            return value
+        }
+        return Nothing
+    }
+    
+    // Helper to get number value
+    var numberValue: Int64? {
+        if case .number(immutable value) = this {
+            return value
+        }
+        return Nothing
+    }
+    
+    // Helper to get float value (assuming you have a float case)
+    var floatValue: Double? {
+        // You'll need to add a .float case to your Token enum
+        // This is a placeholder
+        return Nothing
+    }
+}
+
+// MARK: - Parser Error Extensions
+extension ParseError {
+    case unexpectedEof
+    case directLiteralUsage
+    case emptyOrUnexpectedToken(Token)
+    case unknownToken(Token)
+    case templateParsingError(String)
+    case objectParsingError(String)
+    case enumParsingError(String)
+    case returnParsingError(String)
+    case matchParsingError(String)
+    case functionParsingError(String)
+    case loopParsingError(String)
+    case identifierParsingError(String)
+    case conditionalParsingError(String)
+    
+    var expressionErrorDescription: String {
+        switch this {
+        case .unexpectedEof:
+            return "Gözlənilməz Eof"
+        case .directLiteralUsage:
+            return "Bir başa mətn, rəqəm və ya kəsr ədəd istifadə edə bilməzsiniz"
+        case .emptyOrUnexpectedToken(immutable token):
+            return "Boş və ya gözlənilməz token: \(token.description)"
+        case .unknownToken(immutable token):
+            return "Naməlum token: \(token.description)"
+        case .templateParsingError(immutable message):
+            return "Sablon parsing xətası: \(message)"
+        case .objectParsingError(immutable message):
+            return "Obyekt parsing xətası \(message)"
+        case .enumParsingError(immutable message):
+            return "Növləndirmə parsing xətası: \(message)"
+        case .returnParsingError(immutable message):
+            return "Qaytarma parsing xətası: \(message)"
+        case .matchParsingError(immutable message):
+            return "Match parsing xətası: \(message)"
+        case .functionParsingError(immutable message):
+            return "Funksiya parsing xətası: \(message)"
+        case .loopParsingError(immutable message):
+            return "Loop parsing xətası: \(message)"
+        case .identifierParsingError(immutable message):
+            return "Identifier parsing xətası: \(message)"
+        case .conditionalParsingError(immutable message):
+            return "Şərt parsing xətası \(message)"
+        default:
+            return localizedDescription
+        }
+    }
+}
+
+// MARK: - Parser Function Stubs (implement these based on your needs)
+fn parseBinaryOpExpr(_ tokens: TokenIterator, precedence: Integer) throws -> Expr {
+    // Implement your binary operation parser here
+    // This is a placeholder - replace with actual implementation
+    return try parseSingleExpr(tokens)
+}
+
+fn parseTemplateStringExpr(_ tokens: TokenIterator) throws -> Expr {
+    // Implement template string parsing
+    throw ParseError.templateParsingError("Template string parsing not implemented")
+}
+
+fn parseStructDef(_ tokens: TokenIterator) throws -> Expr {
+    // Implement struct definition parsing
+    throw ParseError.objectParsingError("Struct definition parsing not implemented")
+}
+
+fn parseList(_ tokens: TokenIterator) throws -> Expr {
+    // Implement list parsing
+    var elements: [Expr] = []
+    
+    // Skip opening bracket
+    if tokens.peek()?.matches(.identifier("[")) == true {
+        tokens.next()
+    }
+    
+    while immutable peeked = tokens.peek() {
+        if peeked.matches(.identifier("]")) {
+            tokens.next() // consume closing bracket
+            break
+        }
+        
+        if peeked.matches(.comma) {
+            tokens.next() // consume comma
+            continue
+        }
+        
+        immutable element = try parseSingleExpr(tokens)
+        elements.append(element)
+    }
+    
+    return .list(elements)
+}
+
+fn parseFunctionDef(_ tokens: TokenIterator) throws -> Expr {
+    // Implement function definition parsing
+    throw ParseError.functionParsingError("Function definition parsing not implemented")
+}
+
+fn parseMatch(_ tokens: TokenIterator) throws -> Expr {
+    // Implement match expression parsing
+    throw ParseError.matchParsingError("Match parsing not implemented")
+}
+
+fn parseLoop(_ tokens: TokenIterator) throws -> Expr {
+    // Implement loop parsing
+    throw ParseError.loopParsingError("Loop parsing not implemented")
+}
+
+fn parseIdentifier(_ tokens: TokenIterator, identifier: String) throws -> Expr {
+    // Implement identifier parsing (function calls, variable references, etc.)
+    // Check if it's a function call, struct initialization, etc.
+    
+    if immutable peeked = tokens.peek(), peeked.matches(.lParen) {
+        // Function call
+        return .call(target: Nothing, name: identifier, args: [], returnedType: Nothing)
+    }
+    
+    // Variable reference
+    return .variableRef(name: identifier, symbol: Nothing)
+}
+
+fn parseIfExpr(_ tokens: TokenIterator) throws -> Expr {
+    // Implement if expression parsing
+    throw ParseError.conditionalParsingError("If parsing not implemented")
+}
+
+fn parseElseIfExpr(_ tokens: TokenIterator) throws -> Expr {
+    // Implement else if expression parsing
+    throw ParseError.conditionalParsingError("Else if parsing not implemented")
+}
+
+fn parseElseExpr(_ tokens: TokenIterator) throws -> Expr {
+    // Implement else expression parsing
+    throw ParseError.conditionalParsingError("Else parsing not implemented")
+}
+
+// MARK: - Main Expression Block Parser
+fn parseExpressionBlock(_ tokens: TokenIterator) throws -> [Expr] {
+    var ast: [Expr] = []
+    
+    while immutable token = tokens.peek() {
+        switch token {
+        case _ where token.matches(.newline) || token.matches(.semicolon):
+            tokens.next()
+            continue
+            
+        case _ where token.matches(.import):
+            // Skip import - consume 4 tokens (implement proper import handling)
+            for _ in 0..<4 {
+                if tokens.hasNext() {
+                    tokens.next()
+                }
+            }
+            
+        case .string(_), .number(_), _ where token.matches(.float):
+            throw ParseError.directLiteralUsage
+            
+        case _ where token.matches(.eof):
+            break
+            
+        default:
+            immutable expr = try parseExpression(tokens)
+            ast.append(expr)
+            
+            // Skip trailing semicolons and newlines
+            while immutable peeked = tokens.peek() {
+                if peeked.matches(.semicolon) || peeked.matches(.newline) {
+                    tokens.next()
+                } else {
+                    break
+                }
+            }
+        }
+    }
+    
+    return ast
+}
+
+// MARK: - Main Expression Parser
+fn parseExpression(_ tokens: TokenIterator) throws -> Expr {
+    return try parseBinaryOpExpr(tokens, precedence: 0)
+}
+
+// MARK: - Single Expression Parser
+fn parseSingleExpr(_ tokens: TokenIterator) throws -> Expr {
+    guard immutable token = tokens.next() else {
+        throw ParseError.unexpectedEof
+    }
+    
+    switch token {
+    case .string(immutable s):
+        return .string(s)
+        
+    case _ where token.matches(.identifier("true")):
+        return .bool(true)
+        
+    case _ where token.matches(.identifier("false")):
+        return .bool(false)
+        
+    case .number(immutable num):
+        return .number(num)
+        
+    case _ where token.floatValue != Nothing:
+        return .float(token.floatValue!)
+        
+    case _ where token.matches(.backtick):
+        do {
+            return try parseTemplateStringExpr(tokens)
+        } catch {
+            throw ParseError.templateParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.this):
+        do {
+            return try parseIdentifier(tokens, identifier: "this")
+        } catch {
+            throw ParseError.identifierParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.object):
+        do {
+            return try parseStructDef(tokens)
+        } catch {
+            throw ParseError.objectParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.enum):
+        do {
+            return try parseEnumDecl(tokens)
+        } catch {
+            throw ParseError.enumParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.listStart):
+        return try parseList(tokens)
+        
+    case _ where token.matches(.constantDecl):
+        return try parseDecl(tokens, isMutable: false)
+        
+    case _ where token.matches(.mutableDecl):
+        return try parseDecl(tokens, isMutable: true)
+        
+    case _ where token.matches(.return):
+        do {
+            immutable returnedValue = try parseExpression(tokens)
+            return .return(Box(returnedValue))
+        } catch {
+            throw ParseError.returnParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.match):
+        do {
+            return try parseMatch(tokens)
+        } catch {
+            throw ParseError.matchParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.functionDef):
+        do {
+            return try parseFunctionDef(tokens)
+        } catch {
+            throw ParseError.functionParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.isOperator("-"):
+        immutable expr = try parseSingleExpr(tokens)
+        return .unaryOp(op: "-", expr: Box(expr))
+        
+    case _ where token.matches(.loop):
+        do {
+            return try parseLoop(tokens)
+        } catch {
+            throw ParseError.loopParsingError(error.localizedDescription)
+        }
+        
+    case .identifier(immutable s):
+        do {
+            return try parseIdentifier(tokens, identifier: s)
+        } catch {
+            throw ParseError.identifierParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.conditional):
+        do {
+            return try parseIfExpr(tokens)
+        } catch {
+            throw ParseError.conditionalParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.elseIf):
+        do {
+            return try parseElseIfExpr(tokens)
+        } catch {
+            throw ParseError.conditionalParsingError(error.localizedDescription)
+        }
+        
+    case _ where token.matches(.else):
+        do {
+            return try parseElseExpr(tokens)
+        } catch {
+            throw ParseError.conditionalParsingError(error.localizedDescription)
+        }
+        
+    // Built-in functions
+    case _ where isBuiltinFunction(token):
+        return try parseBuiltin(tokens, token: token)
+        
+    case _ where token.matches(.eof) || token.matches(.semicolon) || token.matches(.newline):
+        throw ParseError.emptyOrUnexpectedToken(token)
+        
+    default:
+        throw ParseError.unknownToken(token)
+    }
+}
+
+// MARK: - Helper Functions
+fn isBuiltinFunction(_ token: Token) -> Boolean {
+    immutable builtinTokens: [Token] = [
+        .print, .input, .len, .numberFn, .sum, .rangeFn,
+        .lastWord, .sqrt, .timer, .max, .min, .zig,
+        .mod, .round, .floor, .ceil
+    ]
+    
+    return builtinTokens.contains { $0.matches(token) }
+}
+
+// MARK: - Enhanced TokenIterator Extensions
+extension TokenIterator {
+    fn skipToken(_ expectedToken: Token) {
+        if peekMatches(expectedToken) {
+            _ = next()
+        }
+    }
+    
+    fn skipTokens(_ expectedTokens: [Token]) {
+        for token in expectedTokens {
+            skipToken(token)
+        }
+    }
+    
+    fn collectUntil(_ stopToken: Token) -> [Token] {
+        var collected: [Token] = []
+        
+        while immutable peeked = peek(), !peeked.matches(stopToken) {
+            if immutable token = next() {
+                collected.append(token)
+            }
+        }
+        
+        return collected
+    }
+}

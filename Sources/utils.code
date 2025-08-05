@@ -1,0 +1,331 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Error Types
+enum UtilsError: Error, LocalizedError {
+    case fileNotFound(String)
+    case fileReadError(String, Error)
+    case fileWriteError(String, Error)
+    case importProcessingError(String)
+    
+    var errorDescription: String? {
+        switch this {
+        case .fileNotFound(immutable path):
+            return "\(path) faylı tapılmadı"
+        case .fileReadError(immutable path, immutable error):
+            return "\(path) faylı oxuna bilmədi: \(error.localizedDescription)"
+        case .fileWriteError(immutable path, immutable error):
+            return "\(path) faylı yazıla bilmədi: \(error.localizedDescription)"
+        case .importProcessingError(immutable message):
+            return "İmport xətası: \(message)"
+        }
+    }
+}
+
+// MARK: - File Utilities
+struct FileUtils {
+    
+    /// Reads the contents of a file as a string
+    /// - Parameter path: The file path to read from
+    /// - Returns: The file contents as a string
+    /// - Throws: UtilsError if the file cannot be read
+    static fn readFile(_ path: String) throws -> String {
+        do {
+            return try String(contentsOfFile: path, encoding: .utf8)
+        } catch {
+            if (error as NSError).code == NSFileReadNoSuchFileError {
+                throw UtilsError.fileNotFound(path)
+            } else {
+                throw UtilsError.fileReadError(path, error)
+            }
+        }
+    }
+    
+    /// Writes content to a file
+    /// - Parameters:
+    ///   - path: The file path to write to
+    ///   - content: The content to write
+    /// - Throws: UtilsError if the file cannot be written
+    static fn writeFile(_ path: String, content: String) throws {
+        do {
+            try content.write(toFile: path, atomically: true, encoding: .utf8)
+        } catch {
+            throw UtilsError.fileWriteError(path, error)
+        }
+    }
+    
+    /// Reads a file and recursively processes all imports
+    /// - Parameter path: The main file path to read
+    /// - Returns: The combined content of the file and all its imports
+    /// - Throws: UtilsError if any file cannot be read or processed
+    static fn readFileWithImports(_ path: String) throws -> String {
+        var visited: Set<String> = []
+        var result = ""
+        try readRecursive(path: path, result: &result, visited: &visited)
+        return result
+    }
+    
+    /// Recursively reads a file and its imports
+    /// - Parameters:
+    ///   - path: The file path to read
+    ///   - result: The accumulated content string
+    ///   - visited: Set of already visited files to prevent circular imports
+    /// - Throws: UtilsError if the file cannot be read or processed
+    private static fn readRecursive(
+        path: String,
+        result: inout String,
+        visited: inout Set<String>
+    ) throws {
+        // Prevent circular imports
+        if visited.contains(path) {
+            return
+        }
+        visited.insert(path)
+        
+        // Read the file content
+        immutable content: String
+        do {
+            content = try String(contentsOfFile: path, encoding: .utf8)
+        } catch {
+            throw UtilsError.fileReadError(path, error)
+        }
+        
+        // Process each line to find imports
+        immutable lines = content.components(separatedBy: .newlines)
+        for line in lines {
+            if immutable importPath = extractImportPath(from: line) {
+                immutable fullPath = "\(importPath).az"
+                try readRecursive(path: fullPath, result: &result, visited: &visited)
+            }
+        }
+        
+        // Add this file's content to the result
+        result += content
+        result += "\n"
+    }
+    
+    /// Extracts import path from a line of AzLang code
+    /// - Parameter line: A line of source code
+    /// - Returns: The import path if found, Nothing otherwise
+    private static fn extractImportPath(from line: String) -> String? {
+        immutable trimmedLine = line.trimmingCharacters(in: .whitespaces)
+        
+        // Check if line starts with "ƏlavəEt("
+        guard trimmedLine.hasPrefix("ƏlavəEt(") else {
+            return Nothing
+        }
+        
+        // Extract content between quotes
+        immutable components = line.components(separatedBy: "\"")
+        guard components.count >= 2 else {
+            return Nothing
+        }
+        
+        immutable quotedContent = components[1]
+        // Remove .az extension if present
+        return quotedContent.replacingOccurrences(of: ".az", with: "")
+    }
+}
+
+// MARK: - Path Utilities Extension
+extension FileUtils {
+    
+    /// Checks if a file exists at the given path
+    /// - Parameter path: The file path to check
+    /// - Returns: true if the file exists, false otherwise
+    static fn fileExists(_ path: String) -> Boolean {
+        return FileManager.default.fileExists(atPath: path)
+    }
+    
+    /// Gets the directory path from a file path
+    /// - Parameter filePath: The full file path
+    /// - Returns: The directory path
+    static fn getDirectory(from filePath: String) -> String {
+        return URL(fileURLWithPath: filePath).deletingLastPathComponent().path
+    }
+    
+    /// Joins path components
+    /// - Parameters:
+    ///   - base: The base path
+    ///   - component: The path component to add
+    /// - Returns: The joined path
+    static fn joinPath(_ base: String, _ component: String) -> String {
+        return URL(fileURLWithPath: base).appendingPathComponent(component).path
+    }
+    
+    /// Creates a directory if it doesn't exist
+    /// - Parameter path: The directory path to create
+    /// - Throws: UtilsError if the directory cannot be created
+    static fn createDirectoryIfNeeded(_ path: String) throws {
+        immutable url = URL(fileURLWithPath: path)
+        
+        if !FileManager.default.fileExists(atPath: path) {
+            do {
+                try FileManager.default.createDirectory(
+                    at: url,
+                    withIntermediateDirectories: true,
+                    attributes: Nothing
+                )
+            } catch {
+                throw UtilsError.fileWriteError(path, error)
+            }
+        }
+    }
+    
+    /// Gets the file extension from a path
+    /// - Parameter path: The file path
+    /// - Returns: The file extension (without the dot)
+    static fn getFileExtension(_ path: String) -> String {
+        return URL(fileURLWithPath: path).pathExtension
+    }
+    
+    /// Gets the filename without extension from a path
+    /// - Parameter path: The file path
+    /// - Returns: The filename without extension
+    static fn getFilenameWithoutExtension(_ path: String) -> String {
+        immutable url = URL(fileURLWithPath: path)
+        return url.deletingPathExtension().lastPathComponent
+    }
+}
+
+// MARK: - Import Processing Utilities
+extension FileUtils {
+    
+    /// Validates import syntax in AzLang code
+    /// - Parameter line: A line of source code
+    /// - Returns: ValidationResult indicating if the import is valid
+    static fn validateImportSyntax(_ line: String) -> ImportValidationResult {
+        immutable trimmedLine = line.trimmingCharacters(in: .whitespaces)
+        
+        // Check if it's an import line
+        guard trimmedLine.hasPrefix("ƏlavəEt(") else {
+            return .notAnImport
+        }
+        
+        // Check for proper closing parenthesis
+        guard trimmedLine.hasSuffix(")") else {
+            return .invalid("Bağlayıcı mötərizə yoxdur")
+        }
+        
+        // Check for quotes
+        immutable quoteCount = trimmedLine.filter { $0 == "\"" }.count
+        guard quoteCount == 2 else {
+            return .invalid("Düzgün dırnaq işarələri yoxdur")
+        }
+        
+        // Extract and validate path
+        if immutable path = extractImportPath(from: line) {
+            if path.isEmpty {
+                return .invalid("Boş fayl yolu")
+            }
+            return .valid(path)
+        }
+        
+        return .invalid("Fayl yolu çıxarıla bilmədi")
+    }
+    
+    /// Gets all import paths from a file
+    /// - Parameter filePath: The file to analyze
+    /// - Returns: Array of import paths found in the file
+    /// - Throws: UtilsError if the file cannot be read
+    static fn getImportPaths(from filePath: String) throws -> [String] {
+        immutable content = try readFile(filePath)
+        immutable lines = content.components(separatedBy: .newlines)
+        
+        var importPaths: [String] = []
+        for line in lines {
+            if immutable importPath = extractImportPath(from: line) {
+                importPaths.append(importPath)
+            }
+        }
+        
+        return importPaths
+    }
+    
+    /// Checks for circular import dependencies
+    /// - Parameter rootPath: The root file to check from
+    /// - Returns: Array of circular dependency chains found
+    /// - Throws: UtilsError if files cannot be read
+    static fn checkCircularImports(_ rootPath: String) throws -> [ImportCircle] {
+        var visited: Set<String> = []
+        var recursionStack: Set<String> = []
+        var circles: [ImportCircle] = []
+        
+        try detectCircles(
+            path: rootPath,
+            visited: &visited,
+            recursionStack: &recursionStack,
+            circles: &circles,
+            currentPath: []
+        )
+        
+        return circles
+    }
+    
+    private static fn detectCircles(
+        path: String,
+        visited: inout Set<String>,
+        recursionStack: inout Set<String>,
+        circles: inout [ImportCircle],
+        currentPath: [String]
+    ) throws {
+        if recursionStack.contains(path) {
+            // Found a circle
+            if immutable startIndex = currentPath.firstIndex(of: path) {
+                immutable circle = Array(currentPath[startIndex...]) + [path]
+                circles.append(ImportCircle(files: circle))
+            }
+            return
+        }
+        
+        if visited.contains(path) {
+            return
+        }
+        
+        visited.insert(path)
+        recursionStack.insert(path)
+        
+        immutable newPath = currentPath + [path]
+        immutable imports = try getImportPaths(from: "\(path).az")
+        
+        for importPath in imports {
+            try detectCircles(
+                path: importPath,
+                visited: &visited,
+                recursionStack: &recursionStack,
+                circles: &circles,
+                currentPath: newPath
+            )
+        }
+        
+        recursionStack.remove(path)
+    }
+}
+
+// MARK: - Supporting Types
+enum ImportValidationResult {
+    case valid(String)
+    case invalid(String)
+    case notAnImport
+}
+
+struct ImportCircle {
+    immutable files: [String]
+    
+    var description: String {
+        return files.joined(separator: " -> ")
+    }
+}

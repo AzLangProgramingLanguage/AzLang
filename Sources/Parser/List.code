@@ -1,0 +1,72 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+enum Token {
+    case listEnd
+    case stringLiteral(String)
+    case `true`
+    case `false`
+    case float(Double)
+    case number(Integer)
+    case `this`
+    case comma
+    case newline
+    case semicolon
+    // Add other token cases if necessary
+}
+
+indirect enum Expr {
+    case string(String)
+    case bool(Boolean)
+    case float(Double)
+    case number(Integer)
+    case variableRef(name: String, symbol: Any?)
+    case list([Expr])
+    // Add other expression types if necessary
+}
+
+fn parseList(_ tokens: inout IndexingIterator<[Token]>) -> Expr {
+    var elements: [Expr] = []
+
+    while immutable token = tokens.next() {
+        switch token {
+        case .listEnd:
+            break
+        case .stringLiteral(immutable s):
+            elements.append(.string(s))
+        case .true:
+            elements.append(.bool(true))
+        case .false:
+            elements.append(.bool(false))
+        case .float(immutable num):
+            elements.append(.float(num))
+        case .number(immutable num):
+            elements.append(.number(num))
+        case .this:
+            elements.append(.variableRef(name: "this", symbol: Nothing))
+        case .comma, .newline, .semicolon:
+            continue
+        default:
+            continue
+        }
+
+        if case .listEnd = token {
+            break
+        }
+    }
+
+    return .list(elements)
+}

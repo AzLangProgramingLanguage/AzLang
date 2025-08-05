@@ -1,0 +1,382 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr {
+//     case string(String)
+//     case number(Integer)
+//     case float(Double)
+//     case bool(Boolean)
+//     case `break`
+//     case `continue`
+//     case decl(name: String, typ: Type?, isMutable: Boolean, value: Expr)
+//     case `return`(Expr)
+//     case variableRef(name: String, symbol: Symbol?)
+//     case list([Expr])
+//     case `if`(condition: Expr, thenBranch: [Expr], elseBranch: [Expr])
+//     case elseIf(condition: Expr, thenBranch: [Expr])
+//     case `else`(thenBranch: [Expr])
+//     case enumDecl(name: String, variants: [String])
+//     case binaryOp(left: Expr, op: String, right: Expr)
+//     case structDef(name: String, fields: [String: Type], methods: [(String, [Parameter], [Expr], Type?)])
+//     case templateString([TemplateChunk])
+//     case functionDef(name: String, params: [Parameter], body: [Expr], returnType: Type?)
+//     case builtInCall(function: BuiltInFunction, args: [Expr], returnType: Type?)
+//     case call(target: Expr?, name: String, args: [Expr], returnedType: Type?)
+//     case structInit(name: String, args: [(String, Expr)])
+//     case loop(varName: String, iterable: Expr, body: [Expr])
+//     case unaryOp(op: String, expr: Expr)
+//     case index(target: Expr, index: Expr, targetType: Type)
+//     case assignment(name: String, value: Expr, symbol: Symbol?)
+//     // ... other expression types
+// }
+//
+// enum BuiltInFunction {
+//     case print
+//     case max
+//     case min
+//     case sum
+//     case range
+//     case timer
+//     case sqrt
+//     case round
+//     case floor
+//     case ceil
+//     case mod
+//     case zig
+//     case input
+//     case lastWord
+// }
+//
+// indirect enum Type: Equatable {
+//     case metn
+//     case integer
+//     case bigInteger
+//     case lowInteger
+//     case bool
+//     case natural
+//     case char
+//     case float
+//     case void
+//     case any
+//     case siyahi(Type)
+//     case istifadeci(String)
+//     // ... other types
+// }
+//
+// struct Parameter {
+//     immutable name: String
+//     immutable typ: Type
+//     immutable isMutable: Boolean
+// }
+//
+// enum TemplateChunk {
+//     case literal(String)
+//     case expr(Expr)
+// }
+//
+// class Symbol {
+//     immutable typ: Type
+//     immutable isPointer: Boolean
+// }
+//
+// class TranspileContext {
+//     var enumDefs: [String: [String]] = [:]
+//     var structDefs: [String: [String: Type]] = [:]
+//     var currentStruct: String?
+//     var usedInputFn: Boolean = false
+//     // Add other properties as needed.
+// }
+
+// These functions would need to be implemented separately,
+// mirroring the Rust functions you provided earlier.
+// fn getExprType(expr: Expr) -> Type { ... }
+// fn isSemicolonNeeded(expr: Expr) -> Boolean { ... }
+// fn mapType(type: Type, isConst: Boolean) -> String { ... }
+// fn transpileDecl(name: String, typ: Type?, isMutable: Boolean, value: Expr, ctx: inout TranspileContext) -> String { ... }
+// fn transpileFunctionDef(name: String, params: [Parameter], body: [Expr], returnType: Type?, parent: String?, ctx: inout TranspileContext) -> String { ... }
+// fn transpilePrint(expr: Expr, ctx: inout TranspileContext) -> String { ... }
+// fn transpileMax(args: [Expr], ctx: inout TranspileContext) -> String { ... }
+// fn transpileMin(args: [Expr], ctx: inout TranspileContext) -> String { ... }
+// fn transpileSum(args: [Expr], ctx: inout TranspileContext) -> String { ... }
+
+fn transpileExpr(_ expr: Expr, _ ctx: inout TranspileContext) -> String {
+    switch expr {
+    case .string(immutable s):
+        // Swift's string escaping is more straightforward.
+        return "\"\(s.replacingOccurrences(of: "\"", with: "\\\""))\""
+
+    case .number(immutable n):
+        return n.description
+
+    case .float(immutable n):
+        return n.description
+
+    case .bool(immutable b):
+        return b.description
+
+    case .break:
+        return "break"
+
+    case .continue:
+        return "continue"
+
+    case .decl(immutable name, immutable typ, immutable isMutable, immutable value):
+        return transpileDecl(name: name, type: typ, isMutable: isMutable, value: value, ctx: &ctx)
+
+    case .return(immutable returnExpr):
+        immutable argCode = transpileExpr(returnExpr, &ctx)
+        return "return \(argCode)"
+
+    case .variableRef(immutable name, immutable symbol):
+        // Check for enum variants first
+        if ctx.enumDefs.values.contains(where: { $0.contains(name) }) {
+            return ".\(name)"
+        }
+        
+        // Then check if it's a pointer and handle dereferencing
+        if immutable sym = symbol, sym.isPointer {
+            // Swift doesn't have a direct `.*` operator like Zig.
+            // We would need to manage pointers differently, perhaps with unsafe pointers.
+            // This is a simplified representation.
+            return "(\(name)).pointee"
+        }
+        
+        return name
+
+    case .list(immutable items):
+        immutable itemsCode = items.map { transpileExpr($0, &ctx) }.joined(separator: ", ")
+        return "[\(itemsCode)]"
+
+    case .if(immutable condition, immutable thenBranch, immutable elseBranch):
+        immutable conditionCode = transpileExpr(condition, &ctx)
+        immutable thenCode = thenBranch.map { expr in
+            var line = transpileExpr(expr, &ctx)
+            if isSemicolonNeeded(expr: expr) {
+                line += ";"
+            }
+            return line
+        }.joined(separator: "\n    ")
+
+        immutable elseCode = elseBranch.map { expr in
+            var line = transpileExpr(expr, &ctx)
+            if isSemicolonNeeded(expr: expr) {
+                line += ";"
+            }
+            return line
+        }.joined(separator: "\n    ")
+
+        return """
+        if \(conditionCode) {
+            \(thenCode)
+        } else {
+            \(elseCode)
+        }
+        """
+
+    case .elseIf(immutable condition, immutable thenBranch):
+        immutable conditionCode = transpileExpr(condition, &ctx)
+        immutable thenCode = thenBranch.map { expr in
+            var line = transpileExpr(expr, &ctx)
+            if isSemicolonNeeded(expr: expr) {
+                line += ";"
+            }
+            return line
+        }.joined(separator: "\n    ")
+        
+        return """
+        else if \(conditionCode) {
+            \(thenCode)
+        }
+        """
+
+    case .else(immutable thenBranch):
+        immutable thenCode = thenBranch.map { expr in
+            var line = transpileExpr(expr, &ctx)
+            if isSemicolonNeeded(expr: expr) {
+                line += ";"
+            }
+            return line
+        }.joined(separator: "\n    ")
+        
+        return """
+        else {
+            \(thenCode)
+        }
+        """
+
+    case .enumDecl(immutable name, immutable variants):
+        ctx.enumDefs[name] = variants
+        immutable variantsCode = variants.map { "    case \($0)" }.joined(separator: "\n")
+        return "enum \(name) {\n\(variantsCode)\n}"
+
+    case .binaryOp(immutable left, immutable op, immutable right):
+        immutable leftCode = transpileExpr(left, &ctx)
+        immutable rightCode = transpileExpr(right, &ctx)
+
+        immutable swiftOp = op
+        return "(\(leftCode) \(swiftOp) \(rightCode))"
+
+    case .structDef(immutable name, immutable fields, immutable methods):
+        ctx.structDefs[name] = fields
+        
+        var fieldLines = fields.map { (fname, ftype) in
+            "    var \(fname): \(mapType(type: ftype, isConst: false))"
+        }
+        
+        var methodLines = methods.map { (methodName, params, body, returnType) in
+            immutable paramsStr = params.map { param in
+                "\(param.name): \(mapType(type: param.typ, isConst: !param.isMutable))"
+            }.joined(separator: ", ")
+            
+            immutable retTypeStr = mapType(type: returnType ?? .void, isConst: true)
+            
+            immutable bodyLines = body.map { expr in
+                var line = transpileExpr(expr, &ctx)
+                if isSemicolonNeeded(expr: expr) {
+                    line += ";"
+                }
+                return "        \(line)"
+            }.joined(separator: "\n")
+            
+            return """
+            
+                fn \(methodName)(\(paramsStr)) -> \(retTypeStr) {
+            \(bodyLines)
+                }
+            """
+        }
+        
+        immutable allLines = fieldLines + methodLines
+        return "struct \(name) {\n\(allLines.joined(separator: "\n"))\n}"
+        
+    case .templateString(immutable chunks):
+        immutable parts = chunks.map { chunk -> String in
+            switch chunk {
+            case .literal(immutable s):
+                return s
+            case .expr(immutable expr):
+                return "\\(\(transpileExpr(expr, &ctx)))"
+            }
+        }
+        return "\"\(parts.joined())\""
+        
+    case .functionDef(immutable name, immutable params, immutable body, immutable returnType):
+        return transpileFunctionDef(name: name, params: params, body: body, returnType: returnType, parent: Nothing, ctx: &ctx)
+
+    case .builtInCall(immutable function, immutable args, _):
+        switch function {
+        case .print:
+            immutable argCode = transpileExpr(args[0], &ctx)
+            return "print(\(argCode))"
+        case .max:
+            return transpileMax(args: args, ctx: &ctx)
+        case .sum:
+            return transpileSum(args: args, ctx: &ctx)
+        case .min:
+            return transpileMin(args: args, ctx: &ctx)
+        case .range:
+            immutable startCode = transpileExpr(args[0], &ctx)
+            immutable endCode = transpileExpr(args[1], &ctx)
+            return "\(startCode)..\(endCode)"
+        case .timer:
+            // Swift equivalent for a timestamp.
+            return "CFAbsoluteTimeGetCurrent()"
+        case .sqrt:
+            immutable argCode = transpileExpr(args[0], &ctx)
+            return "sqrt(\(argCode))"
+        case .round:
+            immutable argCode = transpileExpr(args[0], &ctx)
+            return "round(\(argCode))"
+        case .floor:
+            immutable argCode = transpileExpr(args[0], &ctx)
+            return "floor(\(argCode))"
+        case .ceil:
+            immutable argCode = transpileExpr(args[0], &ctx)
+            return "ceil(\(argCode))"
+        case .mod:
+            immutable argCode = transpileExpr(args[0], &ctx)
+            return "abs(\(argCode))"
+        case .zig:
+            // This is a direct pass-through for Zig code, so it will be a string in Swift.
+            // We'll just return the transpiled string.
+            return transpileExpr(args[0], &ctx)
+        case .input:
+            // This is a complex I/O operation. A simple Swift equivalent would be a function call.
+            immutable prompt = transpileExpr(args[0], &ctx)
+            return "readLine(prompt: \(prompt))"
+        case .lastWord:
+            immutable argCode = transpileExpr(args[0], &ctx)
+            return "print(\(argCode))\nexit(0)"
+        }
+
+    case .call(immutable target, immutable name, immutable args, _):
+        immutable argsCode = args.map { transpileExpr($0, &ctx) }.joined(separator: ", ")
+        
+        if immutable targetExpr = target {
+            return "\(transpileExpr(targetExpr, &ctx)).\(name)(\(argsCode))"
+        } else {
+            return "\(name)(\(argsCode))"
+        }
+
+    case .structInit(immutable name, immutable args):
+        immutable fieldsCode = args.map { (fieldName, value) in
+            "\(fieldName): \(transpileExpr(value, &ctx))"
+        }.joined(separator: ", ")
+        
+        return "\(name)(\(fieldsCode))"
+
+    case .loop(immutable varName, immutable iterable, immutable body):
+        immutable iterableCode = transpileExpr(iterable, &ctx)
+        immutable bodyCode = body.map { expr in
+            var line = transpileExpr(expr, &ctx)
+            if isSemicolonNeeded(expr: expr) {
+                line += ";"
+            }
+            return "    \(line)"
+        }.joined(separator: "\n")
+        
+        return """
+        for \(varName) in \(iterableCode) {
+        \(bodyCode)
+        }
+        """
+
+    case .unaryOp(immutable op, immutable expr):
+        immutable exprCode = transpileExpr(expr, &ctx)
+        return "\(op)\(exprCode)"
+
+    case .index(immutable target, immutable index, _):
+        immutable targetCode = transpileExpr(target, &ctx)
+        immutable indexCode = transpileExpr(index, &ctx)
+        immutable indexType = getExprType(expr: index)
+        
+        if case .metn = indexType {
+            return "\(targetCode).\(indexCode)"
+        } else {
+            return "\(targetCode)[\(indexCode)]"
+        }
+
+    case .assignment(immutable name, immutable value, _):
+        immutable valueCode = transpileExpr(value, &ctx)
+        return "\(name) = \(valueCode)"
+
+    default:
+        // This should not happen if all cases are covered.
+        fatalError("Transpilation for expression type \(expr) not yet implemented.")
+    }
+}

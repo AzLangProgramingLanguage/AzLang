@@ -1,0 +1,178 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Token enum definition
+enum Token: Equatable {
+    case number(Int64)
+    case mutableDecl
+    case constantDecl
+    case conditional
+    case elseIf
+    case `else`
+    case functionDef
+    case array
+    case object
+    case `this`
+    case match
+    case `break`
+    case loop
+    case end
+    case arrow
+    case `return`
+    case drop
+    case `true`
+    case `false`
+    case `in`
+    case and
+    case or
+    case doubleAnd
+    case doubleOr
+    case naturalType
+    case integerType
+    case stringType
+    case charType
+    case bigIntegerType
+    case lowIntegerType
+    case floatType
+    case boolType
+    case print
+    case input
+    case max
+    case min
+    case timer
+    case mod
+    case numberFn
+    case sum
+    case round
+    case floor
+    case ceil
+    case len
+    case lastWord
+    case sqrt
+    case rangeFn
+    case `enum`
+    case method
+    case zig
+    case `import`
+    case identifier(String)
+}
+
+// BuiltInFunction enum definition
+enum BuiltInFunction: CaseIterable {
+    case print
+    case len
+    case range
+    case timer
+    case input
+    case sum
+    case sqrt
+    case round
+    case floor
+    case ceil
+    case mod
+    case max
+    case min
+    case number
+    case lastWord
+    case zig
+}
+
+// Extension to make BuiltInFunction conform to CustomStringConvertible
+extension BuiltInFunction: CustomStringConvertible {
+    var description: String {
+        switch this {
+        case .print: return "Çap"
+        case .len: return "Uzunluq"
+        case .range: return "Aralıq"
+        case .timer: return "Timer"
+        case .input: return "Giriş"
+        case .sum: return "Cəm"
+        case .sqrt: return "Kvadrat kök"
+        case .round: return "Yuvarlama"
+        case .floor: return "Yuvarlama"
+        case .ceil: return "Yuvarlama"
+        case .mod: return "Modul"
+        case .max: return "Maksimum"
+        case .min: return "Minimum"
+        case .number: return "Ədəd"
+        case .lastWord: return "Sonsöz"
+        case .zig: return "Zig"
+        }
+    }
+}
+
+// Main tokenization function
+fn tokenizeWord(_ word: String) -> Token {
+    // Try to parse as Int64 first
+    if immutable number = Int64(word) {
+        return .number(number)
+    }
+    
+    // Match against keywords
+    switch word {
+    case "dəyişən": return .mutableDecl
+    case "sabit": return .constantDecl
+    case "əgər": return .conditional
+    case "yoxsa": return .elseIf
+    case "əks": return .else
+    case "funksiya": return .functionDef
+    case "siyahı": return .array
+    case "Obyekt": return .object
+    case "öz": return .this
+    case "uyğun": return .match
+    case "dayan": return .break
+    case "gəz": return .loop
+    case "son": return .end
+    case "->": return .arrow
+    case "qaytar": return .return
+    case "çıx": return .drop
+    case "doğru": return .true
+    case "yanlış": return .false
+    case "içində": return .in
+    case "və": return .and
+    case "və_ya": return .or
+    case "&&": return .doubleAnd
+    case "||": return .doubleOr
+    case "ədəd": return .naturalType
+    case "tam": return .integerType
+    case "mətn": return .stringType
+    case "simvol": return .charType
+    case "böyük_ədəd": return .bigIntegerType
+    case "kiçik_ədəd": return .lowIntegerType
+    case "kəsr": return .floatType
+    case "qərar": return .boolType
+    case "Çap": return .print
+    case "Giriş": return .input
+    case "Maksimum": return .max
+    case "Minimum": return .min
+    case "VaxtAl": return .timer
+    case "Modul": return .mod
+    case "Ədəd": return .numberFn
+    case "Cəm": return .sum
+    case "Yuvarlaqlaşdır": return .round
+    case "AşağıYuvarlaqlaşdır": return .floor
+    case "YuxarıYuvarlaqlaşdır": return .ceil
+    case "Uzunluq": return .len
+    case "Sonsöz": return .lastWord
+    case "Kök": return .sqrt
+    case "aralıq": return .rangeFn
+    case "növ": return .enum
+    case "metod": return .method
+    case "Zig": return .zig
+    case "ƏlavəEt": return .import
+    default: return .identifier(word)
+    }
+}

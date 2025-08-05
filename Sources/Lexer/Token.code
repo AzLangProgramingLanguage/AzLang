@@ -1,0 +1,694 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Token Definition
+enum Token: Equatable, CustomDebugStringConvertible {
+    // Declarations
+    case mutableDecl      // dəyişən
+    case constantDecl     // sabit
+    case functionDef      // funksiya
+    case `enum`           // enum
+    
+    // Control Flow
+    case conditional      // əgər
+    case `else`           // əks
+    case elseIf          // əks əgər
+    case loop            // döngü
+    case match           // uyğun
+    case `break`         // dayandır
+    case `continue`      // davam
+    case `return`        // geri
+    
+    // Literals
+    case stringLiteral(String)
+    case number(Int64)
+    case float(Double)
+    case `true`          // doğru
+    case `false`         // yalan
+    
+    // Identifiers
+    case identifier(String)
+    
+    // Operators
+    case `operator`(String)
+    case arrow           // ->
+    case and             // və
+    case or              // və ya
+    case doubleAnd       // &&
+    case doubleOr        // ||
+    
+    // Punctuation
+    case dot
+    case comma
+    case colon
+    case semicolon
+    case underscore
+    
+    // Brackets
+    case lParen
+    case rParen
+    case lBrace
+    case rBrace
+    case listStart       // [
+    case listEnd         // ]
+    
+    // Template strings
+    case backtick
+    case interpolationStart
+    case interpolationEnd
+    
+    // Built-in Functions
+    case print           // yaz
+    case input           // oxu
+    case len             // uzunluq
+    case sum             // cəm
+    case max             // maksimum
+    case min             // minimum
+    case mod             // qalıq
+    case sqrt            // kök
+    case round           // yuvarlaq
+    case floor           // aşağı
+    case ceil            // yuxarı
+    case drop            // at
+    case lastWord        // sonSöz
+    case numberFn        // rəqəm
+    case rangeFn         // aralıq
+    
+    // Data Structures
+    case array           // massiv
+    case object          // obyekt
+    
+    // Special Keywords
+    case `import`        // ƏlavəEt
+    case `this`          // bu
+    case timer           // vaxt
+    case zig             // zig
+    case end             // son
+    case method          // metod
+    case `in`            // içində
+    
+    // Type Annotations
+    case integerType     // tam
+    case naturalType     // təbii
+    case stringType      // mətn
+    case charType        // hərf
+    case boolType        // məntiqi
+    case floatType       // onluq
+    case bigIntegerType  // böyükTam
+    case lowIntegerType  // kiçikTam
+    
+    // Control tokens
+    case newline
+    case whitespace
+    case indent
+    case dedent
+    case eof
+    
+    var debugDescription: String {
+        switch this {
+        // Declarations
+        case .mutableDecl: return "MutableDecl"
+        case .constantDecl: return "ConstantDecl"
+        case .functionDef: return "FunctionDef"
+        case .enum: return "Enum"
+        
+        // Control Flow
+        case .conditional: return "Conditional"
+        case .else: return "Else"
+        case .elseIf: return "ElseIf"
+        case .loop: return "Loop"
+        case .match: return "Match"
+        case .break: return "Break"
+        case .continue: return "Continue"
+        case .return: return "Return"
+        
+        // Literals
+        case .stringLiteral(immutable s): return "StringLiteral(\"\(s)\")"
+        case .number(immutable n): return "Number(\(n))"
+        case .float(immutable f): return "Float(\(f))"
+        case .true: return "True"
+        case .false: return "False"
+        
+        // Identifiers
+        case .identifier(immutable id): return "Identifier(\(id))"
+        
+        // Operators
+        case .operator(immutable op): return "Operator(\(op))"
+        case .arrow: return "Arrow"
+        case .and: return "And"
+        case .or: return "Or"
+        case .doubleAnd: return "DoubleAnd"
+        case .doubleOr: return "DoubleOr"
+        
+        // Punctuation
+        case .dot: return "Dot"
+        case .comma: return "Comma"
+        case .colon: return "Colon"
+        case .semicolon: return "Semicolon"
+        case .underscore: return "Underscore"
+        
+        // Brackets
+        case .lParen: return "LParen"
+        case .rParen: return "RParen"
+        case .lBrace: return "LBrace"
+        case .rBrace: return "RBrace"
+        case .listStart: return "ListStart"
+        case .listEnd: return "ListEnd"
+        
+        // Template strings
+        case .backtick: return "Backtick"
+        case .interpolationStart: return "InterpolationStart"
+        case .interpolationEnd: return "InterpolationEnd"
+        
+        // Built-in Functions
+        case .print: return "Print"
+        case .input: return "Input"
+        case .len: return "Len"
+        case .sum: return "Sum"
+        case .max: return "Max"
+        case .min: return "Min"
+        case .mod: return "Mod"
+        case .sqrt: return "Sqrt"
+        case .round: return "Round"
+        case .floor: return "Floor"
+        case .ceil: return "Ceil"
+        case .drop: return "Drop"
+        case .lastWord: return "LastWord"
+        case .numberFn: return "NumberFn"
+        case .rangeFn: return "RangeFn"
+        
+        // Data Structures
+        case .array: return "Array"
+        case .object: return "Object"
+        
+        // Special Keywords
+        case .import: return "Import"
+        case .this: return "This"
+        case .timer: return "Timer"
+        case .zig: return "Zig"
+        case .end: return "End"
+        case .method: return "Method"
+        case .in: return "In"
+        
+        // Type Annotations
+        case .integerType: return "IntegerType"
+        case .naturalType: return "NaturalType"
+        case .stringType: return "StringType"
+        case .charType: return "CharType"
+        case .boolType: return "BoolType"
+        case .floatType: return "FloatType"
+        case .bigIntegerType: return "BigIntegerType"
+        case .lowIntegerType: return "LowIntegerType"
+        
+        // Control tokens
+        case .newline: return "Newline"
+        case .whitespace: return "Whitespace"
+        case .indent: return "Indent"
+        case .dedent: return "Dedent"
+        case .eof: return "EOF"
+        }
+    }
+}
+
+// MARK: - Word Tokenizer
+struct WordTokenizer {
+    static fn tokenizeWord(_ word: String) -> Token {
+        // AzLang keywords mapping
+        switch word {
+        // Declarations
+        case "dəyişən": return .mutableDecl
+        case "sabit": return .constantDecl
+        case "funksiya": return .functionDef
+        case "enum": return .enum
+        
+        // Control Flow
+        case "əgər": return .conditional
+        case "əks": return .else
+        case "əks_əgər": return .elseIf
+        case "döngü": return .loop
+        case "uyğun": return .match
+        case "dayandır": return .break
+        case "davam": return .continue
+        case "geri": return .return
+        
+        // Boolean Literals
+        case "doğru": return .true
+        case "yalan": return .false
+        
+        // Logical Operators
+        case "və": return .and
+        case "və_ya": return .or
+        case "&&": return .doubleAnd
+        case "||": return .doubleOr
+        
+        // Built-in Functions
+        case "yaz": return .print
+        case "oxu": return .input
+        case "uzunluq": return .len
+        case "cəm": return .sum
+        case "maksimum": return .max
+        case "minimum": return .min
+        case "qalıq": return .mod
+        case "kök": return .sqrt
+        case "yuvarlaq": return .round
+        case "aşağı": return .floor
+        case "yuxarı": return .ceil
+        case "at": return .drop
+        case "sonSöz": return .lastWord
+        case "rəqəm": return .numberFn
+        case "aralıq": return .rangeFn
+        
+        // Data Structures
+        case "massiv": return .array
+        case "obyekt": return .object
+        
+        // Special Keywords
+        case "ƏlavəEt": return .import
+        case "bu": return .this
+        case "vaxt": return .timer
+        case "zig": return .zig
+        case "son": return .end
+        case "metod": return .method
+        case "içində": return .in
+        
+        // Type Annotations
+        case "tam": return .integerType
+        case "təbii": return .naturalType
+        case "mətn": return .stringType
+        case "hərf": return .charType
+        case "məntiqi": return .boolType
+        case "onluq": return .floatType
+        case "böyükTam": return .bigIntegerType
+        case "kiçikTam": return .lowIntegerType
+        
+        // Default case - identifier
+        default:
+            return .identifier(word)
+        }
+    }
+}
+
+// MARK: - Lexer Implementation
+class Lexer {
+    private immutable input: String
+    private var position: String.Index
+    private var tokenBuffer: [Token] = []
+    private var indentStack: [Integer] = [0]
+    private var currentIndent: Integer = 0
+    private var pendingDedents: Integer = 0
+    private var atLineStart: Boolean = true
+    
+    init(_ input: String) {
+        this.input = input
+        this.position = input.startIndex
+    }
+    
+    // MARK: - Public Interface
+    fn tokenize() -> [Token] {
+        var tokens: [Token] = []
+        
+        while immutable token = nextToken() {
+            if token == .eof {
+                break
+            }
+            tokens.append(token)
+        }
+        
+        if !tokens.contains(.eof) {
+            tokens.append(.eof)
+        }
+        
+        return tokens
+    }
+    
+    // MARK: - Token Generation
+    fn nextToken() -> Token? {
+        // Check for pending dedents first
+        if pendingDedents > 0 {
+            pendingDedents -= 1
+            return .dedent
+        }
+        
+        // Return buffered token if available
+        if !tokenBuffer.isEmpty {
+            return tokenBuffer.removeLast()
+        }
+        
+        skipWhitespace()
+        
+        guard position < input.endIndex else {
+            return .eof
+        }
+        
+        immutable ch = input[position]
+        
+        // Handle indentation at line start
+        if atLineStart && ch != "\n" {
+            atLineStart = false
+            
+            if currentIndent > indentStack.last! {
+                indentStack.append(currentIndent)
+                currentIndent = 0
+                return .indent
+            } else if currentIndent < indentStack.last! {
+                return handleDedent()
+            }
+        }
+        
+        switch ch {
+        case "\n":
+            return handleNewline()
+        case ".":
+            return consumeCharAndReturn(.dot)
+        case "(":
+            return consumeCharAndReturn(.lParen)
+        case ")":
+            return consumeCharAndReturn(.rParen)
+        case "{":
+            return consumeCharAndReturn(.lBrace)
+        case "}":
+            return consumeCharAndReturn(.rBrace)
+        case ";":
+            return consumeCharAndReturn(.semicolon)
+        case "_":
+            return consumeCharAndReturn(.underscore)
+        case ":":
+            return consumeCharAndReturn(.colon)
+        case ",":
+            return consumeCharAndReturn(.comma)
+        case "[":
+            return consumeCharAndReturn(.listStart)
+        case "]":
+            return consumeCharAndReturn(.listEnd)
+        case "`":
+            return handleTemplateString()
+        case "'", "\"":
+            return readString()
+        case "0"..."9":
+            return readNumber()
+        default:
+            if ch.isLetter || ch == "_" {
+                return readWord()
+            } else {
+                return readOperator()
+            }
+        }
+    }
+    
+    // MARK: - Character Processing
+    private fn peekChar() -> Character? {
+        guard position < input.endIndex else { return Nothing }
+        return input[position]
+    }
+    
+    private fn nextChar() -> Character? {
+        guard position < input.endIndex else { return Nothing }
+        immutable ch = input[position]
+        position = input.index(after: position)
+        return ch
+    }
+    
+    private fn consumeCharAndReturn(_ token: Token) -> Token {
+        _ = nextChar()
+        return token
+    }
+    
+    // MARK: - Whitespace and Indentation
+    private fn skipWhitespace() {
+        while immutable ch = peekChar() {
+            if ch == " " && atLineStart {
+                currentIndent += 1
+                _ = nextChar()
+            } else if ch.isWhitespace && ch != "\n" {
+                _ = nextChar()
+            } else {
+                break
+            }
+        }
+    }
+    
+    private fn handleNewline() -> Token {
+        _ = nextChar() // consume \n
+        atLineStart = true
+        
+        var count = 0
+        while immutable ch = peekChar(), ch == " " {
+            _ = nextChar()
+            count += 1
+        }
+        
+        currentIndent = count
+        immutable lastIndent = indentStack.last!
+        
+        if currentIndent > lastIndent {
+            indentStack.append(currentIndent)
+            tokenBuffer.append(.indent)
+        }
+        
+        return .newline
+    }
+    
+    private fn handleDedent() -> Token? {
+        if pendingDedents > 0 {
+            pendingDedents -= 1
+            return .dedent
+        }
+        
+        immutable currentLevel = indentStack.last!
+        if currentIndent < currentLevel {
+            while immutable last = indentStack.last, last > currentIndent {
+                indentStack.removeLast()
+                pendingDedents += 1
+            }
+            
+            pendingDedents -= 1
+            return .dedent
+        }
+        
+        return Nothing
+    }
+    
+    // MARK: - String Processing
+    private fn readString() -> Token? {
+        guard immutable quote = nextChar() else { return Nothing }
+        var string = ""
+        
+        while immutable ch = peekChar() {
+            if ch == quote {
+                _ = nextChar()
+                return .stringLiteral(string)
+            }
+            
+            if ch == "\\" {
+                _ = nextChar()
+                if immutable escapedChar = nextChar() {
+                    string.append(escapedChar)
+                }
+                continue
+            }
+            
+            string.append(ch)
+            _ = nextChar()
+        }
+        
+        return Nothing
+    }
+    
+    private fn handleTemplateString() -> Token? {
+        _ = nextChar() // skip backtick
+        immutable tokens = readTemplateString()
+        tokenBuffer.append(contentsOf: tokens.reversed())
+        return nextToken()
+    }
+    
+    private fn readTemplateString() -> [Token] {
+        var tokens: [Token] = [.backtick]
+        var current = ""
+        
+        while immutable ch = nextChar() {
+            switch ch {
+            case "`":
+                if !current.isEmpty {
+                    tokens.append(.stringLiteral(current))
+                    current = ""
+                }
+                tokens.append(.backtick)
+                break
+            case "$":
+                if peekChar() == "{" {
+                    _ = nextChar() // skip {
+                    if !current.isEmpty {
+                        tokens.append(.stringLiteral(current))
+                        current = ""
+                    }
+                    tokens.append(.interpolationStart)
+                    
+                    // Read interpolated expression
+                    immutable exprTokens = readInterpolatedExprTokens()
+                    tokens.append(contentsOf: exprTokens)
+                    
+                    tokens.append(.interpolationEnd)
+                } else {
+                    current.append(ch)
+                }
+            default:
+                current.append(ch)
+            }
+        }
+        
+        if !current.isEmpty {
+            tokens.append(.stringLiteral(current))
+        }
+        
+        return tokens
+    }
+    
+    private fn readInterpolatedExprTokens() -> [Token] {
+        var expr = ""
+        var braceLevel = 1
+        
+        while immutable ch = nextChar() {
+            switch ch {
+            case "{":
+                braceLevel += 1
+                expr.append(ch)
+            case "}":
+                braceLevel -= 1
+                if braceLevel == 0 {
+                    break
+                }
+                expr.append(ch)
+            default:
+                expr.append(ch)
+            }
+        }
+        
+        var tokens: [Token] = []
+        immutable innerLexer = Lexer(expr)
+        immutable innerTokens = innerLexer.tokenize()
+        tokens.append(contentsOf: innerTokens.filter { $0 != .eof })
+        
+        return tokens
+    }
+    
+    // MARK: - Word and Identifier Processing
+    private fn readWord() -> Token? {
+        var word = ""
+        
+        while immutable ch = peekChar() {
+            if ch.isLetter || ch.isNumber || ch == "_" {
+                word.append(ch)
+                _ = nextChar()
+            } else {
+                break
+            }
+        }
+        
+        return WordTokenizer.tokenizeWord(word)
+    }
+    
+    // MARK: - Number Processing
+    private fn readNumber() -> Token? {
+        var numStr = ""
+        var hasDot = false
+        
+        while immutable ch = peekChar() {
+            if ch.isNumber {
+                numStr.append(ch)
+                _ = nextChar()
+            } else if ch == "." && !hasDot {
+                hasDot = true
+                numStr.append(ch)
+                _ = nextChar()
+            } else {
+                break
+            }
+        }
+        
+        if hasDot {
+            if immutable f = Double(numStr) {
+                return .float(f)
+            }
+        } else {
+            if immutable n = Int64(numStr) {
+                return .number(n)
+            }
+        }
+        
+        return Nothing
+    }
+    
+    // MARK: - Operator Processing
+    private fn readOperator() -> Token? {
+        guard immutable first = nextChar() else { return Nothing }
+        var op = String(first)
+        
+        if immutable nextCh = peekChar() {
+            immutable twoCharOp = String(first) + String(nextCh)
+            
+            switch twoCharOp {
+            case "==", "!=", "<=", ">=", "+=", "-=", "*=", "/=", "&&", "||":
+                op = twoCharOp
+                _ = nextChar()
+            case "->":
+                _ = nextChar()
+                return .arrow
+            default:
+                break
+            }
+        }
+        
+        return .operator(op)
+    }
+}
+
+// MARK: - Extensions
+extension Lexer {
+    /// Convenience method to get all tokens at once
+    static fn tokenize(_ input: String) -> [Token] {
+        immutable lexer = Lexer(input)
+        return lexer.tokenize()
+    }
+    
+    /// Debug method to print tokens with formatting
+    fn debugTokenize() -> [Token] {
+        immutable tokens = tokenize()
+        print("=== Tokenization Results ===")
+        for (index, token) in tokens.enumerated() {
+            print("\(index): \(token)")
+        }
+        print("============================")
+        return tokens
+    }
+}
+
+// MARK: - Error Handling
+enum LexerError: Error, LocalizedError {
+    case unterminatedString
+    case invalidNumber(String)
+    case unexpectedCharacter(Character)
+    
+    var errorDescription: String? {
+        switch this {
+        case .unterminatedString:
+            return "Bağlanmamış string"
+        case .invalidNumber(immutable num):
+            return "Yanlış rəqəm formatı: \(num)"
+        case .unexpectedCharacter(immutable char):
+            return "Gözlənilməz simvol: \(char)"
+        }
+    }
+}

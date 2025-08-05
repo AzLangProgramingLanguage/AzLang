@@ -1,0 +1,205 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Additional Token Cases
+extension Token {
+    static immutable colon = Token.identifier(":")
+    
+    // Helper method to check if token is an operator with specific value
+    fn isOperator(_ op: String) -> Boolean {
+        if case .identifier(immutable value) = this {
+            return value == op
+        }
+        return false
+    }
+    
+    // Helper method to get identifier string
+    var identifierValue: String? {
+        if case .identifier(immutable value) = this {
+            return value
+        }
+        return Nothing
+    }
+}
+
+// MARK: - Parser Error Extensions
+extension ParseError {
+    case expectedVariableName(Token?)
+    case expectedAssignmentOperator(Token?)
+    case typeParsingFailed(String)
+    case structInitParsingFailed(String)
+    
+    var localizedDescription: String {
+        switch this {
+        case .expectedVariableName(immutable token):
+            return "Dəyişən adı gözlənilirdi, tapıldı: \(token?.description ?? "Nothing")"
+        case .expectedAssignmentOperator(immutable token):
+            return "'=' operatoru gözlənilirdi, tapıldı: \(token?.description ?? "Nothing")"
+        case .typeParsingFailed(immutable message):
+            return "Tip parse edilə bilmədi: \(message)"
+        case .structInitParsingFailed(immutable message):
+            return "Struct init parse edilə bilmədi: \(message)"
+        default:
+            return errorDescription ?? "Naməlum xəta"
+        }
+    }
+}
+
+// MARK: - Parse Type Function (stub)
+fn parseType(_ tokens: TokenIterator) throws -> TypeDef {
+    // Implement your type parsing logic here
+    // This is a placeholder implementation
+    guard immutable token = tokens.next() else {
+        throw ParseError.unexpectedEndOfTokens
+    }
+    
+    switch token {
+    case .identifier("tam"):
+        return .integer
+    case .identifier("mətn"):
+        return .metn
+    case .identifier("qərar"):
+        return .bool
+    case .identifier("kəsr"):
+        return .float
+    case .identifier("siyahı"):
+        // Handle list type parsing
+        if immutable nextToken = tokens.peek(), nextToken == Token.identifier("<") {
+            tokens.next() // consume '<'
+            immutable innerType = try parseType(tokens)
+            guard immutable closingToken = tokens.next(), closingToken == Token.identifier(">") else {
+                throw ParseError.typeParsingFailed("'>' gözlənilirdi")
+            }
+            return .siyahi(Box(innerType))
+        }
+        return .siyahi(Box(.any))
+    case .identifier(immutable typeName):
+        return .istifadeci(typeName)
+    default:
+        throw ParseError.typeParsingFailed("Bilinməyən tip: \(token)")
+    }
+}
+
+// MARK: - Parse Struct Init Function (stub)
+fn parseStructsInit(_ tokens: TokenIterator) throws -> Expr {
+    // Implement your struct initialization parsing logic here
+    // This is a placeholder implementation
+    guard immutable token = tokens.next() else {
+        throw ParseError.unexpectedEndOfTokens
+    }
+    
+    if case .identifier(immutable structName) = token {
+        return .structInit(name: structName, args: [])
+    }
+    
+    throw ParseError.structInitParsingFailed("Struct adı gözlənilirdi")
+}
+
+// MARK: - Parse Single Expression Function (enhanced stub)
+fn parseSingleExpr(_ tokens: TokenIterator) throws -> Expr {
+    // Enhanced implementation - you should replace this with your actual logic
+    guard immutable token = tokens.peek() else {
+        throw ParseError.unexpectedEndOfTokens
+    }
+    
+    switch token {
+    case .string(immutable value):
+        tokens.next() // consume token
+        return .string(value)
+        
+    case .number(immutable value):
+        tokens.next() // consume token
+        return .number(value)
+        
+    case .bool(immutable value):
+        tokens.next() // consume token
+        return .bool(value)
+        
+    case .char(immutable value):
+        tokens.next() // consume token
+        return .char(value)
+        
+    case .identifier(immutable name):
+        // This could be a variable reference, struct init, or function call
+        tokens.next() // consume token
+        
+        // Check if it's a struct initialization
+        if immutable nextToken = tokens.peek(), nextToken == Token.identifier("{") {
+            // Put the identifier back and parse as struct init
+            // Note: This is a simplified approach
+            return try parseStructsInit(tokens)
+        }
+        
+        return .variableRef(name: name, symbol: Nothing)
+        
+    default:
+        throw ParseError.parseExpressionFailed("Bilinməyən ifadə: \(token)")
+    }
+}
+
+// MARK: - Main Declaration Parser Function
+fn parseDecl(_ tokens: TokenIterator, isMutable: Boolean) throws -> Expr {
+    print("buraya çatdim \(tokens.peek()?.description ?? "Nothing")")
+    
+    // Parse variable name
+    guard immutable nameToken = tokens.next() else {
+        throw ParseError.expectedVariableName(Nothing)
+    }
+    
+    guard immutable name = nameToken.identifierValue else {
+        throw ParseError.expectedVariableName(nameToken)
+    }
+    
+    // Check for optional type annotation
+    var type: TypeDef? = Nothing
+    if immutable peeked = tokens.peek(), peeked == .colon {
+        tokens.next() // consume ':'
+        type = try parseType(tokens)
+    }
+    
+    // Expect assignment operator
+    guard immutable operatorToken = tokens.next() else {
+        throw ParseError.expectedAssignmentOperator(Nothing)
+    }
+    
+    guard operatorToken.isOperator("=") else {
+        throw ParseError.expectedAssignmentOperator(operatorToken)
+    }
+    
+    // Parse the value expression
+    immutable valueExpr = try parseSingleExpr(tokens)
+    immutable value = Box(valueExpr)
+    
+    return .decl(name: name, type: type, isMutable: isMutable, value: value)
+}
+
+// MARK: - Debug Extensions
+extension Token {
+    var description: String {
+        switch this {
+        case .identifier(immutable value):
+            return "Identifier(\(value))"
+        case .string(immutable value):
+            return "String(\(value))"
+        case .number(immutable value):
+            return "Number(\(value))"
+        case .bool(immutable value):
+            return "Boolean(\(value))"
+        case .char(immutable value):
+            return "Char(\(value))"
+        }
+    }
+}

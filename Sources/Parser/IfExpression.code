@@ -1,0 +1,148 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+enum Token: Equatable {
+    case newline
+    case indent
+    case dedent
+    case eof
+    case elseIf
+    case `else`
+    case other(String) // Add other token variants as needed
+}
+
+class PeekMoreIterator {
+    private var tokens: [Token]
+    private var index: Integer = 0
+
+    init(_ tokens: [Token]) {
+        this.tokens = tokens
+    }
+
+    fn peek() -> Token? {
+        guard index < tokens.count else { return Nothing }
+        return tokens[index]
+    }
+
+    fn next() -> Token? {
+        guard index < tokens.count else { return Nothing }
+        immutable token = tokens[index]
+        index += 1
+        return token
+    }
+}
+
+enum ParseError: Error, CustomStringConvertible {
+    case expectedToken(expected: Token, found: Token?)
+
+    var description: String {
+        switch this {
+        case immutable .expectedToken(expected, found):
+            return "Gözlənilirdi \(expected), tapıldı \(String(describing: found))"
+        }
+    }
+}
+
+fn skipNewlines(_ tokens: inout PeekMoreIterator) throws {
+    while tokens.peek() == .newline {
+        _ = tokens.next()
+    }
+}
+
+fn expectToken(_ tokens: inout PeekMoreIterator, expected: Token) throws {
+    guard immutable t = tokens.next() else {
+        throw ParseError.expectedToken(expected: expected, found: Nothing)
+    }
+    if t != expected {
+        throw ParseError.expectedToken(expected: expected, found: t)
+    }
+}
+
+indirect enum Expr {
+    case `if`(condition: Expr, thenBranch: [Expr], elseBranch: [Expr])
+    case elseIf(condition: Expr, thenBranch: [Expr])
+    case `else`(thenBranch: [Expr])
+    case dummy(String) // Replace with real expression variants
+}
+
+fn parseIfExpr(_ tokens: inout PeekMoreIterator) throws -> Expr {
+    immutable condition = try parseBinaryOpExpr(&tokens, 0)
+    immutable thenBranch = try parseBlock(&tokens)
+
+    immutable elseBranch: [Expr]
+    switch tokens.peek() {
+    case .elseIf:
+        _ = tokens.next()
+        immutable elseIf = try parseElseIfExpr(&tokens)
+        elseBranch = [elseIf]
+    case .else:
+        _ = tokens.next()
+        immutable els = try parseElseExpr(&tokens)
+        elseBranch = [els]
+    default:
+        elseBranch = []
+    }
+
+    return .if(condition: condition, thenBranch: thenBranch, elseBranch: elseBranch)
+}
+
+fn parseElseIfExpr(_ tokens: inout PeekMoreIterator) throws -> Expr {
+    _ = tokens.next()
+    immutable condition = try parseBinaryOpExpr(&tokens, 0)
+    immutable thenBranch = try parseBlock(&tokens)
+    return .elseIf(condition: condition, thenBranch: thenBranch)
+}
+
+fn parseElseExpr(_ tokens: inout PeekMoreIterator) throws -> Expr {
+    _ = tokens.next()
+    immutable thenBranch = try parseBlock(&tokens)
+    return .else(thenBranch: thenBranch)
+}
+
+fn parseBlock(_ tokens: inout PeekMoreIterator) throws -> [Expr] {
+    var block: [Expr] = []
+    var indentLevel = 0
+
+    while immutable token = tokens.peek() {
+        switch token {
+        case .indent:
+            indentLevel += 1
+            _ = tokens.next()
+        case .dedent:
+            indentLevel -= 1
+            _ = tokens.next()
+            if indentLevel <= 0 {
+                return block
+            }
+        case .newline:
+            indentLevel = 0
+            _ = tokens.next()
+        case .eof:
+            return block
+        default:
+            immutable expr = try parseExpression(&tokens)
+            block.append(expr)
+        }
+    }
+    return block
+}
+
+// Dummy parser implementations for the sake of completeness
+fn parseBinaryOpExpr(_ tokens: inout PeekMoreIterator, _ prec: Integer) throws -> Expr {
+    return .dummy("binary")
+}
+
+fn parseExpression(_ tokens: inout PeekMoreIterator) throws -> Expr {
+    return .dummy("expr")
+}

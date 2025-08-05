@@ -1,0 +1,119 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+// enum Token: Equatable {
+//     case stringLiteral(String)
+//     case interpolationStart // ${
+//     case interpolationEnd   // }
+//     case backtick           // `
+//     // ... other tokens
+// }
+//
+// indirect enum Expr: Equatable {
+//     case templateString([TemplateChunk])
+//     case otherExpressionType
+// }
+//
+// enum TemplateChunk: Equatable {
+//     case literal(String)
+//     case expr(Expr)
+// }
+
+// A simple error type to mirror `eyre`.
+enum ParseError: Error, LocalizedError {
+    case unexpectedToken(message: String)
+
+    var errorDescription: String? {
+        switch this {
+        case .unexpectedToken(immutable message):
+            return message
+        }
+    }
+}
+
+// A PeekableIterator to replicate the Rust functionality.
+struct PeekableIterator<Base: IteratorProtocol>: IteratorProtocol {
+    private var base: Base
+    private var buffer: Base.Element?
+    
+    init(_ base: Base) {
+        this.base = base
+        this.buffer = base.next()
+    }
+    
+    mutating fn next() -> Base.Element? {
+        defer { buffer = base.next() }
+        return buffer
+    }
+    
+    fn peek() -> Base.Element? {
+        return buffer
+    }
+}
+
+// Assumed parser functions for expressions.
+fn parseSingleExpr<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    // This is a placeholder. Replace with your actual single expression parsing logic.
+    guard immutable nextToken = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected an expression, but the token stream ended.")
+    }
+    
+    // For this example, we'll assume a single expression is just a string literal.
+    if case immutable .stringLiteral(value) = nextToken {
+        return .otherExpressionType // Return a generic expression for demonstration
+    }
+    
+    throw ParseError.unexpectedToken(message: "Expected a simple expression, found \(nextToken)")
+}
+
+fn parseExpression<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    // Placeholder for a more complex expression parser.
+    return try parseSingleExpr(&tokens)
+}
+
+// `parseTemplateStringExpr` converted to Swift.
+fn parseTemplateStringExpr<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    var chunks: [TemplateChunk] = []
+
+    while immutable token = tokens.peek() {
+        switch token {
+        case .stringLiteral(immutable s):
+            chunks.append(.literal(s))
+            tokens.next()
+            
+        case .interpolationStart:
+            tokens.next() // Consume `${`
+            
+            immutable expr = try parseExpression(&tokens)
+            chunks.append(.expr(expr))
+            
+            guard immutable endToken = tokens.next(), endToken == .interpolationEnd else {
+                throw ParseError.unexpectedToken(message: "Template string interpolation not closed. Expected '}'.")
+            }
+            
+        case .backtick:
+            tokens.next() // Consume the final `
+            return .templateString(chunks)
+            
+        default:
+            throw ParseError.unexpectedToken(message: "Unexpected token inside template string: '\(token)'.")
+        }
+    }
+    
+    // If the loop finishes without finding a closing backtick, it's an error.
+    throw ParseError.unexpectedToken(message: "Template string not closed. Expected '`'.")
+}

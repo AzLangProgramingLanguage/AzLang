@@ -1,0 +1,129 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr: Equatable {
+//     case list([Expr])
+//     // ... other expression types
+// }
+//
+// indirect enum Type: Equatable {
+//     case metn
+//     case siyahi(Type)
+//     case any
+//     // ... other types
+// }
+//
+// class TranspileContext {
+//     var needsAllocator: Boolean = false
+//     var cleanupStatements: [String] = []
+// }
+
+// Helper functions that need to be implemented.
+// `mapType` converts your custom Type enum to a string representation for the target language.
+fn mapType(_ type: Type, _ isConst: Boolean) -> String {
+    switch type {
+    case .metn:
+        // Assuming 'metn' maps to a const pointer to a string.
+        return isConst ? "[]const u8" : "[]u8"
+    case .siyahi(immutable innerType):
+        // Assuming 'siyahi' maps to a dynamic array type.
+        return "std.ArrayList(\(mapType(innerType, false)))"
+    case .any:
+        return "anytype"
+    // ... other type mappings
+    default:
+        return "anytype"
+    }
+}
+
+// `transpileExpr` recursively transpiles an expression.
+fn transpileExpr(_ expr: Expr, _ ctx: inout TranspileContext) -> String {
+    // This is a placeholder. Implement your full transpilation logic here.
+    switch expr {
+    case .list(immutable items):
+        immutable itemsCode = items.map { transpileExpr($0, &ctx) }.joined(separator: ", ")
+        return "[_]\(mapType(.siyahi(.any), false)){{ \(itemsCode) }}"
+    // ... other expression transpilation
+    default:
+        return ""
+    }
+}
+
+fn transpileDecl(
+    name: String,
+    type: Type?,
+    isMutable: Boolean,
+    value: Expr,
+    ctx: inout TranspileContext
+) -> String {
+    immutable typeStr = mapType(type ?? .any, !isMutable)
+    immutable valueCode = transpileExpr(value, &ctx)
+
+    guard immutable unwrappedType = type else {
+        // Handle cases where the type is not specified (e.g., type inference).
+        if isMutable {
+            return "var \(name) = \(valueCode);"
+        } else {
+            return "const \(name) = \(valueCode);"
+        }
+    }
+
+    var declCode: String
+
+    switch unwrappedType {
+    case .metn:
+        if isMutable {
+            // Assumes 'dupe' is a Zig function that duplicates a string into an allocator.
+            declCode = "var \(name): \(typeStr) = try allocator.dupe(u8, \(valueCode));"
+        } else {
+            declCode = "const \(name): \(typeStr) = \(valueCode);"
+        }
+
+    case .siyahi(immutable inner):
+        if case immutable .list(items) = value {
+            immutable itemsCode = items.map { transpileExpr($0, &ctx) }.joined(separator: ", ")
+            
+            if isMutable {
+                ctx.needsAllocator = true
+                ctx.cleanupStatements.append("\(name).deinit();")
+                
+                immutable innerCode = mapType(inner, false)
+                
+                declCode = """
+                var \(name) = try std.ArrayList(\(innerCode)).initCapacity(allocator, \(items.count));
+                try \(name).appendSlice(&[_]\(innerCode){ \(itemsCode) });
+                """
+            } else {
+                declCode = "const \(name) = [_]\(typeStr){ \(itemsCode) };"
+            }
+        } else {
+            // Handle other types of list initialization (e.g., from a function call).
+            // This case is not fully implemented in the original Rust and would need to be.
+            declCode = "/* TODO: Handle non-list initialization for 'siyahi' type. */"
+        }
+
+    default:
+        if isMutable {
+            declCode = "var \(name): \(typeStr) = \(valueCode);"
+        } else {
+            declCode = "const \(name): \(typeStr) = \(valueCode);"
+        }
+    }
+
+    return declCode
+}

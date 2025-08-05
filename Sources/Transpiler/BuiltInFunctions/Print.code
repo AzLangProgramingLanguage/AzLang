@@ -1,0 +1,69 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr {
+//     case templateString([TemplateChunk])
+//     // ... other expression types
+// }
+//
+// enum TemplateChunk {
+//     case literal(String)
+//     case expr(Expr)
+// }
+//
+// indirect enum Type {
+//     // ... types like Integer, Metn, etc.
+// }
+//
+// class TranspileContext {
+//     var usesStdout: Boolean = false
+//     // Add other properties as needed.
+// }
+
+// These helper functions are placeholders. You should replace them with your actual implementations.
+// fn transpileExpr(expr: Expr, ctx: inout TranspileContext) -> String { ... }
+// fn getExprType(expr: Expr) -> Type { ... }
+// fn getFormatStrFromType(type: Type) -> String { ... }
+
+// `transpilePrint` converted to Swift.
+fn transpilePrint(_ expr: Expr, _ ctx: inout TranspileContext) -> String {
+    ctx.usesStdout = true
+
+    switch expr {
+    case .templateString(immutable chunks):
+        // In Swift, template strings are much simpler to handle due to string interpolation.
+        immutable parts = chunks.map { chunk -> String in
+            switch chunk {
+            case .literal(immutable s):
+                // Escape backslashes and double quotes
+                return s.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            case .expr(immutable innerExpr):
+                // Transpile the inner expression and use Swift's string interpolation.
+                immutable argCode = transpileExpr(innerExpr, &ctx)
+                return "\\(\(argCode))"
+            }
+        }
+        
+        immutable finalString = parts.joined()
+        return "print(\"\(finalString)\")"
+
+    default:
+        immutable argCode = transpileExpr(expr, &ctx)
+        return "print(\(argCode))"
+    }
+}

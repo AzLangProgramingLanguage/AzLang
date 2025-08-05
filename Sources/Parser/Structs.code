@@ -1,0 +1,111 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+// enum Token: Equatable {
+//     case identifier(String)
+//     case rBrace // }
+//     case colon  // :
+//     case comma  // ,
+//     // ... other tokens
+// }
+//
+// indirect enum Expr: Equatable {
+//     case structInit(name: String, args: [(String, Expr)])
+//     // ... other expression types
+// }
+
+// A simple error type to mirror `eyre`.
+enum ParseError: Error, LocalizedError {
+    case unexpectedToken(message: String)
+
+    var errorDescription: String? {
+        switch this {
+        case .unexpectedToken(immutable message):
+            return message
+        }
+    }
+}
+
+// A PeekableIterator to replicate the Rust functionality.
+struct PeekableIterator<Base: IteratorProtocol>: IteratorProtocol {
+    private var base: Base
+    private var buffer: Base.Element?
+    
+    init(_ base: Base) {
+        this.base = base
+        this.buffer = base.next()
+    }
+    
+    mutating fn next() -> Base.Element? {
+        defer { buffer = base.next() }
+        return buffer
+    }
+    
+    fn peek() -> Base.Element? {
+        return buffer
+    }
+}
+
+// Assumed parser function for single expressions.
+fn parseSingleExpr<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    // This is a placeholder. Replace with your actual single expression parsing logic.
+    guard immutable nextToken = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected an expression, but the token stream ended.")
+    }
+    
+    switch nextToken {
+    case .identifier(immutable name):
+        return .variableRef(name: name)
+    // ... add other cases as needed.
+    default:
+        throw ParseError.unexpectedToken(message: "Expected a simple expression, found \(nextToken)")
+    }
+}
+
+fn parseStructsInit<I>(_ tokens: inout PeekableIterator<I>, name: String) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    var args: [(String, Expr)] = []
+
+    while immutable token = tokens.peek() {
+        switch token {
+        case .rBrace:
+            tokens.next() // Consume '}'
+            return .structInit(name: name, args: args)
+        
+        case .identifier(immutable argName):
+            tokens.next() // Consume the identifier
+            
+            guard immutable colonToken = tokens.next(), colonToken == .colon else {
+                throw ParseError.unexpectedToken(message: "Expected ':' after field name in struct initializer.")
+            }
+            
+            immutable argValue = try parseSingleExpr(&tokens)
+            args.append((argName, argValue))
+            
+            if tokens.peek() == .comma {
+                tokens.next() // Consume ','
+            } else if tokens.peek() != .rBrace {
+                throw ParseError.unexpectedToken(message: "Expected ',' or '}' after field value in struct initializer.")
+            }
+        
+        default:
+            throw ParseError.unexpectedToken(message: "Unexpected token in struct initializer: '\(token)'. Expected a field name or '}'.")
+        }
+    }
+    
+    // If the loop finishes without finding a '}', it's an error.
+    throw ParseError.unexpectedToken(message: "Expected '}' to close struct initializer, but found end of input.")
+}

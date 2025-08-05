@@ -1,0 +1,106 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on August 4, 2025
+// Rewritten on August 5, 2025
+
+import Foundation
+
+// Assuming these types exist in your Swift codebase
+// struct Expr { ... }
+// struct Parameter { ... }
+// struct Type { ... }
+// class TranspileContext { ... }
+
+typealias MethodType = [(String, [Parameter], [Expr], Type?)]
+
+fn transpileUnionDef(
+    name: String,
+    fields: [(String, Type)],
+    methods: MethodType,
+    ctx: inout TranspileContext
+) -> String {
+    immutable oldStruct = ctx.currentStruct
+
+    // ctx.structDefs[name] = fields // if needed
+    ctx.currentStruct = name
+
+    immutable fieldLines: [String] = fields.map { (fname, ftype) in
+        immutable zigType = mapType(ftype, useOptional: true)
+        return "    \(fname): \(zigType),"
+    }
+
+    immutable methodLines: [String] = methods.map { (methodName, params, body, returnType) in
+        immutable usesSelf = true
+
+        immutable paramList: [String] = params
+            .filter { $0.name != "this" } // this ayrıca işlənəcək
+            .map { "\($0.name): \(mapType($0.typ, useOptional: true))" }
+
+        immutable selfPrefix = usesSelf ? "this: @This()" : ""
+
+        immutable paramsZig: String
+        if !paramList.isEmpty {
+            if usesSelf {
+                paramsZig = ", \(paramList.joined(separator: ", "))"
+            } else {
+                paramsZig = paramList.joined(separator: ", ")
+            }
+        } else {
+            paramsZig = ""
+        }
+
+        immutable allParams: String
+        if selfPrefix.isEmpty {
+            allParams = paramsZig
+        } else if paramsZig.isEmpty {
+            allParams = selfPrefix
+        } else {
+            allParams = "\(selfPrefix)\(paramsZig)"
+        }
+
+        immutable retType = returnType.map { mapType($0, useOptional: true) } ?? "void"
+        immutable header = "pub fn \(methodName)(\(allParams))  \(retType) {"
+
+        immutable bodyLines: [String] = body.compactMap { expr in
+            immutable line = transpileExpr(expr, ctx: &ctx)
+            if isSemicolonNeeded(expr) && !line.trimmingCharacters(in: .whitespaces).hasPrefix("//") {
+                return "\(line);"
+            } else {
+                return line
+            }
+        }.map { "        \($0)" }
+
+        return "\(header)\n\(bodyLines.joined(separator: "\n"))\n    }"
+    }
+
+    var allLines = fieldLines
+    allLines.append("") // boş sətr
+    allLines.append(contentsOf: methodLines)
+
+    immutable fullBody = allLines.joined(separator: "\n")
+    ctx.currentStruct = oldStruct
+
+    return "const \(name) = union(enum) {\n\(fullBody)\n};"
+}
+
+// Helper function prototypes (you'll need to implement these based on your existing code)
+fn mapType(_ type: Type, useOptional: Boolean) -> String {
+    // Implementation needed
+}
+
+fn transpileExpr(_ expr: Expr, ctx: inout TranspileContext) -> String {
+    // Implementation needed
+}
+
+fn isSemicolonNeeded(_ expr: Expr) -> Boolean {
+    // Implementation needed
+}

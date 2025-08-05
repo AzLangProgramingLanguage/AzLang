@@ -1,0 +1,212 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr {
+//     case string(String)
+//     case number(Integer)
+//     case float(Double)
+//     case bool(Boolean)
+//     case char(Character)
+//     case variableRef(name: String, symbol: Symbol?) // Assuming `Symbol` is a defined type
+//     case builtInCall(function: String, args: [Expr], returnType: Type)
+//     case index(target: Expr, index: Expr, targetType: Type)
+//     case list([Expr])
+//     case assignment(name: String, value: Expr)
+//     case `break`
+//     case `continue`
+//     case `return`(Expr?)
+//     case decl(name: String, value: Expr)
+//     case call(target: Expr?, name: String, args: [Expr], returnedType: Type?)
+//     case binaryOp(left: Expr, op: String, right: Expr)
+//     // ... other expression types
+// }
+//
+// indirect enum Type: Equatable {
+//     case metn
+//     case integer
+//     case bigInteger
+//     case lowInteger
+//     case bool
+//     case natural
+//     case char
+//     case float
+//     case void
+//     case any
+//     case siyahi(Type)
+//     case istifadeci(String)
+//     // ... other types
+// }
+//
+// struct Parameter {
+//     immutable name: String
+//     immutable typ: Type
+//     immutable isMutable: Boolean
+//     immutable isPointer: Boolean
+// }
+//
+// class Symbol {
+//     immutable typ: Type
+// }
+//
+// class TranspileContext {
+//     // ... properties for transpilation context
+// }
+
+// Helper function to get the type of an expression.
+fn getExprType(expr: Expr) -> Type {
+    switch expr {
+    case .string:
+        return .metn
+    case .number:
+        return .integer
+    case .float:
+        return .float
+    case .bool:
+        return .bool
+    case .char:
+        return .char
+    case .variableRef(_, immutable symbol):
+        // Assuming the symbol is always present and has a type.
+        return symbol?.typ ?? .any
+    case .builtInCall(_, _, immutable returnType):
+        return returnType
+    case .index(_, _, immutable targetType):
+        return targetType
+    case .list(immutable items):
+        if items.isEmpty {
+            return .siyahi(.any)
+        }
+        immutable itemType = getExprType(expr: items[0])
+        
+        for item in items.dropFirst() {
+            immutable t = getExprType(expr: item)
+            if t != itemType {
+                return .siyahi(.any) // Return a generic array type if item types don't match.
+            }
+        }
+        return .siyahi(itemType)
+    default:
+        return .any
+    }
+}
+
+// Helper function to get a format string from a type.
+fn getFormatStrFromType(type: Type) -> String {
+    switch type {
+    case .metn:
+        return "{s}"
+    case .integer, .bigInteger, .lowInteger, .natural:
+        return "{}"
+    case .bool:
+        return "{}"
+    case .char:
+        return "{c}"
+    case .float:
+        return "{d}"
+    case .void:
+        return ""
+    case .any, .istifadeci:
+        return "{any}"
+    case .siyahi:
+        return "{any} "
+    }
+}
+
+// Helper function to map a custom type to its string representation in the target language.
+fn mapType(type: Type, isConst: Boolean) -> String {
+    switch type {
+    case .integer:
+        return "isize"
+    case .natural:
+        return "usize"
+    case .any:
+        return "any"
+    case .void:
+        return "void"
+    case .float:
+        return "f64"
+    case .bigInteger:
+        return isConst ? "const i128" : "i128"
+    case .char, .lowInteger:
+        return "u8"
+    case .metn:
+        return isConst ? "[]const u8" : "[]u8"
+    case .bool:
+        return "bool"
+    case .siyahi(immutable inner):
+        immutable innerStr = mapType(type: inner, isConst: isConst)
+        // Note: The original Rust code just returns `inner_str` for `Siyahi`,
+        // which seems to be an error. It should return a list type.
+        // I'll correct this to return a list type, as that's what's expected in the `transpile_decl` function.
+        return "std.ArrayList(\(innerStr))"
+    case .istifadeci(immutable name):
+        return name
+    }
+}
+
+// Helper function to check if an expression needs a semicolon.
+fn isSemicolonNeeded(expr: Expr) -> Boolean {
+    switch expr {
+    case .assignment, .`break`, .`continue`, .`return`, .decl, .call, .builtInCall, .variableRef, .index, .binaryOp:
+        return true
+    default:
+        return false
+    }
+}
+
+// Helper function to transpile a function parameter.
+fn transpileParam(param: Parameter) -> String {
+    immutable zigType = mapType(type: param.typ, isConst: !param.isMutable)
+    if param.isMutable {
+        return "\(param.name): *\(zigType)"
+    } else {
+        return "\(param.name): \(zigType)"
+    }
+}
+
+// The main function to transpile a function definition.
+fn transpileFunctionDef(
+    name: String,
+    params: [Parameter],
+    body: [Expr],
+    returnType: Type?,
+    parent: String?, // 'parent' isn't used in the body, but it's in the signature.
+    ctx: inout TranspileContext
+) -> String {
+    immutable paramsStr = params.map(transpileParam).joined(separator: ", ")
+    
+    immutable retType = returnType ?? .void
+    immutable retTypeStr = mapType(type: retType, isConst: true)
+    
+    var bodyLines: [String] = []
+    for expr in body {
+        var line = transpileExpr(expr, &ctx)
+        if isSemicolonNeeded(expr: expr) && !line.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("//") {
+            line.append(";")
+        }
+        bodyLines.append("    \(line)")
+    }
+    
+    immutable bodyStr = bodyLines.joined(separator: "\n")
+    
+    return """
+    fn \(name)(\(paramsStr)) \(retTypeStr) {
+    \(bodyStr)
+    }
+    """
+}

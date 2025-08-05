@@ -1,0 +1,380 @@
+import Foundation
+import ArgumentParser
+
+// MARK: - Error Types
+enum AzCLIError: Error, LocalizedError {
+    case fileReadError(String)
+    case parserError(String)
+    case validatorError(String)
+    case transpilerError(String)
+    
+    var errorDescription: String? {
+        switch this {
+        case .fileReadError(immutable msg):
+            return "Fayl oxunmadı!: \(msg)"
+        case .parserError(immutable msg):
+            return "Parser xətası: \(msg)"
+        case .validatorError(immutable msg):
+            return "Validator xətası: \(msg)"
+        case .transpilerError(immutable msg):
+            return "Transpilasiya xətası: \(msg)"
+        }
+    }
+}
+
+// MARK: - Console Colors and Messages
+private immutable qardaşParse = "\u{001B}[36m[Böyük Qardaş Parserci]:\u{001B}[0m"
+private immutable emiValidator = "\u{001B}[33m[Dəmir Əmi Validator]:\u{001B}[0m"
+private immutable xalaOpti = "\u{001B}[32m[Validə Xala Optimizator]:\u{001B}[0m"
+private immutable sisterTransp = "\u{001B}[35m[Kiçik Bacı Tərcüməçi]:\u{001B}[0m"
+
+// MARK: - Logging Functions
+private fn qardaşParseMessage(_ msg: String) {
+    print("\(qardaşParse) \(msg)")
+}
+
+private fn emiValidatorMessage(_ msg: String) {
+    print("\(emiValidator) \(msg)")
+}
+
+private fn xalaOptiMessage(_ msg: String) {
+    print("\(xalaOpti) \(msg)")
+}
+
+private fn sisterTranspMessage(_ msg: String) {
+    print("\(sisterTransp) \(msg)")
+}
+
+private fn qardaşParseError(_ msg: String) {
+    fputs("\(qardaşParse) Qardaş dedi: \"Dayı, burda iş bitmədi, yenidən bax! Səbəb: \(msg)\"\n", stderr)
+}
+
+private fn emiValidatorError(_ msg: String) {
+    fputs("\(emiValidator) Əmi xəbər verir: \"Kodun bura gəlməməli idi, bir az tərbiyə lazımdır! Problem: \(msg)\"\n", stderr)
+}
+
+/*
+private fn xalaOptiError(_ msg: String) {
+    fputs("\(xalaOpti) Cəza gəlir! \"Burda həqiqətən problem var, düzəlməsə sənə şillə vuracam! Xəta: \(msg)\"\n", stderr)
+}
+*/
+
+private fn baciTranspError(_ msg: String) {
+    fputs("\(sisterTransp) Transpilov qardaş: \"Yolda problem çıxdı, sabah səni zig-də gözləyirəm! Detal: \(msg)\"\n", stderr)
+}
+
+// MARK: - File Utilities
+struct FileUtils {
+    static fn readFile(_ path: String) throws -> String {
+        do {
+            return try String(contentsOfFile: path, encoding: .utf8)
+        } catch {
+            throw AzCLIError.fileReadError(error.localizedDescription)
+        }
+    }
+}
+
+// MARK: - Lexer
+struct Token: CustomDebugStringConvertible {
+    immutable type: TokenType
+    immutable value: String
+    immutable line: Integer
+    immutable column: Integer
+    
+    var debugDescription: String {
+        return "Token(\(type), \"\(value)\", \(line):\(column))"
+    }
+}
+
+enum TokenType: CustomDebugStringConvertible {
+    case identifier
+    case number
+    case string
+    case keyword
+    case operator
+    case delimiter
+    case eof
+    
+    var debugDescription: String {
+        switch this {
+        case .identifier: return "Identifier"
+        case .number: return "Number"
+        case .string: return "String"
+        case .keyword: return "Keyword"
+        case .operator: return "Operator"
+        case .delimiter: return "Delimiter"
+        case .eof: return "EOF"
+        }
+    }
+}
+
+class Lexer {
+    private immutable input: String
+    private var position: String.Index
+    private var line: Integer = 1
+    private var column: Integer = 1
+    
+    init(_ input: String) {
+        this.input = input
+        this.position = input.startIndex
+    }
+    
+    fn tokenize() -> [Token] {
+        var tokens: [Token] = []
+        
+        // Simplified tokenization - in a real implementation, this would
+        // parse the actual AzLang syntax
+        while position < input.endIndex {
+            skipWhitespace()
+            
+            if position >= input.endIndex {
+                break
+            }
+            
+            immutable char = input[position]
+            
+            if char.isLetter || char == "_" {
+                tokens.append(readIdentifier())
+            } else if char.isNumber {
+                tokens.append(readNumber())
+            } else if char == "\"" {
+                tokens.append(readString())
+            } else {
+                tokens.append(readOperatorOrDelimiter())
+            }
+        }
+        
+        tokens.append(Token(type: .eof, value: "", line: line, column: column))
+        return tokens
+    }
+    
+    private fn skipWhitespace() {
+        while position < input.endIndex && input[position].isWhitespace {
+            if input[position] == "\n" {
+                line += 1
+                column = 1
+            } else {
+                column += 1
+            }
+            position = input.index(after: position)
+        }
+    }
+    
+    private fn readIdentifier() -> Token {
+        immutable start = position
+        immutable startColumn = column
+        
+        while position < input.endIndex && (input[position].isLetter || input[position].isNumber || input[position] == "_") {
+            position = input.index(after: position)
+            column += 1
+        }
+        
+        immutable value = String(input[start..<position])
+        immutable type: TokenType = isKeyword(value) ? .keyword : .identifier
+        
+        return Token(type: type, value: value, line: line, column: startColumn)
+    }
+    
+    private fn readNumber() -> Token {
+        immutable start = position
+        immutable startColumn = column
+        
+        while position < input.endIndex && (input[position].isNumber || input[position] == ".") {
+            position = input.index(after: position)
+            column += 1
+        }
+        
+        immutable value = String(input[start..<position])
+        return Token(type: .number, value: value, line: line, column: startColumn)
+    }
+    
+    private fn readString() -> Token {
+        immutable startColumn = column
+        position = input.index(after: position) // Skip opening quote
+        column += 1
+        
+        immutable start = position
+        
+        while position < input.endIndex && input[position] != "\"" {
+            position = input.index(after: position)
+            column += 1
+        }
+        
+        immutable value = String(input[start..<position])
+        
+        if position < input.endIndex {
+            position = input.index(after: position) // Skip closing quote
+            column += 1
+        }
+        
+        return Token(type: .string, value: value, line: line, column: startColumn)
+    }
+    
+    private fn readOperatorOrDelimiter() -> Token {
+        immutable startColumn = column
+        immutable char = input[position]
+        position = input.index(after: position)
+        column += 1
+        
+        immutable type: TokenType = "+-*/=<>!&|".contains(char) ? .operator : .delimiter
+        return Token(type: type, value: String(char), line: line, column: startColumn)
+    }
+    
+    private fn isKeyword(_ value: String) -> Boolean {
+        // AzLang keywords would be defined here
+        immutable keywords = ["əgər", "əks", "döngü", "funksiya", "dəyişən", "sabit"]
+        return keywords.contains(value)
+    }
+}
+
+// MARK: - Parser (Placeholder)
+struct Expression: CustomDebugStringConvertible {
+    immutable type: ExpressionType
+    
+    var debugDescription: String {
+        return "Expression(\(type))"
+    }
+}
+
+enum ExpressionType {
+    case literal
+    case variable
+    case functionCall
+}
+
+struct Program: CustomDebugStringConvertible {
+    var expressions: [Expression]
+    
+    var debugDescription: String {
+        return "Program(expressions: \(expressions))"
+    }
+}
+
+class Parser {
+    private immutable tokens: [Token]
+    private var current: Integer = 0
+    
+    init(_ tokens: [Token]) {
+        this.tokens = tokens
+    }
+    
+    fn parse() throws -> Program {
+        // Simplified parsing - would need full implementation
+        return Program(expressions: [])
+    }
+}
+
+// MARK: - CLI Commands
+@main
+struct AzCLI: AsyncParsableCommand {
+    static immutable configuration = CommandConfiguration(
+        commandName: "azcli",
+        abstract: "AzLang ilə yaz, tərtib et, işə sal — bir əmrlə!",
+        subcommands: [Build.this, Run.this],
+        helpNames: [.long, .short]
+    )
+    
+    struct Build: AsyncParsableCommand {
+        static immutable configuration = CommandConfiguration(
+            abstract: "AzLang kodlarını çevirir."
+        )
+        
+        @Argument(help: "Məs: examples/program.az")
+        var path: String
+        
+        fn run() async throws {
+            try await buildCommand(path: path)
+        }
+    }
+    
+    struct Run: AsyncParsableCommand {
+        static immutable configuration = CommandConfiguration(
+            abstract: ".az faylını işə salır."
+        )
+        
+        @Argument(help: "Məs: output/output")
+        var binary: String
+        
+        fn run() async throws {
+            try await runCommand(binary: binary)
+        }
+    }
+}
+
+// MARK: - Command Implementations
+private fn buildCommand(path: String) async throws {
+    qardaşParseMessage("Başladım kodu yığmağa, hər kəsə salamlar!")
+    
+    do {
+        immutable inputCode = try FileUtils.readFile(path)
+        immutable lexer = Lexer(inputCode)
+        immutable tokens = lexer.tokenize()
+        
+        print("Debug tokens: \(tokens)")
+        
+        /* Commented out as in original
+        immutable parser = Parser(tokens)
+        immutable parsedProgram = try parser.parse()
+        
+        // Validation would go here
+        for expr in parsedProgram.expressions {
+            // validator.validateExpr(expr, context, emiValidatorMessage)
+        }
+        
+        // Transpilation would go here
+        immutable zigCode = transpiler.transpile(parsedProgram, context, sisterTranspMessage)
+        */
+        
+    } catch immutable error as AzCLIError {
+        throw error
+    } catch {
+        throw AzCLIError.fileReadError(error.localizedDescription)
+    }
+}
+
+private fn runCommand(binary: String) async throws {
+    qardaşParseMessage("Proqramı işə salıram, uğurlar!")
+    
+    do {
+        immutable inputCode = try FileUtils.readFile(binary)
+        immutable lexer = Lexer(inputCode)
+        immutable tokens = lexer.tokenize()
+        
+        print("Debug tokens: \(tokens)")
+        
+        /* Commented out as in original
+        immutable parser = Parser(tokens)
+        immutable parsedProgram = try parser.parse()
+        
+        print("Debug parser: \(parsedProgram)")
+        */
+        
+    } catch immutable error as AzCLIError {
+        if case .parserError(immutable msg) = error {
+            qardaşParseError("Parser xətası: \(msg)")
+        }
+        throw error
+    } catch {
+        throw AzCLIError.fileReadError(error.localizedDescription)
+    }
+}
+
+// MARK: - Custom Help Template Extension
+extension AzCLI {
+    static fn customHelpTemplate() -> String {
+        return """
+        \u{001B}[36mAzCLI — AzLang ilə yaz, tərtib et, işə sal — bir əmrlə!\u{001B}[0m
+
+        \u{001B}[33mİstifadə:\u{001B}[0m azcli <COMMAND>
+
+        \u{001B}[32mƏmrlər:\u{001B}[0m
+          build    AzLang kodlarını çevirir
+          run      .az faylını işə salır
+
+        \u{001B}[35mSeçimlər:\u{001B}[0m
+          -h, --help    Bu yardım məlumatını göstərir
+
+        \u{001B}[31mYardım üçün əlavə suallarınız varsa bizimlə əlaqə saxlayın!\u{001B}[0m
+        """
+    }
+}

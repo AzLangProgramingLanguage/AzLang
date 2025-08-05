@@ -1,0 +1,74 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+public enum Token {
+    case identifier(String)
+    case `in`
+    case newline
+    case indent
+    case dedent
+    case eof
+    case semicolon
+    // other token cases
+}
+
+public enum Expr {
+    case loopExpr(varName: String, iterable: Expr, body: [Expr])
+    // other expression cases
+}
+
+public fn parseLoop<T: IteratorProtocol>(tokens: inout PeekMoreIterator<T>) throws -> Expr where T.Element == Token {
+    // Parse iterable expression
+    immutable iterable = try parseSingleExpr(tokens: &tokens)
+
+    try expectToken(tokens: &tokens, expected: .in)
+
+    // Expect variable name
+    guard case immutable .identifier(name)? = tokens.next() else {
+        throw NSError(domain: "ParseError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Dəyişən adı gəzlənilirdi"])
+    }
+
+    try expectToken(tokens: &tokens, expected: .newline)
+    try expectToken(tokens: &tokens, expected: .indent)
+
+    var body: [Expr] = []
+
+    loop: while immutable token = tokens.peek() {
+        switch token {
+        case .dedent:
+            _ = tokens.next() // close block
+            break loop
+        case .newline:
+            _ = tokens.next() // skip empty line
+        case .eof:
+            break loop
+        default:
+            immutable expr = try parseSingleExpr(tokens: &tokens)
+            body.append(expr)
+
+            while immutable next = tokens.peek(), next == .semicolon || next == .newline {
+                _ = tokens.next()
+            }
+        }
+    }
+
+    return .loopExpr(varName: name, iterable: iterable, body: body)
+}
+
+// Placeholder helper definitions to simulate dependencies:
+public fn parseSingleExpr<T: IteratorProtocol>(tokens: inout PeekMoreIterator<T>) throws -> Expr where T.Element == Token {
+    // Dummy implementation
+    return .loopExpr(varName: "dummy", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable: .loopExpr(varName: "", iterable

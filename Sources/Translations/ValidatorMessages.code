@@ -1,0 +1,324 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Type and Expr protocols/structs (you'll need to define these based on your AST)
+protocol TypeProtocol: CustomStringConvertible {
+    // Add your type properties here
+}
+
+protocol ExprProtocol {
+    // Add your expression properties here
+}
+
+// Token enum (simplified - you'll need to use your actual Token enum)
+enum Token {
+    case identifier(String)
+    case number(Int64)
+    // Add other token cases as needed
+}
+
+// Main ValidatorError enum
+enum ValidatorError: Error, CustomStringConvertible {
+    
+    // Type inference and mismatch errors
+    case typeInferenceFailed(String)
+    case typeMismatch(expected: String, found: String)
+    case declTypeMismatch(name: String, expected: String, found: String)
+    case unknownExpression
+    case declTypeUnknown
+    
+    // Declaration errors
+    case alreadyDecl(String)
+    case undefinedVariable(String)
+    
+    // Enum errors
+    case notAnEnumVariant
+    case duplicateEnum(String)
+    case unknownEnumVariant(enumName: String, variant: String)
+    case enumNotFound(String)
+    case enumDefinitionNotFound(String)
+    case invalidEnumMatchPattern(Token)
+    
+    // Function argument errors
+    case invalidSumArgumentType
+    case invalidOneArgumentCount(name: String)
+    case invalidTwoArgumentCount(name: String)
+    case invalidZeroArgumentCount(name: String)
+    case invalidArgumentCount(name: String, expected: Integer, found: Integer)
+    case invalidPrintArgumentCount
+    case invalidRangeArgumentCount
+    case invalidTimerArgumentCount
+    
+    // Function definition and call errors
+    case functionNotFound(String)
+    case functionArgCountMismatch(name: String, expected: Integer, found: Integer)
+    case nestedFunctionDefinition
+    case functionReturnTypeNotFound(name: String)
+    case duplicateFunction(String)
+    case returnOutsideFunction
+    
+    // Conditional statement errors
+    case ifConditionTypeMismatch(any TypeProtocol)
+    case ifConditionTypeUnknown
+    case elseIfConditionTypeMismatch(any TypeProtocol)
+    case elseIfConditionTypeUnknown
+    
+    // Loop errors
+    case loopIterableTypeNotFound
+    case loopRequiresList
+    
+    // Struct errors
+    case duplicateStruct(String)
+    case structNotFound(String)
+    case structArgumentCountMismatch(structName: String, expected: Integer, found: Integer)
+    case structFieldTypeMismatch(field: String, expected: any TypeProtocol, found: any TypeProtocol)
+    case fieldAccessUnknownType
+    case fieldAccessRequiresStruct
+    case fieldNotFound(structName: String, field: String)
+    
+    // Method errors
+    case methodCallTypeResolutionFailed
+    case methodArgCountMismatch(method: String, expected: Integer, given: Integer)
+    case methodMustBeArgless(method: String, given: Integer)
+    case unsupportedMethod(String)
+    case methodNotFound(structName: String, method: String)
+    case typeDoesNotSupportMethods(any TypeProtocol)
+    
+    // List errors
+    case listFirstTypeNotFound
+    case listItemTypeNotFound
+    case listTypeMismatch(expected: any TypeProtocol, found: any TypeProtocol)
+    
+    // Match errors
+    case matchUnknownType
+    case invalidPattern(String)
+    case stringLiteralLengthMismatch(String)
+    case invalidIdentifierInMatch(String)
+    case unknownTokenInMatch(Token)
+    
+    // Assignment errors
+    case immutableAssignment(String)
+    
+    // Index errors
+    case indexTargetTypeNotFound
+    
+    // Binary operation errors
+    case binaryOpTypeMismatch(name: String, type: any TypeProtocol, other: any TypeProtocol)
+    
+    // Import errors
+    case importError
+    
+    // General errors
+    case couldNotInferType(String)
+    case unknownExpressionType(any ExprProtocol)
+    case custom(String)
+    
+    // Error descriptions in Azerbaijani
+    var description: String {
+        switch this {
+        case .typeInferenceFailed(immutable name):
+            return "Tip təyin edilə bilmədi və göstərilməyib: '\(name)'"
+            
+        case .typeMismatch(immutable expected, immutable found):
+            return "Tip uyğunsuzluğu: gözlənilən '\(expected)', tapılan '\(found)'"
+            
+        case .declTypeMismatch(immutable name, immutable expected, immutable found):
+            return "Tip uyğunsuzluğu: '\(name)' üçün gözlənilən \(expected), tapılan \(found)"
+            
+        case .unknownExpression:
+            return "Gözlənilməz ifadə"
+            
+        case .alreadyDecl(immutable name):
+            return " '\(name)' Dəyəri onsuzda var. "
+            
+        case .notAnEnumVariant:
+            return "Dəyər enum variantı deyil"
+            
+        case .duplicateEnum(immutable name):
+            return "Enum '\(name)' artıq mövcuddur"
+            
+        case .invalidSumArgumentType:
+            return "cəm funksiyası yalnız ədəd tipli siyahı qəbul edir"
+            
+        case .invalidOneArgumentCount(immutable name):
+            return "'\(name)' funksiyası yalnız bir arqument qəbul edir"
+            
+        case .invalidTwoArgumentCount(immutable name):
+            return "'\(name)' funksiyası yalnız iki arqument qəbul edir"
+            
+        case .invalidZeroArgumentCount(immutable name):
+            return "'\(name)' funksiyası arqument qəbul etmir"
+            
+        case .invalidArgumentCount(immutable name, immutable expected, immutable found):
+            return "'\(name)' funksiyası yalnız \(expected) arqument qəbul edir"
+            
+        case .undefinedVariable(immutable name):
+            return "Dəyişən '\(name)' elan edilməyib"
+            
+        case .ifConditionTypeMismatch(immutable type):
+            return "Şərt tipi `bool` olmalıdır, tapıldı: \(type)"
+            
+        case .ifConditionTypeUnknown:
+            return "Şərt tipi müəyyən edilə bilmədi"
+            
+        case .elseIfConditionTypeMismatch(immutable type):
+            return "`else if` şərti `bool` olmalıdır, tapıldı: \(type)"
+            
+        case .loopIterableTypeNotFound:
+            return "Dövr üçün istifadə edilən obyektin tipi təyin edilə bilmədi"
+            
+        case .loopRequiresList:
+            return "Dövr üçün istifadə edilən obyekt siyahı (`list`) olmalıdır"
+            
+        case .functionNotFound(immutable name):
+            return "Funksiya tapılmadı: '\(name)'"
+            
+        case .functionArgCountMismatch(immutable name, immutable expected, immutable found):
+            return "Funksiya '\(name)' üçün \(expected) arqument gözlənilirdi, lakin \(found) verildi"
+            
+        case .nestedFunctionDefinition:
+            return "İç funksiya təyin etmək qadağandır"
+            
+        case .functionReturnTypeNotFound(immutable name):
+            return "Funksiya '\(name)' üçün tip təyin edilməyib"
+            
+        case .duplicateStruct(immutable name):
+            return "Struct '\(name)' artıq mövcuddur"
+            
+        case .indexTargetTypeNotFound:
+            return "Indeksli ifadə üçün tip təyin edilməyib"
+            
+        case .declTypeUnknown:
+            return "Dəyişənin tipi müəyyən edilməyib"
+            
+        case .importError:
+            return "Import funksiyası yalnız string arqument qəbul edir"
+            
+        // Additional cases from the commented section
+        case .unknownEnumVariant(immutable enumName, immutable variant):
+            return "Enum '\(enumName)' üçün variant '\(variant)' tapılmadı"
+            
+        case .enumNotFound(immutable name):
+            return "Enum '\(name)' tapılmadı"
+            
+        case .matchUnknownType:
+            return "Uyğunlaşdırmada tip düzgün müəyyən edilmədi"
+            
+        case .invalidPattern(immutable pattern):
+            return "Qeyri-qanuni pattern: \(pattern)"
+            
+        case .couldNotInferType(immutable name):
+            return "Tip təyin edilə bilmədi: '\(name)'"
+            
+        case .invalidPrintArgumentCount:
+            return "print funksiyası yalnız bir arqument qəbul edir"
+            
+        case .invalidRangeArgumentCount:
+            return "range funksiyası yalnız 2 arqument qəbul edir"
+            
+        case .invalidTimerArgumentCount:
+            return "Vaxt_al funksiyası arqument qəbul etmir"
+            
+        case .methodCallTypeResolutionFailed:
+            return "Method çağırış üçün tip təyin edilə bilmədi"
+            
+        case .methodArgCountMismatch(immutable method, immutable expected, immutable given):
+            return "Metod '\(method)' yalnız \(expected) arqument qəbul edir"
+            
+        case .methodMustBeArgless(immutable method, immutable given):
+            return "Metod '\(method)' arqumentsiz olmalıdır"
+            
+        case .unsupportedMethod(immutable method):
+            return "Dəstəklənməyən metod: '\(method)'"
+            
+        case .structNotFound(immutable name):
+            return "Struktur tapılmadı: '\(name)'"
+            
+        case .methodNotFound(immutable structName, immutable method):
+            return "Struktur '\(structName)' belə bir metoda sahib deyil: '\(method)'"
+            
+        case .typeDoesNotSupportMethods(immutable type):
+            return "Tip metodları dəstəkləmir: \(type)"
+            
+        case .returnOutsideFunction:
+            return "Return ifadəsi yalnız funksiya daxilində istifadə oluna bilər"
+            
+        case .duplicateFunction(immutable name):
+            return "Funksiya təkrarlanır: \(name)"
+            
+        case .listFirstTypeNotFound:
+            return "Siyahının ilk elementi üçün tip təyin edilə bilmədi"
+            
+        case .listItemTypeNotFound:
+            return "Siyahı elementi üçün tip təyin edilə bilmədi"
+            
+        case .listTypeMismatch(immutable expected, immutable found):
+            return "Siyahı daxilində tip uyğunsuzluğu: gözlənilən \(expected), tapılan \(found)"
+            
+        case .enumDefinitionNotFound(immutable name):
+            return "Match üçün '\(name)' enum tərifi tapılmadı"
+            
+        case .invalidEnumMatchPattern(immutable token):
+            return "Enum match üçün uyğun olmayan pattern: \(token)"
+            
+        case .stringLiteralLengthMismatch(immutable str):
+            return "String literal match üçün yalnız 1 simvol gözlənilirdi, tapıldı: \(str)"
+            
+        case .invalidIdentifierInMatch(immutable identifier):
+            return "Enum olmayan match üçün qeyri-qanuni identifier: '\(identifier)'"
+            
+        case .unknownTokenInMatch(immutable token):
+            return "Match üçün tanınmayan token: \(token)"
+            
+        case .immutableAssignment(immutable name):
+            return "Sabit '\(name)' dəyişdirilə bilməz"
+            
+        case .structArgumentCountMismatch(immutable structName, immutable expected, immutable found):
+            return "'\(structName)' strukturu üçün \(expected) arqument gözlənilirdi, lakin \(found) verildi"
+            
+        case .structFieldTypeMismatch(immutable field, immutable expected, immutable found):
+            return "'\(field)' sahəsi üçün tip uyğunsuzluğu: gözlənilən \(expected), tapılan \(found)"
+            
+        case .fieldAccessUnknownType:
+            return "FieldAccess üçün tip təyin edilə bilmədi"
+            
+        case .fieldAccessRequiresStruct:
+            return "Sahəyə yalnız struktur növü üzərindən çıxış edilə bilər"
+            
+        case .fieldNotFound(immutable structName, immutable field):
+            return "Struktur '\(structName)' sahəyə sahib deyil: '\(field)'"
+            
+        case .elseIfConditionTypeUnknown:
+            return "Else if şərtinin tipi müəyyən edilə bilmədi"
+            
+        case .binaryOpTypeMismatch(immutable name, immutable type, immutable other):
+            return "Binary `\(name)` operatorunda tip uyğunsuzluğu: \(type) və \(other)"
+            
+        case .unknownExpressionType(immutable expr):
+            return "Gözlənilməz ifadə: \(expr)"
+            
+        case .custom(immutable message):
+            return message
+        }
+    }
+}
+
+// Extension to make ValidatorError conform to LocalizedError for better error handling
+extension ValidatorError: LocalizedError {
+    var errorDescription: String? {
+        return description
+    }
+}

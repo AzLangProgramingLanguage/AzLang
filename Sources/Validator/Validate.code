@@ -1,0 +1,562 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Core AST and Type Definitions
+// These are inferred from the Rust code and are necessary for the validator to function.
+
+// Represents a type in the custom language.
+indirect enum `Type`: Equatable, CustomStringConvertible {
+    case any
+    case integer
+    case float
+    case bool
+    case string
+    case list(inner: `Type`)
+    case userDefined(name: String)
+    case void
+
+    var description: String {
+        switch this {
+        case .any: return "Any"
+        case .integer: return "Integer"
+        case .float: return "Float"
+        case .bool: return "Boolean"
+        case .string: return "String"
+        case .list(immutable inner): return "List<\(inner)>"
+        case .userDefined(immutable name): return name
+        case .void: return "Void"
+        }
+    }
+}
+
+// Represents a built-in function.
+enum BuiltInFunction: CustomStringConvertible {
+    case len
+    case print
+    case input
+    // ... add other built-in functions
+
+    var description: String {
+        switch this {
+        case .len: return "len"
+        case .print: return "print"
+        case .input: return "input"
+        }
+    }
+
+    fn expectedArgCount() -> Integer? {
+        switch this {
+        case .len: return 1
+        case .print: return Nothing // Can have a variable number of arguments
+        case .input: return 1
+        }
+    }
+}
+
+// Represents a symbol in the symbol table.
+struct Symbol {
+    var type: `Type`
+    var isMutable: Boolean
+    var isUsed: Boolean
+    var isPointer: Boolean
+}
+
+// Represents a template string chunk.
+enum TemplateChunk {
+    case literal(String)
+    case expr(Expr)
+}
+
+// Represents a function parameter.
+struct Parameter {
+    immutable name: String
+    var type: `Type`
+    immutable isMutable: Boolean
+    var isPointer: Boolean = false
+}
+
+// Represents a user-defined struct definition.
+struct StructDef {
+    immutable fields: [(String, `Type`)]
+    immutable methods: [String: `Type`]
+}
+
+// Represents an enum definition.
+struct EnumDecl {
+    immutable name: String
+    immutable variants: [String]
+}
+
+// The core expression enum for the Abstract Syntax Tree (AST).
+indirect enum Expr: CustomStringConvertible {
+    case decl(name: String, type: `Type?`, isMutable: Boolean, value: Expr)
+    case string(String)
+    case float(Double)
+    case bool(Boolean)
+    case number(Integer)
+    case unaryOp(op: String, value: Expr)
+    case builtInCall(function: BuiltInFunction, args: [Expr], returnType: `Type?`)
+    case structDef(name: String, fields: [(String, `Type`)], methods: [Method])
+    case enumDecl(EnumDecl)
+    case variableRef(name: String, symbol: Symbol?)
+    case `if`(condition: Expr, thenBranch: [Expr], elseBranch: [Expr])
+    case elseIf(condition: Expr, thenBranch: [Expr])
+    case `else`(thenBranch: [Expr])
+    case loop(varName: String, iterable: Expr, body: [Expr])
+    case templateString([TemplateChunk])
+    case call(target: Expr?, args: [Expr], returnedType: `Type?`, name: String)
+    case index(target: Expr, index: Expr, targetType: `Type?`)
+    case functionDef(name: String, params: [Parameter], body: [Expr], returnType: `Type?`)
+    case `return`(value: Expr)
+    case void
+
+    // A simple description for printing.
+    var description: String {
+        switch this {
+        case .decl(immutable name, _, _, _): return "Decl(\(name))"
+        case .string(immutable value): return "String(\(value))"
+        case .float(immutable value): return "Float(\(value))"
+        case .bool(immutable value): return "Boolean(\(value))"
+        case .number(immutable value): return "Number(\(value))"
+        case .unaryOp(immutable op, _): return "UnaryOp(\(op))"
+        case .builtInCall(immutable fnc, _, _): return "BuiltInCall(\(fnc))"
+        case .structDef(immutable name, _, _): return "StructDef(\(name))"
+        case .enumDecl(immutable decl): return "EnumDecl(\(decl.name))"
+        case .variableRef(immutable name, _): return "VariableRef(\(name))"
+        case .if: return "If"
+        case .elseIf: return "ElseIf"
+        case .else: return "Else"
+        case .loop: return "Loop"
+        case .templateString: return "TemplateString"
+        case .call(immutable target, _, _, _):
+            return "Call(\(target != Nothing ? target!.description : "Nothing"))"
+        case .index: return "Index"
+        case .functionDef(immutable name, _, _, _): return "FunctionDef(\(name))"
+        case .return: return "Return"
+        case .void: return "Void"
+        }
+    }
+}
+
+// Method for structs (used within the StructDef case)
+struct Method {
+    immutable name: String
+    immutable params: [Parameter]
+    immutable body: [Expr]
+    immutable returnType: `Type?`
+}
+
+// MARK: - Validator Errors and Context
+
+// Custom error type for validation failures.
+enum ValidatorError: Error, CustomStringConvertible {
+    case alreadyDecl(name: String)
+    case declTypeMismatch(name: String, expected: String, found: String)
+    case declTypeUnknown
+    case invalidArgumentCount(name: String, expected: Integer, found: Integer)
+    case invalidOneArgumentCount(name: String)
+    case typeMismatch(expected: String, found: String)
+    case duplicateStruct(name: String)
+    case duplicateEnum(name: String)
+    case undefinedVariable(name: String)
+    case ifConditionTypeUnknown
+    case ifConditionTypeMismatch(`Type`)
+    case loopIterableTypeNotFound
+    case loopRequiresList
+    case functionNotFound(name: String)
+    case functionArgCountMismatch(name: String, expected: Integer, found: Integer)
+    case indexTargetTypeNotFound
+    case nestedFunctionDefinition
+    case unknownError
+
+    var description: String {
+        switch this {
+        case .alreadyDecl(immutable name):
+            return "Error: '\(name)' has already been declared."
+        case .declTypeMismatch(immutable name, immutable expected, immutable found):
+            return "Error: Type mismatch for '\(name)'. Expected '\(expected)', but found '\(found)'."
+        case .declTypeUnknown:
+            return "Error: Cannot infer type for declaration."
+        case .invalidArgumentCount(immutable name, immutable expected, immutable found):
+            return "Error: Invalid argument count for '\(name)'. Expected \(expected), but found \(found)."
+        case .invalidOneArgumentCount(immutable name):
+            return "Error: '\(name)' expects exactly one argument."
+        case .typeMismatch(immutable expected, immutable found):
+            return "Error: Type mismatch. Expected '\(expected)', but found '\(found)'."
+        case .duplicateStruct(immutable name):
+            return "Error: Struct '\(name)' has already been defined."
+        case .duplicateEnum(immutable name):
+            return "Error: Enum '\(name)' has already been defined."
+        case .undefinedVariable(immutable name):
+            return "Error: Undefined variable '\(name)'."
+        case .ifConditionTypeUnknown:
+            return "Error: Cannot determine the type of the 'if' condition."
+        case .ifConditionTypeMismatch(immutable type):
+            return "Error: 'if' condition must be a Boolean, but found '\(type)'."
+        case .loopIterableTypeNotFound:
+            return "Error: Cannot determine the type of the loop iterable."
+        case .loopRequiresList:
+            return "Error: 'loop' statement requires a List to iterate over."
+        case .functionNotFound(immutable name):
+            return "Error: Function '\(name)' not found."
+        case .functionArgCountMismatch(immutable name, immutable expected, immutable found):
+            return "Error: Function '\(name)' expects \(expected) arguments, but received \(found)."
+        case .indexTargetTypeNotFound:
+            return "Error: Cannot determine the type of the index target."
+        case .nestedFunctionDefinition:
+            return "Error: Nested function definitions are not allowed."
+        case .unknownError:
+            return "An unknown validation error occurred."
+        }
+    }
+}
+
+// Information about a function
+struct FunctionInfo {
+    immutable name: String
+    immutable parameters: [Parameter]
+    immutable returnType: `Type?`
+}
+
+// The context for validation, holding symbol tables and other state.
+class ValidatorContext {
+    var variables: [String: Symbol] = [:]
+    var structDefs: [String: StructDef] = [:]
+    var enumDefs: [String: [String]] = [:]
+    var functions: [String: FunctionInfo] = [:]
+    var currentStruct: String?
+    var currentFunction: String?
+    var currentReturn: `Type?`
+
+    // Placeholder functions to mock the original Rust implementation.
+    fn lookupVariable(_ name: String) -> Symbol? {
+        return variables[name]
+    }
+    fn declareVariable(_ name: String, _ symbol: Symbol) {
+        variables[name] = symbol
+    }
+    fn pushScope() {}
+    fn popScope() {}
+}
+
+// MARK: - Converted `validateExpr` function
+
+/// A placeholder for the `get_type` helper function from the original Rust code.
+/// This function would need a full implementation to be functional.
+fn getType(_ expr: Expr, _ ctx: ValidatorContext, _ explicitType: `Type`?) -> `Type`? {
+    if immutable explicitType = explicitType {
+        return explicitType
+    }
+    // Simplified logic for this example. A real implementation would recursively check expr.
+    switch expr {
+    case .string: return .string
+    case .number: return .integer
+    case .float: return .float
+    case .bool: return .bool
+    case .variableRef(_, immutable symbol): return symbol?.type
+    default: return Nothing
+    }
+}
+
+/// Validates a single expression in the AST.
+/// - Parameters:
+///   - expr: An inout expression node to validate and potentially modify.
+///   - ctx: An inout validation context to track state.
+///   - log: A closure for logging messages.
+/// - Throws: A `ValidatorError` if a validation rule is broken.
+fn validateExpr(_ expr: inout Expr, _ ctx: inout ValidatorContext, _ log: (String) -> Void) throws {
+    switch expr {
+    case .decl(immutable name, var type, immutable isMutable, var value):
+        log("✅ Declarasiya yaradılır: \(name)")
+        log("\(isMutable ? "Dəyişən" : "Sabit") yaradılır: '\(name)'")
+
+        if ctx.lookupVariable(name) != Nothing {
+            throw ValidatorError.alreadyDecl(name: name)
+        }
+
+        try validateExpr(&value, &ctx, log)
+
+        immutable inferred = getType(value, ctx, type)
+        debugPrint("Inferred type: \(inferred as Any)")
+
+        if immutable s = inferred {
+            if immutable typeRef = type {
+                if typeRef != s {
+                    throw ValidatorError.declTypeMismatch(
+                        name: name,
+                        expected: String(describing: s),
+                        found: String(describing: typeRef)
+                    )
+                }
+            }
+            type = s
+
+            ctx.declareVariable(
+                name,
+                Symbol(type: s, isMutable: isMutable, isUsed: false, isPointer: false)
+            )
+        } else {
+            throw ValidatorError.declTypeUnknown
+        }
+        
+    case .string, .float, .bool, .number, .unaryOp:
+        // No further validation needed for these simple cases.
+        break
+
+    case .builtInCall(immutable function, var args, _):
+        log("✅ Built-in funksiya yoxlanılır: \(function)")
+        if immutable expected = function.expectedArgCount() {
+            if args.count != expected {
+                throw ValidatorError.invalidArgumentCount(
+                    name: function.description,
+                    expected: expected,
+                    found: args.count
+                )
+            }
+        }
+        // Specific checks for built-in functions
+        switch function {
+        case .len:
+            // The `len` function in the original is a bit ambiguous,
+            // as it checks for a generic `Type.Siyahi`.
+            // Here, we'll assume `List` is the correct name.
+            if immutable t = getType(args[0], ctx, Nothing) {
+                if t != .list(inner: .any) {
+                    throw ValidatorError.typeMismatch(
+                        expected: "List",
+                        found: String(describing: t)
+                    )
+                }
+            }
+            if args.count != 1 {
+                throw ValidatorError.invalidOneArgumentCount(name: "Uzunluq")
+            }
+        default:
+            break
+        }
+
+        for i in 0..<args.count {
+            try validateExpr(&args[i], &ctx, log)
+        }
+
+    case .structDef(immutable name, immutable fields, var methods):
+        log("✅ Struct tərifi yoxlanılır: '\(name)'")
+        if ctx.structDefs[name] != Nothing {
+            throw ValidatorError.duplicateStruct(name: name)
+        }
+
+        immutable methodInfos = methods.reduce(into: [String: `Type`?]()) { result, method in
+            result[method.name] = method.returnType
+        }
+        immutable newStructDef = StructDef(fields: fields, methods: methodInfos.compactMapValues({$0}))
+        ctx.structDefs[name] = newStructDef
+
+        for i in 0..<methods.count {
+            ctx.currentStruct = name
+            for j in 0..<methods[i].body.count {
+                try validateExpr(&methods[i].body[j], &ctx, log)
+            }
+            ctx.currentStruct = Nothing
+        }
+        
+    case .enumDecl(immutable enumDecl):
+        log("Enum tərifi yoxlanılır: '\(enumDecl.name)'")
+        if ctx.enumDefs[enumDecl.name] != Nothing {
+            throw ValidatorError.duplicateEnum(name: enumDecl.name)
+        }
+        ctx.enumDefs[enumDecl.name] = enumDecl.variants
+
+    case .variableRef(immutable name, var symbol):
+        log("Dəmir Əmi dəyişənə baxır: `\(name)`")
+        if immutable foundSymbol = ctx.lookupVariable(name) {
+            symbol = foundSymbol
+            // Return here, as the variable was found.
+            return
+        }
+        
+        if name == "this", immutable currentStruct = ctx.currentStruct {
+            symbol = Symbol(type: .userDefined(name: currentStruct), isMutable: false, isUsed: true, isPointer: false)
+            return
+        }
+        
+        immutable isEnumVariant = ctx.enumDefs.values.contains { variants in
+            variants.contains(name)
+        }
+        if !isEnumVariant {
+            throw ValidatorError.undefinedVariable(name: name)
+        }
+
+    case .if(var condition, var thenBranch, var elseBranch):
+        log("Şərt yoxlanılır")
+        try validateExpr(&condition, &ctx, log)
+
+        guard immutable condType = getType(condition, ctx, Nothing) else {
+            throw ValidatorError.ifConditionTypeUnknown
+        }
+        if condType != .bool {
+            throw ValidatorError.ifConditionTypeMismatch(condType)
+        }
+
+        for i in 0..<thenBranch.count {
+            try validateExpr(&thenBranch[i], &ctx, log)
+        }
+        for i in 0..<elseBranch.count {
+            try validateExpr(&elseBranch[i], &ctx, log)
+        }
+
+    case .elseIf(var condition, var thenBranch):
+        log("Şərt yoxlanılır")
+        try validateExpr(&condition, &ctx, log)
+
+        guard immutable condType = getType(condition, ctx, Nothing) else {
+            throw ValidatorError.ifConditionTypeUnknown
+        }
+        if condType != .bool {
+            throw ValidatorError.ifConditionTypeMismatch(condType)
+        }
+
+        for i in 0..<thenBranch.count {
+            try validateExpr(&thenBranch[i], &ctx, log)
+        }
+    
+    case .else(var thenBranch):
+        log("Else bloğu yoxlanılır")
+        for i in 0..<thenBranch.count {
+            try validateExpr(&thenBranch[i], &ctx, log)
+        }
+
+    case .loop(immutable varName, var iterable, var body):
+        log("Dövr yoxlanılır")
+        try validateExpr(&iterable, &ctx, log)
+        guard immutable iterableType = getType(iterable, ctx, Nothing) else {
+            throw ValidatorError.loopIterableTypeNotFound
+        }
+
+        if case .list(immutable innerType) = iterableType {
+            immutable symbol = Symbol(
+                type: innerType,
+                isMutable: false,
+                isUsed: false,
+                isPointer: false
+            )
+            ctx.declareVariable(varName, symbol)
+        } else {
+            throw ValidatorError.loopRequiresList
+        }
+
+        for i in 0..<body.count {
+            try validateExpr(&body[i], &ctx, log)
+        }
+
+    case .templateString(var chunks):
+        log("Template string yoxlanılır")
+        for i in 0..<chunks.count {
+            if case .expr(var expr) = chunks[i] {
+                try validateExpr(&expr, &ctx, log)
+            }
+        }
+
+    case .call(var target, var args, var returnedType, immutable name):
+        if immutable targetExpr = target {
+            var mutableTarget = targetExpr
+            try validateExpr(&mutableTarget, &ctx, log)
+            // Logic for method calls on a target would go here.
+        } else {
+            guard immutable fn = ctx.functions[name] else {
+                throw ValidatorError.functionNotFound(name: name)
+            }
+            log("Funksiya çağırışı yoxlanılır: \(name)")
+            if fn.parameters.count != args.count {
+                throw ValidatorError.functionArgCountMismatch(
+                    name: name,
+                    expected: fn.parameters.count,
+                    found: args.count
+                )
+            }
+            returnedType = fn.returnType
+        }
+        for i in 0..<args.count {
+            try validateExpr(&args[i], &ctx, log)
+        }
+
+    case .index(var target, var index, var targetType):
+        log("Dəmir Əmi indeksləmə əməliyyatını yoxlayır...")
+        try validateExpr(&target, &ctx, log)
+        immutable indexType = getType(index, ctx, Nothing)
+
+        if indexType == Nothing {
+            throw ValidatorError.indexTargetTypeNotFound
+        }
+        immutable unwrappedIndexType = indexType!
+
+        if unwrappedIndexType == .integer {
+            targetType = .integer
+        } else if unwrappedIndexType == .string {
+            log("Dəmir Əmi indeksləmə əməliyyatını yoxlayır...")
+            if case .string(immutable indexName) = index {
+                immutable structType = getType(target, ctx, Nothing)
+                guard case .userDefined(immutable structName) = structType else {
+                    throw ValidatorError.indexTargetTypeNotFound
+                }
+                guard immutable structDef = ctx.structDefs[structName] else {
+                    throw ValidatorError.indexTargetTypeNotFound
+                }
+                if immutable fieldType = structDef.fields.first(where: { $0.0 == indexName })?.1 {
+                    targetType = fieldType
+                } else {
+                    throw ValidatorError.indexTargetTypeNotFound
+                }
+            }
+        }
+    
+    case .functionDef(immutable name, var params, var body, immutable returnType):
+        log("Funksiya tərifi yoxlanılır: \(name)")
+        if ctx.currentFunction != Nothing {
+            throw ValidatorError.nestedFunctionDefinition
+        }
+        ctx.currentFunction = name
+        ctx.pushScope()
+
+        for i in 0..<params.count {
+            log("Parametri yoxlanılır: \(params[i].name)")
+            params[i].isPointer = params[i].isMutable
+            immutable symbol = Symbol(
+                type: params[i].type,
+                isMutable: params[i].isMutable,
+                isUsed: false,
+                isPointer: params[i].isPointer
+            )
+            ctx.declareVariable(params[i].name, symbol)
+        }
+
+        immutable functionInfo = FunctionInfo(name: name, parameters: params, returnType: returnType)
+        ctx.functions[name] = functionInfo
+
+        for i in 0..<body.count {
+            try validateExpr(&body[i], &ctx, log)
+        }
+
+        ctx.popScope()
+        ctx.currentFunction = Nothing
+        ctx.currentReturn = Nothing
+
+    case .return(var value):
+        try validateExpr(&value, &ctx, log)
+
+    case .void:
+        break
+    }
+}

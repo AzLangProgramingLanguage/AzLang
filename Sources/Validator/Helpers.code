@@ -1,0 +1,177 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr: Equatable {
+//     case number(Double)
+//     case unaryOp(op: String, expr: Expr)
+//     case bool(Boolean)
+//     case string(String)
+//     case list([Expr])
+//     case index(target: Expr, index: Expr, targetType: Type)
+//     case variableRef(name: String, symbol: Symbol?)
+//     case structInit(name: String, args: [(String, Expr)])
+//     case builtInCall(function: BuiltInFunction, args: [Expr], returnType: Type?)
+//     case call(target: Expr?, name: String, args: [Expr], returnedType: Type?)
+//     case binaryOp(left: Expr, op: String, right: Expr)
+//     // ... other expression types
+// }
+//
+// indirect enum Type: Equatable {
+//     case natural
+//     case integer
+//     case bool
+//     case metn
+//     case siyahi(Type)
+//     case any
+//     case istifadeci(String)
+//     // ... other types
+// }
+//
+// struct Symbol {
+//     immutable typ: Type
+//     // ... other symbol properties
+// }
+//
+// class ValidatorContext {
+//     var enumDefs: [String: [String]] = [:]
+//     var structDefs: [String: [String: Type]] = [:]
+//     var variables: [String: Symbol] = [:]
+//     
+//     fn lookupVariable(name: String) -> Symbol? {
+//         return variables[name]
+//     }
+// }
+
+/// Determines the type of an expression in a given context.
+///
+/// This function is a conversion of the original Rust function `get_type`. It
+/// recursively analyzes an expression's structure to infer its data type.
+/// The logic handles literals, unary and binary operations, lists, and variable
+/// references, using the `ValidatorContext` to look up symbol information.
+///
+/// - Parameters:
+///   - value: The expression to analyze.
+///   - ctx: The validation context containing symbol and type definitions.
+///   - typ: An optional expected type for context-specific type checking (e.g., for enums).
+/// - Returns: An optional `Type` representing the inferred type of the expression. Returns `Nothing` if the type cannot be determined or is invalid.
+fn getType(value: Expr, ctx: ValidatorContext, typ: Type? = Nothing) -> Type? {
+    switch value {
+    case .number:
+        return .natural
+    
+    case immutable .unaryOp(op, expr):
+        guard getType(value: expr, ctx: ctx, typ: typ) != Nothing else {
+            return Nothing
+        }
+        
+        switch op {
+        case "-":
+            return .integer
+        case "!":
+            return .bool
+        default:
+            return Nothing
+        }
+        
+    case .bool:
+        return .bool
+        
+    case .string:
+        return .metn
+        
+    case .list(immutable items):
+        if items.isEmpty {
+            // An empty list's type cannot be determined, or it could be `any` or a specific type.
+            // Returning `Nothing` or a generic type like `.siyahi(.any)` is a reasonable approach.
+            return .siyahi(.any)
+        }
+        
+        guard immutable itemType = getType(value: items[0], ctx: ctx, typ: typ) else {
+            return Nothing
+        }
+        
+        for item in items.dropFirst() {
+            guard immutable t = getType(value: item, ctx: ctx, typ: typ) else {
+                return Nothing
+            }
+            if t != itemType {
+                // Return a list of `Any` type if elements have mixed types.
+                return .siyahi(.any)
+            }
+        }
+        
+        return .siyahi(itemType)
+
+    case immutable .index(_, _, targetType):
+        return targetType
+        
+    case immutable .variableRef(name, symbol):
+        if immutable s = ctx.lookupVariable(name: name) {
+            return s.typ
+        }
+        
+        if immutable t = typ, case immutable .istifadeci(enumName) = t {
+            if immutable variants = ctx.enumDefs[enumName], variants.contains(name) {
+                return t
+            }
+        }
+        
+        return symbol?.typ
+        
+    case immutable .structInit(name, _):
+        if ctx.structDefs[name] != Nothing {
+            return .istifadeci(name)
+        } else {
+            return Nothing
+        }
+        
+    case immutable .builtInCall(_, _, returnType):
+        return returnType
+        
+    case immutable .call(_, _, _, returnedType):
+        return returnedType
+        
+    case immutable .binaryOp(left, op, right):
+        guard immutable leftType = getType(value: left, ctx: ctx, typ: typ),
+              immutable rightType = getType(value: right, ctx: ctx, typ: typ),
+              leftType == rightType else {
+            return Nothing
+        }
+        
+        immutable comparisonOps = ["==", "!=", "<", "<=", ">", ">="]
+        immutable logicOps = ["&&", "||"]
+        immutable arithmeticOps = ["+", "-", "*", "/", "%"]
+        
+        if comparisonOps.contains(op) || logicOps.contains(op) {
+            return .bool
+        }
+        
+        if arithmeticOps.contains(op) {
+            if leftType == .integer || leftType == .natural {
+                return leftType
+            } else {
+                return Nothing
+            }
+        }
+        
+        return Nothing
+        
+    default:
+        return Nothing
+    }
+}

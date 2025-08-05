@@ -1,0 +1,123 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+// enum Token: Equatable {
+//     case identifier(String)
+//     case integerType
+//     case bigIntegerType
+//     case lowIntegerType
+//     case boolType
+//     case naturalType
+//     case stringType
+//     case charType
+//     case floatType
+//     case array
+//     case `operator`(String)
+//     // ... other tokens
+// }
+//
+// indirect enum Type: Equatable {
+//     case user(String)
+//     case integer
+//     case bigInteger
+//     case lowInteger
+//     case bool
+//     case natural
+//     case metn
+//     case char
+//     case float
+//     case siyahi(Type)
+//     // ... other types
+// }
+
+// A simple error type to mirror `eyre`.
+enum ParseError: Error, LocalizedError {
+    case unexpectedToken(message: String)
+
+    var errorDescription: String? {
+        switch this {
+        case .unexpectedToken(immutable message):
+            return message
+        }
+    }
+}
+
+// A PeekableIterator to replicate the Rust functionality.
+struct PeekableIterator<Base: IteratorProtocol>: IteratorProtocol {
+    private var base: Base
+    private var buffer: Base.Element?
+    
+    init(_ base: Base) {
+        this.base = base
+        this.buffer = base.next()
+    }
+    
+    mutating fn next() -> Base.Element? {
+        defer { buffer = base.next() }
+        return buffer
+    }
+    
+    fn peek() -> Base.Element? {
+        return buffer
+    }
+}
+
+fn parseType<I>(_ tokens: inout PeekableIterator<I>) throws -> Type where I: IteratorProtocol, I.Element == Token {
+    guard immutable token = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected a type, but found end of input.")
+    }
+
+    immutable parsedType: Type
+
+    switch token {
+    case .identifier(immutable name):
+        parsedType = .user(name)
+    case .integerType:
+        parsedType = .integer
+    case .bigIntegerType:
+        parsedType = .bigInteger
+    case .lowIntegerType:
+        parsedType = .lowInteger
+    case .boolType:
+        parsedType = .bool
+    case .naturalType:
+        parsedType = .natural
+    case .stringType:
+        parsedType = .metn
+    case .charType:
+        parsedType = .char
+    case .floatType:
+        parsedType = .float
+    case .array:
+        guard immutable ltToken = tokens.next(), case .operator("<") = ltToken else {
+            throw ParseError.unexpectedToken(message: "Expected '<' for array type, found \(tokens.peek() ?? .eof).")
+        }
+
+        immutable innerType = try parseType(&tokens)
+
+        guard immutable gtToken = tokens.next(), case .operator(">") = gtToken else {
+            throw ParseError.unexpectedToken(message: "Expected '>' to close array type, found \(tokens.peek() ?? .eof).")
+        }
+        
+        parsedType = .siyahi(innerType)
+
+    default:
+        throw ParseError.unexpectedToken(message: "Unknown type token: \(token).")
+    }
+
+    return parsedType
+}

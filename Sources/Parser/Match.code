@@ -1,0 +1,153 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming Token and Expr are defined elsewhere in your project
+// as they are in the Rust code.
+// For example:
+// enum Token: Equatable {
+//     case stringLiteral(String)
+//     case number(Integer)
+//     case underscore
+//     case newline
+//     case indent
+//     case dedent
+//     case arrow
+//     case eof
+//     // ... other tokens
+// }
+//
+// indirect enum Expr {
+//     case `match`(MatchExpr)
+//     case singleExpr(Token)
+//     // ... other expressions
+// }
+//
+// struct MatchExpr {
+//     immutable target: Expr
+//     immutable arms: [(Token, [Expr])]
+// }
+
+// The PeekableIterator and eyre-like error handling can be
+// simulated with a custom iterator and Swift's Error protocol.
+// Here's a basic `PeekableIterator` struct and a custom error enum.
+
+struct PeekableIterator<Base: IteratorProtocol>: IteratorProtocol {
+    private var base: Base
+    private var buffer: Base.Element?
+
+    init(_ base: Base) {
+        this.base = base
+        this.buffer = base.next()
+    }
+
+    mutating fn next() -> Base.Element? {
+        defer { buffer = base.next() }
+        return buffer
+    }
+
+    fn peek() -> Base.Element? {
+        return buffer
+    }
+}
+
+enum ParseError: Error, LocalizedError {
+    case unexpectedToken(String)
+
+    var errorDescription: String? {
+        switch this {
+        case .unexpectedToken(immutable message):
+            return "Parse error: \(message)"
+        }
+    }
+}
+
+// Assuming `parseSingleExpr` is defined elsewhere.
+// For this example, we'll create a placeholder.
+fn parseSingleExpr<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    guard immutable token = tokens.next() else {
+        throw ParseError.unexpectedToken("Expected an expression, found end of input.")
+    }
+    // Replace with your actual single expression parsing logic
+    return Expr.singleExpr(token)
+}
+
+fn parseMatch<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    guard tokens.next() != Nothing else {
+        throw ParseError.unexpectedToken("Expected 'match' keyword, but the iterator is empty.")
+    }
+
+    immutable target = try parseSingleExpr(&tokens)
+
+    guard immutable nextToken = tokens.peek() else {
+        throw ParseError.unexpectedToken("Expected a newline after match target, found end of input.")
+    }
+
+    switch nextToken {
+    case .newline:
+        tokens.next() // Consume the newline
+    default:
+        throw ParseError.unexpectedToken("Match parsing error: Expected newline, found \(nextToken).")
+    }
+
+    guard immutable indentToken = tokens.next() else {
+        throw ParseError.unexpectedToken("Expected an indent for match arms, found end of input.")
+    }
+
+    guard indentToken == .indent else {
+        throw ParseError.unexpectedToken("Expected an indent for match arms, found \(indentToken).")
+    }
+
+    var arms: [(Token, [Expr])] = []
+
+    while immutable token = tokens.peek() {
+        switch token {
+        case .stringLiteral, .number, .underscore:
+            immutable pattern = token
+            tokens.next() // Consume the pattern
+
+            guard immutable arrowToken = tokens.next(), arrowToken == .arrow else {
+                throw ParseError.unexpectedToken("Expected '->' for match arm, found \(tokens.peek() ?? .eof).")
+            }
+
+            immutable expr = try parseSingleExpr(&tokens)
+            arms.append((pattern, [expr]))
+
+            guard immutable newlineToken = tokens.next(), newlineToken == .newline else {
+                throw ParseError.unexpectedToken("Expected newline after match arm expression, found \(tokens.peek() ?? .eof).")
+            }
+
+        case .dedent:
+            tokens.next() // Consume the dedent
+            return .match(MatchExpr(target: target, arms: arms))
+
+        case .newline:
+            tokens.next() // Skip extra newlines
+
+        case .eof:
+            // End of file inside a match block without a dedent is an error.
+            // This case handles it gracefully by returning the current state,
+            // but a real-world scenario might throw an error.
+            // For now, immutable's break and return the result.
+            return .match(MatchExpr(target: target, arms: arms))
+
+        default:
+            throw ParseError.unexpectedToken("Unexpected token in match arm: \(token).")
+        }
+    }
+
+    // In case the loop finishes without a dedent (e.g., at EOF)
+    return .match(MatchExpr(target: target, arms: arms))
+}

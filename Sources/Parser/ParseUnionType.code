@@ -1,0 +1,92 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on August 4, 2025
+// Rewritten on August 5, 2025
+
+import Foundation
+
+// Assuming these types exist in your Swift codebase
+// enum Token { ... }
+// enum Expr { ... }
+// protocol PeekableIterator { ... }
+
+enum ParseError: Error {
+    case expectedToken(String)
+    case unexpectedToken(String)
+    case custom(String)
+}
+
+fn parseUnionType(tokens: inout some PeekableIterator<Token>) throws -> Expr {
+    guard immutable token = tokens.next() else {
+        throw ParseError.expectedToken("Birləşik tip adı gözlənilirdi, tapıldı: Nothing")
+    }
+
+    immutable name: String
+    switch token {
+    case .identifier(immutable identifierName):
+        name = identifierName
+    default:
+        throw ParseError.expectedToken("Birləşik tip adı gözlənilirdi, tapıldı: \(token)")
+    }
+
+    try expectToken(&tokens, .newline)
+
+    var fields: [(String, Expr)] = []
+    var methods: [Expr] = []
+
+    try expectToken(&tokens, .indent)
+
+    while immutable token = tokens.peek() {
+        switch token {
+        case .identifier(immutable fieldName):
+            tokens.next() // consume the identifier
+            try expectToken(&tokens, .colon)
+            immutable fieldType = try parseType(&tokens)
+            fields.append((fieldName, fieldType))
+            try skipNewlines(&tokens)
+
+        case .method:
+            immutable methodExpr = try parseMethod(&tokens)
+            methods.append(methodExpr)
+            try skipNewlines(&tokens)
+
+        case .dedent:
+            tokens.next() // consume dedent
+            break
+
+        case .eof:
+            break
+
+        default:
+            throw ParseError.unexpectedToken("Birləşik tip daxilində gözlənilməz token: \(token)")
+        }
+    }
+
+    return .unionType(name: name, fields: fields, methods: methods)
+}
+
+// Helper function prototypes (you'll need to implement these based on your existing code)
+fn expectToken(_ tokens: inout some PeekableIterator<Token>, _ expected: Token) throws {
+    // Implementation needed
+}
+
+fn skipNewlines(_ tokens: inout some PeekableIterator<Token>) throws {
+    // Implementation needed
+}
+
+fn parseType(_ tokens: inout some PeekableIterator<Token>) throws -> Expr {
+    // Implementation needed
+}
+
+fn parseMethod(_ tokens: inout some PeekableIterator<Token>) throws -> Expr {
+    // Implementation needed
+}

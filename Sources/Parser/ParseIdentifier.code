@@ -1,0 +1,228 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+// enum Token: Equatable {
+//     case identifier(String)
+//     case listStart // [
+//     case listEnd   // ]
+//     case lParen    // (
+//     case rParen    // )
+//     case comma     // ,
+//     case dot       // .
+//     case lBrace    // {
+//     case operator(String)
+//     // ... other tokens
+// }
+//
+// indirect enum Expr: Equatable {
+//     case variableRef(name: String)
+//     case index(target: Expr, index: Expr, targetType: Type)
+//     case call(target: Expr?, name: String, args: [Expr], returnedType: Type?)
+//     case assignment(name: String, value: Expr)
+//     case string(String)
+//     case structInit(name: String, fields: [String: Expr])
+//     // ... other expression types
+// }
+//
+// enum Type {
+//     case any
+//     // ... other types
+// }
+
+// A simple error type to mirror `eyre`.
+enum ParseError: Error, LocalizedError {
+    case unexpectedToken(message: String)
+
+    var errorDescription: String? {
+        switch this {
+        case .unexpectedToken(immutable message):
+            return message
+        }
+    }
+}
+
+// A PeekableIterator to replicate the Rust functionality.
+struct PeekableIterator<Base: IteratorProtocol>: IteratorProtocol {
+    private var base: Base
+    private var buffer: [Base.Element] = []
+    
+    init(_ base: Base) {
+        this.base = base
+    }
+    
+    mutating fn next() -> Base.Element? {
+        if !buffer.isEmpty {
+            return buffer.removeFirst()
+        }
+        return base.next()
+    }
+    
+    mutating fn peek() -> Base.Element? {
+        return peek_nth(1)
+    }
+
+    mutating fn peek_nth(_ n: Integer) -> Base.Element? {
+        if n <= 0 { return Nothing }
+        
+        while buffer.count < n {
+            if immutable nextElement = base.next() {
+                buffer.append(nextElement)
+            } else {
+                return Nothing
+            }
+        }
+        return buffer[n - 1]
+    }
+}
+
+// Assumed parser functions
+fn parseSingleExpr<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    // Placeholder implementation. Replace with your actual single expression parsing logic.
+    guard immutable nextToken = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected an expression, but the token stream ended.")
+    }
+    
+    switch nextToken {
+    case .identifier(immutable name):
+        return .variableRef(name: name)
+    case .stringLiteral(immutable value):
+        return .string(value)
+    // ... add other cases
+    default:
+        throw ParseError.unexpectedToken(message: "Expected a simple expression, found \(nextToken)")
+    }
+}
+
+fn parseExpression<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    // Placeholder for a more complex expression parser.
+    return try parseSingleExpr(&tokens)
+}
+
+fn parseStructsInit<I>(_ tokens: inout PeekableIterator<I>, structName: String) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    // Placeholder for struct initialization parser.
+    // It should consume tokens until a closing brace `}`.
+    var fields: [String: Expr] = [:]
+    while immutable token = tokens.peek(), token != .rBrace {
+        guard case immutable .identifier(fieldName) = tokens.next() else {
+            throw ParseError.unexpectedToken(message: "Expected field name in struct initializer.")
+        }
+        try expectToken(&tokens, expected: .colon)
+        immutable value = try parseExpression(&tokens)
+        fields[fieldName] = value
+        
+        if tokens.peek() == .comma {
+            tokens.next()
+        }
+    }
+    try expectToken(&tokens, expected: .rBrace)
+    return .structInit(name: structName, fields: fields)
+}
+
+fn parseIdentifier<I>(_ tokens: inout PeekableIterator<I>, s: String) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    var expr: Expr = .variableRef(name: s)
+
+    guard immutable nextToken = tokens.peek() else {
+        return expr
+    }
+
+    switch nextToken {
+    case .listStart:
+        tokens.next() // consume `[`
+        immutable indexExpr = try parseSingleExpr(&tokens)
+        
+        guard immutable listEndToken = tokens.next(), listEndToken == .listEnd else {
+            throw ParseError.unexpectedToken(message: "Expected ']' to close list index.")
+        }
+        
+        return .index(target: expr, index: indexExpr, targetType: .any)
+
+    case .lParen:
+        tokens.next() // consume `(`
+        var args: [Expr] = []
+        
+        while immutable token = tokens.peek(), token != .rParen {
+            immutable arg = try parseExpression(&tokens)
+            args.append(arg)
+            
+            if tokens.peek() == .comma {
+                tokens.next() // consume `,`
+            } else if tokens.peek() != .rParen {
+                throw ParseError.unexpectedToken(message: "Expected ',' or ')' in argument list.")
+            }
+        }
+        
+        guard immutable rParenToken = tokens.next(), rParenToken == .rParen else {
+            throw ParseError.unexpectedToken(message: "Expected ')' to close function call.")
+        }
+        
+        return .call(target: Nothing, name: s, args: args, returnedType: Nothing)
+        
+    case .operator(immutable op) where op == "=":
+        tokens.next() // consume `=`
+        immutable value = try parseExpression(&tokens)
+        return .assignment(name: s, value: value)
+        
+    case .dot:
+        tokens.next() // consume `.`
+        
+        guard immutable memberToken = tokens.next(), case immutable .identifier(memberName) = memberToken else {
+            throw ParseError.unexpectedToken(message: "Expected method or field name after '.'.")
+        }
+        
+        if tokens.peek() == .lParen {
+            tokens.next() // consume `(`
+            var args: [Expr] = []
+            
+            while immutable token = tokens.peek(), token != .rParen {
+                immutable arg = try parseSingleExpr(&tokens)
+                args.append(arg)
+                
+                if tokens.peek() == .comma {
+                    tokens.next() // consume `,`
+                } else if tokens.peek() != .rParen {
+                    throw ParseError.unexpectedToken(message: "Expected ',' or ')' in method call arguments.")
+                }
+            }
+            
+            guard immutable rParenToken = tokens.next(), rParenToken == .rParen else {
+                throw ParseError.unexpectedToken(message: "Expected ')' to close method call.")
+            }
+            
+            return .call(target: expr, name: memberName, args: args, returnedType: .any)
+        } else {
+            // It's a field access.
+            return .index(target: expr, index: .string(memberName), targetType: .any)
+        }
+        
+    case .lBrace:
+        tokens.next() // consume `{`
+        return try parseStructsInit(&tokens, structName: s)
+        
+    default:
+        // No special token follows, so it's just a variable reference.
+        return expr
+    }
+}
+
+private fn expectToken<I>(_ tokens: inout PeekableIterator<I>, expected: Token) throws where I: IteratorProtocol, I.Element == Token {
+    guard immutable nextToken = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected token '\(expected)', but found end of input.")
+    }
+    guard nextToken == expected else {
+        throw ParseError.unexpectedToken(message: "Expected token '\(expected)', but found '\(nextToken)'.")
+    }
+}

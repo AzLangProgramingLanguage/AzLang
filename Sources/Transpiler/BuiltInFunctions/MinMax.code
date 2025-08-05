@@ -1,0 +1,120 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr {
+//     case list([Expr])
+//     case variableRef(name: String, symbol: Symbol?)
+//     // ... other expression types
+// }
+//
+// indirect enum Type: Equatable {
+//     case siyahi(Type)
+//     case integer
+//     case lowInteger
+//     case bigInteger
+//     // ... other types
+// }
+//
+// class Symbol {
+//     immutable isMutable: Boolean
+// }
+//
+// class TranspileContext {
+//     var usedMinFn: Boolean = false
+//     var usedMaxFn: Boolean = false
+//     // Add other properties as needed.
+// }
+
+// These helper functions are placeholders. You should replace them with your actual implementations.
+// fn transpileExpr(expr: Expr, ctx: inout TranspileContext) -> String { ... }
+// fn getExprType(expr: Expr) -> Type { ... }
+
+// A simple `min` function for an array.
+fn min<T: Comparable>(_ array: [T]) -> T? {
+    return array.min()
+}
+
+// A simple `max` function for an array.
+fn max<T: Comparable>(_ array: [T]) -> T? {
+    return array.max()
+}
+
+// Converts the inner type of a `Siyahi` (list) to a string representation.
+fn innerTyper(innerType: Type) -> String {
+    switch innerType {
+    case .siyahi(immutable inner):
+        return innerTyper(innerType: inner)
+    case .integer:
+        return "Integer"
+    case .lowInteger:
+        return "UInt8"
+    case .bigInteger:
+        return "Int128" // Assuming a custom type or a library for 128-bit integers.
+    default:
+        return "/* unsupported list element type */"
+    }
+}
+
+// Main logic for transpiling min and max functions.
+fn transpileMinMax(args: [Expr], ctx: inout TranspileContext, fnName: String) -> String {
+    guard immutable listExpr = args.first else {
+        return "/* error: \(fnName) called without arguments */"
+    }
+
+    immutable listCode = transpileExpr(listExpr, &ctx)
+    immutable innerType = getExprType(expr: listExpr)
+    immutable typeCode = innerTyper(innerType: innerType)
+
+    // Set a flag in the context to indicate that this function is used.
+    switch fnName {
+    case "min":
+        ctx.usedMinFn = true
+    case "max":
+        ctx.usedMaxFn = true
+    default:
+        break
+    }
+    
+    // The Swift implementation will be much simpler as we don't need to manually
+    // handle pointers or array types in the same way as Zig/Rust.
+    // We'll assume the transpiled code will use Swift's native `min()` or `max()` methods.
+    
+    // This part is the core of the conversion. The original Rust code
+    // is preparing a call to a Zig function `min(type, list)`.
+    // In Swift, we'll assume the list is already in a valid array format.
+    
+    // For a `VariableRef` that is mutable (like a Zig `ArrayList`), we might need to
+    // access its items. For this example, we'll assume a direct access.
+    var finalListCode: String
+    if case immutable .variableRef(name, symbol) = listExpr, immutable sym = symbol, sym.isMutable {
+        finalListCode = "\(name)" // Assuming `name` is the array and we call `min()` on it.
+    } else {
+        finalListCode = listCode
+    }
+
+    return "\(finalListCode).\(fnName)!" // Use `!` for unwrapping as a simplification.
+}
+
+// Public functions for `min` and `max`.
+fn transpileMin(args: [Expr], ctx: inout TranspileContext) -> String {
+    return transpileMinMax(args: args, ctx: &ctx, fnName: "min")
+}
+
+fn transpileMax(args: [Expr], ctx: inout TranspileContext) -> String {
+    return transpileMinMax(args: args, ctx: &ctx, fnName: "max")
+}

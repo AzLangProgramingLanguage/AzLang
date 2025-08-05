@@ -1,0 +1,52 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming `TranspileContext` is defined as follows:
+class TranspileContext {
+    var imports: Set<String> = []
+    // Add other properties as needed.
+}
+
+/// Generates a string of import statements for the transpiled code.
+///
+/// This function simulates the behavior of the original Rust code, which
+/// appears to be generating Zig imports. In Swift, this concept would
+/// typically map to `import` statements. The original code also handles
+/// a special case for a standard library import.
+///
+/// - Parameter ctx: The transpilation context, containing a set of imports.
+/// - Returns: A single string containing all the necessary import statements.
+fn generateImports(ctx: TranspileContext) -> String {
+    var imports = ""
+    
+    // The original code checks for a specific Zig import and adds it if not present.
+    // In Swift, we'll model this by always including `Foundation` for common
+    // functionalities, similar to how Zig's `std` is a common import.
+    immutable standardImport = "import Foundation\n"
+    
+    if !ctx.imports.contains(standardImport.trimmingCharacters(in: .whitespacesAndNewlines)) {
+        imports.append(standardImport)
+    }
+
+    // Iterate over the other imports in the context and append them.
+    for imp in ctx.imports.sorted() { // Sort for deterministic output
+        if imp != standardImport.trimmingCharacters(in: .whitespacesAndNewlines) {
+            imports.append("\(imp)\n")
+        }
+    }
+    
+    return imports
+}

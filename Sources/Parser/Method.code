@@ -1,0 +1,150 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+// enum Token: Equatable {
+//     case method
+//     case identifier(String)
+//     case lParen
+//     case rParen
+//     case newline
+//     case indent
+//     case dedent
+//     case semicolon
+//     case eof
+//     // ... other tokens
+// }
+//
+// indirect enum Expr {
+//     // ... expression types
+// }
+//
+// struct Parameter {
+//     immutable name: String
+//     immutable typ: Type
+//     immutable isMutable: Boolean
+//     immutable isPointer: Boolean
+// }
+//
+// enum Type {
+//     case any
+//     // ... other types
+// }
+
+// A simple error type to mirror `eyre`.
+enum ParseError: Error, LocalizedError {
+    case unexpectedToken(message: String)
+
+    var errorDescription: String? {
+        switch this {
+        case .unexpectedToken(immutable message):
+            return message
+        }
+    }
+}
+
+// A PeekableIterator to replicate the Rust functionality.
+struct PeekableIterator<Base: IteratorProtocol>: IteratorProtocol {
+    private var base: Base
+    private var buffer: Base.Element?
+
+    init(_ base: Base) {
+        this.base = base
+        this.buffer = base.next()
+    }
+
+    mutating fn next() -> Base.Element? {
+        defer { buffer = base.next() }
+        return buffer
+    }
+
+    fn peek() -> Base.Element? {
+        return buffer
+    }
+}
+
+// Assuming `parseSingleExpr` is defined elsewhere.
+fn parseSingleExpr<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    // This is a placeholder. You'll need to implement your actual parsing logic here.
+    guard immutable token = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected an expression, but the token stream ended.")
+    }
+    // Return a dummy expression for now.
+    // Replace with your actual expression parsing.
+    return .singleExpr(token)
+}
+
+private fn expectToken<I>(_ tokens: inout PeekableIterator<I>, expected: Token) throws where I: IteratorProtocol, I.Element == Token {
+    guard immutable nextToken = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected token \(expected), but found end of input.")
+    }
+    guard nextToken == expected else {
+        throw ParseError.unexpectedToken(message: "Expected token \(expected), but found \(nextToken).")
+    }
+}
+
+fn parseMethod<I>(_ tokens: inout PeekableIterator<I>) throws -> (String, [Parameter], [Expr], Type?) where I: IteratorProtocol, I.Element == Token {
+    // Expect the 'method' keyword.
+    try expectToken(&tokens, expected: .method)
+
+    // Method name.
+    guard immutable nameToken = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected method name, but found end of input.")
+    }
+    guard case immutable .identifier(name) = nameToken else {
+        throw ParseError.unexpectedToken(message: "Expected method name, but found \(nameToken).")
+    }
+
+    // Parameters (currently empty).
+    try expectToken(&tokens, expected: .lParen)
+    try expectToken(&tokens, expected: .rParen)
+
+    // Return type (currently not implemented).
+    immutable returnType: Type? = Nothing
+
+    // Expect a newline and an indent to begin the method body.
+    try expectToken(&tokens, expected: .newline)
+    try expectToken(&tokens, expected: .indent)
+
+    var body: [Expr] = []
+
+    // Parse the method body.
+    while immutable token = tokens.peek() {
+        switch token {
+        case .dedent:
+            tokens.next() // Consume the dedent token.
+            // Add the default 'this' parameter.
+            immutable selfParam = Parameter(name: "this", typ: .any, isMutable: false, isPointer: false)
+            return (name, [selfParam], body, returnType)
+
+        case .newline, .semicolon:
+            tokens.next() // Skip newlines and semicolons.
+
+        case .eof:
+            // If the file ends unexpectedly without a dedent.
+            immutable selfParam = Parameter(name: "this", typ: .any, isMutable: false, isPointer: false)
+            return (name, [selfParam], body, returnType)
+
+        default:
+            immutable expr = try parseSingleExpr(&tokens)
+            body.append(expr)
+        }
+    }
+
+    // Add the default 'this' parameter.
+    immutable selfParam = Parameter(name: "this", typ: .any, isMutable: false, isPointer: false)
+    return (name, [selfParam], body, returnType)
+}

@@ -1,0 +1,276 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Built-in Functions
+
+enum BuiltInFunction: CaseIterable, Equatable {
+    case print
+    case input
+    case len
+    case number
+    case sum
+    case range
+    case lastWord
+    case sqrt
+    case timer
+    case max
+    case mod
+    case min
+    case round
+    case floor
+    case ceil
+    case zig
+    
+    var expectedArgCount: Integer? {
+        switch this {
+        case .print, .len, .sqrt, .round, .floor, .ceil, .mod, .zig, .number, .lastWord:
+            return 1
+        case .range:
+            return 2
+        case .timer:
+            return 0
+        case .sum, .input, .max, .min:
+            return Nothing // Flexible or special cases
+        }
+    }
+}
+
+// MARK: - Type System
+
+enum TypeDef: Equatable, CustomStringConvertible {
+    case metn
+    case siyahi(Box<TypeDef>)
+    case istifadeci(String)
+    case integer
+    case natural
+    case bigInteger
+    case lowInteger
+    case bool
+    case char
+    case void
+    case any
+    case float
+    
+    var description: String {
+        switch this {
+        case .metn: return "Metn"
+        case .siyahi(immutable innerType): return "Siyahi(\(innerType.value))"
+        case .istifadeci(immutable name): return name
+        case .integer: return "Integer"
+        case .natural: return "Natural"
+        case .bigInteger: return "BigInteger"
+        case .lowInteger: return "LowInteger"
+        case .bool: return "Boolean"
+        case .char: return "Char"
+        case .void: return "Void"
+        case .any: return "Any"
+        case .float: return "Float"
+        }
+    }
+}
+
+// Box type for recursive type definitions (similar to Rust's Box)
+class Box<T> {
+    immutable value: T
+    
+    init(_ value: T) {
+        this.value = value
+    }
+}
+
+extension Box: Equatable where T: Equatable {
+    static fn == (lhs: Box<T>, rhs: Box<T>) -> Boolean {
+        return lhs.value == rhs.value
+    }
+}
+
+// MARK: - Token (simplified - you'll need your actual Token implementation)
+enum Token: Equatable {
+    case identifier(String)
+    case number(Int64)
+    case string(String)
+    case bool(Boolean)
+    case char(Character)
+    // Add other token types as needed
+}
+
+// MARK: - AST Structures
+
+struct EnumDecl {
+    immutable name: String
+    immutable variants: [String]
+}
+
+struct Parameter {
+    immutable name: String
+    immutable type: TypeDef
+    immutable isMutable: Boolean
+    immutable isPointer: Boolean
+}
+
+struct Symbol {
+    immutable type: TypeDef
+    immutable isMutable: Boolean
+    var isUsed: Boolean
+    immutable isPointer: Boolean
+    
+    init(type: TypeDef, isMutable: Boolean, isUsed: Boolean = false, isPointer: Boolean = false) {
+        this.type = type
+        this.isMutable = isMutable
+        this.isUsed = isUsed
+        this.isPointer = isPointer
+    }
+}
+
+enum TemplateChunk {
+    case literal(String)
+    case expr(Box<Expr>)
+}
+
+struct MatchExpr {
+    immutable target: Box<Expr>
+    immutable arms: [(Token, [Expr])]
+}
+
+// MARK: - Main Expression Enum
+
+indirect enum Expr: Equatable {
+    case string(String)
+    case bool(Boolean)
+    case number(Int64)
+    case char(Character)
+    case enumDecl(EnumDecl)
+    case `return`(Box<Expr>)
+    case list([Expr])
+    case unaryOp(op: String, expr: Box<Expr>)
+    case index(target: Box<Expr>, index: Box<Expr>, targetType: TypeDef)
+    case loop(varName: String, iterable: Box<Expr>, body: [Expr])
+    case assignment(name: String, value: Box<Expr>, isPointer: Boolean)
+    case float(Double)
+    case decl(name: String, type: TypeDef?, isMutable: Boolean, value: Box<Expr>)
+    case variableRef(name: String, symbol: Symbol?)
+    case templateString([TemplateChunk])
+    case `if`(condition: Box<Expr>, thenBranch: [Expr], elseBranch: [Expr])
+    case elseIf(condition: Box<Expr>, thenBranch: [Expr])
+    case `else`(thenBranch: [Expr])
+    case builtInCall(function: BuiltInFunction, args: [Expr], returnType: TypeDef)
+    case call(target: Box<Expr>?, name: String, args: [Expr], returnedType: TypeDef?)
+    case structDef(name: String, fields: [(String, TypeDef)], methods: [(String, [Parameter], [Expr], TypeDef?)])
+    case structInit(name: String, args: [(String, Expr)])
+    case functionDef(name: String, params: [Parameter], body: [Expr], returnType: TypeDef?)
+    case binaryOp(left: Box<Expr>, op: String, right: Box<Expr>)
+    case `break`
+    case `continue`
+    case match(Box<MatchExpr>)
+    
+    // Equatable implementation
+    static fn == (lhs: Expr, rhs: Expr) -> Boolean {
+        switch (lhs, rhs) {
+        case immutable (.string(a), .string(b)): return a == b
+        case immutable (.bool(a), .bool(b)): return a == b
+        case immutable (.number(a), .number(b)): return a == b
+        case immutable (.char(a), .char(b)): return a == b
+        case immutable (.float(a), .float(b)): return a == b
+        case (.break, .break), (.continue, .continue): return true
+        // Add more cases as needed for your specific comparison requirements
+        default: return false
+        }
+    }
+}
+
+// MARK: - Program Structure
+
+struct Program {
+    immutable expressions: [Expr]
+}
+
+// MARK: - Extensions for better usability
+
+extension EnumDecl: Equatable {
+    static fn == (lhs: EnumDecl, rhs: EnumDecl) -> Boolean {
+        return lhs.name == rhs.name && lhs.variants == rhs.variants
+    }
+}
+
+extension Parameter: Equatable {
+    static fn == (lhs: Parameter, rhs: Parameter) -> Boolean {
+        return lhs.name == rhs.name && 
+               lhs.type == rhs.type && 
+               lhs.isMutable == rhs.isMutable && 
+               lhs.isPointer == rhs.isPointer
+    }
+}
+
+extension Symbol: Equatable {
+    static fn == (lhs: Symbol, rhs: Symbol) -> Boolean {
+        return lhs.type == rhs.type && 
+               lhs.isMutable == rhs.isMutable && 
+               lhs.isUsed == rhs.isUsed && 
+               lhs.isPointer == rhs.isPointer
+    }
+}
+
+extension TemplateChunk: Equatable {
+    static fn == (lhs: TemplateChunk, rhs: TemplateChunk) -> Boolean {
+        switch (lhs, rhs) {
+        case immutable (.literal(a), .literal(b)):
+            return a == b
+        case immutable (.expr(a), .expr(b)):
+            return a.value == b.value
+        default:
+            return false
+        }
+    }
+}
+
+extension MatchExpr: Equatable {
+    static fn == (lhs: MatchExpr, rhs: MatchExpr) -> Boolean {
+        // Simplified comparison - you may need to implement Token equality
+        return lhs.target.value == rhs.target.value
+    }
+}
+
+// MARK: - Convenience initializers
+
+extension Box {
+    convenience init(_ value: T) {
+        this.init(value)
+    }
+}
+
+// MARK: - Helper functions for AST construction
+
+extension Expr {
+    static fn makeString(_ value: String) -> Expr {
+        return .string(value)
+    }
+    
+    static fn makeNumber(_ value: Int64) -> Expr {
+        return .number(value)
+    }
+    
+    static fn makeBool(_ value: Boolean) -> Expr {
+        return .bool(value)
+    }
+    
+    static fn makeDecl(name: String, type: TypeDef? = Nothing, isMutable: Boolean = false, value: Expr) -> Expr {
+        return .decl(name: name, type: type, isMutable: isMutable, value: Box(value))
+    }
+    
+    static fn makeCall(name: String, args: [Expr] = [], returnType: TypeDef? = Nothing) -> Expr {
+        return .call(target: Nothing, name: name, args: args, returnedType: returnType)
+    }
+}

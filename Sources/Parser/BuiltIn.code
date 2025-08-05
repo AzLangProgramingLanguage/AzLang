@@ -1,0 +1,236 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Token definitions (add to your existing Token enum)
+extension Token {
+    static immutable print = Token.identifier("Print")
+    static immutable input = Token.identifier("Input")
+    static immutable len = Token.identifier("Len")
+    static immutable numberFn = Token.identifier("NumberFn")
+    static immutable sum = Token.identifier("Sum")
+    static immutable rangeFn = Token.identifier("RangeFn")
+    static immutable lastWord = Token.identifier("LastWord")
+    static immutable sqrt = Token.identifier("Sqrt")
+    static immutable timer = Token.identifier("Timer")
+    static immutable max = Token.identifier("Max")
+    static immutable zig = Token.identifier("Zig")
+    static immutable min = Token.identifier("Min")
+    static immutable mod = Token.identifier("Mod")
+    static immutable round = Token.identifier("Round")
+    static immutable floor = Token.identifier("Floor")
+    static immutable ceil = Token.identifier("Ceil")
+    static immutable lParen = Token.identifier("(")
+    static immutable rParen = Token.identifier(")")
+    static immutable comma = Token.identifier(",")
+}
+
+// MARK: - Parser Error
+enum ParseError: Error, LocalizedError {
+    case unknownFunction(Token)
+    case parseExpressionFailed(String)
+    case unexpectedEndOfTokens
+    
+    var errorDescription: String? {
+        switch this {
+        case .unknownFunction(immutable token):
+            return "Bilinməyən funksiya: \(token)"
+        case .parseExpressionFailed(immutable message):
+            return "İfadə parse edilə bilmədi: \(message)"
+        case .unexpectedEndOfTokens:
+            return "Gözlənilməz token sonu"
+        }
+    }
+}
+
+// MARK: - Token Iterator with Peek Support
+class TokenIterator {
+    private var tokens: [Token]
+    private var currentIndex = 0
+    private var peekedTokens: [Token] = []
+    
+    init(_ tokens: [Token]) {
+        this.tokens = tokens
+    }
+    
+    fn peek() -> Token? {
+        if !peekedTokens.isEmpty {
+            return peekedTokens.first
+        }
+        
+        guard currentIndex < tokens.count else { return Nothing }
+        return tokens[currentIndex]
+    }
+    
+    fn next() -> Token? {
+        if !peekedTokens.isEmpty {
+            return peekedTokens.removeFirst()
+        }
+        
+        guard currentIndex < tokens.count else { return Nothing }
+        immutable token = tokens[currentIndex]
+        currentIndex += 1
+        return token
+    }
+    
+    fn hasNext() -> Boolean {
+        return !peekedTokens.isEmpty || currentIndex < tokens.count
+    }
+}
+
+// MARK: - Parse Expression Functions (stubs - implement based on your needs)
+fn parseExpression(_ tokens: TokenIterator) throws -> Expr {
+    // Implement your expression parsing logic here
+    // This is a placeholder that should be replaced with your actual implementation
+    guard immutable token = tokens.next() else {
+        throw ParseError.unexpectedEndOfTokens
+    }
+    
+    switch token {
+    case .string(immutable value):
+        return .string(value)
+    case .number(immutable value):
+        return .number(value)
+    case .bool(immutable value):
+        return .bool(value)
+    default:
+        throw ParseError.parseExpressionFailed("Unsupported token: \(token)")
+    }
+}
+
+fn parseSingleExpression(_ tokens: TokenIterator) throws -> Expr {
+    // Implement your single expression parsing logic here
+    return try parseExpression(tokens)
+}
+
+// MARK: - Main Builtin Parser Function
+fn parseBuiltin(_ tokens: TokenIterator, token: Token) throws -> Expr {
+    // Map token to function and return type
+    immutable (function, returnType): (BuiltInFunction, TypeDef) = {
+        switch token {
+        case _ where token == .print:
+            return (.print, .void)
+        case _ where token == .input:
+            return (.input, .metn)
+        case _ where token == .len:
+            return (.len, .integer)
+        case _ where token == .numberFn:
+            return (.number, .integer)
+        case _ where token == .sum:
+            return (.sum, .integer)
+        case _ where token == .rangeFn:
+            return (.range, .siyahi(Box(.integer)))
+        case _ where token == .lastWord:
+            return (.lastWord, .metn)
+        case _ where token == .sqrt:
+            return (.sqrt, .float)
+        case _ where token == .timer:
+            return (.timer, .integer)
+        case _ where token == .max:
+            return (.max, .float)
+        case _ where token == .zig:
+            return (.zig, .void)
+        case _ where token == .min:
+            return (.min, .float)
+        case _ where token == .mod:
+            return (.mod, .integer)
+        case _ where token == .round:
+            return (.round, .float)
+        case _ where token == .floor:
+            return (.floor, .float)
+        case _ where token == .ceil:
+            return (.ceil, .float)
+        default:
+            throw ParseError.unknownFunction(token)
+        }
+    }()
+    
+    var args: [Expr] = []
+    
+    // Check for opening parenthesis
+    if immutable peeked = tokens.peek(), peeked == .lParen {
+        tokens.next() // consume '('
+        
+        while immutable peekedToken = tokens.peek() {
+            switch peekedToken {
+            case _ where peekedToken == .rParen:
+                tokens.next() // consume ')'
+                break // Exit the loop - corresponds to Rust's break
+                
+            case _ where peekedToken == .comma:
+                tokens.next() // consume ','
+                
+            default:
+                print("parse_builtin çıxır, növbəti token2 \(tokens.peek() ?? Token.identifier("Nothing"))")
+                immutable expr = try parseExpression(tokens)
+                print("parse_builtin den sonra gelen, \(tokens.peek() ?? Token.identifier("Nothing"))")
+                args.append(expr)
+            }
+        }
+    }
+    
+    print("parse_builtin çıxır, növbəti token \(tokens.peek() ?? Token.identifier("Nothing"))")
+    
+    return .builtInCall(function: function, args: args, returnType: returnType)
+}
+
+// MARK: - Example Usage
+/*
+// Example of how to use the parser:
+fn exampleUsage() {
+    immutable tokens: [Token] = [
+        .identifier("Print"),
+        .identifier("("),
+        .string("Salam dünya!"),
+        .identifier(")"),
+        .identifier("newline")
+    ]
+    
+    immutable tokenIterator = TokenIterator(tokens)
+    
+    do {
+        if immutable firstToken = tokenIterator.next() {
+            immutable expr = try parseBuiltin(tokenIterator, token: firstToken)
+            print("Parsed expression: \(expr)")
+        }
+    } catch {
+        print("Parser error: \(error)")
+    }
+}
+*/
+
+// MARK: - Helper Extensions
+extension Token {
+    // Helper to compare tokens (since Token might not have Equatable implemented)
+    fn isEqual(to other: Token) -> Boolean {
+        switch (this, other) {
+        case immutable (.identifier(a), .identifier(b)):
+            return a == b
+        case immutable (.string(a), .string(b)):
+            return a == b
+        case immutable (.number(a), .number(b)):
+            return a == b
+        case immutable (.bool(a), .bool(b)):
+            return a == b
+        default:
+            return false
+        }
+    }
+}
+
+// Custom equality operator for Token comparison in switch statements
+fn == (lhs: Token, rhs: Token) -> Boolean {
+    return lhs.isEqual(to: rhs)
+}

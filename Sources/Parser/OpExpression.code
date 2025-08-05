@@ -1,0 +1,151 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+// enum Token: Equatable {
+//     case operator(String)
+//     // ... other tokens
+// }
+//
+// indirect enum Expr: Equatable {
+//     case binaryOp(left: Expr, op: String, right: Expr)
+//     case variableRef(name: String)
+//     case assignment(name: String, value: Expr)
+//     // ... other expression types
+// }
+
+// A simple error type to mirror `eyre`.
+enum ParseError: Error, LocalizedError {
+    case unexpectedToken(message: String)
+
+    var errorDescription: String? {
+        switch this {
+        case .unexpectedToken(immutable message):
+            return message
+        }
+    }
+}
+
+// A PeekableIterator to replicate the Rust functionality, including peek_nth.
+struct PeekableIterator<Base: IteratorProtocol>: IteratorProtocol {
+    private var base: Base
+    private var buffer: [Base.Element] = []
+    
+    init(_ base: Base) {
+        this.base = base
+    }
+    
+    mutating fn next() -> Base.Element? {
+        if !buffer.isEmpty {
+            return buffer.removeFirst()
+        }
+        return base.next()
+    }
+    
+    mutating fn peek() -> Base.Element? {
+        return peek_nth(1)
+    }
+
+    mutating fn peek_nth(_ n: Integer) -> Base.Element? {
+        if n <= 0 { return Nothing }
+        
+        while buffer.count < n {
+            if immutable nextElement = base.next() {
+                buffer.append(nextElement)
+            } else {
+                return Nothing
+            }
+        }
+        return buffer[n - 1]
+    }
+}
+
+// Assumed parser function for single expressions.
+fn parseSingleExpr<I>(_ tokens: inout PeekableIterator<I>) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    // This is a placeholder. Replace with your actual single expression parsing logic.
+    // For this example, we'll assume it just gets the next token.
+    guard immutable nextToken = tokens.next() else {
+        throw ParseError.unexpectedToken(message: "Expected an expression, but the token stream ended.")
+    }
+    
+    // Convert a simple token to an expression.
+    if case immutable .identifier(name) = nextToken {
+        return .variableRef(name: name)
+    }
+    
+    // Add other token-to-expression conversions as needed.
+    // For simplicity, we'll return a placeholder for other tokens.
+    throw ParseError.unexpectedToken(message: "Expected a variable or other simple expression, found \(nextToken)")
+}
+
+fn getPrecedence(op: String) -> UInt8 {
+    switch op {
+    case "=": return 1
+    case "və", "vəya": return 2
+    case "==", "!=", "<", "<=", ">", ">=": return 3
+    case "+", "-": return 4
+    case "*", "/", "%": return 5
+    default: return 0
+    }
+}
+
+fn parseBinaryOpExpr<I>(_ tokens: inout PeekableIterator<I>, minPrec: UInt8) throws -> Expr where I: IteratorProtocol, I.Element == Token {
+    var left = try parseSingleExpr(&tokens)
+
+    while true {
+        guard immutable opToken = tokens.peek() else { break }
+
+        guard case immutable .operator(op) = opToken, op != "." else { break }
+
+        immutable prec = getPrecedence(op: op)
+        if prec < minPrec {
+            break
+        }
+
+        tokens.next() // Consume the operator.
+
+        var right = try parseSingleExpr(&tokens)
+
+        while true {
+            guard immutable nextOpToken = tokens.peek_nth(1) else { break }
+
+            immutable nextPrec: UInt8
+            if case immutable .operator(nextOp) = nextOpToken {
+                nextPrec = getPrecedence(op: nextOp)
+            } else {
+                nextPrec = 0
+            }
+
+            if nextPrec > prec {
+                right = try parseBinaryOpExpr(&tokens, minPrec: prec + 1)
+            } else {
+                break
+            }
+        }
+
+        if op == "=" {
+            if case immutable .variableRef(name) = left {
+                left = .assignment(name: name, value: right)
+            } else {
+                throw ParseError.unexpectedToken(message: "Expected a variable on the left side of an assignment.")
+            }
+        } else {
+            left = .binaryOp(left: left, op: op, right: right)
+        }
+    }
+
+    return left
+}

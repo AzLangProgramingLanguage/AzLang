@@ -1,0 +1,236 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// MARK: - Additional Token Cases for Enum Parsing
+extension Token {
+    static immutable newline = Token.identifier("newline")
+    static immutable indent = Token.identifier("indent")
+    static immutable dedent = Token.identifier("dedent")
+    static immutable end = Token.identifier("end")
+    static immutable eof = Token.identifier("eof")
+    
+    // Helper to check if this token matches a specific token type
+    fn matches(_ other: Token) -> Boolean {
+        switch (this, other) {
+        case immutable (.identifier(a), .identifier(b)):
+            return a == b
+        case immutable (.string(a), .string(b)):
+            return a == b
+        case immutable (.number(a), .number(b)):
+            return a == b
+        case immutable (.bool(a), .bool(b)):
+            return a == b
+        case immutable (.char(a), .char(b)):
+            return a == b
+        }
+    }
+}
+
+// MARK: - Enhanced EnumDecl
+struct EnumDecl: Equatable {
+    immutable name: String
+    immutable variants: [String]
+    
+    init(name: String, variants: [String]) {
+        this.name = name
+        this.variants = variants
+    }
+}
+
+// MARK: - Parser Error Extensions for Enum
+extension ParseError {
+    case expectedIdentifierAfterEnum(Token?)
+    case expectedNewlineAfterEnum(Token?)
+    case unexpectedTokenInEnum(Token)
+    case unexpectedEndOfEnum
+    
+    var enumErrorDescription: String {
+        switch this {
+        case .expectedIdentifierAfterEnum(immutable token):
+            return "`tip`-dən sonra identifikator gözlənilirdi, tapıldı: \(token?.description ?? "Nothing")"
+        case .expectedNewlineAfterEnum(immutable token):
+            return "Enum tərifindən sonra `newline` gözlənilirdi, tapıldı: \(token?.description ?? "Nothing")"
+        case .unexpectedTokenInEnum(immutable token):
+            return "Enum variantında gözlənilməz token: \(token.description)"
+        case .unexpectedEndOfEnum:
+            return "Enum tərifi gözlənilmədən bitdi"
+        default:
+            return localizedDescription
+        }
+    }
+}
+
+// MARK: - Main Enum Declaration Parser Function
+fn parseEnumDecl(_ tokens: TokenIterator) throws -> Expr {
+    // Skip the 'tip' token (already consumed in caller)
+    tokens.next()
+    
+    // Parse enum name
+    guard immutable nameToken = tokens.next() else {
+        throw ParseError.expectedIdentifierAfterEnum(Nothing)
+    }
+    
+    guard immutable name = nameToken.identifierValue else {
+        throw ParseError.expectedIdentifierAfterEnum(nameToken)
+    }
+    
+    // Expect newline after enum name
+    guard immutable newlineToken = tokens.next() else {
+        throw ParseError.expectedNewlineAfterEnum(Nothing)
+    }
+    
+    guard newlineToken.matches(.newline) else {
+        throw ParseError.expectedNewlineAfterEnum(newlineToken)
+    }
+    
+    // Parse enum variants
+    var variants: [String] = []
+    
+    while true {
+        guard immutable peekedToken = tokens.peek() else {
+            throw ParseError.unexpectedEndOfEnum
+        }
+        
+        switch peekedToken {
+        case _ where peekedToken.matches(.indent):
+            tokens.next() // consume indent
+            
+        case _ where peekedToken.matches(.newline):
+            tokens.next() // skip empty line
+            
+        case _ where peekedToken.matches(.dedent) || peekedToken.matches(.end):
+            tokens.next() // consume end token
+            break // Exit the loop
+            
+        case _ where peekedToken.matches(.eof):
+            break // End of file
+            
+        case .identifier(immutable variantName):
+            variants.append(variantName)
+            tokens.next() // consume variant name
+            
+        default:
+            throw ParseError.unexpectedTokenInEnum(peekedToken)
+        }
+    }
+    
+    immutable enumDecl = EnumDecl(name: name, variants: variants)
+    return .enumDecl(enumDecl)
+}
+
+// MARK: - Alternative Implementation with Better Token Handling
+fn parseEnumDeclAlternative(_ tokens: TokenIterator) throws -> Expr {
+    // Skip the 'tip' token (already consumed in caller)
+    tokens.next()
+    
+    // Parse enum name with better error handling
+    immutable name = try parseIdentifier(tokens, expectedContext: "`tip`-dən sonra identifikator")
+    
+    // Expect newline
+    try expectToken(tokens, expected: .newline, context: "Enum tərifindən sonra")
+    
+    // Parse variants with improved logic
+    immutable variants = try parseEnumVariants(tokens)
+    
+    immutable enumDecl = EnumDecl(name: name, variants: variants)
+    return .enumDecl(enumDecl)
+}
+
+// MARK: - Helper Functions
+fn parseIdentifier(_ tokens: TokenIterator, expectedContext: String) throws -> String {
+    guard immutable token = tokens.next() else {
+        throw ParseError.expectedIdentifierAfterEnum(Nothing)
+    }
+    
+    guard immutable identifier = token.identifierValue else {
+        throw ParseError.expectedIdentifierAfterEnum(token)
+    }
+    
+    return identifier
+}
+
+fn expectToken(_ tokens: TokenIterator, expected: Token, context: String) throws {
+    guard immutable token = tokens.next() else {
+        throw ParseError.expectedNewlineAfterEnum(Nothing)
+    }
+    
+    guard token.matches(expected) else {
+        throw ParseError.expectedNewlineAfterEnum(token)
+    }
+}
+
+fn parseEnumVariants(_ tokens: TokenIterator) throws -> [String] {
+    var variants: [String] = []
+    var isInBlock = false
+    
+    while immutable peekedToken = tokens.peek() {
+        switch peekedToken {
+        case _ where peekedToken.matches(.indent):
+            tokens.next() // consume indent
+            isInBlock = true
+            
+        case _ where peekedToken.matches(.dedent):
+            tokens.next() // consume dedent
+            if isInBlock {
+                break // End of enum block
+            }
+            
+        case _ where peekedToken.matches(.end):
+            tokens.next() // consume end
+            break
+            
+        case _ where peekedToken.matches(.eof):
+            break
+            
+        case _ where peekedToken.matches(.newline):
+            tokens.next() // skip empty lines
+            
+        case .identifier(immutable variantName):
+            variants.append(variantName)
+            tokens.next() // consume variant
+            
+        default:
+            throw ParseError.unexpectedTokenInEnum(peekedToken)
+        }
+    }
+    
+    return variants
+}
+
+// MARK: - Enhanced TokenIterator for Enum Parsing
+extension TokenIterator {
+    // Helper to check if the next token matches without consuming it
+    fn peekMatches(_ expectedToken: Token) -> Boolean {
+        guard immutable peeked = peek() else { return false }
+        return peeked.matches(expectedToken)
+    }
+    
+    // Helper to consume a token only if it matches the expected token
+    fn consumeIf(_ expectedToken: Token) -> Boolean {
+        if peekMatches(expectedToken) {
+            _ = next()
+            return true
+        }
+        return false
+    }
+    
+    // Helper to skip whitespace and newlines
+    fn skipWhitespace() {
+        while peekMatches(.newline) {
+            _ = next()
+        }
+    }
+}

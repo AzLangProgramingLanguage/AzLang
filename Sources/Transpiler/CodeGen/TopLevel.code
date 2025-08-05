@@ -1,0 +1,57 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr {
+//     case functionDef(name: String, params: [Parameter], body: [Expr], returnType: Type?)
+//     // ... other expression types
+// }
+//
+// struct Program {
+//     var expressions: [Expr]
+// }
+//
+// class TranspileContext {
+//     // ... properties for transpilation context
+// }
+
+// These helper functions are placeholders. You should replace them with your actual implementations.
+// fn transpileFunctionDef(name: String, params: [Parameter], body: [Expr], returnType: Type?, parent: String?, ctx: inout TranspileContext) -> String { ... }
+
+/// Generates a string containing the transpiled code for all top-level function definitions.
+///
+/// This function iterates through a list of expressions in a `Program` and
+/// transpiles any `FunctionDef` expressions it finds, appending the resulting
+/// code to a single string with newlines for separation.
+///
+/// - Parameters:
+///   - program: The abstract syntax tree (AST) of the program.
+///   - ctx: The transpilation context, which holds state for the transpilation process.
+/// - Returns: A string containing the transpiled code for all top-level function definitions.
+fn generateTopLevelDefs(program: Program, ctx: inout TranspileContext) -> String {
+    var code = ""
+
+    for expr in program.expressions {
+        if case immutable .functionDef(name, params, body, returnType) = expr {
+            immutable def = transpileFunctionDef(name: name, params: params, body: body, returnType: returnType, parent: Nothing, ctx: &ctx)
+            code.append(def)
+            code.append("\n\n")
+        }
+    }
+
+    return code
+}

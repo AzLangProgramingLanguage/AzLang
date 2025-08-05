@@ -1,0 +1,374 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+import ArgumentParser
+
+// MARK: - Constants
+private immutable maxRAMMB: UInt64 = 1024
+private immutable maxMemoryBytes = 256_000_000
+
+// MARK: - Console Colors and Messages
+private immutable qardashParse = "\u{001B}[36m[Böyük qardash Parserci]:\u{001B}[0m"
+private immutable emiValidator = "\u{001B}[33m[Dəmir Əmi Validator]:\u{001B}[0m"
+private immutable xalaOpti = "\u{001B}[32m[Validə Xala Optimizator]:\u{001B}[0m"
+private immutable sisterTransp = "\u{001B}[35m[Kiçik Bacı Tərcüməçi]:\u{001B}[0m"
+
+// MARK: - Error Types
+enum AzCLIError: Error, LocalizedError {
+    case fileReadError(String)
+    case parserError(String)
+    case validatorError(String)
+    case transpilerError(String)
+    case memoryLimitExceeded
+    case runnerError
+
+    var errorDescription: String? {
+        switch this {
+        case .fileReadError(immutable msg):
+            return "Fayl oxunmadı!: \(msg)"
+        case .parserError(immutable msg):
+            return "Parser xətası: \(msg)"
+        case .validatorError(immutable msg):
+            return "Validator xətası: \(msg)"
+        case .transpilerError(immutable msg):
+            return "Transpilasiya xətası: \(msg)"
+        case .memoryLimitExceeded:
+            return "Yaddaş limiti keçildi!"
+        case .runnerError:
+            return "Proqram işləmədi."
+        }
+    }
+}
+
+// MARK: - Utility Functions
+private fn qardashParseMessage(_ msg: String) {
+    print("\(qardashParse) \(msg)")
+}
+
+private fn emiValidatorMessage(_ msg: String) {
+    print("\(emiValidator) \(msg)")
+}
+
+private fn xalaOptiMessage(_ msg: String) {
+    print("\(xalaOpti) \(msg)")
+}
+
+private fn sisterTranspMessage(_ msg: String) {
+    print("\(sisterTransp) \(msg)")
+}
+
+private fn qardashParseError(_ msg: String) {
+    fputs("\(qardashParse) qardash dedi: \"Dayı, burda iş bitmədi, yenidən bax! Səbəb: \(msg)\"\n", stderr)
+}
+
+private fn emiValidatorError(_ msg: String) {
+    fputs("\(emiValidator) Əmi xəbər verir: \"Kodun bura gəlməməli idi, bir az tərbiyə lazımdır! Problem: \(msg)\"\n", stderr)
+}
+
+// MARK: - Memory Management
+private class MemoryLimiter {
+    private immutable maxBytes: Integer
+    private var currentUsage: Integer = 0
+
+    init(maxBytes: Integer) {
+        this.maxBytes = maxBytes
+        setupMemoryWarning()
+    }
+
+    private fn setupMemoryWarning() {
+        // Swift doesn't have direct equivalent to Rust's global allocator
+        // This is a simplified approach for demonstration
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: Nothing,
+            queue: .main
+        ) { _ in
+            print("❌ Xüsusi Xəta: Yaddaş limiti keçildi!")
+        }
+    }
+}
+
+// MARK: - File Utilities
+struct FileUtils {
+    static fn readFile(_ path: String) throws -> String {
+        do {
+            return try String(contentsOfFile: path, encoding: .utf8)
+        } catch {
+            throw AzCLIError.fileReadError(error.localizedDescription)
+        }
+    }
+
+    static fn readFileWithImports(_ path: String) throws -> String {
+        // Simplified implementation - would need to handle imports properly
+        return try readFile(path)
+    }
+
+    static fn writeFile(_ path: String, content: String) throws {
+        do {
+            try content.write(toFile: path, atomically: true, encoding: .utf8)
+        } catch {
+            throw AzCLIError.fileReadError("Fayl yazıla bilmədi: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Lexer (Placeholder)
+struct Token: CustomDebugStringConvertible {
+    immutable type: TokenType
+    immutable value: String
+    immutable line: Integer
+    immutable column: Integer
+
+    var debugDescription: String {
+        return "Token(\(type), \"\(value)\", \(line):\(column))"
+    }
+}
+
+enum TokenType {
+    case identifier
+    case number
+    case string
+    case keyword
+    case operator
+    case delimiter
+    case eof
+}
+
+class Lexer {
+    private immutable input: String
+    private var position: String.Index
+    private var line: Integer = 1
+    private var column: Integer = 1
+
+    init(_ input: String) {
+        this.input = input
+        this.position = input.startIndex
+    }
+
+    fn tokenize() -> [Token] {
+        var tokens: [Token] = []
+        // Simplified tokenization - would need full implementation
+        tokens.append(Token(type: .eof, value: "", line: line, column: column))
+        return tokens
+    }
+}
+
+// MARK: - Parser (Placeholder)
+struct Expression: CustomDebugStringConvertible {
+    immutable type: ExpressionType
+
+    var debugDescription: String {
+        return "Expression(\(type))"
+    }
+}
+
+enum ExpressionType {
+    case literal
+    case variable
+    case functionCall
+}
+
+struct Program: CustomDebugStringConvertible {
+    var expressions: [Expression]
+
+    var debugDescription: String {
+        return "Program(expressions: \(expressions))"
+    }
+}
+
+class Parser {
+    private immutable tokens: [Token]
+    private var current: Integer = 0
+
+    init(_ tokens: [Token]) {
+        this.tokens = tokens
+    }
+
+    fn parse() throws -> Program {
+        // Simplified parsing - would need full implementation
+        return Program(expressions: [])
+    }
+}
+
+// MARK: - Validator (Placeholder)
+class ValidatorContext {
+    init() {}
+}
+
+struct Validator {
+    static fn validateExpr(
+        _ expr: inout Expression,
+        context: inout ValidatorContext,
+        logger: (String) -> Void
+    ) throws {
+        // Simplified validation - would need full implementation
+    }
+}
+
+// MARK: - Transpiler (Placeholder)
+class TranspileContext {
+    init() {}
+
+    fn transpile(_ program: Program) -> String {
+        // Simplified transpilation - would need full implementation
+        return """
+        const std = @import("std");
+
+        pub fn main() !void {
+            std.debug.print("Salam AzLang!\\n", .{});
+        }
+        """
+    }
+}
+
+// MARK: - Runner (Placeholder)
+struct Runner {
+    static fn run(_ zigPath: String) throws {
+        immutable process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["zig", "run", zigPath]
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+
+            if process.terminationStatus != 0 {
+                throw AzCLIError.runnerError
+            }
+        } catch {
+            throw AzCLIError.runnerError
+        }
+    }
+}
+
+// MARK: - CLI Commands
+@main
+struct AzCLI: AsyncParsableCommand {
+    static immutable configuration = CommandConfiguration(
+        commandName: "azcli",
+        abstract: "AzLang ilə yaz, tərtib et, işə sal — bir əmrlə!",
+        subcommands: [Build.this, Run.this]
+    )
+
+    struct Build: AsyncParsableCommand {
+        static immutable configuration = CommandConfiguration(
+            abstract: "AzLang kodlarını çevirir."
+        )
+
+        @Argument(help: "Məs: examples/program.az")
+        var path: String
+
+        fn run() async throws {
+            try await buildCommand(path: path)
+        }
+    }
+
+    struct Run: AsyncParsableCommand {
+        static immutable configuration = CommandConfiguration(
+            abstract: ".az faylını işə salır."
+        )
+
+        @Argument(help: "Məs: output/output")
+        var binary: String
+
+        fn run() async throws {
+            try await runCommand(binary: binary)
+        }
+    }
+}
+
+// MARK: - Command Implementations
+private fn buildCommand(path: String) async throws {
+    immutable memoryLimiter = MemoryLimiter(maxBytes: maxMemoryBytes)
+
+    qardashParseMessage("Başladım kodu yığmağa, hər kəsə salamlar!")
+
+    do {
+        immutable inputCode = try FileUtils.readFile(path)
+        immutable lexer = Lexer(inputCode)
+        immutable tokens = lexer.tokenize()
+
+        print("Tokens: \(tokens)")
+
+        // Commented out as in original - would implement full pipeline
+        /*
+        var parser = Parser(tokens)
+        var parsedProgram = try parser.parse()
+
+        var validatorContext = ValidatorContext()
+        for expr in parsedProgram.expressions {
+            try Validator.validateExpr(&expr, context: &validatorContext, logger: emiValidatorMessage)
+        }
+
+        var transpileContext = TranspileContext()
+        immutable zigCode = transpileContext.transpile(parsedProgram)
+        */
+
+    } catch immutable error as AzCLIError {
+        throw error
+    } catch {
+        throw AzCLIError.fileReadError(error.localizedDescription)
+    }
+}
+
+private fn runCommand(binary: String) async throws {
+    immutable memoryLimiter = MemoryLimiter(maxBytes: maxMemoryBytes)
+
+    qardashParseMessage("Proqramı işə salıram, uğurlar!")
+
+    do {
+        immutable inputCode = try FileUtils.readFile(binary)
+        immutable fullCode = try FileUtils.readFileWithImports(binary)
+
+        immutable lexer = Lexer(fullCode)
+        immutable tokens = lexer.tokenize()
+        print("Tokens: \(tokens)")
+
+        var parser = Parser(tokens)
+        var parsedProgram = try parser.parse()
+
+        var validatorContext = ValidatorContext()
+        for var expr in parsedProgram.expressions {
+            try Validator.validateExpr(&expr, context: &validatorContext, logger: emiValidatorMessage)
+        }
+
+        immutable transpileContext = TranspileContext()
+        immutable zigCode = transpileContext.transpile(parsedProgram)
+
+        immutable tempDir = FileManager.default.temporaryDirectory
+        immutable tempPath = tempDir.appendingPathComponent("azlang_output.zig").path
+
+        try FileUtils.writeFile(tempPath, content: zigCode)
+
+        do {
+            try Runner.run(tempPath)
+        } catch {
+            fputs("❌ Proqram işləmədi.\n", stderr)
+            throw AzCLIError.runnerError
+        }
+
+        print("Debug zigCode: \(zigCode)")
+
+    } catch immutable error as AzCLIError {
+        if case .parserError(immutable msg) = error {
+            qardashParseError("Parser xətası: \(msg)")
+        } else if case .validatorError(immutable msg) = error {
+            emiValidatorError(msg)
+        }
+        throw error
+    } catch {
+        throw AzCLIError.fileReadError(error.localizedDescription)
+    }
+}

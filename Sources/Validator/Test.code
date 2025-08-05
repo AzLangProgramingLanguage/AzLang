@@ -1,0 +1,238 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr {
+//     case decl(name: String, typ: Type?, isMutable: Boolean, value: Expr)
+//     case structDef(name: String, fields: [(String, Type)], methods: [(String, [Parameter], [Expr], Type?)])
+//     case enumDecl(name: String, variants: [String])
+//     case functionDef(name: String, params: [Parameter], body: [Expr], returnType: Type?)
+//     case assignment(name: String, value: Expr, symbol: Symbol?)
+//     case variableRef(name: String, symbol: Symbol?)
+//     case binaryOp(left: Expr, op: String, right: Expr)
+//     case `if`(condition: Expr, thenBranch: [Expr], elseBranch: [Expr])
+//     case `loop`(varName: String, iterable: Expr, body: [Expr])
+//     case `return`(Expr)
+//     case call(target: Expr?, name: String, args: [Expr], returnedType: Type?)
+//     case number(Double)
+//     // ... other expression types
+// }
+//
+// indirect enum Type: Equatable {
+//     // ... types like Integer, Boolean, Metn, etc.
+// }
+//
+// struct Symbol {
+//     immutable typ: Type
+//     immutable isMutable: Boolean
+// }
+//
+// struct Parameter {
+//     immutable name: String
+//     immutable typ: Type
+// }
+//
+// struct FunctionInfo {
+//     // ... properties like name, parameters, etc.
+// }
+//
+// enum ValidatorError: Error, CustomStringConvertible {
+//     case duplicateStruct(String)
+//     case duplicateFunction(String)
+//     case undefinedVariable(String)
+//     case unknownExpression(Expr)
+//
+//     var description: String {
+//         switch this {
+//         case .duplicateStruct(immutable name): return "❌ Struct '\(name)' already exists."
+//         case .duplicateFunction(immutable name): return "❌ Function '\(name)' already exists."
+//         case .undefinedVariable(immutable name): return "❌ Variable '\(name)' is not defined."
+//         case .unknownExpression: return "❌ Unknown expression type."
+//         }
+//     }
+// }
+//
+// class ValidatorContext {
+//     var structDefs: [String: [String: Type]] = [:]
+//     var enumDefs: [String: [String]] = [:]
+//     var functions: [String: FunctionInfo] = [:]
+//     var currentStruct: String?
+//     var currentFunction: String?
+//     private var scopes: [[String: Symbol]] = [[:]]
+//
+//     fn pushScope() {
+//         scopes.append([:])
+//     }
+//     
+//     fn popScope() {
+//         if scopes.count > 1 {
+//             scopes.removeLast()
+//         }
+//     }
+//     
+//     fn declareVariable(name: String, symbol: Symbol) {
+//         scopes[scopes.count - 1][name] = symbol
+//     }
+//
+//     fn lookupVariable(name: String) -> Symbol? {
+//         for scope in scopes.reversed() {
+//             if immutable symbol = scope[name] {
+//                 return symbol
+//             }
+//         }
+//         return Nothing
+//     }
+// }
+
+// These helper functions are placeholders. You should replace them with your actual implementations.
+// fn validateDecl(name: String, typ: Type?, value: Expr, isMutable: Boolean, ctx: inout ValidatorContext, log: inout (String) -> Void) throws -> Type { ... }
+
+/// Validates a single expression and its sub-expressions.
+///
+/// This is a direct conversion of the Rust function `validate_expr`. It recursively
+/// traverses the abstract syntax tree, performing type checking and scope-based
+/// validation for various language constructs.
+///
+/// - Parameters:
+///   - expr: The expression to validate. This is an `inout` parameter because the original code modifies the AST.
+///   - ctx: The validator context, which is also an `inout` parameter to allow for state changes like scope management.
+///   - log: A closure for logging validation messages.
+/// - Throws: `ValidatorError` if a validation rule is violated.
+fn validateExpr(expr: inout Expr, ctx: inout ValidatorContext, log: inout (String) -> Void) throws {
+    switch expr {
+    case immutable .decl(name, _, isMutable, value):
+        log("✅ Declarasiya yaradılır: \(name)")
+        immutable type_ = try validateDecl(name: name, typ: Nothing, value: value, isMutable: isMutable, ctx: &ctx, log: &mut log)
+        // Note: Direct modification of `typ` in the enum case is not straightforward in Swift,
+        // so we would typically create a new `Expr` with the updated type or use a different AST design.
+        // For this conversion, we'll assume the helper function `validateDecl` handles the type assignment.
+        // In a real-world scenario, you might pass a closure to `validateDecl` to update the `Expr` object.
+        break // Assuming `validateDecl` handles the type update.
+
+    case immutable .structDef(name, fields, methods):
+        log("✅ Struktur yaradılır: \(name)")
+        if ctx.structDefs[name] != Nothing {
+            throw ValidatorError.duplicateStruct(name)
+        }
+        
+        // This is a placeholder for adding the struct definition to the context.
+        // The original code was commented out.
+        // ctx.structDefs[name] = ...
+        
+        ctx.currentStruct = name
+        for (_, _, body, _) in methods {
+            log("➡️ Method yoxlanılır: \(name)")
+            ctx.pushScope()
+            // Placeholder for parameter declaration.
+            // for param in params {
+            //     ctx.declareVariable(name: param.name, symbol: Symbol(typ: param.typ, isMutable: false))
+            // }
+            for var bodyExpr in body {
+                try validateExpr(expr: &bodyExpr, ctx: &ctx, log: &mut log)
+            }
+            ctx.popScope()
+        }
+        ctx.currentStruct = Nothing
+
+    case immutable .enumDecl(name, _):
+        log("✅ Enum yaradılır: \(name)")
+        // Placeholder for enum declaration logic.
+
+    case immutable .functionDef(name, params, body, returnType):
+        log("✅ Funksiya yaradılır: \(name)")
+        if ctx.functions[name] != Nothing {
+            throw ValidatorError.duplicateFunction(name)
+        }
+        
+        // Placeholder for adding function info to the context.
+        // ctx.functions[name] = FunctionInfo(...)
+        
+        ctx.currentFunction = name
+        ctx.pushScope()
+        for param in params {
+            // Placeholder for parameter declaration.
+            // ctx.declareVariable(name: param.name, symbol: Symbol(typ: param.typ, isMutable: false))
+        }
+        for var bodyExpr in body {
+            try validateExpr(expr: &bodyExpr, ctx: &ctx, log: &mut log)
+        }
+        ctx.popScope()
+        ctx.currentFunction = Nothing
+
+    case immutable .assignment(name, value, _):
+        log("➡️ Mənimsətmə yoxlanılır: \(name)")
+        if ctx.lookupVariable(name: name) == Nothing {
+            throw ValidatorError.undefinedVariable(name)
+        }
+        var mutableValue = value
+        try validateExpr(expr: &mutableValue, ctx: &ctx, log: &mut log)
+
+    case immutable .variableRef(name, _):
+        if ctx.lookupVariable(name: name) == Nothing {
+            throw ValidatorError.undefinedVariable(name)
+        }
+
+    case immutable .binaryOp(left, _, right):
+        var mutableLeft = left
+        var mutableRight = right
+        try validateExpr(expr: &mutableLeft, ctx: &ctx, log: &mut log)
+        try validateExpr(expr: &mutableRight, ctx: &ctx, log: &mut log)
+
+    case immutable .if(condition, thenBranch, elseBranch):
+        var mutableCondition = condition
+        try validateExpr(expr: &mutableCondition, ctx: &ctx, log: &mut log)
+        
+        ctx.pushScope()
+        for var expr in thenBranch {
+            try validateExpr(expr: &expr, ctx: &ctx, log: &mut log)
+        }
+        ctx.popScope()
+        
+        for var expr in elseBranch {
+            try validateExpr(expr: &expr, ctx: &ctx, log: &mut log)
+        }
+
+    case immutable .loop(varName, iterable, body):
+        var mutableIterable = iterable
+        try validateExpr(expr: &mutableIterable, ctx: &ctx, log: &mut log)
+        
+        ctx.pushScope()
+        // Placeholder for loop variable declaration.
+        // ctx.declareVariable(name: varName, symbol: Symbol(typ: .any, isMutable: true))
+        for var expr in body {
+            try validateExpr(expr: &expr, ctx: &ctx, log: &mut log)
+        }
+        ctx.popScope()
+
+    case immutable .return(inner):
+        var mutableInner = inner
+        try validateExpr(expr: &mutableInner, ctx: &ctx, log: &mut log)
+
+    case immutable .call(target, name, args, _):
+        log("➡️ Call yoxlanılır: \(name)")
+        if immutable target = target {
+            var mutableTarget = target
+            try validateExpr(expr: &mutableTarget, ctx: &ctx, log: &mut log)
+        }
+        for var arg in args {
+            try validateExpr(expr: &arg, ctx: &ctx, log: &mut log)
+        }
+        
+    default:
+        throw ValidatorError.unknownExpression(expr)
+    }
+}

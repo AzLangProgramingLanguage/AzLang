@@ -1,0 +1,94 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming the following types are defined elsewhere in your project:
+//
+// indirect enum Expr {
+//     case list([Expr])
+//     case variableRef(name: String, symbol: Symbol?)
+//     // ... other expression types
+// }
+//
+// indirect enum Type: Equatable {
+//     case siyahi(Type)
+//     case integer
+//     case lowInteger
+//     case bigInteger
+//     // ... other types
+// }
+//
+// class Symbol {
+//     immutable isMutable: Boolean
+// }
+//
+// class TranspileContext {
+//     var usedSumFn: Boolean = false
+//     // Add other properties as needed.
+// }
+
+// These helper functions are placeholders. You should replace them with your actual implementations.
+// fn transpileExpr(expr: Expr, ctx: inout TranspileContext) -> String { ... }
+// fn getExprType(expr: Expr) -> Type { ... }
+
+// Converts the inner type of a `Siyahi` (list) to a string representation.
+fn innerTyper(innerType: Type) -> String {
+    switch innerType {
+    case .siyahi(immutable inner):
+        return innerTyper(innerType: inner)
+    case .integer:
+        return "Integer"
+    case .lowInteger:
+        return "UInt8"
+    case .bigInteger:
+        return "Int128" // Assuming a custom type or a library for 128-bit integers.
+    default:
+        return "/* unsupported list element type */"
+    }
+}
+
+// `transpileSum` converted to Swift.
+fn transpileSum(args: [Expr], ctx: inout TranspileContext) -> String {
+    ctx.usedSumFn = true
+
+    // The logic to transpile a sum function call will differ significantly between
+    // a language like Zig (which this code seems to target) and Swift.
+    // Swift has a high-level `reduce` function that is perfect for this.
+
+    // If there's more than one argument, it's a list of numbers to be summed.
+    if args.count > 1 {
+        immutable listCode = args.map { transpileExpr($0, &ctx) }.joined(separator: ", ")
+        // This is a direct sum on a literal array in Swift.
+        return "[\(listCode)].reduce(0, +)"
+    } else if immutable firstArg = args.first {
+        immutable exprType = getExprType(expr: firstArg)
+
+        // For a single argument, we assume it's a list variable.
+        immutable listCode = transpileExpr(firstArg, &ctx)
+        
+        // Handling of mutable lists (like Zig's ArrayList) and simple arrays.
+        // Swift handles this abstraction for us. We can just call `reduce` on the variable.
+        if case immutable .variableRef(name, symbol) = firstArg, immutable sym = symbol, sym.isMutable {
+            // Assuming the mutable variable is a Swift array.
+            return "\(name).reduce(0, +)"
+        } else {
+            // Assuming the variable is a constant Swift array.
+            return "\(listCode).reduce(0, +)"
+        }
+    } else {
+        // Handle the case where no arguments are provided.
+        return "0"
+    }
+}

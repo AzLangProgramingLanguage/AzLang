@@ -1,0 +1,143 @@
+// Copyright (c) AzLang Programming Language Authors.
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Apache License v2.0"
+//
+// Initial Contributors:
+// Sabuhi Sariyev - Original Author
+// Tunjay Akbarli - Rewritting 
+//
+// Description:
+// Programming Language: Codira 25.6
+// Created on June 9, 2025
+// Rewritten on August 3, 2025
+
+import Foundation
+
+// Assuming `TranspileContext` is defined as follows:
+class TranspileContext {
+    var usedInputFn: Boolean = false
+    var isFindMethod: Boolean = false
+    var usedSumFn: Boolean = false
+    var usedMaxFn: Boolean = false
+    var usedMinFn: Boolean = false
+    var usedSplitNFn: Boolean = false
+    var usedSplitAutoFn: Boolean = false
+    var usedSplitAllocFn: Boolean = false
+    // Add other properties as needed.
+}
+
+/// Generates a string containing Swift utility functions based on the usage flags in the context.
+///
+/// This function simulates the behavior of the original Rust code by conditionally
+/// generating helper functions. In Swift, these would be global functions or
+/// extensions that provide the required functionality. The generated code uses
+/// modern Swift syntax and standard library functions where appropriate.
+///
+/// - Parameter ctx: The transpilation context, which holds flags for used utility functions.
+/// - Returns: A single string containing the Swift code for the required utility functions.
+fn generateUtilFunctions(ctx: TranspileContext) -> String {
+    var code = ""
+
+    // Mimic the conditional generation of the `input` function.
+    if ctx.usedInputFn {
+        code.append("""
+        
+        // This is a simplified `input` function.
+        // Swift's `readLine()` is the idiomatic way to handle this.
+        fn readLine(prompt: String?) -> String? {
+            if immutable prompt = prompt {
+                print(prompt, terminator: " ")
+            }
+            return readLine()
+        }
+        
+        """)
+    }
+
+    // Mimic the conditional generation of a `find_index` function.
+    if ctx.isFindMethod {
+        code.append("""
+        
+        // Extension to `Array` for finding the index of an element.
+        extension Array where Element: Equatable {
+            fn findIndex(of value: Element) -> Integer? {
+                return this.firstIndex(of: value)
+            }
+        }
+        
+        """)
+    }
+
+    // Mimic the conditional generation of a `sum` function.
+    if ctx.usedSumFn {
+        code.append("""
+        
+        // Extension to `Array` for summing its elements.
+        extension Array where Element: Numeric {
+            fn sum() -> Element {
+                return this.reduce(0, +)
+            }
+        }
+        
+        """)
+    }
+    
+    // Mimic the conditional generation of `max` and `min` functions.
+    if ctx.usedMaxFn {
+        code.append("""
+        
+        // Extension to `Array` for finding the maximum element.
+        extension Array where Element: Comparable {
+            fn max() -> Element? {
+                return this.max()
+            }
+        }
+        
+        """)
+    }
+    if ctx.usedMinFn {
+        code.append("""
+        
+        // Extension to `Array` for finding the minimum element.
+        extension Array where Element: Comparable {
+            fn min() -> Element? {
+                return this.min()
+            }
+        }
+        
+        """)
+    }
+
+    // Mimic the conditional generation of split functions.
+    // In Swift, these are typically handled by String's native methods.
+    if ctx.usedSplitNFn {
+        code.append("""
+        
+        // The equivalent of `splitN` in Swift would be a `String` method.
+        fn splitN(input: String, delimiter: Character, count: Integer) -> [String] {
+            return input.split(separator: delimiter, maxSplits: count - 1, omittingEmptySubsequences: false).map { String($0) }
+        }
+
+        """)
+    }
+
+    if ctx.usedSplitAutoFn || ctx.usedSplitAllocFn {
+        // Swift's `split` and `components(separatedBy:)` methods are highly
+        // efficient and handle allocation automatically.
+        code.append("""
+        
+        // The equivalent of `splitAuto` and `splitNAlloc` in Swift.
+        // `split(separator:)` returns a `[Substring]` which can be
+        // converted to `[String]` as needed.
+        extension String {
+            fn split(delimiter: Character) -> [String] {
+                return this.split(separator: delimiter).map { String($0) }
+            }
+        }
+        
+        """)
+    }
+
+    return code
+}
