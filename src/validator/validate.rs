@@ -6,7 +6,7 @@ use crate::{
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Parameter, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
     validator::{
-        FunctionInfo, ValidatorContext,
+        FunctionInfo, MethodInfo, ValidatorContext,
         helpers::{get_type, transpile_az_chars},
     },
 };
@@ -19,6 +19,7 @@ pub fn validate_expr<'a>(
     match expr {
         Expr::Decl {
             name,
+
             transpiled_name,
             typ,
             is_mutable,
@@ -66,30 +67,50 @@ pub fn validate_expr<'a>(
         }
         Expr::UnionType {
             name,
+            transpiled_name,
             fields,
             methods,
         } => {
             log(&format!("✅ Union tərifi yoxlanılır: '{name}'"));
-            if ctx.struct_defs.contains_key(*name) {
-                return Err(ValidatorError::DuplicateStruct(name));
+            if ctx.union_defs.contains_key(*name) {
+                return Err(ValidatorError::DuplicateUnion(name.to_string()));
             }
-
-            let method_infos = methods
-                .iter()
-                .map(|(method_name, _params, _body, ret_type)| {
-                    (Cow::Borrowed(*method_name), ret_type.clone())
+            let transpiled = transpile_az_chars(name);
+            ctx.union_defs.insert(
+                name.to_string(),
+                (transpiled.to_string(), Vec::new(), Vec::new()),
+            );
+            let method_infos: Vec<MethodInfo<'a>> = methods
+                .iter_mut()
+                .map(|(method_name, params, _body, ret_type)| {
+                    /*     if let Some(Type::Istifadeci(name, transpiled_type)) = &mut cloned_ret_type {
+                                           match ctx.validate_user_type(name.as_ref()) {
+                                               Ok(_) => {
+                                                   *transpiled_type =
+                                                       Cow::Owned(transpile_az_chars(name.as_ref()).into_owned());
+                                               }
+                                               Err(e) => return Err(e),
+                                           }
+                                       }
+                    */
+                    Ok(MethodInfo {
+                        name: Cow::Borrowed(*method_name),
+                        return_type: ret_type.clone(),
+                        parameters: params.clone(),
+                        is_allocator_used: false, // bu sonra müəyyən olunacaq
+                    })
                 })
-                .collect();
+                .collect::<Result<_, ValidatorError<'a>>>()?;
 
             let newfields: Vec<(&str, Type)> = fields
                 .iter()
                 .map(|(name, typ)| (*name, typ.clone()))
                 .collect();
-
-            ctx.struct_defs
-                .insert(name.to_string(), (newfields, method_infos));
-
-            for (_method_name, _params, body, _ret_type) in methods.iter_mut() {
+            ctx.union_defs.insert(
+                name.to_string(),
+                (transpiled.to_string(), newfields, method_infos),
+            );
+            for (_method_name, _params, body, ret_type) in methods.iter_mut() {
                 ctx.current_struct = Some(name);
                 for expr in body {
                     validate_expr(expr, ctx, log)?;
@@ -98,6 +119,15 @@ pub fn validate_expr<'a>(
                     "✅ Union metodları yoxlanılır: '{}'",
                     ctx.is_allocator_used
                 ));
+                if let Some(Type::Istifadeci(name, transpiled_type)) = ret_type {
+                    match ctx.validate_user_type(name.as_ref()) {
+                        Ok(_) => {
+                            *transpiled_type =
+                                Cow::Owned(transpile_az_chars(name.as_ref()).into_owned());
+                        }
+                        Err(e) => return Err(e),
+                    }
+                }
 
                 if ctx.is_allocator_used {
                     _params.push(Parameter {
@@ -110,6 +140,7 @@ pub fn validate_expr<'a>(
                 ctx.is_allocator_used = false;
                 ctx.current_struct = None;
             }
+            *transpiled_name = Some(Cow::Owned(transpile_az_chars(name).to_string()));
         }
         Expr::Match { target, arms } => {
             log(&format!("✅ Match ifadəsi yoxlanılır"));
@@ -128,7 +159,7 @@ pub fn validate_expr<'a>(
         Expr::BuiltInCall {
             function,
             args,
-            return_type,
+            return_type: _,
         } => {
             log(&format!("✅ Built-in funksiya yoxlanılır: {function:?}"));
 
@@ -185,8 +216,20 @@ pub fn validate_expr<'a>(
                 validate_expr(arg, ctx, log)?;
             }
         }
-        Expr::StructInit { name, args } => {
+        Expr::StructInit {
+            name,
+            transpiled_name,
+            args,
+        } => {
             log(&format!("✅ Struct yoxlanılır: '{}'", name));
+
+            if let Some((s, ..)) = ctx.struct_defs.get(name.as_ref()) {
+                *transpiled_name = Some(Cow::Owned(s.clone()))
+            } else if let Some((s, ..)) = ctx.union_defs.get(name.as_ref()) {
+                *transpiled_name = Some(Cow::Owned(s.clone()))
+            } else {
+                return Err(ValidatorError::UnknownStruct(name.to_string()));
+            }
 
             for arg in args.iter_mut() {
                 validate_expr(&mut arg.1, ctx, log)?;
@@ -204,18 +247,33 @@ pub fn validate_expr<'a>(
 
             let method_infos = methods
                 .iter()
-                .map(|(method_name, _params, _body, ret_type)| {
-                    (Cow::Borrowed(*method_name), ret_type.clone())
+                .map(|(method_name, params, _body, ret_type)| {
+                    let mut cloned_ret_type = ret_type.clone();
+                    if let Some(Type::Istifadeci(name, transpiled_type)) = &mut cloned_ret_type {
+                        match ctx.validate_user_type(name.as_ref()) {
+                            Ok(_) => {
+                                *transpiled_type =
+                                    Cow::Owned(transpile_az_chars(name.as_ref()).into_owned());
+                            }
+                            Err(e) => return Err(e),
+                        }
+                    }
+                    Ok(MethodInfo {
+                        name: Cow::Borrowed(*method_name),
+                        return_type: cloned_ret_type,
+                        parameters: params.clone(),
+                        is_allocator_used: false, // bu sonra müəyyən olunacaq
+                    })
                 })
-                .collect();
+                .collect::<Result<Vec<_>, ValidatorError<'a>>>()?;
 
             let newfields: Vec<(&str, Type)> = fields
                 .iter()
                 .map(|(name, typ, _)| (*name, typ.clone()))
                 .collect();
-
+            let s = transpile_az_chars(name);
             ctx.struct_defs
-                .insert(name.to_string(), (newfields, method_infos));
+                .insert(name.to_string(), (s.to_string(), newfields, method_infos));
 
             for (_method_name, _params, body, _ret_type) in methods.iter_mut() {
                 ctx.current_struct = Some(name);
@@ -257,15 +315,19 @@ pub fn validate_expr<'a>(
         } => {
             log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
-            if let Some(found_symbol) = ctx.lookup_variable(name) {
+            if let Some(mut found_symbol) = ctx.lookup_variable(name) {
                 *symbol = Some(found_symbol.clone());
                 *transpiled_name = found_symbol.transpiled_name;
+                found_symbol.is_used = true;
                 return Ok(());
             }
 
             if name == "self" && ctx.current_struct.is_some() {
                 *symbol = Some(Symbol {
-                    typ: Type::Istifadeci(Cow::Borrowed(ctx.current_struct.unwrap())),
+                    typ: Type::Istifadeci(
+                        Cow::Borrowed(ctx.current_struct.unwrap()),
+                        Cow::Borrowed(ctx.current_struct.unwrap()),
+                    ),
                     is_mutable: false,
                     transpiled_name: Some("self".into()),
                     is_used: true,
@@ -408,6 +470,7 @@ pub fn validate_expr<'a>(
             log("Dəmir Əmi indeksləmə əməliyyatını yoxlayır...");
 
             validate_expr(target, ctx, log)?;
+            validate_expr(index, ctx, log)?;
             /*             validate_expr(index, ctx, log)?;
              */
             let index_type = get_type(index, ctx, None);
@@ -437,15 +500,18 @@ pub fn validate_expr<'a>(
 
                     println!("Sruktur tipi {target:?}");
                     let struct_name = match struct_type {
-                        Some(Type::Istifadeci(name)) => name,
+                        Some(Type::Istifadeci(name, _)) => name,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
+
                     let struct_def = ctx
                         .struct_defs
                         .get(&struct_name.to_string())
-                        .unwrap()
-                        .0
+                        .or_else(|| ctx.union_defs.get(&struct_name.to_string()))
+                        .ok_or(ValidatorError::IndexTargetTypeNotFound)?
+                        .1
                         .clone();
+
                     match &**index {
                         Expr::String(index_name) => {
                             log(&format!("Dəmir Əmi sindeksləmə əməliyyatını yoxlayır..."));
@@ -471,6 +537,12 @@ pub fn validate_expr<'a>(
             log(&format!("Funksiya tərifi yoxlanılır: {}", name));
             if ctx.current_function.is_some() {
                 return Err(ValidatorError::NestedFunctionDefinition);
+            }
+            if let Some(Type::Istifadeci(name, _)) = return_type {
+                match ctx.validate_user_type(name) {
+                    Ok(_) => {}
+                    Err(e) => return Err(e),
+                }
             }
             ctx.current_function = Some(name.to_string());
 

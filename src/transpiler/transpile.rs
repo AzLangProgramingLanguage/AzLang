@@ -298,9 +298,13 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
         }
         Expr::UnionType {
             name,
+            transpiled_name,
             fields,
             methods,
-        } => transpile_union_def(name, fields, methods, ctx),
+        } => {
+            let new_name = transpiled_name.as_ref().unwrap();
+            transpile_union_def(name, new_name, fields, methods, ctx)
+        }
         Expr::TemplateString(template) => {
             let mut lines = Vec::new();
             for part in template {
@@ -416,16 +420,20 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             }
         }
 
-        Expr::StructInit { name, args } => {
+        Expr::StructInit {
+            name,
+            transpiled_name,
+            args,
+        } => {
             let mut field_lines: Vec<String> = Vec::new();
-
+            let transpiled_name = transpiled_name.as_ref().unwrap();
             for (i, arg_expr) in args.iter().enumerate() {
                 let value_code = transpile_expr(&arg_expr.1, ctx);
                 let field_name = arg_expr.0;
                 field_lines.push(format!(".{} = {}", field_name, value_code));
             }
             let body = field_lines.join(", ");
-            format!("{}{{ {} }};", name, body)
+            format!("{}{{ {} }};", transpiled_name, body)
         }
 
         Expr::Loop {

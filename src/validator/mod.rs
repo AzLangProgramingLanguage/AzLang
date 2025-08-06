@@ -3,12 +3,19 @@ pub mod validate;
 use crate::parser::ast::{Expr, Parameter, Symbol, Type};
 pub use validate::validate_expr;
 pub mod helpers;
-
+pub use crate::translations::validator_messages::ValidatorError;
 #[derive(Debug)]
 pub struct FunctionInfo<'a> {
     pub name: Cow<'a, str>,
     pub return_type: Option<Type<'a>>,
     pub parameters: Vec<Parameter<'a>>,
+}
+
+struct MethodInfo<'a> {
+    pub name: Cow<'a, str>,
+    pub return_type: Option<Type<'a>>,
+    pub parameters: Vec<Parameter<'a>>,
+    pub is_allocator_used: bool,
 }
 pub struct ValidatorContext<'a> {
     pub scopes: Vec<HashMap<String, Symbol<'a>>>,
@@ -16,8 +23,17 @@ pub struct ValidatorContext<'a> {
     pub struct_defs: HashMap<
         String,
         (
+            String,
             Vec<(&'a str, Type<'a>)>, // fields
-            Vec<(Cow<'a, str>, Option<Type<'a>>)>,
+            Vec<MethodInfo<'a>>,
+        ),
+    >,
+    pub union_defs: HashMap<
+        String,
+        (
+            String,
+            Vec<(&'a str, Type<'a>)>, // fields
+            Vec<MethodInfo<'a>>,
         ),
     >,
     pub enum_defs: HashMap<Cow<'a, str>, Vec<Cow<'a, str>>>,
@@ -40,6 +56,7 @@ impl<'a> ValidatorContext<'a> {
             functions: HashMap::new(),
             struct_defs: HashMap::new(),
             enum_defs: HashMap::new(),
+            union_defs: HashMap::new(),
             is_allocator_used: false,
             current_function: None,
             current_return: None,
@@ -54,7 +71,18 @@ impl<'a> ValidatorContext<'a> {
     pub fn pop_scope(&mut self) {
         self.scopes.pop();
     }
-
+    pub fn validate_user_type(&self, name: &str) -> Result<(), ValidatorError<'a>> {
+        if let Some(_) = self.enum_defs.get(name) {
+            return Ok(());
+        }
+        if let Some(_) = self.struct_defs.get(name) {
+            return Ok(());
+        }
+        if let Some(_) = self.union_defs.get(name) {
+            return Ok(());
+        }
+        Err(ValidatorError::UnknownType(name.to_string()))
+    }
     pub fn declare_variable(&mut self, name: String, symbol: Symbol<'a>) {
         if let Some(scope) = self.scopes.last_mut() {
             scope.insert(name, symbol);

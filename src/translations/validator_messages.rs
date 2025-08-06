@@ -45,6 +45,8 @@ pub enum ValidatorError<'a> {
         expected: usize,
         found: usize,
     },
+    #[error("Union '{0}' artıq mövcuddur")]
+    DuplicateUnion(String),
     #[error("Dəyişən '{0}' elan edilməyib")]
     UndefinedVariable(String),
 
@@ -88,6 +90,11 @@ pub enum ValidatorError<'a> {
     #[error("Dəyişənin tipi müəyyən edilməyib")]
     DeclTypeUnknown,
 
+    #[error("Tip '{0}' tapılmadı")]
+    UnknownType(String),
+
     #[error("Import funksiyası yalnız string arqument qəbul edir")]
     ImportError,
+    #[error("Struct '{0}' tapılmadı")]
+    UnknownStruct(String),
 }

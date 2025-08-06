@@ -23,7 +23,7 @@ pub fn get_type<'a>(
         Expr::Bool(_) => Some(Type::Bool),
         Expr::String(_) => Some(Type::Metn),
         Expr::List(items) => {
-            if (items.len() > 0) {
+            if items.len() > 0 {
                 let item_type = get_type(&items[0], ctx, typ)?;
                 for item in &items[1..] {
                     let t = get_type(item, ctx, typ)?;
@@ -52,7 +52,7 @@ pub fn get_type<'a>(
             }
 
             if let Some(t) = typ {
-                if let Type::Istifadeci(enum_name) = t {
+                if let Type::Istifadeci(enum_name, _) = t {
                     if let Some(variants) = ctx.enum_defs.get(enum_name) {
                         if variants.contains(name) {
                             return Some(t.clone());
@@ -63,12 +63,21 @@ pub fn get_type<'a>(
             return Some(symbol.as_ref().unwrap().typ.clone());
         }
         Expr::StructInit { name, .. } => {
-            if let Some(_) = ctx.struct_defs.get(name.as_ref()) {
-                Some(Type::Istifadeci(Cow::Owned(name.to_string())))
+            if let Some((s, ..)) = ctx.struct_defs.get(name.as_ref()) {
+                Some(Type::Istifadeci(
+                    Cow::Owned(name.to_string()),
+                    Cow::Owned(s.clone()),
+                ))
+            } else if let Some((s, ..)) = ctx.union_defs.get(name.as_ref()) {
+                Some(Type::Istifadeci(
+                    Cow::Owned(name.to_string()),
+                    Cow::Owned(s.clone()),
+                ))
             } else {
                 None
             }
         }
+
         Expr::BuiltInCall { return_type, .. } => Some(return_type.clone()),
         Expr::Call { returned_type, .. } => {
             dbg!(returned_type);

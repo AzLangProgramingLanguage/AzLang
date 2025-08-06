@@ -12,6 +12,7 @@ use super::TranspileContext;
 type MethodType<'a> = Vec<(&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>;
 pub fn transpile_union_def<'a>(
     name: &'a str,
+    transpiled_name: &Cow<'a, str>,
     fields: &Vec<(&str, Type<'_>)>,
     methods: &MethodType<'a>,
     ctx: &mut TranspileContext<'a>,
@@ -89,6 +90,6 @@ pub fn transpile_union_def<'a>(
     all_lines.extend(method_lines);
     let full_body = all_lines.join("\n");
     ctx.current_struct = old_struct;
-
-    format!("const {name} = union(enum) {{\n{full_body}\n}};")
+    let new_name = transpiled_name;
+    format!("const {new_name} = union(enum) {{\n{full_body}\n}};")
 }

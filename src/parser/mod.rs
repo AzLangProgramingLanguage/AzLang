@@ -28,14 +28,10 @@ pub mod ast;
 #[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
-    is_used_allocator: bool,
 }
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self {
-            tokens,
-            is_used_allocator: false,
-        }
+        Self { tokens }
     }
     pub fn parse(&mut self) -> Result<Program> {
         let tokens = &mut self.tokens.iter().peekmore();

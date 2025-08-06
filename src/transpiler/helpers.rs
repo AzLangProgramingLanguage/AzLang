@@ -57,7 +57,7 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>) -> &'a str {
         Type::Allocator => "",
         Type::Any => "{any}",
         Type::Siyahi(_) => "{any} ",
-        Type::Istifadeci(_) => "{any}",
+        Type::Istifadeci(_, _) => "{any}",
         Type::ZigString => "{s}",
         Type::ZigConstString => "{s}",
     }
@@ -100,8 +100,8 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
             let inner_str = map_type(inner, is_const);
             inner_str
         }
-        Type::Istifadeci(name) => {
-            Cow::Borrowed(name) // əgər `name: &'a str`-dirsə.
+        Type::Istifadeci(_, s) => {
+            Cow::Borrowed(s) // əgər `name: &'a str`-dirsə.
         }
         Type::Allocator => Cow::Borrowed("std.mem.Allocator"),
     }

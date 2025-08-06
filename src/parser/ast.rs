@@ -55,7 +55,7 @@ pub enum Type<'a> {
     ZigString,
     ZigConstString,
     Siyahi(Box<Type<'a>>),
-    Istifadeci(Cow<'a, str>),
+    Istifadeci(Cow<'a, str>, Cow<'a, str>),
     Integer,
     Natural,
     BigInteger,
@@ -135,6 +135,7 @@ pub enum Expr<'a> {
         args: Vec<Expr<'a>>,
         return_type: Type<'a>,
     },
+
     Call {
         target: Option<Box<Expr<'a>>>,
         name: &'a str,
@@ -146,21 +147,24 @@ pub enum Expr<'a> {
         fields: Vec<(&'a str, Type<'a>, Option<Expr<'a>>)>,
         methods: MethodType<'a>,
     },
-    UnionType {
-        name: &'a str,
-        fields: Vec<(&'a str, Type<'a>)>,
-        methods: MethodType<'a>,
-    },
-    StructInit {
-        name: Cow<'a, str>,
-        args: Vec<(&'a str, Expr<'a>)>,
-    },
     FunctionDef {
         name: &'a str,
         params: Vec<Parameter<'a>>,
         body: Vec<Expr<'a>>,
         return_type: Option<Type<'a>>,
     },
+    UnionType {
+        name: &'a str,
+        transpiled_name: Option<Cow<'a, str>>,
+        fields: Vec<(&'a str, Type<'a>)>,
+        methods: MethodType<'a>,
+    },
+    StructInit {
+        name: Cow<'a, str>,
+        transpiled_name: Option<Cow<'a, str>>,
+        args: Vec<(&'a str, Expr<'a>)>,
+    },
+
     Assignment {
         name: Cow<'a, str>,
         value: Box<Expr<'a>>,
@@ -182,16 +186,14 @@ pub enum Expr<'a> {
 #[derive(Debug)]
 pub struct Program<'a> {
     pub expressions: Vec<Expr<'a>>,
-    /*     pub return_type: Option<Type<'a>>,
-     */
 }
 
 #[derive(Clone, Debug)]
 pub struct Symbol<'a> {
     pub typ: Type<'a>,
     pub is_mutable: bool,
-    pub is_used: bool,
     pub is_pointer: bool,
+    pub is_used: bool,
     pub transpiled_name: Option<String>,
     //pub source_location: Option<Location>,
 }

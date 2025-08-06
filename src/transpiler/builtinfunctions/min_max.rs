@@ -31,14 +31,15 @@ fn transpile_min_max<'a>(
 
     let final_list_code = match list_expr {
         Expr::VariableRef {
-            name,
+            name: _,
             transpiled_name,
             symbol: Some(sym),
         } => {
+            let transpiled_name = transpiled_name.as_ref().unwrap();
             if sym.is_mutable {
-                format!("{}.items", name)
+                format!("{transpiled_name}.items")
             } else {
-                format!("&{}", name)
+                format!("&{transpiled_name}")
             }
         }
         _ => {

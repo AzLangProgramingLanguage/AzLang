@@ -1,12 +1,10 @@
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
-use std::borrow::Cow;
 
 use crate::{
     lexer::Token,
     parser::{
         ast::Expr,
-        expression::parse_single_expr,
         helper::{expect_token, skip_newlines},
         method::parse_method,
         types::parse_type,
@@ -57,6 +55,7 @@ where
     }
     Ok(Expr::UnionType {
         name,
+        transpiled_name: None,
         fields,
         methods,
     })

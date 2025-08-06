@@ -35,7 +35,7 @@ where
     if let Some(Token::LBrace) = tokens.peek() {
         let typ_clone = typ.clone().unwrap();
 
-        if let Type::Istifadeci(ref n) = *typ_clone {
+        if let Type::Istifadeci(n, _t) = &*typ_clone {
             tokens.next();
             value_expr = parse_structs_init(tokens, n.clone())?;
         } else {

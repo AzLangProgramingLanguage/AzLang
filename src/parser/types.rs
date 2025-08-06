@@ -1,5 +1,5 @@
 use crate::{lexer::Token, parser::ast::Type};
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 
@@ -12,7 +12,7 @@ where
         .ok_or_else(|| eyre!("Tip gözlənilirdi, amma EOF tapıldı"))?;
 
     let typ = match token {
-        Token::Identifier(name) => Type::Istifadeci(Cow::Borrowed(name)),
+        Token::Identifier(name) => Type::Istifadeci(Cow::Borrowed(name), Cow::Borrowed(name)),
         Token::IntegerType => Type::Integer,
         Token::BigIntegerType => Type::BigInteger,
         Token::LowIntegerType => Type::LowInteger,

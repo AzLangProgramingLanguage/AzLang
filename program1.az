@@ -1,13 +1,15 @@
-tip Yazi
+tip Yazı
   Const: zigsabityazı
   Mut: zigyazı
   metod dondur(): zigsabityazı
     qaytar Zig(`switch (self) {.Const => |v| v,.Mut => |v| v,}`)
-  metod boyut(): Yazi
+  metod boyut(): Yazı
     uyğun öz
-      Const -> qaytar Yazi{ Const: YazıBöyüt(öz.Const) }
-      Mut -> qaytar Yazi{ Mut: YazıBöyüt(öz.Mut) }
+      Const -> qaytar Yazı{ Const: YazıBöyüt(öz.Const) }
+      Mut -> qaytar Yazı{ Mut: YazıBöyüt(öz.Mut) }
 
+sabit yazi = Yazı{Const: "asdas"}
+Çap(yazi.boyut())
 
 sabit aü = 2
 Çap(aü)

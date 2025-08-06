@@ -1,4 +1,4 @@
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 
@@ -52,5 +52,9 @@ where
         }
     }
 
-    Ok(Expr::StructInit { name, args })
+    Ok(Expr::StructInit {
+        name,
+        transpiled_name: None,
+        args,
+    })
 }

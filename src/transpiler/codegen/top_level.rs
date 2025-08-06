@@ -25,10 +25,17 @@ pub fn generate_top_level_defs<'a>(
             }
             Expr::UnionType {
                 name,
+                transpiled_name,
                 fields,
                 methods,
             } => {
-                let union = transpile_union_def(name, fields, methods, ctx);
+                let union = transpile_union_def(
+                    name,
+                    transpiled_name.as_ref().unwrap(),
+                    fields,
+                    methods,
+                    ctx,
+                );
                 code.push_str(&union);
                 code.push_str("\n\n");
             }

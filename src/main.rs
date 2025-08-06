@@ -45,8 +45,8 @@ enum Commands {
     },
 }
 
-const MAX_RAM_MB: u64 = 1024;
-
+/* const MAX_RAM_MB: u64 = 1024;
+ */
 /* fn xala_opti_error(msg: &str) {
     eprintln!(
         "{} Cəza gəlir! \"Burda həqiqətən problem var, düzəlməsə sənə şillə vuracam! Xəta: {}\"",
@@ -82,17 +82,17 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn emi_validator_error(msg: &str) {
+/* fn emi_validator_error(msg: &str) {
     eprintln!(
         "{EMI_VALIDATOR} Əmi xəbər verir: \"Kodun bura gəlməməli idi, bir az tərbiyə lazımdır! Problem: {msg}\"",
     );
-}
+} */
 const QARDAS_PARSE: &str = "\x1b[36m[Böyük Qardaş Parserci]:\x1b[0m";
 const EMI_VALIDATOR: &str = "\x1b[33m[Dəmir Əmi Validator]:\x1b[0m";
-const XALA_OPTI: &str = "\x1b[32m[Validə Xala Optimizator]:\x1b[0m";
+/* const XALA_OPTI: &str = "\x1b[32m[Validə Xala Optimizator]:\x1b[0m";
 
 const SISTER_TRANSP: &str = "\x1b[35m[Kiçik Bacı Tərcüməçi]:\x1b[0m";
-
+ */
 fn qardas_parse(msg: &str) {
     println!("{QARDAS_PARSE} {msg}");
 }
@@ -101,13 +101,13 @@ fn emi_validator(msg: &str) {
     println!("{EMI_VALIDATOR} {msg}");
 }
 
-fn xala_opti(msg: &str) {
+/* fn xala_opti(msg: &str) {
     println!("{XALA_OPTI} {msg}");
 }
 
 fn sister_transp(msg: &str) {
     println!("{SISTER_TRANSP} {msg}");
-}
+} */
 
 fn qardas_parse_error(msg: &str) {
     eprintln!("{QARDAS_PARSE} Qardaş dedi: \"Dayı, burda iş bitmədi, yenidən bax! Səbəb: {msg}\"",);
@@ -150,8 +150,6 @@ fn build(input_path: &str) -> Result<()> {
 
 fn run(input_path: &str) -> Result<()> {
     qardas_parse("Proqramı işə salıram, uğurlar!");
-    let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
-
     let full_code =
         utils::read_file_with_imports(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
     let tokens = lexer::Lexer::new(&full_code).tokenize();
@@ -168,8 +166,6 @@ fn run(input_path: &str) -> Result<()> {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator)
             .map_err(|e| eyre!("Validator xətası: {e}"))?;
     }
-    println!("Parser {:#?}", parsed_program);
-
     let mut ctx = TranspileContext::new();
     let zig_code = ctx.transpile(&parsed_program);
     let mut temp_path = env::temp_dir();
