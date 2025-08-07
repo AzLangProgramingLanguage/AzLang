@@ -18,8 +18,17 @@ pub fn generate_top_level_defs<'a>(
                 params,
                 body,
                 return_type,
+                is_allocator,
             } => {
-                let def = transpile_function_def(name, params, body, return_type, None, ctx);
+                let def = transpile_function_def(
+                    name,
+                    params,
+                    body,
+                    return_type,
+                    None,
+                    ctx,
+                    is_allocator,
+                );
                 code.push_str(&def);
                 code.push_str("\n\n");
             }

@@ -9,9 +9,11 @@ pub struct FunctionInfo<'a> {
     pub name: Cow<'a, str>,
     pub return_type: Option<Type<'a>>,
     pub parameters: Vec<Parameter<'a>>,
+    pub is_allocator_used: bool,
 }
 
-struct MethodInfo<'a> {
+#[derive(Debug)]
+pub struct MethodInfo<'a> {
     pub name: Cow<'a, str>,
     pub return_type: Option<Type<'a>>,
     pub parameters: Vec<Parameter<'a>>,

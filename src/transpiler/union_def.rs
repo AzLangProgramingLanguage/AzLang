@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    parser::ast::{Expr, Parameter, Type},
+    parser::ast::{Expr, MethodType, Parameter, Type},
     transpiler::{
         helpers::{is_semicolon_needed, map_type},
         transpile::transpile_expr,
@@ -9,18 +9,15 @@ use crate::{
 };
 
 use super::TranspileContext;
-type MethodType<'a> = Vec<(&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>;
+
 pub fn transpile_union_def<'a>(
     name: &'a str,
     transpiled_name: &Cow<'a, str>,
     fields: &Vec<(&str, Type<'_>)>,
-    methods: &MethodType<'a>,
+    methods: &Vec<MethodType<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let old_struct = ctx.current_struct.clone();
-
-    // ctx.struct_defsc
-    // .insert(Cow::Borrowed(name), Cow::Owned(fields.clone()));
 
     ctx.current_struct = Some(name);
     let field_lines: Vec<String> = fields
@@ -33,15 +30,22 @@ pub fn transpile_union_def<'a>(
 
     let method_lines: Vec<String> = methods
         .iter()
-        .map(|(method_name, params, body, return_type)| {
+        .map(|method| {
             let uses_self = true;
-            let param_list: Vec<String> = params
+            let param_list: Vec<String> = method
+                .params
                 .iter()
                 .filter(|p| p.name != "self") // self ayrıca işlənəcək
                 .map(|p| format!("{}: {}", p.name, map_type(&p.typ, true)))
                 .collect();
-
-            let self_prefix = if uses_self { "self: @This()" } else { "" };
+            let is_allocator_used = method.is_allocator;
+            let mut prefix = String::new();
+            if uses_self {
+                prefix.push_str("self: @This(),");
+            }
+            if is_allocator_used {
+                prefix.push_str("allocator: std.mem.Allocator");
+            }
 
             let params_zig = if !param_list.is_empty() {
                 if uses_self {
@@ -53,21 +57,26 @@ pub fn transpile_union_def<'a>(
                 "".to_string()
             };
 
-            let all_params = if self_prefix.is_empty() {
+            let all_params = if prefix.is_empty() {
                 params_zig
             } else if params_zig.is_empty() {
-                self_prefix.to_string()
+                prefix.to_string()
             } else {
-                format!("{self_prefix}{params_zig}")
+                format!("{prefix}{params_zig}")
             };
 
-            let ret_type = return_type
+            let ret_type = method
+                .return_type
                 .as_ref()
                 .map(|t| map_type(t, true))
                 .unwrap_or(Cow::Borrowed("void"));
 
-            let header = format!("pub fn {method_name}({all_params})  {ret_type} {{");
-            let body_lines: Vec<String> = body
+            let header = format!(
+                "pub fn {}({all_params})  {ret_type} {{",
+                method.transpiled_name.as_ref().unwrap()
+            );
+            let body_lines: Vec<String> = method
+                .body
                 .iter()
                 .filter_map(|expr| {
                     /*                     let old_struct = ctx.current_struct.clone();
@@ -90,6 +99,7 @@ pub fn transpile_union_def<'a>(
     all_lines.extend(method_lines);
     let full_body = all_lines.join("\n");
     ctx.current_struct = old_struct;
+
     let new_name = transpiled_name;
     format!("const {new_name} = union(enum) {{\n{full_body}\n}};")
 }

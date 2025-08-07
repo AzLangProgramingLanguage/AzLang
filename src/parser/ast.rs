@@ -67,7 +67,16 @@ pub enum Type<'a> {
     Any,
     Float,
 }
-type MethodType<'a> = Vec<(&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>)>;
+
+#[derive(Debug)]
+pub struct MethodType<'a> {
+    pub name: &'a str,
+    pub transpiled_name: Option<Cow<'a, str>>,
+    pub params: Vec<Parameter<'a>>,
+    pub body: Vec<Expr<'a>>,
+    pub return_type: Option<Type<'a>>,
+    pub is_allocator: bool,
+}
 #[derive(Debug)]
 pub struct EnumDecl<'a> {
     pub name: Cow<'a, str>,
@@ -139,25 +148,28 @@ pub enum Expr<'a> {
     Call {
         target: Option<Box<Expr<'a>>>,
         name: &'a str,
+        transpiled_name: Option<String>,
         args: Vec<Expr<'a>>,
         returned_type: Option<Type<'a>>,
+        is_allocator: bool,
     },
     StructDef {
         name: &'a str,
         fields: Vec<(&'a str, Type<'a>, Option<Expr<'a>>)>,
-        methods: MethodType<'a>,
+        methods: Vec<MethodType<'a>>,
     },
     FunctionDef {
         name: &'a str,
         params: Vec<Parameter<'a>>,
         body: Vec<Expr<'a>>,
         return_type: Option<Type<'a>>,
+        is_allocator: bool,
     },
     UnionType {
         name: &'a str,
         transpiled_name: Option<Cow<'a, str>>,
         fields: Vec<(&'a str, Type<'a>)>,
-        methods: MethodType<'a>,
+        methods: Vec<MethodType<'a>>,
     },
     StructInit {
         name: Cow<'a, str>,

@@ -49,6 +49,8 @@ pub enum ValidatorError<'a> {
     DuplicateUnion(String),
     #[error("Dəyişən '{0}' elan edilməyib")]
     UndefinedVariable(String),
+    #[error("Union '{0}' tapılmadı")]
+    UnionNotFound(String),
 
     #[error("Şərt tipi `bool` olmalıdır, tapıldı: {0:?}")]
     IfConditionTypeMismatch(Type<'a>),

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    parser::ast::{BuiltInFunction, EnumDecl, Expr, TemplateChunk, Type},
+    parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     transpiler::{
         TranspileContext,
         builtinfunctions::{
@@ -238,9 +238,10 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
 
             let method_lines: Vec<String> = methods
                 .iter()
-                .map(|(method_name, params, body, _return_type)| {
+                .map(|method| {
                     let uses_self = true;
-                    let param_list: Vec<String> = params
+                    let param_list: Vec<String> = method
+                        .params
                         .iter()
                         .filter(|p| p.name != "self") // self ayrıca işlənəcək
                         .map(|p| format!("{}: {}", p.name, map_type(&p.typ, true)))
@@ -271,8 +272,9 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                                            .map(|t| map_type(t, true))
                                            .unwrap_or(Cow::Borrowed("void"));
                     */
-                    let header = format!("pub fn {method_name}({all_params}) {{return_type}}");
-                    let body_lines: Vec<String> = body
+                    let header = format!("pub fn {}({all_params}) {{return_type}}", method.name);
+                    let body_lines: Vec<String> = method
+                        .body
                         .iter()
                         .filter_map(|expr| {
                             let line = transpile_expr(expr, ctx);
@@ -322,7 +324,8 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             params,
             body,
             return_type,
-        } => transpile_function_def(name, params, body, return_type, None, ctx),
+            is_allocator,
+        } => transpile_function_def(name, params, body, return_type, None, ctx, is_allocator),
         Expr::BuiltInCall {
             function,
             args,
@@ -370,9 +373,9 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
 
                 format!(
                     r#"(blk: {{
-                var {buf}: [100]u8 = undefined;
-                break :blk try input({prompt}, &{buf});
-            }})"#,
+                    var {buf}: [100]u8 = undefined;
+                    break :blk try input({prompt}, &{buf});
+                }})"#,
                     buf = buf_name,
                     prompt = prompt
                 )
@@ -388,6 +391,8 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             name,
             args,
             returned_type: _,
+            is_allocator,
+            transpiled_name,
         } => {
             let mut args_code = vec![];
 
@@ -415,8 +420,19 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             match target.as_deref() {
                 Some(Expr::VariableRef {
                     name: target_name, ..
-                }) => return format!("{}.{} ({})", target_name, name, args_code.join(", ")),
-                _ => format!("{}({})", name, args_code.join(", ")),
+                }) => {
+                    return format!(
+                        "{}.{} ({})",
+                        target_name,
+                        transpiled_name.as_ref().unwrap(),
+                        args_code.join(", ")
+                    );
+                }
+                _ => format!(
+                    "{}({})",
+                    transpiled_name.as_ref().unwrap(),
+                    args_code.join(", ")
+                ),
             }
         }
 

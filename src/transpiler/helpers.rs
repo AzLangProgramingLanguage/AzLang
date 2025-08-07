@@ -12,7 +12,7 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         Expr::Char(_) => Type::Char,
         Expr::VariableRef {
             name: _,
-            transpiled_name,
+            transpiled_name: _,
             symbol,
         } => symbol.as_ref().unwrap().typ.clone(),
         Expr::BuiltInCall {
@@ -100,9 +100,7 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
             let inner_str = map_type(inner, is_const);
             inner_str
         }
-        Type::Istifadeci(_, s) => {
-            Cow::Borrowed(s) // əgər `name: &'a str`-dirsə.
-        }
+        Type::Istifadeci(_, s) => Cow::Borrowed(s),
         Type::Allocator => Cow::Borrowed("std.mem.Allocator"),
     }
 }
@@ -130,6 +128,7 @@ pub fn transpile_function_def<'a>(
     return_type: &Option<Type<'_>>,
     _parent: Option<&'a str>,
     ctx: &mut TranspileContext<'a>,
+    is_allocator: &bool,
 ) -> String {
     let params_str: Vec<String> = params.iter().map(transpile_param).collect();
 

@@ -68,6 +68,8 @@ where
                 name: s,
                 args,
                 returned_type: None,
+                is_allocator: false,
+                transpiled_name: None,
             };
             Ok(expr)
         }
@@ -113,6 +115,8 @@ where
                         name: field_or_method,
                         args,
                         returned_type: Some(Type::Any),
+                        is_allocator: false,
+                        transpiled_name: None,
                     };
                 }
                 _ => {

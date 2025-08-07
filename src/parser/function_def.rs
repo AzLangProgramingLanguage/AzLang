@@ -115,5 +115,6 @@ where
         params,
         body,
         return_type,
+        is_allocator: false,
     })
 }

@@ -8,7 +8,13 @@ use crate::{
 };
 use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
-type MethodResultType<'a> = (&'a str, Vec<Parameter<'a>>, Vec<Expr<'a>>, Option<Type<'a>>);
+type MethodResultType<'a> = (
+    &'a str,
+    Vec<Parameter<'a>>,
+    Vec<Expr<'a>>,
+    Option<Type<'a>>,
+    bool,
+);
 pub fn parse_method<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<MethodResultType<'a>>
 where
     I: Iterator<Item = &'a Token>,
@@ -68,7 +74,7 @@ where
         is_pointer: false,
     }];
 
-    Ok((name, params, body, return_type))
+    Ok((name, params, body, return_type, false))
 }
 
 fn expect_token<'a, I>(tokens: &mut PeekMoreIterator<I>, expected: Token) -> Result<()>

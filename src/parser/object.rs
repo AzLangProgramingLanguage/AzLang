@@ -1,7 +1,7 @@
 use crate::{
     lexer::Token,
     parser::{
-        ast::Expr,
+        ast::{Expr, MethodType},
         expression::parse_expression,
         helper::{expect_token, skip_newlines},
         method::parse_method,
@@ -24,7 +24,7 @@ where
     expect_token(tokens, Token::Newline)?;
 
     let mut fields = Vec::new();
-    let mut methods = Vec::new();
+    let mut methods: Vec<MethodType<'a>> = Vec::new();
 
     expect_token(tokens, Token::Indent)?;
 
@@ -49,7 +49,14 @@ where
             }
             Token::Method => {
                 let method_expr = parse_method(tokens)?;
-                methods.push(method_expr);
+                methods.push(MethodType {
+                    name: method_expr.0,
+                    params: method_expr.1,
+                    body: method_expr.2,
+                    return_type: method_expr.3,
+                    transpiled_name: None,
+                    is_allocator: method_expr.4,
+                });
 
                 skip_newlines(tokens)?;
             }

@@ -4,7 +4,7 @@ use peekmore::PeekMoreIterator;
 use crate::{
     lexer::Token,
     parser::{
-        ast::Expr,
+        ast::{Expr, MethodType},
         helper::{expect_token, skip_newlines},
         method::parse_method,
         types::parse_type,
@@ -36,7 +36,14 @@ where
             }
             Token::Method => {
                 let method_expr = parse_method(tokens)?;
-                methods.push(method_expr);
+                methods.push(MethodType {
+                    name: method_expr.0,
+                    transpiled_name: None,
+                    params: method_expr.1,
+                    body: method_expr.2,
+                    return_type: method_expr.3,
+                    is_allocator: method_expr.4,
+                });
 
                 skip_newlines(tokens)?;
             }

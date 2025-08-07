@@ -3,7 +3,10 @@ use std::{borrow::Cow, rc::Rc};
 use color_eyre::eyre::Result;
 
 use crate::{
-    parser::ast::{BuiltInFunction, EnumDecl, Expr, Parameter, Symbol, TemplateChunk, Type},
+    parser::{
+        ast::{BuiltInFunction, EnumDecl, Expr, Parameter, Symbol, TemplateChunk, Type},
+        method,
+    },
     translations::validator_messages::ValidatorError,
     validator::{
         FunctionInfo, MethodInfo, ValidatorContext,
@@ -81,23 +84,13 @@ pub fn validate_expr<'a>(
                 (transpiled.to_string(), Vec::new(), Vec::new()),
             );
             let method_infos: Vec<MethodInfo<'a>> = methods
-                .iter_mut()
-                .map(|(method_name, params, _body, ret_type)| {
-                    /*     if let Some(Type::Istifadeci(name, transpiled_type)) = &mut cloned_ret_type {
-                                           match ctx.validate_user_type(name.as_ref()) {
-                                               Ok(_) => {
-                                                   *transpiled_type =
-                                                       Cow::Owned(transpile_az_chars(name.as_ref()).into_owned());
-                                               }
-                                               Err(e) => return Err(e),
-                                           }
-                                       }
-                    */
+                .iter()
+                .map(|method| {
                     Ok(MethodInfo {
-                        name: Cow::Borrowed(*method_name),
-                        return_type: ret_type.clone(),
-                        parameters: params.clone(),
-                        is_allocator_used: false, // bu sonra müəyyən olunacaq
+                        name: Cow::Borrowed(method.name),
+                        return_type: method.return_type.clone(),
+                        parameters: method.params.clone(),
+                        is_allocator_used: false,
                     })
                 })
                 .collect::<Result<_, ValidatorError<'a>>>()?;
@@ -110,33 +103,27 @@ pub fn validate_expr<'a>(
                 name.to_string(),
                 (transpiled.to_string(), newfields, method_infos),
             );
-            for (_method_name, _params, body, ret_type) in methods.iter_mut() {
+            for method in methods.iter_mut() {
                 ctx.current_struct = Some(name);
-                for expr in body {
+                for expr in &mut method.body {
                     validate_expr(expr, ctx, log)?;
                 }
                 log(&format!(
                     "✅ Union metodları yoxlanılır: '{}'",
-                    ctx.is_allocator_used
+                    method.is_allocator
                 ));
-                if let Some(Type::Istifadeci(name, transpiled_type)) = ret_type {
+                /* TODO Burada Tekrar tekrar transpile olunma problemini çöz */
+                method.is_allocator = ctx.is_allocator_used;
+                method.transpiled_name = Some(transpile_az_chars(method.name.as_ref()));
+                if let Some(Type::Istifadeci(name, transpiled_type)) = &mut method.return_type {
                     match ctx.validate_user_type(name.as_ref()) {
                         Ok(_) => {
-                            *transpiled_type =
-                                Cow::Owned(transpile_az_chars(name.as_ref()).into_owned());
+                            *transpiled_type = Cow::Owned(transpile_az_chars(name).to_string());
                         }
                         Err(e) => return Err(e),
                     }
                 }
 
-                if ctx.is_allocator_used {
-                    _params.push(Parameter {
-                        name: "allocator".into(),
-                        typ: Type::Allocator,
-                        is_mutable: false,
-                        is_pointer: false,
-                    });
-                }
                 ctx.is_allocator_used = false;
                 ctx.current_struct = None;
             }
@@ -247,8 +234,8 @@ pub fn validate_expr<'a>(
 
             let method_infos = methods
                 .iter()
-                .map(|(method_name, params, _body, ret_type)| {
-                    let mut cloned_ret_type = ret_type.clone();
+                .map(|method| {
+                    let mut cloned_ret_type = method.return_type.clone();
                     if let Some(Type::Istifadeci(name, transpiled_type)) = &mut cloned_ret_type {
                         match ctx.validate_user_type(name.as_ref()) {
                             Ok(_) => {
@@ -259,9 +246,9 @@ pub fn validate_expr<'a>(
                         }
                     }
                     Ok(MethodInfo {
-                        name: Cow::Borrowed(*method_name),
+                        name: Cow::Borrowed(method.name),
                         return_type: cloned_ret_type,
-                        parameters: params.clone(),
+                        parameters: method.params.clone(),
                         is_allocator_used: false, // bu sonra müəyyən olunacaq
                     })
                 })
@@ -275,24 +262,16 @@ pub fn validate_expr<'a>(
             ctx.struct_defs
                 .insert(name.to_string(), (s.to_string(), newfields, method_infos));
 
-            for (_method_name, _params, body, _ret_type) in methods.iter_mut() {
+            for method in methods.iter_mut() {
                 ctx.current_struct = Some(name);
-                for expr in body {
+                for expr in &mut method.body {
                     validate_expr(expr, ctx, log)?;
                 }
                 log(&format!(
                     "✅ Struct metodları yoxlanılır: '{}'",
-                    _method_name
+                    method.name
                 ));
 
-                if ctx.is_allocator_used {
-                    _params.push(Parameter {
-                        name: "allocator".into(),
-                        typ: Type::Allocator,
-                        is_mutable: false,
-                        is_pointer: false,
-                    });
-                }
                 ctx.is_allocator_used = false;
                 ctx.current_struct = None;
             }
@@ -436,17 +415,51 @@ pub fn validate_expr<'a>(
             args,
             returned_type,
             name,
+            is_allocator,
+            transpiled_name,
         } => {
             match target {
                 Some(variable) => {
                     validate_expr(variable, ctx, log)?;
+                    let variable_type = get_type(variable, ctx, None);
+                    match variable_type {
+                        Some(Type::Istifadeci(s, _)) => {
+                            let union = ctx
+                                .union_defs
+                                .get(&s.to_string())
+                                .ok_or(ValidatorError::UnionNotFound(s.to_string()))?;
+                            let maybe_method = union
+                                .2
+                                .iter()
+                                .find(|m| m.name.to_string() == name.to_string());
+                            let method = maybe_method.ok_or_else(|| {
+                                ValidatorError::FunctionNotFound(name) // Əgər ayrıca MethodNotFound error varsa onu istifadə et
+                            })?;
+                            if method.parameters.len() != args.len() + 1 {
+                                return Err(ValidatorError::FunctionArgCountMismatch {
+                                    name: name.to_string(),
+                                    expected: method.parameters.len(),
+                                    found: args.len(),
+                                });
+                            }
+                            *transpiled_name =
+                                Some(transpile_az_chars(method.name.as_ref()).to_string());
+
+                            *is_allocator = method.is_allocator_used;
+                            *returned_type = method.return_type.clone();
+                        }
+                        _ => {
+                            return Err(ValidatorError::UnionNotFound(
+                                "Enum tapılmadı".to_string(),
+                            ));
+                        }
+                    }
                 }
                 _ => {
                     let func = ctx
                         .functions
                         .get(&Cow::Owned(name.to_string()))
                         .ok_or(ValidatorError::FunctionNotFound(name))?;
-
                     log(&format!("Funksiya çağırışı yoxlanılır: {}", name));
                     if func.parameters.len() != args.len() {
                         return Err(ValidatorError::FunctionArgCountMismatch {
@@ -455,6 +468,7 @@ pub fn validate_expr<'a>(
                             found: args.len(),
                         });
                     }
+                    *transpiled_name = Some(transpile_az_chars(name).to_string());
                     *returned_type = func.return_type.clone();
                 }
             }
@@ -482,9 +496,9 @@ pub fn validate_expr<'a>(
 
             if index_type == Type::Integer {
                 *target_type = Type::Integer;
-            } else {
             }
             log("Dəmir Əmi indeksləmə2  əməliyyatını yoxlayır...");
+
             match index_type {
                 Type::Integer => {
                     *target_type = Type::Integer;
@@ -495,7 +509,6 @@ pub fn validate_expr<'a>(
                         Expr::String(s) => s,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
-
                     let struct_type = get_type(target, ctx, None);
 
                     println!("Sruktur tipi {target:?}");
@@ -533,6 +546,7 @@ pub fn validate_expr<'a>(
             params,
             body,
             return_type,
+            is_allocator,
         } => {
             log(&format!("Funksiya tərifi yoxlanılır: {}", name));
             if ctx.current_function.is_some() {
@@ -560,14 +574,7 @@ pub fn validate_expr<'a>(
                 };
                 ctx.declare_variable(param.name.clone(), symbol);
             }
-            if ctx.is_allocator_used {
-                params.push(Parameter {
-                    name: "allocator".into(),
-                    typ: Type::Allocator,
-                    is_mutable: false,
-                    is_pointer: false,
-                });
-            }
+
             let mut owned_body = std::mem::take(body);
 
             ctx.functions.insert(
@@ -576,18 +583,21 @@ pub fn validate_expr<'a>(
                     name: Cow::Borrowed(*name),
                     parameters: params.clone(),
                     return_type: return_type.clone(),
+                    is_allocator_used: ctx.is_allocator_used,
                 },
             );
 
             for expr in owned_body.iter_mut() {
                 validate_expr(expr, ctx, log)?;
             }
+            *is_allocator = ctx.is_allocator_used;
             ctx.functions.insert(
                 Cow::Borrowed(*name),
                 FunctionInfo {
                     name: Cow::Borrowed(*name),
                     parameters: params.clone(),
                     return_type: return_type.clone(),
+                    is_allocator_used: ctx.is_allocator_used,
                 },
             );
 

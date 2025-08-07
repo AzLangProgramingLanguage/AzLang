@@ -4,6 +4,7 @@ use peekmore::PeekMoreIterator;
 use crate::{
     lexer::Token,
     parser::{
+        Parser,
         ast::Expr,
         builtin::parse_builtin,
         decl::parse_decl,
