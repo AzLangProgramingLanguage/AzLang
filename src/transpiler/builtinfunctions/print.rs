@@ -19,7 +19,7 @@ pub fn transpile_print<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> S
                     }
                     TemplateChunk::Expr(inner_expr) => {
                         let typ = get_expr_type(inner_expr);
-                        let format_str = get_format_str_from_type(&typ);
+                        let format_str = get_format_str_from_type(&typ, ctx.is_used_allocator);
 
                         format_parts.push_str(format_str);
 
@@ -39,9 +39,10 @@ pub fn transpile_print<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> S
         }
         _ => {
             let my_type = get_expr_type(expr);
-            let format_str = get_format_str_from_type(&my_type);
+            let format_str = get_format_str_from_type(&my_type, ctx.is_used_allocator);
             let arg_code = transpile_expr(expr, ctx);
             ctx.uses_stdout = true;
+
             format!("std.debug.print(\"{format_str}\\n\", .{{{arg_code}}})")
         }
     }

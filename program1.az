@@ -1,13 +1,14 @@
 tip Yazı
   Const: zigsabityazı
   Mut: zigyazı
-  metod böyüt(): Yazı
+  metod böyüt(): zigsabityazı
     uyğun öz
       Const -> qaytar YazıBöyüt(öz.Const)
       Mut -> qaytar YazıBöyüt(öz.Mut)
+  metod TipVer(): zigsabityazı
+    qaytar "Yazı"
+
 
 sabit yazi = Yazı{Const: "asdas"}
 Çap(yazi.böyüt())
-
-sabit aü = 2
-Çap(aü)
+Çap(yazi.TipVer())

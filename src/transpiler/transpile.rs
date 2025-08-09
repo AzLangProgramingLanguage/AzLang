@@ -363,6 +363,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                 format!("{}", code)
             }
             BuiltInFunction::StrUpper => {
+                ctx.is_used_allocator = true;
                 let code = transpile_expr(&args[0], ctx);
                 format!("str_uppercase(allocator, {})", code)
             }
@@ -411,12 +412,17 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                     }
                     _ => {
                         // Digər hallarda transpile_expr çağır
+
                         let code = transpile_expr(arg, ctx);
                         args_code.push(code);
                     }
                 }
             }
-
+            ctx.is_used_allocator = true;
+            if *is_allocator {
+                ctx.needs_allocator = true;
+                args_code.push("allocator".to_string());
+            }
             match target.as_deref() {
                 Some(Expr::VariableRef {
                     name: target_name, ..
@@ -511,11 +517,10 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             let mut arms_code = Vec::new();
             for arm in arms {
                 let pattern_code = transpile_expr(&arm.0, ctx);
-                let mut expr_code = String::from(" { ");
+                let mut expr_code = String::new();
                 for expr in &arm.1 {
                     expr_code.push_str(&transpile_expr(&expr, ctx));
                 }
-                expr_code.push('}');
                 expr_code.push(',');
 
                 arms_code.push(format!(".{} => {}", pattern_code, expr_code));

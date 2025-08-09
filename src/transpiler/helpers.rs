@@ -10,6 +10,14 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
+        Expr::Call {
+            target,
+            name,
+            transpiled_name,
+            args,
+            returned_type,
+            is_allocator,
+        } => returned_type.as_ref().unwrap().clone(),
         Expr::VariableRef {
             name: _,
             transpiled_name: _,
@@ -45,23 +53,90 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     }
 }
 
-pub fn get_format_str_from_type<'a>(t: &Type<'_>) -> &'a str {
+pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str {
     match t {
-        Type::Metn => "{s}",
-        Type::Integer | Type::BigInteger | Type::LowInteger => "{}",
-        Type::Bool => "{}",
-        Type::Char => "{c}",
-        Type::Float => "{d}",
+        Type::Metn => {
+            if is_allocator {
+                "{!s}"
+            } else {
+                "{s}"
+            }
+        }
+        Type::Integer | Type::BigInteger | Type::LowInteger => {
+            if is_allocator {
+                "{!}"
+            } else {
+                "{}"
+            }
+        }
+        Type::Bool => {
+            if is_allocator {
+                "{!}"
+            } else {
+                "{}"
+            }
+        }
+        Type::Char => {
+            if is_allocator {
+                "{!c}"
+            } else {
+                "{c}"
+            }
+        }
+        Type::Float => {
+            if is_allocator {
+                "{!d}"
+            } else {
+                "{d}"
+            }
+        }
         Type::Void => "",
-        Type::Natural => "{}",
+        Type::Natural => {
+            if is_allocator {
+                "{!}"
+            } else {
+                "{}"
+            }
+        }
         Type::Allocator => "",
-        Type::Any => "{any}",
-        Type::Siyahi(_) => "{any} ",
-        Type::Istifadeci(_, _) => "{any}",
-        Type::ZigString => "{s}",
-        Type::ZigConstString => "{s}",
+        Type::Any => {
+            if is_allocator {
+                "{!any}"
+            } else {
+                "{any}"
+            }
+        }
+        Type::Siyahi(_) => {
+            if is_allocator {
+                "{!any}"
+            } else {
+                "{any}"
+            }
+        }
+        Type::Istifadeci(_, _) => {
+            if is_allocator {
+                "{!any}"
+            } else {
+                "{any}"
+            }
+        }
+        Type::ZigString => {
+            if is_allocator {
+                "{!s}"
+            } else {
+                "{s}"
+            }
+        }
+        Type::ZigConstString => {
+            if is_allocator {
+                "{!s}"
+            } else {
+                "{s}"
+            }
+        }
     }
 }
+
 use std::borrow::Cow;
 
 pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {

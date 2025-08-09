@@ -10,6 +10,7 @@ mod transpile;
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext<'a> {
     pub imports: HashSet<String>,
+    pub is_used_allocator: bool,
     pub current_struct: Option<&'a str>,
     pub needs_allocator: bool,
     pub uses_stdout: bool,
@@ -30,6 +31,7 @@ impl<'a> TranspileContext<'a> {
     pub fn new() -> Self {
         Self {
             imports: HashSet::new(),
+            is_used_allocator: false,
             current_struct: None,
             needs_allocator: false,
             uses_stdout: false,
@@ -46,7 +48,6 @@ impl<'a> TranspileContext<'a> {
             is_find_method: false,
         }
     }
-
     pub fn add_import(&mut self, import: &str) -> Option<String> {
         if self.imports.contains(import) {
             None

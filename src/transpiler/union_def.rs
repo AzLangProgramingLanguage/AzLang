@@ -71,16 +71,10 @@ pub fn transpile_union_def<'a>(
                 .map(|t| map_type(t, true))
                 .unwrap_or(Cow::Borrowed("void"));
 
-            let header = format!(
-                "pub fn {}({all_params})  {ret_type} {{",
-                method.transpiled_name.as_ref().unwrap()
-            );
             let body_lines: Vec<String> = method
                 .body
                 .iter()
                 .filter_map(|expr| {
-                    /*                     let old_struct = ctx.current_struct.clone();
-                     */
                     let line = transpile_expr(expr, ctx);
                     if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
                         Some(format!("{line};"))
@@ -90,6 +84,19 @@ pub fn transpile_union_def<'a>(
                 })
                 .map(|line| format!("        {line}"))
                 .collect();
+            let header;
+            if ctx.is_used_allocator {
+                header = format!(
+                    "pub fn {}({all_params})  !{ret_type} {{",
+                    method.transpiled_name.as_ref().unwrap()
+                );
+            } else {
+                header = format!(
+                    "pub fn {}({all_params})  {ret_type} {{",
+                    method.transpiled_name.as_ref().unwrap()
+                );
+            }
+
             format!("{header}\n{}\n    }}", body_lines.join("\n"))
         })
         .collect::<Vec<_>>();

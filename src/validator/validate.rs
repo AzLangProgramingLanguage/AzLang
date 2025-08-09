@@ -112,7 +112,6 @@ pub fn validate_expr<'a>(
                     "✅ Union metodları yoxlanılır: '{}'",
                     method.is_allocator
                 ));
-                /* TODO Burada Tekrar tekrar transpile olunma problemini çöz */
                 method.is_allocator = ctx.is_allocator_used;
                 method.transpiled_name = Some(transpile_az_chars(method.name.as_ref()));
                 if let Some(Type::Istifadeci(name, transpiled_type)) = &mut method.return_type {
@@ -123,10 +122,16 @@ pub fn validate_expr<'a>(
                         Err(e) => return Err(e),
                     }
                 }
-
+                if let Some((_trans, _fields, ctx_methods)) = ctx.union_defs.get_mut(*name) {
+                    if let Some(ctx_method) = ctx_methods.iter_mut().find(|m| m.name == method.name)
+                    {
+                        ctx_method.is_allocator_used = ctx.is_allocator_used;
+                    }
+                }
                 ctx.is_allocator_used = false;
-                ctx.current_struct = None;
             }
+
+            ctx.current_struct = None;
             *transpiled_name = Some(Cow::Owned(transpile_az_chars(name).to_string()));
         }
         Expr::Match { target, arms } => {
