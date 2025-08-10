@@ -20,6 +20,7 @@ pub enum BuiltInFunction {
     Ceil,
     Zig,
     StrUpper,
+    StrLower,
     Allocator,
 }
 
@@ -44,6 +45,7 @@ impl BuiltInFunction {
             BuiltInFunction::Sum => None,
             BuiltInFunction::Input => None,
             BuiltInFunction::StrUpper => Some(1),
+            BuiltInFunction::StrLower => Some(1),
             BuiltInFunction::Max | BuiltInFunction::Min => None,
         }
     }
@@ -155,11 +157,13 @@ pub enum Expr<'a> {
     },
     StructDef {
         name: &'a str,
+        transpiled_name: Option<Cow<'a, str>>,
         fields: Vec<(&'a str, Type<'a>, Option<Expr<'a>>)>,
         methods: Vec<MethodType<'a>>,
     },
     FunctionDef {
         name: &'a str,
+        transpiled_name: Option<Cow<'a, str>>,
         params: Vec<Parameter<'a>>,
         body: Vec<Expr<'a>>,
         return_type: Option<Type<'a>>,

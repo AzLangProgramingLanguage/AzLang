@@ -4,10 +4,10 @@ use crate::{
 };
 
 pub fn transpile_decl<'a>(
-    name: &String,
+    name: &'a String,
     typ: Option<&Type<'a>>,
     is_mutable: bool,
-    value: &Expr<'a>,
+    value: &'a Expr<'a>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let type_str = map_type(typ.unwrap_or(&Type::Any), !is_mutable);

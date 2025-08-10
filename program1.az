@@ -5,10 +5,35 @@ tip Yazı
     uyğun öz
       Const -> qaytar YazıBöyüt(öz.Const)
       Mut -> qaytar YazıBöyüt(öz.Mut)
+  metod kiçilt(): zigsabityazı
+    uyğun öz
+      Const -> qaytar YazıKiçilt(öz.Const)
+      Mut -> qaytar YazıKiçilt(öz.Mut)
   metod TipVer(): zigsabityazı
+    Zig(`_ = self`)
     qaytar "Yazı"
+  metod uzunluq(): ədəd
+    uyğun öz
+      Const -> qaytar Zig(`self.Const.len`)
+      Mut -> qaytar Zig(`self.Mut.len`)
 
 
-sabit yazi = Yazı{Const: "asdas"}
+
+Obyekt Ədəd
+  deyer: ədəd
+  metod TipVer(): zigsabityazı
+    Zig(`_ = self`)
+    qaytar "Ədəd"
+
+
+
+
+
+
+sabit yazi = "asdas"
+sabit eded = 5
 Çap(yazi.böyüt())
 Çap(yazi.TipVer())
+Çap(yazi.uzunluq()) 
+Çap(yazi.kiçilt())
+Çap(eded.TipVer())

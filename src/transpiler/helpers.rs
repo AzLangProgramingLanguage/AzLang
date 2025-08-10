@@ -199,7 +199,7 @@ pub fn is_semicolon_needed(expr: &Expr) -> bool {
 pub fn transpile_function_def<'a>(
     name: &'a str,
     params: &'_ [Parameter<'a>],
-    body: &'_ [Expr<'a>],
+    body: &'a [Expr<'a>],
     return_type: &Option<Type<'_>>,
     _parent: Option<&'a str>,
     ctx: &mut TranspileContext<'a>,

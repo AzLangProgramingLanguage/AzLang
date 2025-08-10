@@ -169,10 +169,14 @@ pub fn validate_expr<'a>(
                 BuiltInFunction::Allocator => {
                     ctx.is_allocator_used = true;
                 }
+                BuiltInFunction::StrLower => {
+                    log(&format!("✅ StrLower funksiyası yoxlanılır"));
+                    ctx.is_allocator_used = true;
+                }
                 BuiltInFunction::StrUpper => {
                     log(&format!("✅ StrUpper funksiyası yoxlanılır"));
                     ctx.is_allocator_used = true;
-
+                    /* TODO burada içeriden yoxlamanı et */
                     /*    if let Some(t) = get_type(&args[0], ctx, None) {
                         if t != Type::Metn {
                             return Err(ValidatorError::TypeMismatch {
@@ -229,6 +233,7 @@ pub fn validate_expr<'a>(
         }
         Expr::StructDef {
             name,
+            transpiled_name,
             fields,
             methods,
         } => {
@@ -266,7 +271,6 @@ pub fn validate_expr<'a>(
             let s = transpile_az_chars(name);
             ctx.struct_defs
                 .insert(name.to_string(), (s.to_string(), newfields, method_infos));
-
             for method in methods.iter_mut() {
                 ctx.current_struct = Some(name);
                 for expr in &mut method.body {
@@ -280,6 +284,8 @@ pub fn validate_expr<'a>(
                 ctx.is_allocator_used = false;
                 ctx.current_struct = None;
             }
+            *transpiled_name = Some(s);
+            std::mem::take(name);
         }
 
         Expr::EnumDecl(EnumDecl { name, variants }) => {
@@ -432,6 +438,7 @@ pub fn validate_expr<'a>(
                             let union = ctx
                                 .union_defs
                                 .get(&s.to_string())
+                                .or_else(|| ctx.struct_defs.get(&s.to_string()))
                                 .ok_or(ValidatorError::UnionNotFound(s.to_string()))?;
                             let maybe_method = union
                                 .2
@@ -548,6 +555,7 @@ pub fn validate_expr<'a>(
         }
         Expr::FunctionDef {
             name,
+            transpiled_name,
             params,
             body,
             return_type,

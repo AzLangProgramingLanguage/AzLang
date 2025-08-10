@@ -48,7 +48,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "YazıBöyüt" => Token::StrUpper,
             "VaxtAl" => Token::Timer,
             "Modul" => Token::Mod,
-            "Ədəd" => Token::NumberFn,
+            "ƏdədəÇevir" => Token::NumberFn,
             "Cəm" => Token::Sum,
             "Yuvarlaqlaşdır" => Token::Round,
             "AşağıYuvarlaqlaşdır" => Token::Floor,
@@ -63,6 +63,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "ƏlavəEt" => Token::Import,
             "tip" => Token::Type,
             "YaddaşAl" => Token::Allocator,
+            "YazıKiçilt" => Token::StrLower,
             other => Token::Identifier(other.to_string()),
         },
     }
@@ -85,10 +86,11 @@ impl fmt::Display for BuiltInFunction {
             BuiltInFunction::Mod => "Modul",
             BuiltInFunction::Max => "Maksimum",
             BuiltInFunction::Min => "Minimum",
-            BuiltInFunction::Number => "Ədəd",
+            BuiltInFunction::Number => "ƏdədəÇevir",
             BuiltInFunction::LastWord => "Sonsöz",
             BuiltInFunction::Zig => "Zig",
             BuiltInFunction::Allocator => "YaddaşAl",
+            BuiltInFunction::StrLower => "YazıKiçilt",
         };
         write!(f, "{name}")
     }

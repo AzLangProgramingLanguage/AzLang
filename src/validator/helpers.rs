@@ -133,11 +133,18 @@ pub fn transpile_az_chars<'a>(name: &'a str) -> Cow<'a, str> {
     for ch in name.chars() {
         match ch {
             'ə' => out.push('e'),
+            'Ə' => out.push('E'),
+            'Ö' => out.push('o'),
             'ö' => out.push('o'),
+            'Ü' => out.push('u'),
             'ü' => out.push('u'),
+            'Ğ' => out.push('g'),
             'ğ' => out.push('g'),
+            'Ç' => out.push('c'),
             'ç' => out.push('c'),
+            'Ş' => out.push('s'),
             'ş' => out.push('s'),
+            'İ' => out.push('i'),
             'ı' => out.push('i'),
             _ => out.push(ch),
         }

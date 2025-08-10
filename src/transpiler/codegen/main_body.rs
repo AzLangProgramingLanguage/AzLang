@@ -3,12 +3,12 @@ use crate::{
     transpiler::{TranspileContext, transpile::transpile_expr},
 };
 
-pub fn generate_main_body<'a>(program: &Program<'a>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn generate_main_body<'a>(program: &'a Program<'a>, ctx: &mut TranspileContext<'a>) -> String {
     let mut body = String::new();
 
     for expr in &program.expressions {
         match expr {
-            Expr::FunctionDef { .. } | Expr::UnionType { .. } => {
+            Expr::FunctionDef { .. } | Expr::UnionType { .. } | Expr::StructDef { .. } => {
                 continue;
             }
             _ => {}

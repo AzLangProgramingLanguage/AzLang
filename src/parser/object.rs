@@ -72,6 +72,7 @@ where
     }
     Ok(Expr::StructDef {
         name,
+        transpiled_name: None,
         fields,
         methods,
     })

@@ -22,6 +22,7 @@ pub enum Token {
     Mod,
     Len,
     StrUpper,
+    StrLower,
     LastWord,
     Sum,
     Drop,

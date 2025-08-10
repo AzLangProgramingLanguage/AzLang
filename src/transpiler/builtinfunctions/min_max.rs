@@ -3,16 +3,16 @@ use crate::{
     transpiler::{TranspileContext, helpers::get_expr_type, transpile::transpile_expr},
 };
 
-pub fn transpile_min<'a>(args: &[Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_min<'a>(args: &'a [Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
     transpile_min_max(args, ctx, "min")
 }
 
-pub fn transpile_max<'a>(args: &[Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_max<'a>(args: &'a [Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
     transpile_min_max(args, ctx, "max")
 }
 
 fn transpile_min_max<'a>(
-    args: &[Expr<'a>],
+    args: &'a [Expr<'a>],
     ctx: &mut TranspileContext<'a>,
     fn_name: &str,
 ) -> String {

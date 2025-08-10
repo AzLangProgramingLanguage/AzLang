@@ -1,12 +1,13 @@
 use crate::{
     parser::ast::{Expr, Program},
     transpiler::{
-        TranspileContext, helpers::transpile_function_def, union_def::transpile_union_def,
+        TranspileContext, helpers::transpile_function_def, struct_def::transpile_struct_def,
+        union_def::transpile_union_def,
     },
 };
 
 pub fn generate_top_level_defs<'a>(
-    program: &Program<'a>,
+    program: &'a Program<'a>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let mut code = String::new();
@@ -15,6 +16,7 @@ pub fn generate_top_level_defs<'a>(
         match expr {
             Expr::FunctionDef {
                 name,
+                transpiled_name: _,
                 params,
                 body,
                 return_type,
@@ -40,12 +42,28 @@ pub fn generate_top_level_defs<'a>(
             } => {
                 let union = transpile_union_def(
                     name,
-                    transpiled_name.as_ref().unwrap(),
+                    transpiled_name.as_deref().unwrap(),
                     fields,
                     methods,
                     ctx,
                 );
                 code.push_str(&union);
+                code.push_str("\n\n");
+            }
+            Expr::StructDef {
+                name,
+                transpiled_name,
+                fields,
+                methods,
+            } => {
+                let struct_def = transpile_struct_def(
+                    name,
+                    transpiled_name.as_deref().unwrap(),
+                    fields,
+                    methods,
+                    ctx,
+                );
+                code.push_str(&struct_def);
                 code.push_str("\n\n");
             }
             _ => {}

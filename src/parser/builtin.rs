@@ -33,6 +33,7 @@ where
         Token::Round => (BuiltInFunction::Round, Type::Float),
         Token::Floor => (BuiltInFunction::Floor, Type::Float),
         Token::Ceil => (BuiltInFunction::Ceil, Type::Float),
+        Token::StrLower => (BuiltInFunction::StrLower, Type::Metn),
         Token::Allocator => (BuiltInFunction::Allocator, Type::Void),
         Token::StrUpper => (BuiltInFunction::StrUpper, Type::Metn),
         other => return Err(eyre!("Bilinməyən funksiya: {:?}", other)),

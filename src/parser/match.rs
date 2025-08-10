@@ -3,7 +3,11 @@ use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
-    parser::{ast::Expr, expression::parse_single_expr, helper::expect_token},
+    parser::{
+        ast::Expr,
+        expression::{parse_expression, parse_single_expr},
+        helper::expect_token,
+    },
 };
 
 pub fn parse_match<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
@@ -34,7 +38,7 @@ where
 
                 expect_token(tokens, Token::Arrow)?;
 
-                let expr = parse_single_expr(tokens)?;
+                let expr = parse_expression(tokens)?;
 
                 arms.push((pattern, vec![expr]));
 

@@ -6,7 +6,7 @@ use crate::{
     },
 };
 
-pub fn transpile_sum<'a>(args: &[Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_sum<'a>(args: &'a [Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
     ctx.used_sum_fn = true;
 
     let expr_type = get_expr_type(&args[0]);

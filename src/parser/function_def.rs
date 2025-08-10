@@ -112,6 +112,7 @@ where
 
     Ok(Expr::FunctionDef {
         name,
+        transpiled_name: None,
         params,
         body,
         return_type,

@@ -6,12 +6,14 @@ mod builtinfunctions;
 mod codegen;
 mod decl;
 mod helpers;
+mod struct_def;
 mod transpile;
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext<'a> {
     pub imports: HashSet<String>,
     pub is_used_allocator: bool,
     pub current_struct: Option<&'a str>,
+    pub current_union: Option<&'a str>,
     pub needs_allocator: bool,
     pub uses_stdout: bool,
     pub used_min_fn: bool,
@@ -33,6 +35,7 @@ impl<'a> TranspileContext<'a> {
             imports: HashSet::new(),
             is_used_allocator: false,
             current_struct: None,
+            current_union: None,
             needs_allocator: false,
             uses_stdout: false,
             used_max_fn: false,
@@ -56,7 +59,7 @@ impl<'a> TranspileContext<'a> {
             Some(import.to_string())
         }
     }
-    pub fn transpile(&mut self, program: &Program<'a>) -> String {
+    pub fn transpile(&mut self, program: &'a Program<'a>) -> String {
         let imports = codegen::prelude::generate_imports(self);
         let defs = codegen::top_level::generate_top_level_defs(program, self);
         let main_body = codegen::main_body::generate_main_body(program, self);
@@ -82,6 +85,10 @@ impl<'a> TranspileContext<'a> {
             pub fn str_uppercase(allocator: std.mem.Allocator, self: []const u8) ![]u8 {{
                 const output = try allocator.alloc(u8, self.len);
                 return std.ascii.upperString(output, self);
+            }}
+            pub fn str_lowercase(allocator: std.mem.Allocator, self: []const u8) ![]u8 {{
+                const output = try allocator.alloc(u8, self.len);
+                return std.ascii.lowerString(output, self);
             }}
 
 {defs}

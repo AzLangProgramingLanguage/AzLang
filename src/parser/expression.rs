@@ -128,6 +128,7 @@ where
         | Token::Timer
         | Token::Max
         | Token::StrUpper
+        | Token::StrLower
         | Token::Min
         | Token::Zig
         | Token::Mod

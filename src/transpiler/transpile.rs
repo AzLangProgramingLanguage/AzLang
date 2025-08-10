@@ -11,12 +11,13 @@ use crate::{
         },
         decl::transpile_decl,
         helpers::{get_expr_type, is_semicolon_needed, map_type, transpile_function_def},
+        struct_def::transpile_struct_def,
     },
 };
 
 use super::union_def::transpile_union_def;
 
-pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     match expr {
         Expr::String(s) => format!("\"{}\"", s.escape_default()),
         Expr::Number(n) => n.to_string(),
@@ -214,97 +215,23 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
 
         Expr::StructDef {
             name,
+            transpiled_name,
             fields,
             methods,
-        } => {
-            let old_struct = ctx.current_struct.clone();
-
-            // ctx.struct_defsc
-            // .insert(Cow::Borrowed(name), Cow::Owned(fields.clone()));
-
-            ctx.current_struct = Some(name);
-            let field_lines: Vec<String> = fields
-                .iter()
-                .map(|(fname, ftype, value)| {
-                    let zig_type = map_type(ftype, true);
-                    if let Some(val) = value {
-                        let transpiled = transpile_expr(val, ctx);
-                        format!("    {}: {}={},", fname, zig_type, transpiled)
-                    } else {
-                        format!("    {}: {},", fname, zig_type)
-                    }
-                })
-                .collect();
-
-            let method_lines: Vec<String> = methods
-                .iter()
-                .map(|method| {
-                    let uses_self = true;
-                    let param_list: Vec<String> = method
-                        .params
-                        .iter()
-                        .filter(|p| p.name != "self") // self ayrıca işlənəcək
-                        .map(|p| format!("{}: {}", p.name, map_type(&p.typ, true)))
-                        .collect();
-
-                    let self_prefix = if uses_self { "self: @This()" } else { "" };
-
-                    let params_zig = if !param_list.is_empty() {
-                        if uses_self {
-                            format!(", {}", param_list.join(", "))
-                        } else {
-                            param_list.join(", ")
-                        }
-                    } else {
-                        "".to_string()
-                    };
-
-                    let all_params = if self_prefix.is_empty() {
-                        params_zig
-                    } else if params_zig.is_empty() {
-                        self_prefix.to_string()
-                    } else {
-                        format!("{}{}", self_prefix, params_zig)
-                    };
-
-                    /*  let ret_type = return_type
-                                           .as_ref()
-                                           .map(|t| map_type(t, true))
-                                           .unwrap_or(Cow::Borrowed("void"));
-                    */
-                    let header = format!("pub fn {}({all_params}) {{return_type}}", method.name);
-                    let body_lines: Vec<String> = method
-                        .body
-                        .iter()
-                        .filter_map(|expr| {
-                            let line = transpile_expr(expr, ctx);
-                            if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
-                                Some(format!("{line};"))
-                            } else {
-                                Some(line)
-                            }
-                        })
-                        .map(|line| format!("        {line}"))
-                        .collect();
-                    format!("{header}\n{}\n    }}", body_lines.join("\n"))
-                })
-                .collect::<Vec<_>>();
-
-            let mut all_lines = field_lines;
-            all_lines.push("".to_string()); // boş sətr
-            all_lines.extend(method_lines);
-            let full_body = all_lines.join("\n");
-            ctx.current_struct = old_struct;
-
-            format!("const {name} = struct {{\n{full_body}\n}};")
-        }
+        } => transpile_struct_def(
+            name,
+            transpiled_name.as_deref().unwrap(),
+            fields,
+            methods,
+            ctx,
+        ),
         Expr::UnionType {
             name,
             transpiled_name,
             fields,
             methods,
         } => {
-            let new_name = transpiled_name.as_ref().unwrap();
+            let new_name = transpiled_name.as_deref().unwrap();
             transpile_union_def(name, new_name, fields, methods, ctx)
         }
         Expr::TemplateString(template) => {
@@ -321,6 +248,7 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
         }
         Expr::FunctionDef {
             name,
+            transpiled_name: _,
             params,
             body,
             return_type,
@@ -361,6 +289,11 @@ pub fn transpile_expr<'a>(expr: &Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             BuiltInFunction::Zig => {
                 let code = transpile_expr(&args[0], ctx);
                 format!("{}", code)
+            }
+            BuiltInFunction::StrLower => {
+                ctx.is_used_allocator = true;
+                let code = transpile_expr(&args[0], ctx);
+                format!("str_lowercase(allocator, {})", code)
             }
             BuiltInFunction::StrUpper => {
                 ctx.is_used_allocator = true;
