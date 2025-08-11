@@ -21,7 +21,7 @@ pub fn get_type<'a>(
             }
         }
         Expr::Bool(_) => Some(Type::Bool),
-        Expr::String(_) => Some(Type::Metn),
+        Expr::String(_, _) => Some(Type::Metn),
         Expr::List(items) => {
             if items.len() > 0 {
                 let item_type = get_type(&items[0], ctx, typ)?;

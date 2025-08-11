@@ -143,7 +143,7 @@ pub fn validate_expr<'a>(
                 }
             }
         }
-        Expr::String(_)
+        Expr::String(_, _)
         | Expr::Float(_)
         | Expr::Bool(_)
         | Expr::Number(_)
@@ -518,7 +518,7 @@ pub fn validate_expr<'a>(
                 Type::Metn => {
                     log("Dəmir Əmi indeksləmə2  əməliyyatını yoxlayır...");
                     let index_name = match &**index {
-                        Expr::String(s) => s,
+                        Expr::String(s, _) => s,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
                     let struct_type = get_type(target, ctx, None);
@@ -538,7 +538,7 @@ pub fn validate_expr<'a>(
                         .clone();
 
                     match &**index {
-                        Expr::String(index_name) => {
+                        Expr::String(index_name, _) => {
                             log(&format!("Dəmir Əmi sindeksləmə əməliyyatını yoxlayır..."));
                             for (fname, ftype) in struct_def {
                                 if fname == *index_name {

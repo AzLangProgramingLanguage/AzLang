@@ -26,14 +26,24 @@ Obyekt Ədəd
     qaytar "Ədəd"
 
 
+tip Siyahı
+  Const: zigsabitsiyahı
+  Mut: zigsiyahı
+  metod uzunluq(): ədəd
+    uyğun öz
+      Const -> qaytar Zig(`self.Const.len`)
+      Mut -> qaytar Zig(`self.Mut.len`)
+  metod TipVer(): zigsabityazı
+    Zig(`_ = self`)
+    qaytar "Siyahi"
+
+
 
 
 
 
 sabit yazi = "asdas"
-sabit eded = 5
+dəyişən yazis = "dasdasd"
 Çap(yazi.böyüt())
 Çap(yazi.TipVer())
-Çap(yazi.uzunluq()) 
-Çap(yazi.kiçilt())
-Çap(eded.TipVer())
+Çap(yazis)

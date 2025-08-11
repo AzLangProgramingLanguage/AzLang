@@ -122,7 +122,7 @@ where
                 _ => {
                     expr = Expr::Index {
                         target: Box::new(expr),
-                        index: Box::new(Expr::String(field_or_method)),
+                        index: Box::new(Expr::String(field_or_method, false)),
                         target_type: Type::Any,
                     };
                 }

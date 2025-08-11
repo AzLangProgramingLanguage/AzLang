@@ -73,7 +73,7 @@ where
     let token = tokens.next().ok_or_else(|| eyre!("Gözlənilməz Eof"))?;
 
     match token {
-        Token::StringLiteral(s) => Ok(Expr::String(s)),
+        Token::StringLiteral(s) => Ok(Expr::String(s, false)),
         Token::True => Ok(Expr::Bool(true)),
         Token::False => Ok(Expr::Bool(false)),
 

@@ -19,7 +19,13 @@ use super::union_def::transpile_union_def;
 
 pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     match expr {
-        Expr::String(s) => format!("\"{}\"", s.escape_default()),
+        Expr::String(s, b) => {
+            if *b {
+                format!("try allocator.dupe(u8, \"{}\")", s.escape_default())
+            } else {
+                format!("\"{}\"", s.escape_default())
+            }
+        }
         Expr::Number(n) => n.to_string(),
         Expr::Float(n) => n.to_string(),
         Expr::Bool(b) => b.to_string(),

@@ -73,6 +73,8 @@ pub enum Token {
     NaturalType,
     StringType,
     ZigConstString,
+    ZigConstArray,
+    ZigArray,
     Type,
     ZigString,
     CharType,

@@ -5,7 +5,7 @@ use crate::{
 
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     match expr {
-        Expr::String(_) => Type::Metn,
+        Expr::String(_, _) => Type::Metn,
         Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
@@ -99,20 +99,8 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
             }
         }
         Type::Allocator => "",
-        Type::Any => {
-            if is_allocator {
-                "{!any}"
-            } else {
-                "{any}"
-            }
-        }
-        Type::Siyahi(_) => {
-            if is_allocator {
-                "{!any}"
-            } else {
-                "{any}"
-            }
-        }
+        Type::Any => "{any}",
+        Type::Siyahi(_) => "{any}",
         Type::Istifadeci(_, _) => {
             if is_allocator {
                 "{!any}"
@@ -127,6 +115,8 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
                 "{s}"
             }
         }
+        Type::ZigConstArray => "{any}",
+        Type::ZigArray => "{any}",
         Type::ZigConstString => {
             if is_allocator {
                 "{!s}"
@@ -170,6 +160,8 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
         }
         Type::ZigString => Cow::Borrowed("[]u8"),
         Type::ZigConstString => Cow::Borrowed("[]const u8"),
+        Type::ZigArray => Cow::Borrowed("[]usize"),
+        Type::ZigConstArray => Cow::Borrowed("[]const usize"),
         Type::Bool => Cow::Borrowed("bool"),
         Type::Siyahi(inner) => {
             let inner_str = map_type(inner, is_const);

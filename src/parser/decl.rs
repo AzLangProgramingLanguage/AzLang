@@ -49,7 +49,7 @@ where
                 value_expr = Expr::StructInit {
                     name: Cow::Borrowed("Yazı"),
                     transpiled_name: Some(Cow::Borrowed("azlangYazi")),
-                    args: vec![(is_muttable_str, Expr::String(s))].into(),
+                    args: vec![(is_muttable_str, Expr::String(s, is_mutable))].into(),
                 };
             }
             Some(Token::Number(n)) => {

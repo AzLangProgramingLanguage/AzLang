@@ -56,6 +56,8 @@ pub enum Type<'a> {
     Metn,
     ZigString,
     ZigConstString,
+    ZigArray,
+    ZigConstArray,
     Siyahi(Box<Type<'a>>),
     Istifadeci(Cow<'a, str>, Cow<'a, str>),
     Integer,
@@ -87,7 +89,7 @@ pub struct EnumDecl<'a> {
 
 #[derive(Debug)]
 pub enum Expr<'a> {
-    String(&'a str),
+    String(&'a str, bool),
     Bool(bool),
     Number(i64),
     Char(char),

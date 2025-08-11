@@ -36,6 +36,8 @@ pub fn tokenize_word(word: &str) -> Token {
             "yazı" => Token::StringType,
             "zigsabityazı" => Token::ZigConstString,
             "zigyazı" => Token::ZigString,
+            "zigsabitsiyahı" => Token::ZigConstArray,
+            "zigsiyahı" => Token::ZigArray,
             "işarə" => Token::CharType,
             "böyük_ədəd" => Token::BigIntegerType,
             "kiçik_ədəd" => Token::LowIntegerType,
