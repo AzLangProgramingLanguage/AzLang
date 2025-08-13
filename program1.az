@@ -39,11 +39,5 @@ tip Siyahı
 
 
 
-
-
-
-sabit yazi = "asdas"
-dəyişən yazis = "dasdasd"
-Çap(yazi.böyüt())
-Çap(yazi.TipVer())
-Çap(yazis)
+sabit eded = ƏdədəÇevir(Giriş("Ədəd daxil edin."))
+Çap(`${eded/10}  ${eded%10}`)

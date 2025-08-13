@@ -75,7 +75,17 @@ where
         }
         Some(Token::Operator(op)) if op == "=" => {
             tokens.next();
-            let value = parse_expression(tokens)?;
+            let mut value = parse_expression(tokens)?;
+            match value {
+                Expr::String(s, _) => {
+                    value = Expr::StructInit {
+                        name: Cow::Borrowed("Yazı"),
+                        transpiled_name: Some(Cow::Borrowed("azlangYazi")),
+                        args: vec![("Mut", value)],
+                    }
+                }
+                _ => {}
+            }
             Ok(Expr::Assignment {
                 name: s.into(),
                 value: Box::new(value),

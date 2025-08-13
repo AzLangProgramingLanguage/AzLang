@@ -1,10 +1,9 @@
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{eyre, Result};
 use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
     parser::{
-        Parser,
         ast::Expr,
         builtin::parse_builtin,
         decl::parse_decl,
@@ -13,10 +12,10 @@ use crate::{
         if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
         list::parse_list,
         loops::parse_loop,
-        r#match::parse_match,
         object::parse_struct_def,
         op_expr::parse_binary_op_expr,
         parse_identifier::parse_identifier,
+        r#match::parse_match,
         template::parse_template_string_expr,
     },
 };

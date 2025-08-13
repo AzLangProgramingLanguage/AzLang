@@ -215,8 +215,11 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 ">=" => ">=",
                 other => other,
             };
-
-            format!("({} {} {})", left_code, zig_op, right_code)
+            match zig_op {
+                "/" => format!("(@divTrunc({left_code},{right_code}))"),
+                "%" => format!("(@mod({left_code},{right_code}))"),
+                _ => format!("({} {} {})", left_code, zig_op, right_code),
+            }
         }
 
         Expr::StructDef {
@@ -252,6 +255,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
             lines.join("\n")
         }
+
         Expr::FunctionDef {
             name,
             transpiled_name: _,
@@ -269,6 +273,10 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             BuiltInFunction::Max => transpile_max(&args, ctx),
             BuiltInFunction::Sum => transpile_sum(&args, ctx),
             BuiltInFunction::Min => transpile_min(&args, ctx),
+            BuiltInFunction::Number => {
+                let arg_code = transpile_expr(&args[0], ctx);
+                format!("try std.fmt.parseInt(isize, {}, 10)", arg_code)
+            }
             BuiltInFunction::Range => {
                 let start_code = transpile_expr(&args[0], ctx);
                 let end_code = transpile_expr(&args[1], ctx);
@@ -471,9 +479,31 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             value,
             symbol: _,
         } => {
-            let value_code = transpile_expr(value, ctx);
+            let mut value_code = String::new();
+            match &**value {
+                Expr::StructInit {
+                    name: _,
+                    transpiled_name,
+                    args,
+                } => {
+                    if transpiled_name.as_ref().map(|t| t.as_ref()) == Some("azlangYazi") {
+                        // args[1].1 -> ikinci argümanın değeri
+                        value_code = format!(
+                            "azlangYazi{{ .Mut = try allocator.dupe(u8,  {} )  }}",
+                            transpile_expr(&args[0].1, ctx)
+                        );
+                    } else {
+                        value_code = transpile_expr(value, ctx);
+                    }
+                }
+                _ => {
+                    value_code = transpile_expr(value, ctx);
+                }
+            }
+
             format!("{} = {}", name, value_code)
         }
+
         _ => {
             println!("not yet implemented");
             println!("{:?}", expr);
