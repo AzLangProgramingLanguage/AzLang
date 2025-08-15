@@ -154,9 +154,9 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
         }
         Type::Metn => {
             if is_const {
-                Cow::Borrowed("[]const u8")
+                Cow::Borrowed("azlangYazi")
             } else {
-                Cow::Borrowed("[]u8")
+                Cow::Borrowed("azlangYazi")
             }
         }
         Type::ZigString => Cow::Borrowed("[]u8"),

@@ -9,6 +9,10 @@ tip Yazı
     uyğun öz
       Const -> qaytar YazıKiçilt(öz.Const)
       Mut -> qaytar YazıKiçilt(öz.Mut)
+  metod yazıtərs(): Yazı
+    uyğun öz
+      Const -> qaytar YazıTərs(öz.Const)
+      Mut   -> qaytar YazıTərs(öz.Mut)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
     qaytar "Yazı"
@@ -40,4 +44,11 @@ tip Siyahı
 
 
 sabit eded = ƏdədəÇevir(Giriş("Ədəd daxil edin."))
+sabit eded1 = YazıyaÇevir(eded)
+sabit yazii = "Salam"
+sabit yaziis = YazıTərs(yazii)
+
+Çap(yaziis)
 Çap(`${eded/10}  ${eded%10}`)
+
+

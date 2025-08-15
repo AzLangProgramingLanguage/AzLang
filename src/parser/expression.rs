@@ -1,4 +1,4 @@
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 
 use crate::{
@@ -12,10 +12,10 @@ use crate::{
         if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
         list::parse_list,
         loops::parse_loop,
+        r#match::parse_match,
         object::parse_struct_def,
         op_expr::parse_binary_op_expr,
         parse_identifier::parse_identifier,
-        r#match::parse_match,
         template::parse_template_string_expr,
     },
 };
@@ -131,6 +131,8 @@ where
         | Token::Min
         | Token::Zig
         | Token::Mod
+        | Token::StrReverse
+        | Token::ConvertString
         | Token::Round
         | Token::Floor
         | Token::Ceil => {

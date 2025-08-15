@@ -57,6 +57,8 @@ pub fn tokenize_word(word: &str) -> Token {
             "YuxarıYuvarlaqlaşdır" => Token::Ceil,
             "Uzunluq" => Token::Len,
             "Sonsöz" => Token::LastWord,
+            "YazıTərs" => Token::StrReverse,
+            "YazıyaÇevir" => Token::ConvertString,
             "Kök" => Token::Sqrt,
             "aralıq" => Token::RangeFn,
             "növ" => Token::Enum,
@@ -74,6 +76,7 @@ pub fn tokenize_word(word: &str) -> Token {
 impl fmt::Display for BuiltInFunction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
+            BuiltInFunction::StrReverse => "YazıTərs",
             BuiltInFunction::Print => "Çap",
             BuiltInFunction::Len => "Uzunluq",
             BuiltInFunction::Range => "Aralıq",
@@ -93,6 +96,7 @@ impl fmt::Display for BuiltInFunction {
             BuiltInFunction::Zig => "Zig",
             BuiltInFunction::Allocator => "YaddaşAl",
             BuiltInFunction::StrLower => "YazıKiçilt",
+            BuiltInFunction::ConvertString => "YazıyaÇevir",
         };
         write!(f, "{name}")
     }

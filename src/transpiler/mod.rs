@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
+
 mod union_def;
 use crate::parser::ast::{Program, Type};
 mod builtinfunctions;
@@ -8,6 +9,8 @@ mod decl;
 mod helpers;
 mod struct_def;
 mod transpile;
+mod zigbuiltin_functions;
+use crate::transpiler::zigbuiltin_functions::BUILTIN_FUNCTIONS;
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext<'a> {
     pub imports: HashSet<String>,
@@ -82,14 +85,7 @@ impl<'a> TranspileContext<'a> {
 
 
 
-            pub fn str_uppercase(allocator: std.mem.Allocator, self: []const u8) ![]u8 {{
-                const output = try allocator.alloc(u8, self.len);
-                return std.ascii.upperString(output, self);
-            }}
-            pub fn str_lowercase(allocator: std.mem.Allocator, self: []const u8) ![]u8 {{
-                const output = try allocator.alloc(u8, self.len);
-                return std.ascii.lowerString(output, self);
-            }}
+      {BUILTIN_FUNCTIONS}
 
 {defs}
 {utils}

@@ -272,6 +272,10 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             BuiltInFunction::Print => transpile_print(&args[0], ctx),
             BuiltInFunction::Max => transpile_max(&args, ctx),
             BuiltInFunction::Sum => transpile_sum(&args, ctx),
+            BuiltInFunction::ConvertString => {
+                let arg_code = transpile_expr(&args[0], ctx);
+                format!("try convert_string(allocator, {})", arg_code)
+            }
             BuiltInFunction::Min => transpile_min(&args, ctx),
             BuiltInFunction::Number => {
                 let arg_code = transpile_expr(&args[0], ctx);
@@ -331,6 +335,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             BuiltInFunction::LastWord => {
                 let print_code = transpile_print(&args[0], ctx);
                 format!("{};\n    std.process.exit(0)", print_code)
+            }
+            BuiltInFunction::StrReverse => {
+                ctx.is_used_allocator = true;
+                ctx.needs_allocator = true;
+                let code = transpile_expr(&args[0], ctx);
+                format!("try str_reverse(allocator, {})", code)
             }
             _ => todo!(),
         },

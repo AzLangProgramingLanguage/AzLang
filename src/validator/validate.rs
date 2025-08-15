@@ -173,6 +173,10 @@ pub fn validate_expr<'a>(
                     log(&format!("✅ StrLower funksiyası yoxlanılır"));
                     ctx.is_allocator_used = true;
                 }
+                BuiltInFunction::StrReverse => {
+                    log(&format!("✅ StrReverse funksiyası yoxlanılır"));
+                    ctx.is_allocator_used = true;
+                }
                 BuiltInFunction::StrUpper => {
                     log(&format!("✅ StrUpper funksiyası yoxlanılır"));
                     ctx.is_allocator_used = true;

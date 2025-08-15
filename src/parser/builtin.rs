@@ -36,9 +36,10 @@ where
         Token::StrLower => (BuiltInFunction::StrLower, Type::Metn),
         Token::Allocator => (BuiltInFunction::Allocator, Type::Void),
         Token::StrUpper => (BuiltInFunction::StrUpper, Type::Metn),
+        Token::StrReverse => (BuiltInFunction::StrReverse, Type::Metn),
+        Token::ConvertString => (BuiltInFunction::ConvertString, Type::Metn),
         other => return Err(eyre!("Bilinməyən funksiya: {:?}", other)),
     };
-
     let mut args = Vec::new();
 
     if let Some(Token::LParen) = tokens.peek() {

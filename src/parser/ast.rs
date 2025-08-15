@@ -20,8 +20,10 @@ pub enum BuiltInFunction {
     Ceil,
     Zig,
     StrUpper,
+    StrReverse,
     StrLower,
     Allocator,
+    ConvertString,
 }
 
 impl BuiltInFunction {
@@ -45,7 +47,9 @@ impl BuiltInFunction {
             BuiltInFunction::Sum => None,
             BuiltInFunction::Input => None,
             BuiltInFunction::StrUpper => Some(1),
+            BuiltInFunction::StrReverse => Some(1),
             BuiltInFunction::StrLower => Some(1),
+            BuiltInFunction::ConvertString => Some(1),
             BuiltInFunction::Max | BuiltInFunction::Min => None,
         }
     }
