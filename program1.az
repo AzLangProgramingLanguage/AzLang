@@ -45,7 +45,10 @@ tip Siyahı
 
 sabit eded = ƏdədəÇevir(Giriş("Ədəd daxil edin."))
 sabit eded1 = YazıyaÇevir(eded)
-sabit yazii = "Salam"
+Çap(eded1)
+dəyişən yazii = "Salam"
+yazii = YazıKiçilt(yazii)
+yazii = YazıBöyüt(yazii)
 sabit yaziis = YazıTərs(yazii)
 
 Çap(yaziis)

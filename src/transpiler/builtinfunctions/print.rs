@@ -12,14 +12,12 @@ use crate::{
 /// Helper: Expression üçün arg kodunu formalaşdırır
 fn arg_code_for_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     if let Expr::VariableRef { name, symbol, .. } = expr {
-        if let Type::Istifadeci(s, _) = &symbol.as_ref().unwrap().typ {
-            if s == "Yazı" {
-                return if symbol.as_ref().unwrap().is_mutable {
-                    format!("{}.Mut", name)
-                } else {
-                    format!("{}.Const", name)
-                };
-            }
+        if let Type::Metn = &symbol.as_ref().unwrap().typ {
+            return if symbol.as_ref().unwrap().is_mutable {
+                format!("{}.Mut", name)
+            } else {
+                format!("{}.Const", name)
+            };
         }
     }
     transpile_expr(expr, ctx)
@@ -59,14 +57,7 @@ pub fn transpile_print<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -
 
         // Sadə expression variantı
         _ => {
-            let typ = {
-                let typ = get_expr_type(expr);
-                if let Type::Istifadeci(ref s, _) = typ {
-                    if s == "Yazı" { Type::Metn } else { typ }
-                } else {
-                    typ
-                }
-            };
+            let typ = get_expr_type(expr);
             let format_str = get_format_str_from_type(&typ, ctx.is_used_allocator);
             let arg_code = arg_code_for_expr(expr, ctx);
             format!("std.debug.print(\"{format_str}\\n\", .{{{arg_code}}})")

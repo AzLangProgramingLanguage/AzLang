@@ -1,5 +1,5 @@
 use crate::{
-    parser::ast::{Expr, Type},
+    parser::ast::{BuiltInFunction, Expr, Type},
     transpiler::{TranspileContext, helpers::map_type, transpile::transpile_expr},
 };
 
@@ -15,16 +15,86 @@ pub fn transpile_decl<'a>(
     let value_code: String = transpile_expr(value, ctx);
 
     let decl_code = match typ {
-        Some(Type::Metn) => {
-            if is_mutable {
-                format!(
-                    "var {}: {} =  try allocator.dupe(u8, {})",
-                    name, type_str, value_code
-                )
-            } else {
-                format!("const {}: {} = {}", name, type_str, value_code)
+        Some(Type::Metn) => match value {
+            Expr::String(_, _) => {
+                if is_mutable {
+                    format!(
+                        "var {}: {} = azlangYazi{{.Mut=try allocator.dupe(u8, {}) }}",
+                        name, type_str, value_code
+                    )
+                } else {
+                    format!(
+                        "const {}: {} = azlangYazi{{.Const={}}}",
+                        name, type_str, value_code
+                    )
+                }
             }
-        }
+
+            Expr::BuiltInCall {
+                function,
+                args: s,
+                return_type: _,
+            } => match function {
+                BuiltInFunction::StrReverse => {
+                    let arg_code = transpile_expr(&s[0], ctx);
+                    if is_mutable {
+                        format!(
+                            "var {}: {} = try str_reverse(allocator, {}, true)",
+                            name, type_str, arg_code
+                        )
+                    } else {
+                        format!(
+                            "const {}: {} = try str_reverse(allocator, {}, false)",
+                            name, type_str, arg_code
+                        )
+                    }
+                }
+                BuiltInFunction::StrLower => {
+                    let arg_code = transpile_expr(&s[0], ctx);
+                    if is_mutable {
+                        format!(
+                            "var {}: {} = try str_lowercase(allocator, {}, true)",
+                            name, type_str, arg_code
+                        )
+                    } else {
+                        format!(
+                            "const {}: {} = try str_lowercase(allocator, {}, false)",
+                            name, type_str, arg_code
+                        )
+                    }
+                }
+                BuiltInFunction::StrUpper => {
+                    let arg_code = transpile_expr(&s[0], ctx);
+                    if is_mutable {
+                        format!(
+                            "var {}: {} = try str_uppercase(allocator, {}, true)",
+                            name, type_str, arg_code
+                        )
+                    } else {
+                        format!(
+                            "const {}: {} = try str_uppercase(allocator, {}, false)",
+                            name, type_str, arg_code
+                        )
+                    }
+                }
+                _ => {
+                    if is_mutable {
+                        format!("var {}: {} = {}", name, type_str, value_code)
+                    } else {
+                        format!("const {}: {} = {}", name, type_str, value_code)
+                    }
+                }
+            },
+
+            _ => {
+                if is_mutable {
+                    format!("var {}: {} = {}", name, type_str, value_code)
+                } else {
+                    format!("const {}: {} = {}", name, type_str, value_code)
+                }
+            }
+        },
+
         Some(Type::Siyahi(inner)) => match value {
             Expr::List(items) => {
                 let items_code: Vec<String> =
@@ -50,6 +120,8 @@ try {name}.appendSlice(&[_]{inner}{{ {items} }});"#,
             }
             _ => todo!(),
         },
+
+        // en sona catch-all
         _ => {
             if is_mutable {
                 format!("var {}: {} = {}", name, type_str, value_code)

@@ -274,7 +274,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             BuiltInFunction::Sum => transpile_sum(&args, ctx),
             BuiltInFunction::ConvertString => {
                 let arg_code = transpile_expr(&args[0], ctx);
-                format!("try convert_string(allocator, {})", arg_code)
+                format!("try convert_string(allocator, {},false)", arg_code)
             }
             BuiltInFunction::Min => transpile_min(&args, ctx),
             BuiltInFunction::Number => {
@@ -311,12 +311,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             BuiltInFunction::StrLower => {
                 ctx.is_used_allocator = true;
                 let code = transpile_expr(&args[0], ctx);
-                format!("str_lowercase(allocator, {})", code)
+                format!("try str_lowercase(allocator, {},false)", code)
             }
             BuiltInFunction::StrUpper => {
                 ctx.is_used_allocator = true;
                 let code = transpile_expr(&args[0], ctx);
-                format!("str_uppercase(allocator, {})", code)
+                format!("try str_uppercase(allocator, {},false)", code)
             }
             BuiltInFunction::Input => {
                 ctx.used_input_fn = true;
@@ -340,7 +340,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 ctx.is_used_allocator = true;
                 ctx.needs_allocator = true;
                 let code = transpile_expr(&args[0], ctx);
-                format!("try str_reverse(allocator, {})", code)
+                format!("try str_reverse(allocator, {},false)", code)
             }
             _ => todo!(),
         },
