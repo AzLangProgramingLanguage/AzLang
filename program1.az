@@ -1,33 +1,31 @@
 tip Yazı
   Const: zigsabityazı
   Mut: zigyazı
-  metod böyüt(): zigsabityazı
-    uyğun öz
-      Const -> qaytar YazıBöyüt(öz.Const)
-      Mut -> qaytar YazıBöyüt(öz.Mut)
-  metod kiçilt(): zigsabityazı
-    uyğun öz
-      Const -> qaytar YazıKiçilt(öz.Const)
-      Mut -> qaytar YazıKiçilt(öz.Mut)
-  metod yazıtərs(): Yazı
-    uyğun öz
-      Const -> qaytar YazıTərs(öz.Const)
-      Mut   -> qaytar YazıTərs(öz.Mut)
+  metod Yeni(): yazı
+    qaytar öz
+  metod böyüt(): yazı
+    qaytar YazıBöyüt(self)
+  metod kiçilt(): yazı
+    qaytar YazıKiçilt(self)
+  metod yazıtərs(): yazı
+    qaytar YazıTərs(self)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
     qaytar "Yazı"
   metod uzunluq(): ədəd
     uyğun öz
-      Const -> qaytar Zig(`self.Const.len`)
-      Mut -> qaytar Zig(`self.Mut.len`)
+      Const -> qaytar Zig(`azlangEded.Yeni(self.Const.len)`)
+      Mut -> qaytar Zig(`azlangEded.Yeni(self.Mut.len)`)
 
 
 
 Obyekt Ədəd
-  deyer: ədəd
+  deyer: ziginteger
+  tipi: zigsabityazı = "Ədəd"
+  metod Yeni(x: ziginteger): ədəd
+    qaytar Zig(`azlangEded{.deyer = x}`)
   metod TipVer(): zigsabityazı
-    Zig(`_ = self`)
-    qaytar "Ədəd"
+    qaytar öz.tipi
 
 
 tip Siyahı
@@ -35,23 +33,14 @@ tip Siyahı
   Mut: zigsiyahı
   metod uzunluq(): ədəd
     uyğun öz
-      Const -> qaytar Zig(`self.Const.len`)
-      Mut -> qaytar Zig(`self.Mut.len`)
+      Const -> qaytar Zig(`azlangEded.Yeni(self.Const.len)`)
+      Mut -> qaytar Zig(`azlangEded.Yeni(self.Mut.len)`)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
     qaytar "Siyahi"
+  
 
 
-
-sabit eded = ƏdədəÇevir(Giriş("Ədəd daxil edin."))
-sabit eded1 = YazıyaÇevir(eded)
-Çap(eded1)
-dəyişən yazii = "Salam"
-yazii = YazıKiçilt(yazii)
-yazii = YazıBöyüt(yazii)
-sabit yaziis = YazıTərs(yazii)
-
-Çap(yaziis)
-Çap(`${eded/10}  ${eded%10}`)
-
+sabit eded = "Salam"
+Çap(1.uzunluq())
 

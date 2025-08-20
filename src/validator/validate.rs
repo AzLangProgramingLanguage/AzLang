@@ -437,7 +437,55 @@ pub fn validate_expr<'a>(
                 Some(variable) => {
                     validate_expr(variable, ctx, log)?;
                     let variable_type = get_type(variable, ctx, None);
+
                     match variable_type {
+                        Some(Type::Metn) => {
+                            let union = ctx
+                                .union_defs
+                                .get("Yazı")
+                                .ok_or(ValidatorError::UnionNotFound("Yazı".to_string()))?;
+                            let maybe_method = union
+                                .2
+                                .iter()
+                                .find(|m| m.name.to_string() == name.to_string());
+                            let method = maybe_method
+                                .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
+                            if method.parameters.len() != args.len() {
+                                return Err(ValidatorError::FunctionArgCountMismatch {
+                                    name: name.to_string(),
+                                    expected: method.parameters.len(),
+                                    found: args.len(),
+                                });
+                            }
+                            *transpiled_name =
+                                Some(transpile_az_chars(method.name.as_ref()).to_string());
+                            *is_allocator = method.is_allocator_used;
+                            *returned_type = method.return_type.clone();
+                        }
+                        Some(Type::Natural) | Some(Type::Integer) => {
+                            let object = ctx
+                                .struct_defs
+                                .get("Ədəd")
+                                .ok_or(ValidatorError::UnionNotFound("Ədəd".to_string()))?;
+                            let maybe_method = object
+                                .2
+                                .iter()
+                                .find(|m| m.name.to_string() == name.to_string());
+                            let method = maybe_method
+                                .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
+                            /* TODO: Burada parametr ve args qiymetini yoxla */
+                            if method.parameters.len() != args.len() + 1 {
+                                return Err(ValidatorError::FunctionArgCountMismatch {
+                                    name: name.to_string(),
+                                    expected: method.parameters.len(),
+                                    found: args.len(),
+                                });
+                            }
+                            *transpiled_name =
+                                Some(transpile_az_chars(method.name.as_ref()).to_string());
+                            *is_allocator = method.is_allocator_used;
+                            *returned_type = method.return_type.clone();
+                        }
                         Some(Type::Istifadeci(s, _)) => {
                             let union = ctx
                                 .union_defs
@@ -484,6 +532,7 @@ pub fn validate_expr<'a>(
                             found: args.len(),
                         });
                     }
+
                     *transpiled_name = Some(transpile_az_chars(name).to_string());
                     *returned_type = func.return_type.clone();
                 }
@@ -556,6 +605,10 @@ pub fn validate_expr<'a>(
                 }
                 _ => {}
             }
+        }
+        Expr::BinaryOp { left, op, right } => {
+            validate_expr(left, ctx, log)?;
+            validate_expr(right, ctx, log)?;
         }
         Expr::FunctionDef {
             name,

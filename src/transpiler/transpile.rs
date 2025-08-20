@@ -26,6 +26,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 format!("\"{}\"", s.escape_default())
             }
         }
+
         Expr::Number(n) => n.to_string(),
         Expr::Float(n) => n.to_string(),
         Expr::Bool(b) => b.to_string(),
@@ -53,6 +54,10 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             transpiled_name,
             symbol,
         } => {
+            if name == "self" {
+                ctx.is_used_self = true;
+            }
+
             let transpiled_name: Cow<str> = match transpiled_name {
                 Some(transled_name) => Cow::Borrowed(transled_name),
                 None => Cow::Owned(name.to_string()),
@@ -180,7 +185,6 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 _ => transpile_expr(left, ctx),
             };
 
-            // Sağ tərəfi transpile et (pointer yoxla)
             let right_code = match &**right {
                 Expr::VariableRef {
                     name,
@@ -216,9 +220,9 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 other => other,
             };
             match zig_op {
-                "/" => format!("(@divTrunc({left_code},{right_code}))"),
-                "%" => format!("(@mod({left_code},{right_code}))"),
-                _ => format!("({} {} {})", left_code, zig_op, right_code),
+                "/" => format!("(@divTrunc({left_code}.deyer,{right_code}.deyer))"),
+                "%" => format!("(@mod({left_code}.deyer,{right_code}.deyer))"),
+                _ => format!("({}.deyer {} {}.deyer)", left_code, zig_op, right_code),
             }
         }
 
@@ -338,7 +342,6 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
             BuiltInFunction::StrReverse => {
                 ctx.is_used_allocator = true;
-                ctx.needs_allocator = true;
                 let code = transpile_expr(&args[0], ctx);
                 format!("try str_reverse(allocator, {},false)", code)
             }
@@ -346,56 +349,59 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
         },
         Expr::Call {
             target,
-            name,
+            name: _,
             args,
             returned_type: _,
             is_allocator,
             transpiled_name,
         } => {
-            let mut args_code = vec![];
-
-            for arg in args {
-                match arg {
+            // Argümanları dönüştür
+            let mut args_code: Vec<String> = args
+                .iter()
+                .map(|arg| match arg {
                     Expr::VariableRef {
-                        name,
                         transpiled_name,
                         symbol: Some(sym),
+                        ..
                     } => {
+                        let new_name = transpiled_name.as_ref().unwrap();
                         if sym.is_pointer {
-                            args_code.push(format!("&{}", name));
+                            format!("&{}", new_name)
                         } else {
-                            args_code.push(name.to_string());
+                            new_name.to_string()
                         }
                     }
-                    _ => {
-                        // Digər hallarda transpile_expr çağır
+                    _ => transpile_expr(arg, ctx),
+                })
+                .collect();
 
-                        let code = transpile_expr(arg, ctx);
-                        args_code.push(code);
-                    }
-                }
-            }
             ctx.is_used_allocator = true;
+
+            // Eğer allocator gerekiyorsa ekle
             if *is_allocator {
                 ctx.needs_allocator = true;
                 args_code.push("allocator".to_string());
             }
+
+            // Fonksiyon adı
+            let func_name = transpiled_name.as_ref().unwrap();
+
             match target.as_deref() {
                 Some(Expr::VariableRef {
                     name: target_name, ..
                 }) => {
-                    return format!(
-                        "{}.{} ({})",
-                        target_name,
-                        transpiled_name.as_ref().unwrap(),
-                        args_code.join(", ")
-                    );
+                    if *is_allocator {
+                        format!(
+                            "(try {}.{} ({}))",
+                            target_name,
+                            func_name,
+                            args_code.join(", ")
+                        )
+                    } else {
+                        format!("{}.{} ({})", target_name, func_name, args_code.join(", "))
+                    }
                 }
-                _ => format!(
-                    "{}({})",
-                    transpiled_name.as_ref().unwrap(),
-                    args_code.join(", ")
-                ),
+                _ => format!("{}({})", func_name, args_code.join(", ")),
             }
         }
 

@@ -19,19 +19,74 @@ pub fn parse_method<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<MethodRes
 where
     I: Iterator<Item = &'a Token>,
 {
-    println!("Method parsing");
     expect_token(tokens, Token::Method)?;
 
-    // Metod adı
     let name = match tokens.next() {
         Some(Token::Identifier(n)) => (*n).as_str(),
         other => return Err(eyre!("Method adı gözlənilirdi, tapıldı: {:?}", other)),
     };
 
-    // Parametrlər hələlik boş olur
     expect_token(tokens, Token::LParen)?;
-    expect_token(tokens, Token::RParen)?;
 
+    let mut params = Vec::new();
+    while let Some(token) = tokens.peek() {
+        match token {
+            Token::ConstantDecl | Token::MutableDecl | Token::Identifier(_) => {
+                // Mutability
+                let is_mutable = match tokens.peek() {
+                    Some(Token::MutableDecl) => {
+                        tokens.next();
+                        true
+                    }
+                    Some(Token::ConstantDecl) => {
+                        tokens.next();
+                        false
+                    }
+                    _ => false,
+                };
+
+                let param_name = match tokens.next() {
+                    Some(Token::Identifier(s)) => (*s).as_str(),
+                    other => return Err(eyre!("Parametr adı gözlənilirdi, tapıldı: {:?}", other)),
+                };
+                dbg!(param_name);
+
+                let mut param_type = Type::Any;
+
+                match tokens.peek() {
+                    Some(Token::Comma) => {
+                        tokens.next();
+                    }
+                    Some(Token::Colon) => {
+                        tokens.next();
+                        param_type = parse_type(tokens)?;
+                    }
+                    Some(Token::RParen) => break,
+                    other => {
+                        return Err(eyre!(
+                            "Parametrdən sonra ',' və ya ')' gözlənilirdi, tapıldı: {:?}",
+                            other
+                        ));
+                    }
+                }
+                params.push(Parameter {
+                    name: param_name.to_string(),
+                    typ: param_type,
+                    is_mutable,
+                    is_pointer: false,
+                });
+            }
+            Token::RParen => break,
+            other => {
+                return Err(eyre!(
+                    "Parametr və ya ')' gözlənilirdi, tapıldı: {:?}",
+                    other
+                ));
+            }
+        }
+    }
+
+    expect_token(tokens, Token::RParen)?;
     // Return tipi varsa oxu
     let mut return_type = None;
     match tokens.next() {
@@ -65,14 +120,6 @@ where
             }
         }
     }
-
-    // default self parametri əlavə edirik
-    let params = vec![Parameter {
-        name: "self".into(),
-        typ: Type::Any,
-        is_mutable: false,
-        is_pointer: false,
-    }];
 
     Ok((name, params, body, return_type, false))
 }

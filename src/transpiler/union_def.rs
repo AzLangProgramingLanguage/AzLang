@@ -84,6 +84,7 @@ pub fn transpile_union_def<'a>(
                 })
                 .map(|line| format!("        {line}"))
                 .collect();
+            ctx.is_used_self = false;
             let header;
             if ctx.is_used_allocator {
                 header = format!(
@@ -96,6 +97,7 @@ pub fn transpile_union_def<'a>(
                     method.transpiled_name.as_ref().unwrap()
                 );
             }
+            ctx.is_used_allocator = false;
 
             format!("{header}\n{}\n    }}", body_lines.join("\n"))
         })

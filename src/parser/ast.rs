@@ -62,6 +62,8 @@ pub enum Type<'a> {
     ZigConstString,
     ZigArray,
     ZigConstArray,
+    ZigNatural,
+    ZigInteger,
     Siyahi(Box<Type<'a>>),
     Istifadeci(Cow<'a, str>, Cow<'a, str>),
     Integer,

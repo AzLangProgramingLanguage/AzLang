@@ -53,9 +53,6 @@ where
         }
     }
     Ok(ast)
-
-    /* cannot return value referencing local variable `newtokens`
-    returns a value referencing data owned by the current function */
 }
 
 pub fn parse_expression<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>

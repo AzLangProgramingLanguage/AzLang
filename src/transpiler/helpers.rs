@@ -63,7 +63,12 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
                 "{s}"
             }
         }
-        Type::Integer | Type::BigInteger | Type::LowInteger => {
+
+        Type::ZigNatural
+        | Type::ZigInteger
+        | Type::Integer
+        | Type::BigInteger
+        | Type::LowInteger => {
             if is_allocator {
                 "{!}"
             } else {
@@ -132,8 +137,8 @@ use std::borrow::Cow;
 
 pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
     match typ {
-        Type::Integer => Cow::Borrowed("isize"),
-        Type::Natural => Cow::Borrowed("usize"),
+        Type::Integer => Cow::Borrowed("azlangEded"),
+        Type::Natural => Cow::Borrowed("azlangEded"),
         Type::Any => Cow::Borrowed("any"),
         Type::Void => Cow::Borrowed("void"),
         Type::Float => Cow::Borrowed("f64"),
@@ -160,6 +165,8 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
             }
         }
         Type::ZigString => Cow::Borrowed("[]u8"),
+        Type::ZigNatural => Cow::Borrowed("usize"),
+        Type::ZigInteger => Cow::Borrowed("isize"),
         Type::ZigConstString => Cow::Borrowed("[]const u8"),
         Type::ZigArray => Cow::Borrowed("[]usize"),
         Type::ZigConstArray => Cow::Borrowed("[]const usize"),
@@ -228,4 +235,35 @@ fn transpile_param(param: &Parameter) -> String {
     } else {
         format!("{}: {}", param.name, zig_type)
     }
+}
+
+pub fn is_muttable<'a>(expr: &'a Expr<'a>) -> bool {
+    match expr {
+        Expr::VariableRef {
+            name: _,
+            transpiled_name: _,
+            symbol,
+        } => {
+            if let Some(sym) = symbol {
+                return sym.is_mutable;
+            }
+        }
+        Expr::Call { target, .. } => match target {
+            Some(boxed_expr) => match &**boxed_expr {
+                Expr::VariableRef {
+                    name: _,
+                    transpiled_name: _,
+                    symbol,
+                } => {
+                    if let Some(sym) = symbol {
+                        return sym.is_mutable;
+                    }
+                }
+                _ => {}
+            },
+            _ => {}
+        },
+        _ => {}
+    }
+    false
 }

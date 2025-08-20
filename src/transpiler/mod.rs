@@ -30,6 +30,7 @@ pub struct TranspileContext<'a> {
     pub used_split_auto_fn: bool,
     pub used_split_alloc_fn: bool,
     pub is_find_method: bool,
+    pub is_used_self: bool,
 }
 
 impl<'a> TranspileContext<'a> {
@@ -52,6 +53,7 @@ impl<'a> TranspileContext<'a> {
             used_split_n_fn: false,
             used_split_auto_fn: false,
             is_find_method: false,
+            is_used_self: false,
         }
     }
     pub fn add_import(&mut self, import: &str) -> Option<String> {
@@ -64,6 +66,7 @@ impl<'a> TranspileContext<'a> {
     }
     pub fn transpile(&mut self, program: &'a Program<'a>) -> String {
         let imports = codegen::prelude::generate_imports(self);
+
         let defs = codegen::top_level::generate_top_level_defs(program, self);
         let main_body = codegen::main_body::generate_main_body(program, self);
         let utils = codegen::utils_fn::generate_util_functions(self);

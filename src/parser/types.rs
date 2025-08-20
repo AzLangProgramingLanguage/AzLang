@@ -25,6 +25,8 @@ where
         Token::ZigString => Type::ZigString,
         Token::ZigConstArray => Type::ZigConstArray,
         Token::ZigArray => Type::ZigArray,
+        Token::ZigNatural => Type::ZigNatural,
+        Token::ZigInteger => Type::ZigInteger,
         Token::Array => {
             match tokens.next() {
                 Some(Token::Operator(op)) if op == "<" => {}

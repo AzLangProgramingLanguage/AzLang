@@ -2,7 +2,7 @@ use peekmore::PeekMoreIterator;
 
 use color_eyre::eyre::{Result, eyre};
 
-use crate::lexer::Token;
+use crate::{ lexer::Token};
 
 pub fn skip_newlines<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<()>
 where

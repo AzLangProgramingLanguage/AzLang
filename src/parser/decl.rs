@@ -2,7 +2,7 @@ use crate::{
     lexer::Token,
     parser::{
         ast::{Expr, Type},
-        expression::{parse_expression, parse_single_expr},
+        expression::parse_expression,
         structs::parse_structs_init,
         types::parse_type,
     },

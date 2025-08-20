@@ -19,12 +19,12 @@ pub fn transpile_decl<'a>(
             Expr::String(_, _) => {
                 if is_mutable {
                     format!(
-                        "var {}: {} = azlangYazi{{.Mut=try allocator.dupe(u8, {}) }}",
+                        "var {}: {} = azlangYazi.Yeni(azlangYazi{{.Mut=try allocator.dupe(u8, {}) }});",
                         name, type_str, value_code
                     )
                 } else {
                     format!(
-                        "const {}: {} = azlangYazi{{.Const={}}}",
+                        "const {}: {} = azlangYazi.Yeni(azlangYazi{{.Const={}}});",
                         name, type_str, value_code
                     )
                 }
@@ -93,6 +93,43 @@ pub fn transpile_decl<'a>(
                     format!("const {}: {} = {}", name, type_str, value_code)
                 }
             }
+        },
+        Some(Type::Natural) | Some(Type::Integer) => match value {
+            Expr::Number(_) => {
+                if is_mutable {
+                    format!(
+                        "var {}: {} = azlangEded{{.deyer = {}}}",
+                        name, type_str, value_code
+                    )
+                } else {
+                    format!(
+                        "const {}: {} = azlangEded{{.deyer = {}}}",
+                        name, type_str, value_code
+                    )
+                }
+            }
+            Expr::BuiltInCall {
+                function,
+                args: s,
+                return_type: _,
+            } => match function {
+                BuiltInFunction::Timer => {
+                    let value_code = transpile_expr(value, ctx);
+                    if is_mutable {
+                        format!(
+                            "var {}: azlangEded = azlangEded{{.deyer = {}}}",
+                            name, value_code
+                        )
+                    } else {
+                        format!(
+                            "const {}: azlangEded = azlangEded{{.deyer = {}}}",
+                            name, value_code
+                        )
+                    }
+                }
+                _ => todo!(),
+            },
+            _ => todo!(),
         },
 
         Some(Type::Siyahi(inner)) => match value {

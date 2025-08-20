@@ -33,7 +33,7 @@ pub struct ValidatorContext<'a> {
     pub union_defs: HashMap<
         String,
         (
-            String,
+            String,                   //transpiled name
             Vec<(&'a str, Type<'a>)>, // fields
             Vec<MethodInfo<'a>>,
         ),

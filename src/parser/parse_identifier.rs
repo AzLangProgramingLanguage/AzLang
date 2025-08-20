@@ -75,8 +75,9 @@ where
         }
         Some(Token::Operator(op)) if op == "=" => {
             tokens.next();
-            let mut value = parse_expression(tokens)?;
-            match value {
+            let value = parse_expression(tokens)?;
+            /* TODO: Buraya baxarsan */
+            /*   match value {
                 Expr::String(s, _) => {
                     value = Expr::StructInit {
                         name: Cow::Borrowed("Yazı"),
@@ -85,7 +86,7 @@ where
                     }
                 }
                 _ => {}
-            }
+            } */
             Ok(Expr::Assignment {
                 name: s.into(),
                 value: Box::new(value),
