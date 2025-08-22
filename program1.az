@@ -7,7 +7,7 @@ tip Yazı
     qaytar YazıBöyüt(self)
   metod kiçilt(): yazı
     qaytar YazıKiçilt(self)
-  metod yazıtərs(): yazı
+  metod tərs(): yazı
     qaytar YazıTərs(self)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
@@ -20,9 +20,9 @@ tip Yazı
 
 
 Obyekt Ədəd
-  deyer: ziginteger
+  deyer: zignatural
   tipi: zigsabityazı = "Ədəd"
-  metod Yeni(x: ziginteger): ədəd
+  metod Yeni(x: zignatural): ədəd
     qaytar Zig(`azlangEded{.deyer = x}`)
   metod TipVer(): zigsabityazı
     qaytar öz.tipi
@@ -41,6 +41,37 @@ tip Siyahı
   
 
 
-sabit eded = "Salam"
-Çap(1.uzunluq())
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sabit eded = 1
+Çap(eded.TipVer())
+Çap(1.TipVer())
+Çap("Salam".TipVer())
+sabit salamla = "Salam Dostlar"
+Çap(salamla.TipVer())
+Çap(salamla.uzunluq())
+Çap(salamla.böyüt())
+Çap(salamla.kiçilt())
+Çap(salamla.tərs())

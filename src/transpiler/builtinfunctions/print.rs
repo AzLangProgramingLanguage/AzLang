@@ -15,6 +15,12 @@ fn arg_code_for_expr<'a>(
     ctx: &mut TranspileContext<'a>,
     typ: Type<'_>,
 ) -> String {
+    match expr {
+        Expr::String(_, _) | Expr::TemplateString(_) | Expr::Number(_) => {
+            return transpile_expr(expr, ctx);
+        }
+        _ => {}
+    }
     match typ {
         Type::Metn => {
             let name = transpile_expr(expr, ctx);
@@ -67,8 +73,6 @@ pub fn transpile_print<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -
         // Sadə expression variantı
         _ => {
             let typ: Type<'_> = get_expr_type(expr);
-            println!("{:?}", typ);
-            //std::process::exit(0);
             let format_str = get_format_str_from_type(&typ, ctx.is_used_allocator);
             let arg_code = arg_code_for_expr(expr, ctx, typ);
             format!("std.debug.print(\"{format_str}\\n\", .{{{arg_code}}})")

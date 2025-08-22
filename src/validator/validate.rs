@@ -3,10 +3,7 @@ use std::{borrow::Cow, rc::Rc};
 use color_eyre::eyre::Result;
 
 use crate::{
-    parser::{
-        ast::{BuiltInFunction, EnumDecl, Expr, Parameter, Symbol, TemplateChunk, Type},
-        method,
-    },
+    parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
     validator::{
         FunctionInfo, MethodInfo, ValidatorContext,
@@ -309,10 +306,10 @@ pub fn validate_expr<'a>(
         } => {
             log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
-            if let Some(mut found_symbol) = ctx.lookup_variable(name) {
-                *symbol = Some(found_symbol.clone());
-                *transpiled_name = found_symbol.transpiled_name;
-                found_symbol.is_used = true;
+            if let Some(sym) = ctx.lookup_variable_mut(name) {
+                sym.is_used = true;
+                *symbol = Some(sym.clone());
+                *transpiled_name = sym.transpiled_name.clone();
                 return Ok(());
             }
 
@@ -450,6 +447,7 @@ pub fn validate_expr<'a>(
                                 .find(|m| m.name.to_string() == name.to_string());
                             let method = maybe_method
                                 .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
+                            /*  */
                             if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
                                     name: name.to_string(),
@@ -474,7 +472,7 @@ pub fn validate_expr<'a>(
                             let method = maybe_method
                                 .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
                             /* TODO: Burada parametr ve args qiymetini yoxla */
-                            if method.parameters.len() != args.len() + 1 {
+                            if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
                                     name: name.to_string(),
                                     expected: method.parameters.len(),

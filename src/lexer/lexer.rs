@@ -1,3 +1,5 @@
+use peekmore::{PeekMore, PeekMoreIterator};
+
 use crate::lexer::words::tokenize_word;
 use std::iter::Peekable;
 use std::mem;
@@ -6,7 +8,7 @@ use std::str::Chars;
 use super::token::Token;
 
 pub struct Lexer<'a> {
-    pub chars: Peekable<Chars<'a>>,
+    pub chars: PeekMoreIterator<Chars<'a>>,
     token_buffer: Vec<Token>,
     indent_stack: Vec<usize>, // İndentasiya səviyyələrini izləmək üçün
     current_indent: usize,    // Cari sətirin indentasiya səviyyəsi
@@ -17,7 +19,7 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         Lexer {
-            chars: input.chars().peekable(),
+            chars: input.chars().peekmore(),
             token_buffer: Vec::new(),
             indent_stack: vec![0],
             current_indent: 0,
@@ -247,28 +249,32 @@ impl<'a> Lexer<'a> {
         let mut has_dot = false;
 
         while let Some(&ch) = self.chars.peek() {
-            if ch.is_digit(10) {
-                num_str.push(ch);
-                self.chars.next();
-            } else if ch == '.' && !has_dot {
-                has_dot = true;
-                num_str.push(ch);
-                self.chars.next();
-            } else {
-                break;
+            match ch {
+                '0'..='9' => {
+                    num_str.push(ch);
+                    self.chars.next();
+                }
+                '.' if !has_dot => {
+                    if let Some(&next_ch) = self.chars.peek_nth(1) {
+                        if next_ch.is_ascii_digit() {
+                            has_dot = true;
+                            num_str.push(ch);
+                            self.chars.next();
+                        } else {
+                            break; // nöqtədən sonra rəqəm yoxdursa, ayrı token
+                        }
+                    } else {
+                        break; // son char `.` idisə, float etmə
+                    }
+                }
+                _ => break,
             }
         }
 
         if has_dot {
-            match num_str.parse::<f64>() {
-                Ok(f) => Some(Token::Float(f)),
-                Err(_) => None,
-            }
+            num_str.parse::<f64>().ok().map(Token::Float)
         } else {
-            match num_str.parse::<i64>() {
-                Ok(n) => Some(Token::Number(n)),
-                Err(_) => None,
-            }
+            num_str.parse::<i64>().ok().map(Token::Number)
         }
     }
 

@@ -9,6 +9,7 @@ use crate::{
         decl::parse_decl,
         enums::parse_enum_decl,
         function_def::parse_function_def,
+        helper::literals_parse,
         if_expr::{parse_else_expr, parse_else_if_expr, parse_if_expr},
         list::parse_list,
         loops::parse_loop,
@@ -69,15 +70,15 @@ where
     let token = tokens.next().ok_or_else(|| eyre!("Gözlənilməz Eof"))?;
 
     match token {
-        Token::StringLiteral(s) => Ok(Expr::String(s, false)),
+        Token::StringLiteral(_s) => literals_parse(token, tokens),
         Token::True => Ok(Expr::Bool(true)),
         Token::False => Ok(Expr::Bool(false)),
 
-        Token::Float(num) => Ok(Expr::Float(*num)),
+        Token::Float(_num) => literals_parse(token, tokens),
         Token::Backtick => {
             parse_template_string_expr(tokens).map_err(|e| eyre!("Sablon parsing xətası: {}", e))
         }
-        Token::Number(num) => Ok(Expr::Number(*num)),
+        Token::Number(_num) => literals_parse(token, tokens),
         Token::This => parse_identifier(tokens, "self"),
         Token::Object => parse_struct_def(tokens).map_err(|e| eyre!("Obyekt parsing xətası {}", e)),
         Token::Enum => {

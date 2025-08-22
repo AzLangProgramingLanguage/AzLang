@@ -2,7 +2,13 @@ use peekmore::PeekMoreIterator;
 
 use color_eyre::eyre::{Result, eyre};
 
-use crate::{ lexer::Token};
+use crate::{
+    lexer::Token,
+    parser::{
+        ast::{Expr, Type},
+        expression::parse_single_expr,
+    },
+};
 
 pub fn skip_newlines<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<()>
 where
@@ -22,4 +28,68 @@ where
         Some(t) if *t == expected => Ok(()),
         other => Err(eyre!("Gözlənilirdi {:?}, tapıldı {:?}", expected, other)),
     }
+}
+
+pub fn literals_parse<'a, I>(token: &'a Token, tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+where
+    I: Iterator<Item = &'a Token>,
+{
+    let mut expr = match token {
+        Token::StringLiteral(s) => Expr::String(s, false),
+        Token::Number(num) => Expr::Number(*num),
+        Token::Float(num) => Expr::Float(*num),
+        _ => {
+            dbg!(tokens.peek());
+            std::process::exit(0);
+            return Err(eyre!("Gözlənilirdi identifikator"));
+        }
+    };
+
+    if let Some(Token::Dot) = tokens.peek() {
+        tokens.next();
+        let field_or_method = match tokens.next() {
+            Some(Token::Identifier(name)) => (*name).as_str(),
+            _ => return Err(eyre!("Metod və ya sahə adı gözlənilirdi")),
+        };
+
+        match tokens.peek() {
+            Some(Token::LParen) => {
+                tokens.next(); // consume '('
+                let mut args = Vec::new();
+
+                while let Some(token) = tokens.peek() {
+                    match token {
+                        Token::RParen => {
+                            tokens.next(); // consume ')'
+                            break;
+                        }
+                        Token::Comma => {
+                            tokens.next();
+                        }
+                        _ => {
+                            let arg = parse_single_expr(tokens)?;
+                            args.push(arg);
+                        }
+                    }
+                }
+
+                expr = Expr::Call {
+                    target: Some(Box::new(expr)),
+                    name: field_or_method,
+                    args,
+                    returned_type: Some(Type::Any),
+                    is_allocator: false,
+                    transpiled_name: None,
+                };
+            }
+            _ => {
+                expr = Expr::Index {
+                    target: Box::new(expr),
+                    index: Box::new(Expr::String(field_or_method, false)),
+                    target_type: Type::Any,
+                };
+            }
+        }
+    }
+    Ok(expr)
 }

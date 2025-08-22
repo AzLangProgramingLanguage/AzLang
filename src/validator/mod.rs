@@ -100,6 +100,15 @@ impl<'a> ValidatorContext<'a> {
         None
     }
 
+    pub fn lookup_variable_mut(&mut self, name: &str) -> Option<&mut Symbol<'a>> {
+        for scope in self.scopes.iter_mut().rev() {
+            if let Some(sym) = scope.get_mut(name) {
+                return Some(sym);
+            }
+        }
+        None
+    }
+
     pub fn declare_function(&mut self, func: FunctionInfo<'a>) {
         self.functions.insert(func.name.clone(), func);
     }

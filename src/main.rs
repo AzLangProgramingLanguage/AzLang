@@ -3,19 +3,19 @@ use std::{env, panic};
 
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 use color_eyre::eyre::{Result, eyre};
+pub mod cleaner;
 mod lexer;
 mod parser;
 pub mod translations;
 pub mod validator;
+use limit_alloc::Limit;
+use std::alloc::System;
 pub use utils::*;
 pub use validator::validate_expr;
 
-use limit_alloc::Limit;
-use std::alloc::System;
-
 pub mod runner;
 pub mod transpiler;
-use crate::{transpiler::TranspileContext, validator::ValidatorContext};
+use crate::{cleaner::clean_ast, transpiler::TranspileContext, validator::ValidatorContext};
 
 #[global_allocator]
 static A: Limit<System> = Limit::new(256_000_000, System);
@@ -161,12 +161,19 @@ fn run(input_path: &str) -> Result<()> {
         eyre!("Parser xətası: {e}")
     })?;
 
+    /* Validator */
+
     let mut validator_ctx = ValidatorContext::new();
     for expr in parsed_program.expressions.iter_mut() {
         validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator)
             .map_err(|e| eyre!("Validator xətası: {e}"))?;
     }
 
+    /* Cleaner */
+
+    clean_ast(&mut parsed_program, &validator_ctx);
+
+    /* Transpiler */
     let mut ctx = TranspileContext::new();
     let zig_code = ctx.transpile(&parsed_program);
     let mut temp_path = env::temp_dir();
@@ -176,7 +183,5 @@ fn run(input_path: &str) -> Result<()> {
     if runner::runner(temp_path.to_str().unwrap()).is_err() {
         eprintln!("❌ Proqram işləmədi.");
     }
-    /*     dbg!(&zig_code);
-     */
     Ok(())
 }

@@ -1,3 +1,41 @@
-funksiya uzunluq(ad: Metn): ədəd
-    qaytar Zig(`ad.len`)
-    
+tip Yazı
+  Const: zigsabityazı
+  Mut: zigyazı
+  metod Yeni(): yazı
+    qaytar öz
+  metod böyüt(): yazı
+    qaytar YazıBöyüt(self)
+  metod kiçilt(): yazı
+    qaytar YazıKiçilt(self)
+  metod yazıtərs(): yazı
+    qaytar YazıTərs(self)
+  metod TipVer(): zigsabityazı
+    Zig(`_ = self`)
+    qaytar "Yazı"
+  metod uzunluq(): ədəd
+    uyğun öz
+      Const -> qaytar Zig(`azlangEded.Yeni(self.Const.len)`)
+      Mut -> qaytar Zig(`azlangEded.Yeni(self.Mut.len)`)
+
+
+
+Obyekt Ədəd
+  deyer: ziginteger
+  tipi: zigsabityazı = "Ədəd"
+  metod Yeni(x: ziginteger): ədəd
+    qaytar Zig(`azlangEded{.deyer = x}`)
+  metod TipVer(): zigsabityazı
+    qaytar öz.tipi
+
+
+tip Siyahı
+  Const: zigsabitsiyahı
+  Mut: zigsiyahı
+  metod uzunluq(): ədəd
+    uyğun öz
+      Const -> qaytar Zig(`azlangEded.Yeni(self.Const.len)`)
+      Mut -> qaytar Zig(`azlangEded.Yeni(self.Mut.len)`)
+  metod TipVer(): zigsabityazı
+    Zig(`_ = self`)
+    qaytar "Siyahi"
+  

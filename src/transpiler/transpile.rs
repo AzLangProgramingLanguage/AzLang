@@ -371,6 +371,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                             new_name.to_string()
                         }
                     }
+
                     _ => transpile_expr(arg, ctx),
                 })
                 .collect();
@@ -400,6 +401,22 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                     } else {
                         format!("{}.{} ({})", target_name, func_name, args_code.join(", "))
                     }
+                }
+                Some(Expr::Number(n)) => {
+                    format!(
+                        "azlangEded.Yeni({}).{}({})",
+                        n,
+                        func_name,
+                        args_code.join(", ")
+                    )
+                }
+                Some(Expr::String(s, _)) => {
+                    format!(
+                        "azlangYazi.Yeni(azlangYazi{{.Const = \"{}\"}}).{}({})",
+                        s,
+                        func_name,
+                        args_code.join(", ")
+                    )
                 }
                 _ => format!("{}({})", func_name, args_code.join(", ")),
             }
