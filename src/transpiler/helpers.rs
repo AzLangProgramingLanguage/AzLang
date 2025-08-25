@@ -10,6 +10,14 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
+        Expr::UnaryOp { op, expr } => match *op {
+            "!" => Type::Bool,
+            "-" => Type::Integer,
+            "+" => Type::Natural,
+            _ => {
+                panic!("get_expr_type de bilinmeyen unaryOp tipi geldi ")
+            }
+        },
 
         Expr::Call {
             target,
@@ -165,7 +173,7 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
             }
         }
         Type::ZigString => Cow::Borrowed("[]u8"),
-        Type::ZigNatural => Cow::Borrowed("usize"),
+        Type::ZigNatural => Cow::Borrowed("isize"),
         Type::ZigInteger => Cow::Borrowed("isize"),
         Type::ZigConstString => Cow::Borrowed("[]const u8"),
         Type::ZigArray => Cow::Borrowed("[]usize"),

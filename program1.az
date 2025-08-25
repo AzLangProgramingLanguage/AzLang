@@ -7,34 +7,35 @@ tip Yazı
     qaytar YazıBöyüt(self)
   metod kiçilt(): yazı
     qaytar YazıKiçilt(self)
-  metod tərs(): yazı
+  metod yazıtərs(): yazı
     qaytar YazıTərs(self)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
     qaytar "Yazı"
   metod uzunluq(): ədəd
     uyğun öz
-      Const -> qaytar Zig(`azlangEded.Yeni(self.Const.len)`)
-      Mut -> qaytar Zig(`azlangEded.Yeni(self.Mut.len)`)
+      Const -> qaytar Zig(`azlangEded.Yeni(azlangEded{.natural = self.Const.len})`)
+      Mut -> qaytar Zig(`azlangEded.Yeni(azlangEded{.natural = self.Mut.len})`)
 
 
 
-Obyekt Ədəd
-  deyer: zignatural
-  tipi: zigsabityazı = "Ədəd"
-  metod Yeni(x: zignatural): ədəd
-    qaytar Zig(`azlangEded{.deyer = x}`)
+tip Ədəd
+  natural: zignatural
+  integer: ziginteger
+  metod Yeni(): ədəd
+    qaytar öz
   metod TipVer(): zigsabityazı
-    qaytar öz.tipi
-
+    Zig(`_ = self`)
+    qaytar "Ədəd"
+  
 
 tip Siyahı
   Const: zigsabitsiyahı
   Mut: zigsiyahı
   metod uzunluq(): ədəd
     uyğun öz
-      Const -> qaytar Zig(`azlangEded.Yeni(self.Const.len)`)
-      Mut -> qaytar Zig(`azlangEded.Yeni(self.Mut.len)`)
+      Const -> qaytar Zig(`azlangEded.Yeni(azlangEded{.natural = self.Const.len})`)
+      Mut -> qaytar Zig(`azlangEded.Yeni(azlangEded{.natural = self.Mut.len})`)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
     qaytar "Siyahi"
@@ -50,28 +51,13 @@ tip Siyahı
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sabit eded = 1
-Çap(eded.TipVer())
-Çap(1.TipVer())
+  
+sabit eded = 2
+Çap(-1+eded)
 Çap("Salam".TipVer())
 sabit salamla = "Salam Dostlar"
-Çap(salamla.TipVer())
+Çap(`  ${salamla.böyüt()}  `)
 Çap(salamla.uzunluq())
 Çap(salamla.böyüt())
 Çap(salamla.kiçilt())
-Çap(salamla.tərs())
+Çap(salamla.yazıtərs())

@@ -9,14 +9,16 @@ use crate::{
     },
 };
 
-/// Helper: Expression üçün arg kodunu formalaşdırır
 fn arg_code_for_expr<'a>(
     expr: &'a Expr<'a>,
     ctx: &mut TranspileContext<'a>,
     typ: Type<'_>,
 ) -> String {
     match expr {
-        Expr::String(_, _) | Expr::TemplateString(_) | Expr::Number(_) => {
+        Expr::String(_, _)
+        | Expr::TemplateString(_)
+        | Expr::Number(_)
+        | Expr::UnaryOp { op: _, expr: _ } => {
             return transpile_expr(expr, ctx);
         }
         _ => {}
@@ -30,9 +32,13 @@ fn arg_code_for_expr<'a>(
                 format!("{}.Const", name)
             }
         }
-        Type::Natural | Type::Integer => {
+        Type::Natural => {
             let name = transpile_expr(expr, ctx);
-            format!("{}.deyer", name)
+            format!("{}.natural", name)
+        }
+        Type::Integer => {
+            let name = transpile_expr(expr, ctx);
+            format!("{}.integer", name)
         }
         _ => transpile_expr(expr, ctx),
     }

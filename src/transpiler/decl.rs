@@ -95,17 +95,22 @@ pub fn transpile_decl<'a>(
             }
         },
         Some(Type::Natural) | Some(Type::Integer) => match value {
-            Expr::Number(_) => {
-                if is_mutable {
-                    format!(
-                        "var {}: {} = azlangEded{{.deyer = {}}}",
-                        name, type_str, value_code
-                    )
-                } else {
-                    format!(
-                        "const {}: {} = azlangEded{{.deyer = {}}}",
-                        name, type_str, value_code
-                    )
+            Expr::Number(_) | Expr::UnaryOp { op: _, expr: _ } => {
+                let var_code = if is_mutable { "var" } else { "const" };
+                match typ {
+                    Some(Type::Natural) => {
+                        format!(
+                            "{} {}: {} = azlangEded.Yeni(azlangEded{{.natural = {}}});",
+                            var_code, name, type_str, value_code
+                        )
+                    }
+                    Some(Type::Integer) => {
+                        format!(
+                            "{} {}: {} = azlangEded.Yeni(azlangEded{{.integer = {}}});",
+                            var_code, name, type_str, value_code
+                        )
+                    }
+                    _ => todo!(),
                 }
             }
             Expr::BuiltInCall {
@@ -115,21 +120,29 @@ pub fn transpile_decl<'a>(
             } => match function {
                 BuiltInFunction::Timer => {
                     let value_code = transpile_expr(value, ctx);
-                    if is_mutable {
-                        format!(
-                            "var {}: azlangEded = azlangEded{{.deyer = {}}}",
-                            name, value_code
-                        )
-                    } else {
-                        format!(
-                            "const {}: azlangEded = azlangEded{{.deyer = {}}}",
-                            name, value_code
-                        )
+                    let var_code = if is_mutable { "var" } else { "const" };
+                    match typ {
+                        Some(Type::Natural) => {
+                            format!(
+                                "{} {}: {} = azlangEded.Yeni(azlangEded{{.natural = {}}});",
+                                var_code, name, type_str, value_code
+                            )
+                        }
+                        Some(Type::Integer) => {
+                            format!(
+                                "{} {}: {} = azlangEded.Yeni(azlangEded{{.integer = {}}});",
+                                var_code, name, type_str, value_code
+                            )
+                        }
+                        _ => todo!(),
                     }
                 }
                 _ => todo!(),
             },
-            _ => todo!(),
+
+            _ => {
+                todo!()
+            }
         },
 
         Some(Type::Siyahi(inner)) => match value {

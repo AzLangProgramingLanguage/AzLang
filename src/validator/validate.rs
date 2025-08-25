@@ -308,6 +308,7 @@ pub fn validate_expr<'a>(
 
             if let Some(sym) = ctx.lookup_variable_mut(name) {
                 sym.is_used = true;
+
                 *symbol = Some(sym.clone());
                 *transpiled_name = sym.transpiled_name.clone();
                 return Ok(());
@@ -447,7 +448,7 @@ pub fn validate_expr<'a>(
                                 .find(|m| m.name.to_string() == name.to_string());
                             let method = maybe_method
                                 .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
-                            /*  */
+                            /* TODO: Burada parametr ve args qiymetini yoxla */
                             if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
                                     name: name.to_string(),
@@ -462,7 +463,7 @@ pub fn validate_expr<'a>(
                         }
                         Some(Type::Natural) | Some(Type::Integer) => {
                             let object = ctx
-                                .struct_defs
+                                .union_defs
                                 .get("Ədəd")
                                 .ok_or(ValidatorError::UnionNotFound("Ədəd".to_string()))?;
                             let maybe_method = object

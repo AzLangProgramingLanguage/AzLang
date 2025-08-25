@@ -176,7 +176,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         if symbol.is_pointer {
                             format!("{}.*", name)
                         } else {
-                            name.to_string()
+                            let typ = get_expr_type(left);
+                            match typ {
+                                Type::Natural => format!("{}.natural", name),
+                                Type::Integer => format!("{}.integer", name),
+                                _ => name.to_string(),
+                            }
                         }
                     } else {
                         transpile_expr(left, ctx)
@@ -195,13 +200,18 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         if symbol.is_pointer {
                             format!("{}.*", name)
                         } else {
-                            name.to_string()
+                            let typ = get_expr_type(right);
+                            match typ {
+                                Type::Natural => format!("{}.natural", name),
+                                Type::Integer => format!("{}.integer", name),
+                                _ => name.to_string(),
+                            }
                         }
                     } else {
-                        transpile_expr(right, ctx)
+                        transpile_expr(left, ctx)
                     }
                 }
-                _ => transpile_expr(right, ctx),
+                _ => transpile_expr(left, ctx),
             };
 
             let zig_op = match *op {
@@ -220,9 +230,9 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 other => other,
             };
             match zig_op {
-                "/" => format!("(@divTrunc({left_code}.deyer,{right_code}.deyer))"),
-                "%" => format!("(@mod({left_code}.deyer,{right_code}.deyer))"),
-                _ => format!("({}.deyer {} {}.deyer)", left_code, zig_op, right_code),
+                "/" => format!("(@divTrunc({left_code},{right_code}))"),
+                "%" => format!("(@mod({left_code},{right_code}))"),
+                _ => format!("({} {} {})", left_code, zig_op, right_code),
             }
         }
 
