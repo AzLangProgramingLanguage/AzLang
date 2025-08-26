@@ -208,10 +208,10 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                             }
                         }
                     } else {
-                        transpile_expr(left, ctx)
+                        transpile_expr(right, ctx)
                     }
                 }
-                _ => transpile_expr(left, ctx),
+                _ => transpile_expr(right, ctx),
             };
 
             let zig_op = match *op {
@@ -232,6 +232,10 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             match zig_op {
                 "/" => format!("(@divTrunc({left_code},{right_code}))"),
                 "%" => format!("(@mod({left_code},{right_code}))"),
+                "+" | "-" => format!(
+                    "@as(isize,@intCast({left_code})) {} @as(isize,@intCast({right_code}))",
+                    zig_op
+                ),
                 _ => format!("({} {} {})", left_code, zig_op, right_code),
             }
         }

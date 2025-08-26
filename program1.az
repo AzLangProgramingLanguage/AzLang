@@ -4,11 +4,11 @@ tip Yazı
   metod Yeni(): yazı
     qaytar öz
   metod böyüt(): yazı
-    qaytar YazıBöyüt(self)
+    qaytar YazıBöyüt(öz)
   metod kiçilt(): yazı
-    qaytar YazıKiçilt(self)
+    qaytar YazıKiçilt(öz)
   metod yazıtərs(): yazı
-    qaytar YazıTərs(self)
+    qaytar YazıTərs(öz)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
     qaytar "Yazı"
@@ -22,8 +22,11 @@ tip Yazı
 tip Ədəd
   natural: zignatural
   integer: ziginteger
+  float: kəsr
   metod Yeni(): ədəd
     qaytar öz
+  metod yazıya_çevir(): yazı
+    qaytar YazıyaÇevir(öz)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
     qaytar "Ədəd"
@@ -53,7 +56,8 @@ tip Siyahı
 
   
 sabit eded = 2
-Çap(-1+eded)
+sabit eded2 = 5
+Çap(eded2-eded)
 Çap("Salam".TipVer())
 sabit salamla = "Salam Dostlar"
 Çap(`  ${salamla.böyüt()}  `)

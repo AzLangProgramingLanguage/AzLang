@@ -173,7 +173,7 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
             }
         }
         Type::ZigString => Cow::Borrowed("[]u8"),
-        Type::ZigNatural => Cow::Borrowed("isize"),
+        Type::ZigNatural => Cow::Borrowed("usize"),
         Type::ZigInteger => Cow::Borrowed("isize"),
         Type::ZigConstString => Cow::Borrowed("[]const u8"),
         Type::ZigArray => Cow::Borrowed("[]usize"),
