@@ -1,7 +1,6 @@
 use peekmore::{PeekMore, PeekMoreIterator};
 
 use crate::lexer::words::tokenize_word;
-use std::iter::Peekable;
 use std::mem;
 use std::str::Chars;
 
@@ -78,7 +77,25 @@ impl<'a> Lexer<'a> {
 
         None
     }
-    pub fn next_token(&mut self) -> Option<Token> {
+    fn skip_comment_line(&mut self) {
+        while let Some(&ch) = self.chars.peek() {
+            if ch == '\n' {
+                break; // sətrin sonuna qədər ignore elə
+            }
+            self.chars.next();
+        }
+    }
+    fn skip_comment_block(&mut self) {
+        while let Some(ch) = self.chars.next() {
+            if ch == '*' {
+                if let Some(&'/') = self.chars.peek() {
+                    self.chars.next();
+                    return;
+                }
+            }
+        }
+    }
+    fn next_token(&mut self) -> Option<Token> {
         // Əvvəlcə gözləyən dedentləri yoxla
         if self.pending_dedents > 0 {
             self.pending_dedents -= 1;
@@ -139,13 +156,27 @@ impl<'a> Lexer<'a> {
             ',' => self.consume_char_and_return(Token::Comma),
             '[' => self.consume_char_and_return(Token::ListStart),
             ']' => self.consume_char_and_return(Token::ListEnd),
+            '/' => {
+                self.chars.next();
+                if let Some(&'/') = self.chars.peek() {
+                    self.chars.next(); // ikinci `/`-i də keç
+                    self.skip_comment_line();
+                    self.next_token() // koment bitəndən sonra növbəti tokeni qaytar
+                } else if let Some(&'*') = self.chars.peek() {
+                    self.chars.next(); // ikinci `*`-i də keç
+                    self.skip_comment_block();
+                    self.next_token() // koment bitəndən sonra növbəti tokeni qaytar
+                } else {
+                    Some(Token::Operator("/".to_string()))
+                }
+            }
             '`' => {
                 self.chars.next(); // skip backtick
                 let tokens = self.read_template_string(); // Vec<Token>
                 self.token_buffer.extend(tokens.into_iter().rev());
                 self.next_token()
             }
-            '\'' | '"' => self.read_string(),
+            '"' | '\'' => self.read_string(),
             '0'..='9' => self.read_number(),
             _ if ch.is_alphabetic() || ch == '_' => self.read_word(),
             _ => self.read_operator(),
@@ -159,9 +190,6 @@ impl<'a> Lexer<'a> {
             if ch.is_alphanumeric() || ch == '_' {
                 word.push(ch);
                 self.chars.next();
-                /*  if ch == '_' {
-                    return Some(Token::Underscore);
-                } */
             } else {
                 break;
             }

@@ -45,23 +45,4 @@ tip Siyahı
   
 
 
-
-
-
-
-
-
-
-
-
-  
-sabit eded = 2
-sabit eded2 = 5
-Çap(eded2-eded)
-Çap("Salam".TipVer())
-sabit salamla = "Salam Dostlar"
-Çap(`  ${salamla.böyüt()}  `)
-Çap(salamla.uzunluq())
-Çap(salamla.böyüt())
-Çap(salamla.kiçilt())
-Çap(salamla.yazıtərs())
+Çap("Saalam")

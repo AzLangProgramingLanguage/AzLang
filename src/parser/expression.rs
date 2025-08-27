@@ -30,7 +30,7 @@ where
     let mut ast = Vec::new();
     while let Some(token) = tokens.peek() {
         match token {
-            Token::Newline | Token::Semicolon => {
+            Token::Newline | Token::Semicolon | Token::Indent => {
                 tokens.next();
                 continue;
             }
@@ -43,7 +43,9 @@ where
                     "Bir başa mətn, rəqəm və ya kəsr ədəd istifadə edə bilməzsiniz"
                 ));
             }
-            Token::Eof => break,
+            Token::Eof => {
+                tokens.next();
+            }
             _ => {
                 let expr = parse_expression(tokens)?;
                 ast.push(expr);
@@ -109,7 +111,6 @@ where
         Token::Type => {
             parse_union_type(tokens).map_err(|e| eyre!("Tip yaradılmasında problem oldu: {}", e))
         }
-
         Token::Conditional => parse_if_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
         Token::ElseIf => parse_else_if_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
         Token::Else => parse_else_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),

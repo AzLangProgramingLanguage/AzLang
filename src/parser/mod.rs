@@ -26,11 +26,11 @@ use crate::{
 
 pub mod ast;
 #[derive(Debug)]
-pub struct Parser {
-    tokens: Vec<Token>,
+pub struct Parser<'a> {
+    tokens: &'a mut Vec<Token>,
 }
-impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(tokens: &'a mut Vec<Token>) -> Self {
         Self { tokens }
     }
     pub fn parse(&mut self) -> Result<Program> {

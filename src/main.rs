@@ -150,12 +150,14 @@ fn build(input_path: &str) -> Result<()> {
 
 fn run(input_path: &str) -> Result<()> {
     qardas_parse("Proqramı işə salıram, uğurlar!");
+    let stk_code = utils::read_file("program1.az").map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
     let full_code =
         utils::read_file_with_imports(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
-    let tokens = lexer::Lexer::new(&full_code).tokenize();
-    /*     println!("Tokens: {tokens:#?}");
-     */
-    let mut parser = parser::Parser::new(tokens);
+    let mut tokens = lexer::Lexer::new(&stk_code).tokenize();
+    let user_tokens = lexer::Lexer::new(&full_code).tokenize(); /* Burası Üstdeki importları oxuyur. */
+    tokens.extend(user_tokens);
+
+    let mut parser = parser::Parser::new(&mut tokens);
     let mut parsed_program = parser.parse().map_err(|e| {
         qardas_parse_error(&format!("Parser xətası: {e}"));
         eyre!("Parser xətası: {e}")
