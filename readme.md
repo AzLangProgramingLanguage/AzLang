@@ -24,7 +24,7 @@ Biz yeni bir proqramlaşdırma dili təqdim etmirik. Məqsədimiz — **təhlük
 - 🛡️ **Type-Safety** – Tip yoxlamaları avtomatik aparılır, lakin zəruri hallarda əl ilə də göstərilir
 - ⚡ **Performans** – Rust-vari optimallaşdırıla bilən transpiler çıxışı
 - 🧪 **Statik analiz** – Tip analiz sistemi daxildə qurulub
-- 🧬 **Transpiler hazırdır** – Lakin bəzi funksiyalar hələ tamamlanmayıb (mətn/siyahı funksiyaları)
+- 🧬 **Transpiler** – Həm eyni anda həm zig kodu yazmaq mümkündür həmdə azlang
 
 ---
 
