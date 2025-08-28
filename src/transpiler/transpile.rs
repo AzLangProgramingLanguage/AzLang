@@ -165,21 +165,19 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             format!("const {} = enum {{\n{}\n}};", name, variants_code)
         }
         Expr::BinaryOp { left, op, right } => {
-            // Sol tərəfi transpile et (pointer yoxla)
+            let left_type = get_expr_type(left);
+            let right_type = get_expr_type(right);
+
             let left_code = match &**left {
-                Expr::VariableRef {
-                    name,
-                    transpiled_name,
-                    symbol,
-                } => {
+                Expr::VariableRef { name, symbol, .. } => {
                     if let Some(symbol) = symbol {
                         if symbol.is_pointer {
                             format!("{}.*", name)
                         } else {
-                            let typ = get_expr_type(left);
-                            match typ {
+                            match left_type {
                                 Type::Natural => format!("{}.natural", name),
                                 Type::Integer => format!("{}.integer", name),
+                                Type::Float => format!("{}.float", name),
                                 _ => name.to_string(),
                             }
                         }
@@ -191,19 +189,15 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             };
 
             let right_code = match &**right {
-                Expr::VariableRef {
-                    name,
-                    transpiled_name,
-                    symbol,
-                } => {
+                Expr::VariableRef { name, symbol, .. } => {
                     if let Some(symbol) = symbol {
                         if symbol.is_pointer {
                             format!("{}.*", name)
                         } else {
-                            let typ = get_expr_type(right);
-                            match typ {
+                            match right_type {
                                 Type::Natural => format!("{}.natural", name),
                                 Type::Integer => format!("{}.integer", name),
+                                Type::Float => format!("{}.float", name),
                                 _ => name.to_string(),
                             }
                         }
@@ -229,14 +223,23 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 ">=" => ">=",
                 other => other,
             };
+
             match zig_op {
-                "/" => format!("(@divTrunc({left_code},{right_code}))"),
-                "%" => format!("(@mod({left_code},{right_code}))"),
-                "+" | "-" => format!(
-                    "@as(isize,@intCast({left_code})) {} @as(isize,@intCast({right_code}))",
-                    zig_op
-                ),
-                _ => format!("({} {} {})", left_code, zig_op, right_code),
+                "/" => format!("(@divTrunc({left_code}, {right_code}))"),
+                "%" => format!("(@mod({left_code}, {right_code}))"),
+                "+" | "-" => {
+                    if matches!(left_type, Type::Float) && !matches!(right_type, Type::Float) {
+                        format!("{left_code} {zig_op} @as(f64,@floatFromInt({right_code}))")
+                    } else if !matches!(left_type, Type::Float) && matches!(right_type, Type::Float)
+                    {
+                        format!("@as(f64,@floatFromInt({left_code})) {zig_op} {right_code}")
+                    } else {
+                        format!(
+                            "@as(isize,@intCast({left_code})) {zig_op} @as(isize,@intCast({right_code}))"
+                        )
+                    }
+                }
+                _ => format!("({left_code} {zig_op} {right_code})"),
             }
         }
 
@@ -354,12 +357,17 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 let print_code = transpile_print(&args[0], ctx);
                 format!("{};\n    std.process.exit(0)", print_code)
             }
+            BuiltInFunction::Trim => {
+                ctx.is_used_allocator = true;
+                let code = transpile_expr(&args[0], ctx);
+                format!("str_trim({},false)", code)
+            }
             BuiltInFunction::StrReverse => {
                 ctx.is_used_allocator = true;
                 let code = transpile_expr(&args[0], ctx);
                 format!("try str_reverse(allocator, {},false)", code)
             }
-            _ => todo!(),
+            _ => todo!("Bilinməyən funksiya"),
         },
         Expr::Call {
             target,

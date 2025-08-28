@@ -36,10 +36,15 @@ fn arg_code_for_expr<'a>(
             let name = transpile_expr(expr, ctx);
             format!("{}.natural", name)
         }
+        Type::Float => {
+            let name = transpile_expr(expr, ctx);
+            format!("{}.float", name)
+        }
         Type::Integer => {
             let name = transpile_expr(expr, ctx);
             format!("{}.integer", name)
         }
+
         _ => transpile_expr(expr, ctx),
     }
 }

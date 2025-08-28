@@ -94,8 +94,8 @@ pub fn transpile_decl<'a>(
                 }
             }
         },
-        Some(Type::Natural) | Some(Type::Integer) => match value {
-            Expr::Number(_) | Expr::UnaryOp { op: _, expr: _ } => {
+        Some(Type::Natural) | Some(Type::Integer) | Some(Type::Float) => match value {
+            Expr::Number(_) | Expr::UnaryOp { op: _, expr: _ } | Expr::Float(_) => {
                 let var_code = if is_mutable { "var" } else { "const" };
                 match typ {
                     Some(Type::Natural) => {
@@ -107,6 +107,12 @@ pub fn transpile_decl<'a>(
                     Some(Type::Integer) => {
                         format!(
                             "{} {}: {} = azlangEded.Yeni(azlangEded{{.integer = {}}});",
+                            var_code, name, type_str, value_code
+                        )
+                    }
+                    Some(Type::Float) => {
+                        format!(
+                            "{} {}: {} = azlangEded.Yeni(azlangEded{{.float = {}}});",
                             var_code, name, type_str, value_code
                         )
                     }
@@ -134,10 +140,16 @@ pub fn transpile_decl<'a>(
                                 var_code, name, type_str, value_code
                             )
                         }
-                        _ => todo!(),
+                        Some(Type::Float) => {
+                            format!(
+                                "{} {}: {} = azlangEded.Yeni(azlangEded{{.float = {}}});",
+                                var_code, name, type_str, value_code
+                            )
+                        }
+                        _ => todo!("Buraya çatdım"),
                     }
                 }
-                _ => todo!(),
+                _ => todo!("Burası neresi"),
             },
 
             _ => {

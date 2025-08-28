@@ -19,6 +19,7 @@ pub enum Token {
     End,
     Max,
     Min,
+    Trim,
     Mod,
     Len,
     StrUpper,
@@ -84,6 +85,7 @@ pub enum Token {
     CharType,
     BoolType,
     FloatType,
+    ZigFloat,
     BigIntegerType,
     LowIntegerType,
 }

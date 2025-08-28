@@ -71,7 +71,13 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
                 "{s}"
             }
         }
-
+        Type::ZigFloat => {
+            if is_allocator {
+                "{!d}"
+            } else {
+                "{d}"
+            }
+        }
         Type::ZigNatural
         | Type::ZigInteger
         | Type::Integer
@@ -149,7 +155,8 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
         Type::Natural => Cow::Borrowed("azlangEded"),
         Type::Any => Cow::Borrowed("any"),
         Type::Void => Cow::Borrowed("void"),
-        Type::Float => Cow::Borrowed("f64"),
+        Type::ZigFloat => Cow::Borrowed("f64"),
+        Type::Float => Cow::Borrowed("azlangEded"),
         Type::BigInteger => {
             if is_const {
                 Cow::Borrowed("const i128")

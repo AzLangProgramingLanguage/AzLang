@@ -130,6 +130,7 @@ where
         | Token::Min
         | Token::Zig
         | Token::Mod
+        | Token::Trim
         | Token::StrReverse
         | Token::ConvertString
         | Token::Round

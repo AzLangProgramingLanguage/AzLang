@@ -9,6 +9,8 @@ tip Yazı
     qaytar YazıKiçilt(öz)
   metod yazıtərs(): yazı
     qaytar YazıTərs(öz)
+  metod qırx(): yazı
+    qaytar YazıQırx(öz)
   metod TipVer(): zigsabityazı
     Zig(`_ = self`)
     qaytar "Yazı"
@@ -22,7 +24,7 @@ tip Yazı
 tip Ədəd
   natural: zignatural
   integer: ziginteger
-  float: kəsr
+  float: zigfloat
   metod Yeni(): ədəd
     qaytar öz
   metod yazıya_çevir(): yazı
@@ -44,5 +46,3 @@ tip Siyahı
     qaytar "Siyahi"
   
 
-
-Çap("Saalam")

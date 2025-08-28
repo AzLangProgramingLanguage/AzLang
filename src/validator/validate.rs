@@ -38,7 +38,7 @@ pub fn validate_expr<'a>(
             let transpiled = transpile_az_chars(name);
             validate_expr(value, ctx, log)?;
             let inferred = get_type(value, ctx, typ.as_deref());
-            dbg!(&inferred);
+            dbg!(&value);
             if let Some(s) = inferred {
                 if let Some(typ_ref) = typ.as_deref() {
                     if *typ_ref != s {

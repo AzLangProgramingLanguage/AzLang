@@ -21,6 +21,7 @@ pub fn get_type<'a>(
             }
         }
         Expr::Bool(_) => Some(Type::Bool),
+        Expr::Float(_) => Some(Type::Float),
         Expr::String(_, _) => Some(Type::Metn),
         Expr::List(items) => {
             if items.len() > 0 {

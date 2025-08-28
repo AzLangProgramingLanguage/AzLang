@@ -9,6 +9,7 @@ pub enum BuiltInFunction {
     Number,
     Sum,
     Range,
+    Trim,
     LastWord,
     Sqrt,
     Timer,
@@ -39,6 +40,7 @@ impl BuiltInFunction {
             | BuiltInFunction::Zig
             | BuiltInFunction::Number
             | BuiltInFunction::Allocator
+            | BuiltInFunction::Trim
             | BuiltInFunction::LastWord => Some(1),
 
             BuiltInFunction::Range => Some(2),
@@ -60,6 +62,7 @@ pub enum Type<'a> {
     Metn,
     ZigString,
     ZigConstString,
+    ZigFloat,
     ZigArray,
     ZigConstArray,
     ZigNatural,
@@ -218,6 +221,7 @@ pub struct Symbol<'a> {
     pub is_mutable: bool,
     pub is_pointer: bool,
     pub is_used: bool,
+
     pub transpiled_name: Option<String>,
     //pub source_location: Option<Location>,
 }

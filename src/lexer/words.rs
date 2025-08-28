@@ -18,7 +18,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "uyğun" => Token::Match,
             "dayan" => Token::Break,
             "davam" => Token::Continue,
-
+            "YazıQırx" => Token::Trim,
             "gəz" => Token::Loop,
             "son" => Token::End,
             "->" => Token::Arrow,
@@ -43,7 +43,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "işarə" => Token::CharType,
             "böyük_ədəd" => Token::BigIntegerType,
             "kiçik_ədəd" => Token::LowIntegerType,
-            "kəsr" => Token::FloatType,
+            "zigfloat" => Token::ZigFloat,
             "qərar" => Token::BoolType,
             "Çap" => Token::Print,
             "Giriş" => Token::Input,
@@ -80,6 +80,7 @@ impl fmt::Display for BuiltInFunction {
         let name = match self {
             BuiltInFunction::StrReverse => "YazıTərs",
             BuiltInFunction::Print => "Çap",
+            BuiltInFunction::Trim => "YazıQırx",
             BuiltInFunction::Len => "Uzunluq",
             BuiltInFunction::Range => "Aralıq",
             BuiltInFunction::Timer => "Timer",

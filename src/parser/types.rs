@@ -26,6 +26,7 @@ where
         Token::ZigConstArray => Type::ZigConstArray,
         Token::ZigArray => Type::ZigArray,
         Token::ZigNatural => Type::ZigNatural,
+        Token::ZigFloat => Type::ZigFloat,
         Token::ZigInteger => Type::ZigInteger,
         Token::Array => {
             match tokens.next() {
