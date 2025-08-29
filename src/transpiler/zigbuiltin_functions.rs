@@ -16,17 +16,19 @@ pub fn str_uppercase(allocator: std.mem.Allocator, self: azlangYazi, mut: bool) 
 }
 
 
-pub fn str_trim(self: azlangYazi, mut: bool) azlangYazi {
-      const slice = switch (self) {
+pub fn str_trim(self: azlangYazi, allocator: std.mem.Allocator, mut: bool) !azlangYazi {
+    const slice = switch (self) {
         .Mut => self.Mut,
         .Const => self.Const,
     };
 
     const trimmed = std.mem.trim(u8, slice, " ");
-    return if (mut)
-        azlangYazi{ .Mut = trimmed }
-    else
-        azlangYazi{ .Const = trimmed };
+    if (mut) {
+        const buf = try allocator.alloc(u8, trimmed.len);
+        return azlangYazi{ .Mut = buf };
+    } else {
+        return azlangYazi{ .Const = trimmed };
+    }
 }
 
 pub fn str_reverse(

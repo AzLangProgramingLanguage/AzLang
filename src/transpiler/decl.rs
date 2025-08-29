@@ -151,9 +151,12 @@ pub fn transpile_decl<'a>(
                 }
                 _ => todo!("Burası neresi"),
             },
-
             _ => {
-                todo!()
+                if is_mutable {
+                    format!("var {}: {} = {}", name, type_str, value_code)
+                } else {
+                    format!("const {}: {} = {}", name, type_str, value_code)
+                }
             }
         },
 

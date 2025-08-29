@@ -34,22 +34,26 @@ pub fn literals_parse<'a, I>(token: &'a Token, tokens: &mut PeekMoreIterator<I>)
 where
     I: Iterator<Item = &'a Token>,
 {
+    // İlk literalı parse et
     let mut expr = match token {
         Token::StringLiteral(s) => Expr::String(s, false),
         Token::Number(num) => Expr::Number(*num),
         Token::Float(num) => Expr::Float(*num),
-        _ => {
-            dbg!(tokens.peek());
-            std::process::exit(0);
-            return Err(eyre!("Gözlənilirdi identifikator"));
-        }
+        _ => return Err(eyre!("Literal gözlənilirdi, alındı {:?}", token)),
     };
 
-    if let Some(Token::Dot) = tokens.peek() {
-        tokens.next();
+    // Dot-chaining üçün loop
+    while let Some(Token::Dot) = tokens.peek() {
+        tokens.next(); // consume '.'
+
         let field_or_method = match tokens.next() {
             Some(Token::Identifier(name)) => (*name).as_str(),
-            _ => return Err(eyre!("Metod və ya sahə adı gözlənilirdi")),
+            other => {
+                return Err(eyre!(
+                    "Metod və ya sahə adı gözlənilirdi, alındı {:?}",
+                    other
+                ));
+            }
         };
 
         match tokens.peek() {
@@ -91,5 +95,6 @@ where
             }
         }
     }
+
     Ok(expr)
 }

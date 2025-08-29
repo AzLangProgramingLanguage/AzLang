@@ -22,7 +22,7 @@ Biz yeni bir proqramlaşdırma dili təqdim etmirik. Məqsədimiz — **təhlük
 
 - 🧠 **Təbii sintaksis** – Kod yazmaq insan dili qədər aydın olur
 - 🛡️ **Type-Safety** – Tip yoxlamaları avtomatik aparılır, lakin zəruri hallarda əl ilə də göstərilir
-- ⚡ **Performans** – Rust-vari optimallaşdırıla bilən transpiler çıxışı
+- ⚡ **Performans** – Rust kimi optimallaşdırıla bilən transpiler çıxışı
 - 🧪 **Statik analiz** – Tip analiz sistemi daxildə qurulub
 - 🧬 **Transpiler** – Həm eyni anda həm zig kodu yazmaq mümkündür həmdə azlang
 
@@ -64,7 +64,7 @@ Bu layihə açıq mənbəlidir. Hər bir yardım və fikir dəyərlidir:
 
     ✅ Funksiyonallıq
 
-    ✅  Optimallasdırma
+    ✅ Optimallasdırma
 
     ❌ Web IDE və playground
 

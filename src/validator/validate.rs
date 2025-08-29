@@ -163,7 +163,7 @@ pub fn validate_expr<'a>(
                 }
             }
             match function {
-                BuiltInFunction::Allocator => {
+                BuiltInFunction::Allocator | BuiltInFunction::Trim => {
                     ctx.is_allocator_used = true;
                 }
                 BuiltInFunction::StrLower => {
@@ -178,6 +178,7 @@ pub fn validate_expr<'a>(
                     log(&format!("✅ ConvertString funksiyası yoxlanılır"));
                     ctx.is_allocator_used = true;
                 }
+
                 BuiltInFunction::StrUpper => {
                     log(&format!("✅ StrUpper funksiyası yoxlanılır"));
                     ctx.is_allocator_used = true;

@@ -359,8 +359,16 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
             BuiltInFunction::Trim => {
                 ctx.is_used_allocator = true;
+                ctx.needs_allocator = true;
                 let code = transpile_expr(&args[0], ctx);
-                format!("str_trim({},false)", code)
+                if let Expr::String(_, _) = &args[0] {
+                    format!(
+                        "try str_trim(azlangYazi.Yeni(azlangYazi{{.Const ={}}}),allocator,false)",
+                        code
+                    )
+                } else {
+                    format!("try str_trim({},allocator,false)", code)
+                }
             }
             BuiltInFunction::StrReverse => {
                 ctx.is_used_allocator = true;
@@ -393,7 +401,6 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                             new_name.to_string()
                         }
                     }
-
                     _ => transpile_expr(arg, ctx),
                 })
                 .collect();
@@ -409,20 +416,13 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             // Fonksiyon adı
             let func_name = transpiled_name.as_ref().unwrap();
 
-            match target.as_deref() {
+            // Target-ə görə prefix hazırlayırıq
+
+            let call_expr = match target.as_deref() {
                 Some(Expr::VariableRef {
                     name: target_name, ..
                 }) => {
-                    if *is_allocator {
-                        format!(
-                            "(try {}.{} ({}))",
-                            target_name,
-                            func_name,
-                            args_code.join(", ")
-                        )
-                    } else {
-                        format!("{}.{} ({})", target_name, func_name, args_code.join(", "))
-                    }
+                    format!("{}.{}({})", target_name, func_name, args_code.join(", "))
                 }
                 Some(Expr::Number(n)) => {
                     format!(
@@ -440,7 +440,17 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         args_code.join(", ")
                     )
                 }
-                _ => format!("{}({})", func_name, args_code.join(", ")),
+                _ => {
+                    let target_code = transpile_expr(target.as_deref().unwrap(), ctx);
+                    format!("{}.{}({})", target_code, func_name, args_code.join(", "))
+                }
+            };
+
+            // Əgər allocator istifadə olunursa `try` ilə bük
+            if *is_allocator {
+                format!("(try {})", call_expr)
+            } else {
+                call_expr
             }
         }
 

@@ -2,4 +2,5 @@ sabit a = 1
 sabit c = 1.4
 Çap(a)
 Çap(`${c}`)
-Çap(YazıQırx("   sdasd   "))
+sabit e = "asdasd ".qırx().uzunluq()
+Çap(e)
