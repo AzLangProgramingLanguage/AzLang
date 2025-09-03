@@ -1,6 +1,19 @@
+// Ədəd nümunələri
 sabit a = 1
+sabit b = 5
 sabit c = 1.4
+
+Çap("Ədəd nümunələri:")
 Çap(a)
-Çap(`${c}`)
-sabit e = "asdasd ".qırx().uzunluq()
-Çap(e)
+Çap(b)
+Çap(c)
+Çap(`Cəmi: ${a + b + c}`)
+
+// Yazı nümunələri
+Çap("    salam dünya         ".böyüt().tərs().qırx().uzunluq())
+
+
+funksiya faktorial(x: ədəd) :heçnə
+    Çap(x)
+    
+Çap(faktorial(5))

@@ -20,6 +20,7 @@ where
         Token::NaturalType => Type::Natural,
         Token::StringType => Type::Metn,
         Token::CharType => Type::Char,
+        Token::Void => Type::Void,
         Token::FloatType => Type::Float,
         Token::ZigConstString => Type::ZigConstString,
         Token::ZigString => Type::ZigString,

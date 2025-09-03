@@ -45,10 +45,39 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             value,
             ctx,
         ),
+        /* TODO: Buraya Diqqət yetir. */
         Expr::Return(expr) => {
-            let arg_code = transpile_expr(expr, ctx);
-            format!("return {arg_code}")
+            let code = match &**expr {
+                Expr::Number(n) => match get_expr_type(expr) {
+                    Type::Natural => format!("azlangEded{{.natural={}}}", n),
+                    Type::Integer => format!("azlangEded{{.integer={}}}", n),
+                    Type::Float => format!("azlangEded{{.float={}}}", n),
+                    _ => transpile_expr(expr, ctx),
+                },
+
+                Expr::VariableRef {
+                    transpiled_name,
+                    symbol,
+                    ..
+                } => {
+                    let name = transpiled_name.as_deref().unwrap_or("<undefined>");
+                    match symbol.as_ref().map(|s| &s.typ) {
+                        Some(Type::Natural) => format!("azlangEded{{.natural={}}}", name),
+                        Some(Type::Integer) => format!("azlangEded{{.integer={}}}", name),
+                        Some(Type::Float) => format!("azlangEded{{.float={}}}", name),
+                        _ => transpile_expr(expr, ctx),
+                    }
+                }
+
+                Expr::Float(n) => n.to_string(),
+                Expr::String(s, _) => format!("\"{}\"", s.escape_default()),
+
+                _ => transpile_expr(expr, ctx),
+            };
+
+            format!("return {}", code)
         }
+
         Expr::VariableRef {
             name,
             transpiled_name,
@@ -294,6 +323,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             BuiltInFunction::Max => transpile_max(&args, ctx),
             BuiltInFunction::Sum => transpile_sum(&args, ctx),
             BuiltInFunction::ConvertString => {
+                ctx.is_used_allocator = true;
                 let arg_code = transpile_expr(&args[0], ctx);
                 format!("try convert_string(allocator, {},false)", arg_code)
             }
@@ -401,6 +431,9 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                             new_name.to_string()
                         }
                     }
+                    Expr::Number(n) => format!("azlangEded{{.natural={}}}", n),
+                    Expr::Float(n) => format!("azlangEded{{.float={}}}", n),
+                    Expr::String(s, _) => format!("\"{}\"", s),
                     _ => transpile_expr(arg, ctx),
                 })
                 .collect();
@@ -432,6 +465,14 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         args_code.join(", ")
                     )
                 }
+                Some(Expr::Float(n)) => {
+                    format!(
+                        "azlangEded.Yeni(azlangEded{{.float = {}}}).{}({})",
+                        n,
+                        func_name,
+                        args_code.join(", ")
+                    )
+                }
                 Some(Expr::String(s, _)) => {
                     format!(
                         "azlangYazi.Yeni(azlangYazi{{.Const = \"{}\"}}).{}({})",
@@ -440,9 +481,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         args_code.join(", ")
                     )
                 }
-                _ => {
+                Some(_) => {
                     let target_code = transpile_expr(target.as_deref().unwrap(), ctx);
                     format!("{}.{}({})", target_code, func_name, args_code.join(", "))
+                }
+                _ => {
+                    format!("{}({})", func_name, args_code.join(", "))
                 }
             };
 

@@ -166,6 +166,19 @@ pub fn validate_expr<'a>(
                 BuiltInFunction::Allocator | BuiltInFunction::Trim => {
                     ctx.is_allocator_used = true;
                 }
+                BuiltInFunction::Print => {
+                    log(&format!("✅ Print funksiyası yoxlanılır"));
+                    if let Some(t) = get_type(&args[0], ctx, None) {
+                        /* TODO: Burada Void geçmesine icaze verme */
+                        print!("Tiiiiiiiiiiiiiiipp {:?}", args[0]);
+                        if t == Type::Void {
+                            return Err(ValidatorError::TypeMismatch {
+                                expected: "Yazı".to_string(),
+                                found: format!("{t:?}"),
+                            });
+                        }
+                    }
+                }
                 BuiltInFunction::StrLower => {
                     log(&format!("✅ StrLower funksiyası yoxlanılır"));
                     ctx.is_allocator_used = true;
@@ -316,6 +329,7 @@ pub fn validate_expr<'a>(
 
                 *symbol = Some(sym.clone());
                 *transpiled_name = sym.transpiled_name.clone();
+
                 return Ok(());
             }
 
@@ -466,7 +480,7 @@ pub fn validate_expr<'a>(
                             *is_allocator = method.is_allocator_used;
                             *returned_type = method.return_type.clone();
                         }
-                        Some(Type::Natural) | Some(Type::Integer) => {
+                        Some(Type::Natural) | Some(Type::Integer) | Some(Type::Float) => {
                             let object = ctx
                                 .union_defs
                                 .get("Ədəd")
@@ -644,7 +658,7 @@ pub fn validate_expr<'a>(
                     is_mutable: param.is_mutable,
                     is_used: false,
                     is_pointer: param.is_pointer,
-                    transpiled_name: Some("".into()),
+                    transpiled_name: Some(transpile_az_chars(param.name.as_str()).to_string()),
                 };
                 ctx.declare_variable(param.name.clone(), symbol);
             }

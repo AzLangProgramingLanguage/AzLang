@@ -9,7 +9,7 @@ use std::{env, io, path::PathBuf};
         .join(if cfg!(windows) { "zig.exe" } else { "zig" })
 } */
 fn get_zig_path() -> &'static str {
-    "zig"
+    "zig-x86_64-linux-0.15.1/zig"
 }
 
 pub fn runner(rust_file: &str) -> Result<(), io::Error> {

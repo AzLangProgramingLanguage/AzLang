@@ -7,7 +7,7 @@ tip Yazı
     qaytar YazıBöyüt(öz)
   metod kiçilt(): yazı
     qaytar YazıKiçilt(öz)
-  metod yazıtərs(): yazı
+  metod tərs(): yazı
     qaytar YazıTərs(öz)
   metod qırx(): yazı
     qaytar YazıQırx(öz)

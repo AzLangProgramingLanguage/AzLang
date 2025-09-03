@@ -65,11 +65,31 @@ pub fn str_lowercase(allocator: std.mem.Allocator, self: azlangYazi, mut: bool) 
         azlangYazi{ .Const = output };
 }
 pub fn convert_string(allocator: std.mem.Allocator, value: anytype, mut: bool) !azlangYazi {
-    const str_val = try std.fmt.allocPrint(allocator, "{}", .{value});
+    const T = comptime @TypeOf(value);
+    var str_val: []u8 = undefined;
+
+    if (T == azlangEded) {
+        switch (value) {
+            .natural => |n| {
+                str_val = try std.fmt.allocPrint(allocator, "{}", .{n});
+            },
+            .integer => |i| {
+                str_val = try std.fmt.allocPrint(allocator, "{}", .{i});
+            },
+            .float => |f| {
+                str_val = try std.fmt.allocPrint(allocator, "{d}", .{f});
+            },
+        }
+    } else {
+        str_val = try std.fmt.allocPrint(allocator, "{}", .{value});
+    }
+
     if (mut) {
         return azlangYazi{ .Mut = str_val };
     } else {
         return azlangYazi{ .Const = str_val };
     }
 }
+
+
 "#;

@@ -5,6 +5,7 @@ pub enum Token {
     FunctionDef,
     Conditional,
     Underscore,
+    Void,
     Float(f64),
     Backtick,
     InterpolationStart,
