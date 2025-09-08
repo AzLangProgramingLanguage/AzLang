@@ -19,6 +19,7 @@ pub struct MethodInfo<'a> {
     pub parameters: Vec<Parameter<'a>>,
     pub is_allocator_used: bool,
 }
+#[derive(Debug)]
 pub struct ValidatorContext<'a> {
     pub scopes: Vec<HashMap<String, Symbol<'a>>>,
     pub functions: HashMap<Cow<'a, str>, FunctionInfo<'a>>,

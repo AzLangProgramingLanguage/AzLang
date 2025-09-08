@@ -26,6 +26,7 @@ static A: Limit<System> = Limit::new(256_000_000, System);
     about = "AzLang ilə yaz, tərtib et, işə sal — bir əmrlə!",
     disable_help_subcommand = true
 )]
+
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -54,6 +55,13 @@ enum Commands {
     );
 } */
 
+#[macro_export]
+macro_rules! dd {
+    ($x:expr) => {
+        println!("{:#?}", $x); // daha rahat debug üçün Debug trait istifadə et
+        std::process::exit(0);
+    };
+}
 fn main() -> Result<()> {
     color_eyre::install()?;
 
@@ -61,7 +69,6 @@ fn main() -> Result<()> {
         println!("❌ Xüsusi Xəta: Yaddaş limiti keçildi!");
         println!("Əlavə məlumat: {panic_info}");
     }));
-
     let mut cmd = Cli::command();
     cmd = cmd.help_template(
         "\x1b[36m{before-help}AzCLI — {about}\x1b[0m\n\n\
@@ -151,10 +158,12 @@ fn build(input_path: &str) -> Result<()> {
 fn run(input_path: &str) -> Result<()> {
     qardas_parse("Proqramı işə salıram, uğurlar!");
     let stk_code = utils::read_file("program1.az").map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
+
     let full_code =
         utils::read_file_with_imports(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
     let mut tokens = lexer::Lexer::new(&stk_code).tokenize();
     let user_tokens = lexer::Lexer::new(&full_code).tokenize(); /* Burası Üstdeki importları oxuyur. */
+
     tokens.extend(user_tokens);
 
     let mut parser = parser::Parser::new(&mut tokens);
@@ -174,6 +183,7 @@ fn run(input_path: &str) -> Result<()> {
     /* Cleaner */
 
     clean_ast(&mut parsed_program, &validator_ctx);
+    drop(validator_ctx);
 
     /* Transpiler */
     let mut ctx = TranspileContext::new();

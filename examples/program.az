@@ -1,19 +1,9 @@
-// Ədəd nümunələri
-sabit a = 1
-sabit b = 5
-sabit c = 1.4
-
-Çap("Ədəd nümunələri:")
-Çap(a)
-Çap(b)
+sabit c = "asda".böyüt().tərs()
 Çap(c)
-Çap(`Cəmi: ${a + b + c}`)
 
-// Yazı nümunələri
-Çap("    salam dünya         ".böyüt().tərs().qırx().uzunluq())
-
-
-funksiya faktorial(x: ədəd) :heçnə
-    Çap(x)
-    
+funksiya faktorial(x: ədəd):ədəd
+    əgər x == 0
+        qaytar 1
+    əks
+        qaytar x * faktorial(x - 1)  //Burası transpile olunarken azlangEded tipinde transpile olunmalıdır.
 Çap(faktorial(5))

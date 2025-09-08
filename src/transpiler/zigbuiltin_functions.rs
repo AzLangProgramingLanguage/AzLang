@@ -15,6 +15,35 @@ pub fn str_uppercase(allocator: std.mem.Allocator, self: azlangYazi, mut: bool) 
         azlangYazi{ .Const = output };
 }
 
+fn azlang_add(a: azlangEded, b: azlangEded) azlangEded {
+    const af = a.toFloat();
+    const bf = b.toFloat();
+    const res = af + bf;
+    if (@floor(res) == res) {
+        if (res >= 0) {
+            return azlangEded{ .natural = @intCast(res) };
+        } else {
+            return azlangEded{ .integer = @intCast(res) };
+        }
+    } else {
+        return azlangEded{ .float = res };
+    }
+}
+
+fn azlang_sub(a: azlangEded, b: azlangEded) azlangEded {
+    const ai = a.toInteger();
+    const bi = b.toInteger();
+    const res = ai - bi;
+    if (res >= 0) {
+        return azlangEded{ .natural = @intCast(res) };
+    } else return azlangEded{ .integer = res };
+}
+
+fn azlang_mul(a: azlangEded, b: azlangEded) azlangEded {
+    const ai = a.toInteger();
+    const bi = b.toInteger();
+    return azlangEded{ .integer = ai * bi };
+}
 
 pub fn str_trim(self: azlangYazi, allocator: std.mem.Allocator, mut: bool) !azlangYazi {
     const slice = switch (self) {
@@ -83,7 +112,6 @@ pub fn convert_string(allocator: std.mem.Allocator, value: anytype, mut: bool) !
     } else {
         str_val = try std.fmt.allocPrint(allocator, "{}", .{value});
     }
-
     if (mut) {
         return azlangYazi{ .Mut = str_val };
     } else {

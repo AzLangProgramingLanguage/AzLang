@@ -3,6 +3,7 @@ use std::{borrow::Cow, rc::Rc};
 use color_eyre::eyre::Result;
 
 use crate::{
+    dd,
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
     validator::{
@@ -167,10 +168,10 @@ pub fn validate_expr<'a>(
                     ctx.is_allocator_used = true;
                 }
                 BuiltInFunction::Print => {
+                    /* TODO: Burada Void geçmesine icaze verme */
+                    validate_expr(&mut args[0], ctx, log)?;
                     log(&format!("✅ Print funksiyası yoxlanılır"));
                     if let Some(t) = get_type(&args[0], ctx, None) {
-                        /* TODO: Burada Void geçmesine icaze verme */
-                        print!("Tiiiiiiiiiiiiiiipp {:?}", args[0]);
                         if t == Type::Void {
                             return Err(ValidatorError::TypeMismatch {
                                 expected: "Yazı".to_string(),

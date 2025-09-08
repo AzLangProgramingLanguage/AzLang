@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
+    dd,
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     transpiler::{
         TranspileContext,
@@ -62,9 +63,9 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 } => {
                     let name = transpiled_name.as_deref().unwrap_or("<undefined>");
                     match symbol.as_ref().map(|s| &s.typ) {
-                        Some(Type::Natural) => format!("azlangEded{{.natural={}}}", name),
-                        Some(Type::Integer) => format!("azlangEded{{.integer={}}}", name),
-                        Some(Type::Float) => format!("azlangEded{{.float={}}}", name),
+                        Some(Type::Natural) => format!("{}", name),
+                        Some(Type::Integer) => format!("{}", name),
+                        Some(Type::Float) => format!("{}", name),
                         _ => transpile_expr(expr, ctx),
                     }
                 }
@@ -431,6 +432,10 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                             new_name.to_string()
                         }
                     }
+                    Expr::BinaryOp { left, op, right } => {
+                        let arg_code = transpile_expr(arg, ctx);
+                        format!("azlangEded{{.integer=({})}}", arg_code)
+                    }
                     Expr::Number(n) => format!("azlangEded{{.natural={}}}", n),
                     Expr::Float(n) => format!("azlangEded{{.float={}}}", n),
                     Expr::String(s, _) => format!("\"{}\"", s),
@@ -459,7 +464,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 }
                 Some(Expr::Number(n)) => {
                     format!(
-                        "azlangEded.Yeni({}).{}({})",
+                        "azlangEded.Yeni(azlangEded{{.natural={}}}).{}({})",
                         n,
                         func_name,
                         args_code.join(", ")
