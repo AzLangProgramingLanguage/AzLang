@@ -16,23 +16,40 @@ pub fn str_uppercase(allocator: std.mem.Allocator, self: azlangYazi, mut: bool) 
 }
 
 fn azlang_add(a: azlangEded, b: azlangEded) azlangEded {
-    const af = a.toFloat();
-    const bf = b.toFloat();
+    const af = toFloat(a);
+    const bf = toFloat(b);
     const res = af + bf;
     if (@floor(res) == res) {
         if (res >= 0) {
-            return azlangEded{ .natural = @intCast(res) };
+            return azlangEded{ .natural = @intFromFloat(res) };
         } else {
-            return azlangEded{ .integer = @intCast(res) };
+            return azlangEded{ .integer = @intFromFloat(res) };
         }
     } else {
         return azlangEded{ .float = res };
     }
 }
 
+   pub fn toFloat(self: azlangEded) f64 {
+        return switch (self) {
+            .natural => |n| @floatFromInt(n),
+            .integer => |i| @floatFromInt(i),
+            .float => |f| f,
+        };
+    }
+
+ pub fn toInteger(self: azlangEded) isize {
+        return switch (self) {
+            .natural => |n| @intCast(n),
+            .integer => |i| i,
+            .float => |f| @intFromFloat(f), // truncation ola bilər
+        };
+    }
+
+
 fn azlang_sub(a: azlangEded, b: azlangEded) azlangEded {
-    const ai = a.toInteger();
-    const bi = b.toInteger();
+    const ai = toInteger(a);
+    const bi = toInteger(b);
     const res = ai - bi;
     if (res >= 0) {
         return azlangEded{ .natural = @intCast(res) };
@@ -40,8 +57,8 @@ fn azlang_sub(a: azlangEded, b: azlangEded) azlangEded {
 }
 
 fn azlang_mul(a: azlangEded, b: azlangEded) azlangEded {
-    const ai = a.toInteger();
-    const bi = b.toInteger();
+    const ai = toInteger(a);
+    const bi = toInteger(b);
     return azlangEded{ .integer = ai * bi };
 }
 

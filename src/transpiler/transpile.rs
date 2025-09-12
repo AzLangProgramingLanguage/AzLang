@@ -194,22 +194,19 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
 
             format!("const {} = enum {{\n{}\n}};", name, variants_code)
         }
+
+        /* TODO:  Bu kodu optimallaşdırmam lazım.*/
         Expr::BinaryOp { left, op, right } => {
             let left_type = get_expr_type(left);
             let right_type = get_expr_type(right);
 
-            let left_code = match &**left {
+            let mut left_code = match &**left {
                 Expr::VariableRef { name, symbol, .. } => {
                     if let Some(symbol) = symbol {
                         if symbol.is_pointer {
                             format!("{}.*", name)
                         } else {
-                            match left_type {
-                                Type::Natural => format!("{}.natural", name),
-                                Type::Integer => format!("{}.integer", name),
-                                Type::Float => format!("{}.float", name),
-                                _ => name.to_string(),
-                            }
+                            name.to_string()
                         }
                     } else {
                         transpile_expr(left, ctx)
@@ -218,18 +215,13 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 _ => transpile_expr(left, ctx),
             };
 
-            let right_code = match &**right {
+            let mut right_code = match &**right {
                 Expr::VariableRef { name, symbol, .. } => {
                     if let Some(symbol) = symbol {
                         if symbol.is_pointer {
                             format!("{}.*", name)
                         } else {
-                            match right_type {
-                                Type::Natural => format!("{}.natural", name),
-                                Type::Integer => format!("{}.integer", name),
-                                Type::Float => format!("{}.float", name),
-                                _ => name.to_string(),
-                            }
+                            name.to_string()
                         }
                     } else {
                         transpile_expr(right, ctx)
@@ -257,17 +249,75 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             match zig_op {
                 "/" => format!("(@divTrunc({left_code}, {right_code}))"),
                 "%" => format!("(@mod({left_code}, {right_code}))"),
-                "+" | "-" => {
-                    if matches!(left_type, Type::Float) && !matches!(right_type, Type::Float) {
-                        format!("{left_code} {zig_op} @as(f64,@floatFromInt({right_code}))")
-                    } else if !matches!(left_type, Type::Float) && matches!(right_type, Type::Float)
-                    {
-                        format!("@as(f64,@floatFromInt({left_code})) {zig_op} {right_code}")
-                    } else {
-                        format!(
-                            "@as(isize,@intCast({left_code})) {zig_op} @as(isize,@intCast({right_code}))"
-                        )
+                "+" => {
+                    /* Buradada  */
+
+                    if let Expr::Number(value) = &**left {
+                        if left_type == Type::Integer {
+                            left_code = format!("azlangEded{{.integer = {value}}}");
+                        } else if left_type == Type::Natural {
+                            left_code = format!("azlangEded{{.natural = {value}}}");
+                        }
+                    } else if let Expr::Float(value) = &**right {
+                        left_code = format!("azlangEded{{.float = {value}}}");
                     }
+
+                    if let Expr::Number(value) = &**right {
+                        if right_type == Type::Integer {
+                            right_code = format!("azlangEded{{.integer = {value}}}");
+                        } else if right_type == Type::Natural {
+                            right_code = format!("azlangEded{{.natural = {value}}}");
+                        }
+                    } else if let Expr::Float(value) = &**right {
+                        right_code = format!("azlangEded{{.float = {value}}}");
+                    }
+
+                    format!(" azlang_add( {left_code}, {right_code})")
+                }
+                "-" => {
+                    /* Buradada  */
+                    if let Expr::Number(value) = &**left {
+                        if left_type == Type::Integer {
+                            left_code = format!("azlangEded{{.integer = {value}}}");
+                        } else if left_type == Type::Natural {
+                            left_code = format!("azlangEded{{.natural = {value}}}");
+                        } else if left_type == Type::Float {
+                            left_code = format!("azlangEded{{.float = {value}}}");
+                        }
+                    }
+                    if let Expr::Number(value) = &**right {
+                        if right_type == Type::Integer {
+                            right_code = format!("azlangEded{{.integer = {value}}}");
+                        } else if right_type == Type::Natural {
+                            right_code = format!("azlangEded{{.natural = {value}}}");
+                        } else if right_type == Type::Float {
+                            right_code = format!("azlangEded{{.float = {value}}}");
+                        }
+                    }
+                    format!(" azlang_sub( {left_code}, {right_code})")
+                }
+                "*" => {
+                    /* Buradada  */
+                    format!(" azlang_mul( {left_code}, {right_code})")
+                }
+                "==" | "!=" | "<" | ">" | "<=" | ">=" => {
+                    if left_type == Type::Integer
+                        || left_type == Type::Natural
+                        || left_type == Type::Float
+                    {
+                        if let Expr::VariableRef { name, symbol, .. } = &**left {
+                            left_code = format!("toFloat({})", name);
+                        }
+                    }
+                    if right_type == Type::Integer
+                        || right_type == Type::Natural
+                        || right_type == Type::Float
+                    {
+                        if let Expr::VariableRef { name, symbol, .. } = &**right {
+                            right_code = format!("toFloat({})", name);
+                        }
+                    }
+                    format!("({left_code} {zig_op} {right_code})")
                 }
                 _ => format!("({left_code} {zig_op} {right_code})"),
             }
@@ -432,10 +482,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                             new_name.to_string()
                         }
                     }
-                    Expr::BinaryOp { left, op, right } => {
-                        let arg_code = transpile_expr(arg, ctx);
-                        format!("azlangEded{{.integer=({})}}", arg_code)
-                    }
+
                     Expr::Number(n) => format!("azlangEded{{.natural={}}}", n),
                     Expr::Float(n) => format!("azlangEded{{.float={}}}", n),
                     Expr::String(s, _) => format!("\"{}\"", s),

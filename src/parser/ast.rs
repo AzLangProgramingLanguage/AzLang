@@ -148,7 +148,6 @@ pub enum Expr<'a> {
         condition: Box<Expr<'a>>,
         then_branch: Vec<Expr<'a>>,
     },
-
     Else {
         then_branch: Vec<Expr<'a>>,
     },
@@ -157,7 +156,6 @@ pub enum Expr<'a> {
         args: Vec<Expr<'a>>,
         return_type: Type<'a>,
     },
-
     Call {
         target: Option<Box<Expr<'a>>>,
         name: &'a str,
@@ -221,7 +219,6 @@ pub struct Symbol<'a> {
     pub is_mutable: bool,
     pub is_pointer: bool,
     pub is_used: bool,
-
     pub transpiled_name: Option<String>,
     //pub source_location: Option<Location>,
 }

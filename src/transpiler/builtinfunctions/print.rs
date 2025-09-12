@@ -1,6 +1,5 @@
-use std::borrow::Cow;
-
 use crate::{
+    dd,
     parser::ast::{Expr, TemplateChunk, Type},
     transpiler::{
         TranspileContext,
@@ -14,14 +13,15 @@ fn arg_code_for_expr<'a>(
     ctx: &mut TranspileContext<'a>,
     typ: Type<'_>,
 ) -> String {
-    println!("{:#?}", expr);
     match expr {
         Expr::String(_, _)
         | Expr::TemplateString(_)
         | Expr::Number(_)
+        | Expr::Float(_)
         | Expr::UnaryOp { op: _, expr: _ } => {
             return transpile_expr(expr, ctx);
         }
+
         _ => {}
     }
     match typ {
@@ -33,18 +33,14 @@ fn arg_code_for_expr<'a>(
                 format!("{}.Const", name)
             }
         }
-        Type::Natural => {
+        Type::Natural | Type::Integer => {
             let name = transpile_expr(expr, ctx);
 
-            format!("{}.natural", name)
+            format!("toInteger({})", name)
         }
         Type::Float => {
             let name = transpile_expr(expr, ctx);
-            format!("{}.float", name)
-        }
-        Type::Integer => {
-            let name = transpile_expr(expr, ctx);
-            format!("{}.integer", name)
+            format!("toFloat({})", name)
         }
 
         _ => transpile_expr(expr, ctx),

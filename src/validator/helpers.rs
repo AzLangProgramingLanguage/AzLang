@@ -21,6 +21,7 @@ pub fn get_type<'a>(
             }
         }
         Expr::Bool(_) => Some(Type::Bool),
+
         Expr::Float(_) => Some(Type::Float),
         Expr::String(_, _) => Some(Type::Metn),
         Expr::List(items) => {
@@ -80,16 +81,10 @@ pub fn get_type<'a>(
         }
 
         Expr::BuiltInCall { return_type, .. } => Some(return_type.clone()),
-        Expr::Call { returned_type, .. } => {
-            dbg!(returned_type);
-
-            returned_type.clone()
-        }
+        Expr::Call { returned_type, .. } => returned_type.clone(),
         Expr::BinaryOp { left, op, right } => {
             let left_type = get_type(left, ctx, typ)?;
             let right_type = get_type(right, ctx, typ)?;
-
-            // Əgər operandların tipi uyğun gəlmir
             if left_type != right_type {
                 return None;
             }
@@ -103,7 +98,6 @@ pub fn get_type<'a>(
             }
 
             if arithmetic_ops.contains(&op) {
-                // Sadəcə ədədlər üçün arifmetik operatorlar keçərlidir
                 if left_type == Type::Integer {
                     return Some(Type::Integer);
                 } else {
@@ -111,7 +105,6 @@ pub fn get_type<'a>(
                 }
             }
 
-            // Tanınmayan operatorlar üçün
             None
         }
         _ => None,

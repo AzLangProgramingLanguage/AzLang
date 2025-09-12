@@ -1,3 +1,4 @@
+pub mod interpretator;
 pub mod utils;
 use std::{env, panic};
 
@@ -8,6 +9,7 @@ mod lexer;
 mod parser;
 pub mod translations;
 pub mod validator;
+use interpretator::InterPretator;
 use limit_alloc::Limit;
 use std::alloc::System;
 pub use utils::*;
@@ -122,40 +124,6 @@ fn qardas_parse_error(msg: &str) {
 
 #[allow(hidden_glob_reexports)]
 fn build(input_path: &str) -> Result<()> {
-    qardas_parse("Başladım kodu yığmağa, hər kəsə salamlar!");
-
-    let input_code = utils::read_file(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
-
-    let tokens = lexer::Lexer::new(&input_code).tokenize();
-    println!("Tokens: {:#?}", tokens);
-
-    // let mut parser = parser::Parser::new(tokens);
-    // let mut parsed_program = parser.parse().map_err(|e| {
-    //     qardas_parse_error(&format!("Parser xətası: {e}"));
-    //     eyre!("Parser xətası: {e}")
-    // })?;
-    // for expr in parsed_program.expressions.iter_mut() {
-    //     validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator).map_err(|e| {
-    //         emi_validator_error(&e);
-    //         eyre!("Validator xətası: {e}")
-    //     })?;
-
-    //     validate_top_level_expr(expr).map_err(|e| {
-    //         emi_validator_error(&e);
-    //         eyre!("Validator xətası: {e}")
-    //     })?;
-    // }
-    /* println!("Parser {:#?}", parsed_program); */
-    // let zig_code =
-    //     transpiler::transpile(&parsed_program, &mut ctx, &sister_transp).map_err(|e| {
-    //         baci_transp_error(&e);
-    //         eyre!("Transpilasiya xətası: {e}")
-    //     })?;
-
-    Ok(())
-}
-
-fn run(input_path: &str) -> Result<()> {
     qardas_parse("Proqramı işə salıram, uğurlar!");
     let stk_code = utils::read_file("program1.az").map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
 
@@ -195,5 +163,41 @@ fn run(input_path: &str) -> Result<()> {
     if runner::runner(temp_path.to_str().unwrap()).is_err() {
         eprintln!("❌ Proqram işləmədi.");
     }
+    Ok(())
+}
+
+fn run(input_path: &str) -> Result<()> {
+    qardas_parse("Proqramı işə salıram, uğurlar!");
+    let stk_code = utils::read_file("program1.az").map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
+
+    let full_code =
+        utils::read_file_with_imports(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
+    let mut tokens = lexer::Lexer::new(&stk_code).tokenize();
+    let user_tokens = lexer::Lexer::new(&full_code).tokenize(); /* Burası Üstdeki importları oxuyur. */
+
+    tokens.extend(user_tokens);
+
+    let mut parser = parser::Parser::new(&mut tokens);
+    let mut parsed_program = parser.parse().map_err(|e| {
+        qardas_parse_error(&format!("Parser xətası: {e}"));
+        eyre!("Parser xətası: {e}")
+    })?;
+
+    /* Validator */
+
+    let mut validator_ctx = ValidatorContext::new();
+    for expr in parsed_program.expressions.iter_mut() {
+        validator::validate_expr(expr, &mut validator_ctx, &mut emi_validator)
+            .map_err(|e| eyre!("Validator xətası: {e}"))?;
+    }
+
+    /* Cleaner */
+
+    clean_ast(&mut parsed_program, &validator_ctx);
+    drop(validator_ctx);
+    let mut interpretator_ctx = InterPretator::new();
+    InterPretator::run(&mut interpretator_ctx, parsed_program);
+    /* Intepretator. */
+
     Ok(())
 }

@@ -1,9 +1,11 @@
-sabit c = "asda".böyüt().tərs()
+Çap("Salam")
+/* sabit c = "asda".böyüt().tərs()
 Çap(c)
-
 funksiya faktorial(x: ədəd):ədəd
     əgər x == 0
         qaytar 1
     əks
-        qaytar x * faktorial(x - 1)  //Burası transpile olunarken azlangEded tipinde transpile olunmalıdır.
+        qaytar x * faktorial(x - 1)
 Çap(faktorial(5))
+Çap(5+2.1)
+*/

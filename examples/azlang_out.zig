@@ -13,6 +13,52 @@ pub fn str_uppercase(allocator: std.mem.Allocator, self: azlangYazi, mut: bool) 
         azlangYazi{ .Const = output };
 }
 
+fn azlang_add(a: azlangEded, b: azlangEded) azlangEded {
+    const af = toFloat(a);
+    const bf = toFloat(b);
+    const res = af + bf;
+    if (@floor(res) == res) {
+        if (res >= 0) {
+            return azlangEded{ .natural = @intCast(res) };
+        } else {
+            return azlangEded{ .integer = @intCast(res) };
+        }
+    } else {
+        return azlangEded{ .float = res };
+    }
+}
+
+pub fn toFloat(self: azlangEded) f64 {
+    return switch (self) {
+        .natural => |n| @floatFromInt(n),
+        .integer => |i| @floatFromInt(i),
+        .float => |f| f,
+    };
+}
+
+pub fn toInteger(self: azlangEded) isize {
+    return switch (self) {
+        .natural => |n| @intCast(n),
+        .integer => |i| i,
+        .float => |f| @intFromFloat(f), // truncation ola bilər
+    };
+}
+
+fn azlang_sub(a: azlangEded, b: azlangEded) azlangEded {
+    const ai = toInteger(a);
+    const bi = toInteger(b);
+    const res = ai - bi;
+    if (res >= 0) {
+        return azlangEded{ .natural = @intCast(res) };
+    } else return azlangEded{ .integer = res };
+}
+
+fn azlang_mul(a: azlangEded, b: azlangEded) azlangEded {
+    const ai = toInteger(a);
+    const bi = toInteger(b);
+    return azlangEded{ .integer = ai * bi };
+}
+
 pub fn str_trim(self: azlangYazi, allocator: std.mem.Allocator, mut: bool) !azlangYazi {
     const slice = switch (self) {
         .Mut => self.Mut,
@@ -80,7 +126,6 @@ pub fn convert_string(allocator: std.mem.Allocator, value: anytype, mut: bool) !
     } else {
         str_val = try std.fmt.allocPrint(allocator, "{}", .{value});
     }
-
     if (mut) {
         return azlangYazi{ .Mut = str_val };
     } else {
@@ -109,13 +154,6 @@ const azlangYazi = union(enum) {
     pub fn azlangqirx(self: @This(), allocator: std.mem.Allocator) !azlangYazi {
         return try str_trim(self, allocator, false);
     }
-    pub fn free(self: azlangYazi, allocator: std.mem.Allocator) void {
-        switch (self) {
-            .Mut => |buf| allocator.free(buf),
-            .Const => |buf| allocator.free(buf),
-        }
-    }
-
     pub fn TipVer(
         self: @This(),
     ) []const u8 {
@@ -129,6 +167,27 @@ const azlangYazi = union(enum) {
             .Const => return azlangEded.Yeni(azlangEded{ .natural = self.Const.len }),
             .Mut => return azlangEded.Yeni(azlangEded{ .natural = self.Mut.len }),
         }
+    }
+};
+
+const azlangEded = union(enum) {
+    natural: usize,
+    integer: isize,
+    float: f64,
+
+    pub fn Yeni(
+        self: @This(),
+    ) azlangEded {
+        return self;
+    }
+    pub fn azlangyaziya_cevir(self: @This(), allocator: std.mem.Allocator) !azlangYazi {
+        return try convert_string(allocator, self, false);
+    }
+    pub fn TipVer(
+        self: @This(),
+    ) []const u8 {
+        _ = self;
+        return "\u{18f}d\u{259}d";
     }
 };
 
@@ -151,87 +210,19 @@ const azlangSiyahi = union(enum) {
         return "Siyahi";
     }
 };
-fn azlang_add(a: azlangEded, b: azlangEded) azlangEded {
-    const af = a.toFloat();
-    const bf = b.toFloat();
-    const res = af + bf;
-    if (@floor(res) == res) {
-        if (res >= 0) {
-            return azlangEded{ .natural = @intCast(res) };
-        } else {
-            return azlangEded{ .integer = @intCast(res) };
-        }
-    } else {
-        return azlangEded{ .float = res };
-    }
-}
-
-fn azlang_sub(a: azlangEded, b: azlangEded) azlangEded {
-    const ai = a.toInteger();
-    const bi = b.toInteger();
-    const res = ai - bi;
-    if (res >= 0) {
-        return azlangEded{ .natural = @intCast(res) };
-    } else return azlangEded{ .integer = res };
-}
-
-fn azlang_mul(a: azlangEded, b: azlangEded) azlangEded {
-    const ai = a.toInteger();
-    const bi = b.toInteger();
-    return azlangEded{ .integer = ai * bi };
-}
-
-const azlangEded = union(enum) {
-    natural: usize,
-    integer: isize,
-    float: f64,
-    pub fn toInteger(self: azlangEded) isize {
-        return switch (self) {
-            .natural => |n| @intCast(n),
-            .integer => |i| i,
-            .float => |f| @intFromFloat(f), // truncation ola bilər
-        };
-    }
-
-    pub fn toFloat(self: azlangEded) f64 {
-        return switch (self) {
-            .natural => |n| @floatFromInt(n),
-            .integer => |i| @floatFromInt(i),
-            .float => |f| f,
-        };
-    }
-
-    pub fn Yeni(
-        self: @This(),
-    ) azlangEded {
-        return self;
-    }
-    pub fn azlangyaziya_cevir(self: @This(), allocator: std.mem.Allocator) !azlangYazi {
-        return try convert_string(allocator, self, true);
-    }
-    pub fn TipVer(
-        self: @This(),
-    ) []const u8 {
-        _ = self;
-        return "\u{18f}d\u{259}d";
-    }
-};
 
 fn faktorial(x: azlangEded) azlangEded {
-    if (x.toInteger() == 0) {
+    if ((toFloat(x) == 0)) {
         return azlangEded{ .integer = 1 };
     } else {
-        const one = azlangEded{ .natural = 1 };
-        const sub = azlang_sub(x, one);
-        return azlang_mul(x, faktorial(sub));
+        return azlang_mul(x, faktorial(azlang_sub(x, azlangEded{ .integer = 1 })));
     }
 }
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
-
-    const result = faktorial(azlangEded{ .natural = 5 });
-    const s = try result.azlangyaziya_cevir(allocator);
-    defer s.free(allocator);
-    std.debug.print("Faktorial(5) = {s}\n", .{s.Mut});
+    const c: azlangYazi = (try (try azlangYazi.Yeni(azlangYazi{ .Const = "asda" }).azlangboyut(allocator)).azlangters(allocator));
+    std.debug.print("{s}\n", .{c.Const});
+    std.debug.print("{}\n", .{faktorial(azlangEded{ .natural = 5 }).integer});
 }

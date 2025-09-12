@@ -1,4 +1,5 @@
 use crate::{
+    dd,
     parser::ast::{Expr, Parameter, Type},
     transpiler::{TranspileContext, transpile::transpile_expr},
 };
@@ -37,6 +38,38 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
             args: _,
             return_type,
         } => return_type.clone(),
+
+        Expr::BinaryOp { left, op, right } => {
+            let left_type = get_expr_type(left);
+            let right_type = get_expr_type(right);
+
+            // Əgər operandların tipi uyğun gəlmir
+
+            let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
+            let logic_ops = ["&&", "||"];
+            let arithmetic_ops = ["+", "-", "*", "/", "%"];
+
+            if comparison_ops.contains(&op) || logic_ops.contains(&op) {
+                return Type::Bool;
+            }
+
+            if arithmetic_ops.contains(&op) {
+                if left_type == Type::Integer && right_type == Type::Integer {
+                    return Type::Integer;
+                } else if left_type == Type::Natural && right_type == Type::Natural {
+                    return Type::Natural;
+                } else if left_type == Type::Float && right_type == Type::Float {
+                    return Type::Float;
+                } else if left_type == Type::Integer && right_type == Type::Natural {
+                    return Type::Integer;
+                } else if left_type == Type::Natural && right_type == Type::Integer {
+                    return Type::Integer;
+                } else {
+                    return Type::Float;
+                }
+            }
+            Type::Any
+        }
         Expr::Index {
             target: _,
             index: _,
