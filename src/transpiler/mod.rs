@@ -6,7 +6,7 @@ use crate::parser::ast::{Program, Type};
 mod builtinfunctions;
 mod codegen;
 mod decl;
-mod helpers;
+pub mod helpers;
 mod struct_def;
 mod transpile;
 mod zigbuiltin_functions;

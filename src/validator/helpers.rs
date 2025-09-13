@@ -98,11 +98,7 @@ pub fn get_type<'a>(
             }
 
             if arithmetic_ops.contains(&op) {
-                if left_type == Type::Integer {
-                    return Some(Type::Integer);
-                } else {
-                    return None;
-                }
+                return Some(left_type);
             }
 
             None

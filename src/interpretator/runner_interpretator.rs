@@ -1,5 +1,6 @@
 use crate::{
     dd,
+    interpretator::{Variable, builtin},
     parser::ast::{BuiltInFunction, Expr},
 };
 
@@ -15,7 +16,14 @@ pub fn runner_interpreator<'a>(ctx: &mut InterPretator<'a>, expr: Expr<'a>) {
             value,
         } => {
             if let Some(typ) = typ {
-                ctx.variables.insert(name.to_string(), (typ, value));
+                ctx.variables.insert(
+                    name.to_string(),
+                    Variable {
+                        value,
+                        typ,
+                        is_mutable,
+                    },
+                );
             }
         }
         Expr::BuiltInCall {
@@ -23,10 +31,13 @@ pub fn runner_interpreator<'a>(ctx: &mut InterPretator<'a>, expr: Expr<'a>) {
             args,
             return_type,
         } => match function {
-            BuiltInFunction::Print => match args[0] {
-                Expr::String(s, _) => println!("{}", s),
-                _ => {}
-            },
+            BuiltInFunction::Print => {
+                builtin::print::print_interpreter(&args[0], ctx);
+            }
+            BuiltInFunction::Input => {
+                builtin::print::exporter(&args[0], ctx);
+                std::io::stdin().read_line(&mut String::new()).unwrap();
+            }
             _ => {}
         },
         _ => {}

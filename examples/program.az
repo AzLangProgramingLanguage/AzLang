@@ -1,4 +1,7 @@
-Çap("Salam")
+sabit b = 1+1
+sabit a = b
+Çap(a)
+Çap([1,2,3,4])
 /* sabit c = "asda".böyüt().tərs()
 Çap(c)
 funksiya faktorial(x: ədəd):ədəd
