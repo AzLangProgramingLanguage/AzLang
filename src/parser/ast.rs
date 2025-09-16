@@ -98,6 +98,7 @@ pub struct EnumDecl<'a> {
 
 #[derive(Debug)]
 pub enum Expr<'a> {
+    DynamicString(Rc<String>),
     String(&'a str, bool),
     Bool(bool),
     Number(i64),
