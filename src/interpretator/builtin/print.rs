@@ -1,9 +1,24 @@
-use crate::parser::ast::Type;
+use crate::interpretator::runner_interpretator::eval;
+use crate::parser::ast::{TemplateChunk, Type};
 use crate::transpiler::helpers::get_expr_type;
 use crate::{interpretator::InterPretator, parser::ast::Expr};
 
 pub fn print_interpreter(expr: &Expr, ctx: &InterPretator) {
-    println!("{}", exporter(expr, ctx));
+    match expr {
+        Expr::TemplateString(chunks) => {
+            for chunk in chunks {
+                match chunk {
+                    TemplateChunk::Literal(s) => print!("{}", s),
+                    TemplateChunk::Expr(expr) => print!("{}", exporter(&*expr, ctx)),
+                }
+            }
+            print!("\n");
+        }
+        _ => {
+            let arg = eval(expr, ctx);
+            println!("{}", exporter(&arg, ctx));
+        }
+    }
 }
 
 pub fn exporter(expr: &Expr, ctx: &InterPretator) -> String {

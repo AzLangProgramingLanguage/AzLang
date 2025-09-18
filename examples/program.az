@@ -1,6 +1,9 @@
 sabit b = 1+2
-sabit a = b
+dəyişən a = b
+a=b
 Çap(a+1)
+Çap(a)
+Sonsöz("Salam")
 Çap(` Salam ${a} `)
 /* sabit c = "asda".böyüt().tərs()
 Çap(c)

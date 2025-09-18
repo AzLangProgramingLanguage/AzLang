@@ -6,7 +6,7 @@ mod runner_interpretator;
 use crate::parser::ast::{Expr, MethodType, Program, Type};
 
 struct Variable<'a> {
-    value: Box<Expr<'a>>,
+    value: Rc<Expr<'a>>,
     typ: Rc<Type<'a>>,
     is_mutable: bool,
 }

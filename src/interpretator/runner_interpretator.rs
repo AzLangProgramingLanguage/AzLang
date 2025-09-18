@@ -2,14 +2,8 @@ use std::rc::Rc;
 
 use crate::{
     dd,
-    interpretator::{
-        Method, StructDef, Variable,
-        builtin::{self, print::exporter},
-    },
-    parser::{
-        ast::{BuiltInFunction, Expr, TemplateChunk, Type},
-        list,
-    },
+    interpretator::{Method, StructDef, Variable, builtin::print::print_interpreter},
+    parser::ast::{BuiltInFunction, Expr},
 };
 
 use super::InterPretator;
@@ -27,7 +21,7 @@ pub fn runner_interpretator<'a>(ctx: &mut InterPretator<'a>, expr: Expr<'a>) {
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
-                    value: Box::new(eval_value),
+                    value: Rc::new(eval_value),
                     typ: typ.unwrap(),
                     is_mutable,
                 },
@@ -60,15 +54,34 @@ pub fn runner_interpretator<'a>(ctx: &mut InterPretator<'a>, expr: Expr<'a>) {
                 },
             );
         }
-
+        Expr::Assignment {
+            name,
+            value,
+            symbol,
+        } => {
+            /* TODO: ASSINGMENT */
+            let eval_value = eval(&*value, ctx);
+            dd!(symbol);
+            ctx.variables.insert(
+                name.to_string(),
+                Variable {
+                    value: Rc::new(eval_value),
+                    typ: Rc::new(symbol.expect("Symbol not found").typ),
+                    is_mutable: true,
+                },
+            );
+        }
         Expr::BuiltInCall {
             function,
             args,
             return_type: _,
         } => match function {
             BuiltInFunction::Print => {
-                let arg = eval(&args[0], ctx);
-                println!("{}", exporter(&arg, ctx));
+                print_interpreter(&args[0], ctx);
+            }
+            BuiltInFunction::LastWord => {
+                print_interpreter(&args[0], ctx);
+                std::process::exit(0);
             }
             _ => {}
         },
@@ -100,7 +113,6 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &InterPretator<'a>) -> Expr<'a> {
                 Expr::Number(0)
             }
         }
-        Expr::TemplateString(chunks) => Expr::TemplateString(chunks),
 
         Expr::BinaryOp { left, op, right } => {
             let left_val = eval(left, ctx);
