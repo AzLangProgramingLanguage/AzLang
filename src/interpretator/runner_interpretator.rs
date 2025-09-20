@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use crate::{
     dd,
-    interpretator::{Method, StructDef, Variable, builtin::print::print_interpreter},
-    parser::ast::{BuiltInFunction, Expr},
+    interpretator::{FunctionDef, Method, StructDef, Variable, builtin::print::print_interpreter},
+    parser::ast::{BuiltInFunction, Expr, Symbol, Type},
 };
 
 use super::InterPretator;
@@ -54,22 +54,65 @@ pub fn runner_interpretator<'a>(ctx: &mut InterPretator<'a>, expr: Expr<'a>) {
                 },
             );
         }
+        Expr::FunctionDef {
+            name,
+            transpiled_name: _,
+            params,
+            body,
+            return_type,
+            is_allocator,
+        } => {
+            ctx.functions.insert(
+                name.to_string(),
+                FunctionDef {
+                    params: params
+                        .into_iter()
+                        .map(|param| (param.name, param.typ))
+                        .collect(),
+                    body: Rc::new(body),
+                    return_type,
+                },
+            );
+        }
         Expr::Assignment {
             name,
             value,
             symbol,
         } => {
-            /* TODO: ASSINGMENT */
             let eval_value = eval(&*value, ctx);
-            dd!(symbol);
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
                     value: Rc::new(eval_value),
-                    typ: Rc::new(symbol.expect("Symbol not found").typ),
+                    typ: Rc::new(
+                        symbol
+                            .unwrap_or(Symbol {
+                                typ: Type::Any,
+                                is_mutable: true,
+                                is_pointer: false,
+                                is_used: false,
+                                transpiled_name: None,
+                            })
+                            .typ,
+                    ),
                     is_mutable: true,
                 },
             );
+        }
+        Expr::Call {
+            target,
+            name,
+            transpiled_name,
+            args,
+            returned_type,
+            is_allocator,
+        } => {
+            //TODO:  CAll
+            if let Some(func_def) = ctx.functions.remove(&name.to_string()) {
+                for expr in func_def.body.into_iter() {
+                    runner_interpretator(ctx, expr);
+                }
+            }
         }
         Expr::BuiltInCall {
             function,
@@ -110,6 +153,8 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &InterPretator<'a>) -> Expr<'a> {
                     other => eval(other, ctx),
                 }
             } else {
+                println!("Variable {}", name);
+                dd!(ctx.variables);
                 Expr::Number(0)
             }
         }

@@ -65,6 +65,34 @@ pub fn validate_expr<'a>(
                 return Err(ValidatorError::DeclTypeUnknown);
             }
         }
+        Expr::Assignment {
+            name,
+            value,
+            symbol: _,
+        } => {
+            log(&format!("✅ Assignment yoxlanılır: '{name}'"));
+            validate_expr(value, ctx, log)?;
+            let inferred = get_type(value, ctx, None);
+            if let Some(mut var) = ctx.lookup_variable(name) {
+                if let Some(s) = inferred {
+                    if var.typ != s {
+                        return Err(ValidatorError::AssignmentTypeMismatch {
+                            name: name.to_string(),
+                            expected: format!("{s:?}"),
+                            found: format!("{:?}", var.typ),
+                        });
+                    }
+                    var.is_used = true;
+                    if !var.is_mutable {
+                        return Err(ValidatorError::AssignmentToImmutableVariable(
+                            name.to_string(),
+                        ));
+                    }
+                }
+            } else {
+                return Err(ValidatorError::UndefinedVariable(name.to_string()));
+            }
+        }
         Expr::UnionType {
             name,
             transpiled_name,

@@ -21,6 +21,14 @@ pub enum ValidatorError<'a> {
     #[error(" '{0}' Dəyəri onsuzda var. ")]
     AlreadyDecl(String),
 
+    #[error("Uygunsuz tip girildi. '{name}' üçün gözlənilən '{expected}', tapılan '{found}'")]
+    AssignmentTypeMismatch {
+        name: String,
+        expected: String,
+        found: String,
+    },
+    #[error("Bu bir dəyişən deyil")]
+    AssignmentToImmutableVariable(String),
     #[error("Dəyər enum variantı deyil")]
     NotAnEnumVariant,
 
