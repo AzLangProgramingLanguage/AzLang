@@ -1,0 +1,12 @@
+sabit b = 3
+dəyişən a = 5
+a=1
+Çap(b*2)
+Çap(b)
+Çap(a)
+
+/* sabit c = "asda".böyüt().tərs()
+Çap(c)
+
+Çap(5+2.1)
+*/
