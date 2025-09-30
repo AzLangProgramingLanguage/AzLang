@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 mod builtin;
+mod helpers;
 mod runner_interpretator;
 use crate::parser::ast::{Expr, MethodType, Program, Type};
 use bumpalo::Bump;

@@ -3,7 +3,9 @@ use std::rc::Rc;
 use crate::{
     dd,
     parser::ast::{BuiltInFunction, Expr, Symbol, Type},
-    runner::{FunctionDef, Method, StructDef, Variable, builtin::print::print_interpreter},
+    runner::{
+        FunctionDef, Method, StructDef, Variable, builtin::print::print_interpreter, helpers,
+    },
 };
 
 use super::Runner;
@@ -50,7 +52,62 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
             }
             _ => {}
         },
-
+        Expr::Assignment {
+            name,
+            value,
+            symbol,
+        } => {
+            ctx.variables.insert(
+                name.to_string(),
+                Variable {
+                    value: eval(&*value, ctx),
+                    typ: symbol
+                        .map(|s| s.typ)
+                        .unwrap_or_else(|| helpers::get_run_type(&value)),
+                    is_mutable: true,
+                },
+            );
+        }
+        Expr::If {
+            condition,
+            then_branch,
+            else_branch,
+        } => {
+            let condition = eval(&*condition, ctx);
+            if let Expr::Bool(b) = condition {
+                if b {
+                    for expr in then_branch.into_iter() {
+                        runner_interpretator(ctx, expr);
+                    }
+                } else {
+                    for expr in else_branch.into_iter() {
+                        match expr {
+                            Expr::ElseIf {
+                                condition,
+                                then_branch,
+                            } => {
+                                let condition = eval(&*condition, ctx);
+                                if let Expr::Bool(b) = condition {
+                                    if b {
+                                        for expr in then_branch.into_iter() {
+                                            runner_interpretator(ctx, expr);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            Expr::Else { then_branch } => {
+                                for expr in then_branch.into_iter() {
+                                    runner_interpretator(ctx, expr);
+                                }
+                                break;
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+        }
         /*
         Expr::StructDef {
             name,
@@ -98,46 +155,6 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                 },
             );
         }
-        Expr::Assignment {
-            name,
-            value,
-            symbol,
-        } => {
-            let eval_value = eval(&*value, ctx);
-            ctx.variables.insert(
-                /* cannot borrow `ctx.variables` as mutable because it is also borrowed as immutable
-                mutable borrow occurs here */
-                name.to_string(),
-                Variable {
-                    value: &eval_value,
-                    typ: &symbol
-                        .unwrap_or(Symbol {
-                            typ: Type::Any,
-                            is_mutable: true,
-                            is_pointer: false,
-                            is_used: false,
-                        })
-                        .typ,
-                    is_mutable: true,
-                },
-            );
-        }
-        Expr::If {
-            condition,
-            then_branch,
-            else_branch,
-        } => {
-            let condition = eval(&*condition, ctx);
-            if let Expr::Bool(b) = condition {
-                if *b {
-                    /*                     runner_interpretator(ctx, then_branch[0].clone());
-                     */
-                } else {
-                    /*                     runner_interpretator(ctx, else_branch[0].clone());
-                     */
-                }
-            }
-        }
         Expr::Call {
             target,
             name,
@@ -179,15 +196,25 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
         Expr::BinaryOp { left, op, right } => {
             let left_val = eval(left, ctx);
             let right_val = eval(right, ctx);
+
             match (&left_val, &right_val) {
                 (Expr::Number(l), Expr::Number(r)) => match *op {
                     "+" => Expr::Number(l + r),
                     "-" => Expr::Number(l - r),
                     "*" => Expr::Number(l * r),
                     "/" => Expr::Number(l / r),
-                    _ => left_val,
+                    "==" => Expr::Bool(l == r),
+                    _ => Expr::Bool(false), // naməlum operator
                 },
-                _ => left_val,
+
+                (Expr::Bool(l), Expr::Bool(r)) => match *op {
+                    "&&" => Expr::Bool(*l && *r),
+                    "||" => Expr::Bool(*l || *r),
+                    "==" => Expr::Bool(l == r),
+                    _ => Expr::Bool(false),
+                },
+
+                _ => Expr::Bool(false),
             }
         }
 

@@ -138,7 +138,6 @@ fn run(input_path: &str) -> Result<()> {
     }
 
     /* Cleaner */
-
     drop(validator_ctx);
     let mut bump = Bump::new();
     let mut interpretator_ctx = Runner::new(&mut bump);

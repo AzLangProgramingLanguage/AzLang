@@ -2,6 +2,7 @@ use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
 
 use crate::{
+    dd,
     lexer::Token,
     parser::{ast::Expr, expression::parse_expression, op_expr::parse_binary_op_expr},
 };
@@ -13,19 +14,20 @@ where
     let condition = parse_binary_op_expr(tokens, 0)?; //Problem burada
 
     let then_branch = parse_block(tokens)?;
-
-    let else_branch = match tokens.peek() {
-        Some(Token::ElseIf) => {
-            tokens.next();
-            vec![parse_else_if_expr(tokens)?]
+    let mut else_branch = Vec::new();
+    while let Some(token) = tokens.peek() {
+        match token {
+            Token::ElseIf => {
+                tokens.next();
+                else_branch.push(parse_else_if_expr(tokens)?);
+            }
+            Token::Else => {
+                tokens.next();
+                else_branch.push(parse_else_expr(tokens)?);
+            }
+            _ => break,
         }
-        Some(Token::Else) => {
-            tokens.next();
-            vec![parse_else_expr(tokens)?]
-        }
-        _ => vec![],
-    };
-
+    }
     Ok(Expr::If {
         condition: Box::new(condition),
         then_branch,
@@ -36,12 +38,8 @@ pub fn parse_else_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Exp
 where
     I: Iterator<Item = &'a Token>,
 {
-    tokens.next();
-    let condition = parse_binary_op_expr(tokens, 0)?; //Problem burada
-    // expect_token(tokens, Token::Newline)?;
-    // expect_token(tokens, Token::Indent)?;
+    let condition = parse_binary_op_expr(tokens, 0)?;
     let then_branch = parse_block(tokens)?;
-
     Ok(Expr::ElseIf {
         condition: Box::new(condition),
         then_branch,
@@ -53,9 +51,6 @@ where
     I: Iterator<Item = &'a Token>,
 {
     tokens.next();
-
-    // expect_token(tokens, Token::Newline)?;
-    // expect_token(tokens, Token::Indent)?;
     let then_branch = parse_block(tokens)?;
     Ok(Expr::Else { then_branch })
 }

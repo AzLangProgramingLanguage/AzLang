@@ -60,7 +60,7 @@ pub fn validate_expr<'a>(
         Expr::Assignment {
             name,
             value,
-            symbol: _,
+            symbol,
         } => {
             log(&format!("✅ Assignment yoxlanılır: '{name}'"));
             validate_expr(value, ctx, log)?;

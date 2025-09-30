@@ -4,6 +4,12 @@ a=1
 Çap(b*2)
 Çap(b)
 Çap(a)
+əgər yanlış
+    Çap("doğrudur")
+yoxsa 1==1
+    Çap("doğrudur")
+əks
+    Çap("yanlışdır")
 
 /* sabit c = "asda".böyüt().tərs()
 Çap(c)
