@@ -237,11 +237,7 @@ pub fn validate_expr<'a>(
                 validate_expr(arg, ctx, log)?;
             }
         }
-        Expr::StructInit {
-            name,
-            transpiled_name,
-            args,
-        } => {
+        Expr::StructInit { name, args } => {
             log(&format!("✅ Struct yoxlanılır: '{}'", name));
 
             if let Some((s, ..)) = ctx.struct_defs.get(name.as_ref()) {
@@ -454,6 +450,7 @@ pub fn validate_expr<'a>(
                             let method = maybe_method
                                 .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
                             /* TODO: Burada parametr ve args qiymetini yoxla */
+
                             if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
                                     name: name.to_string(),
@@ -476,6 +473,7 @@ pub fn validate_expr<'a>(
                             let method = maybe_method
                                 .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
                             /* TODO: Burada parametr ve args qiymetini yoxla */
+
                             if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
                                     name: name.to_string(),
@@ -499,7 +497,7 @@ pub fn validate_expr<'a>(
                             let method = maybe_method.ok_or_else(|| {
                                 ValidatorError::FunctionNotFound(name) // Əgər ayrıca MethodNotFound error varsa onu istifadə et
                             })?;
-                            if method.parameters.len() != args.len() + 1 {
+                            if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
                                     name: name.to_string(),
                                     expected: method.parameters.len(),
@@ -522,6 +520,7 @@ pub fn validate_expr<'a>(
                         .get(&Cow::Owned(name.to_string()))
                         .ok_or(ValidatorError::FunctionNotFound(name))?;
                     log(&format!("Funksiya çağırışı yoxlanılır: {}", name));
+
                     if func.parameters.len() != args.len() {
                         return Err(ValidatorError::FunctionArgCountMismatch {
                             name: name.to_string(),

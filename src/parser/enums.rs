@@ -1,4 +1,5 @@
 use crate::{
+    dd,
     lexer::Token,
     parser::ast::{EnumDecl, Expr},
 };
@@ -10,7 +11,6 @@ pub fn parse_enum_decl<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'
 where
     I: Iterator<Item = &'a Token>,
 {
-    tokens.next();
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed((*name).as_str()),
         other => {

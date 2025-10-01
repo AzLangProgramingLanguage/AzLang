@@ -176,7 +176,6 @@ pub enum Expr<'a> {
     },
     StructInit {
         name: Cow<'a, str>,
-        transpiled_name: Option<Cow<'a, str>>,
         args: Vec<(&'a str, Expr<'a>)>,
     },
 

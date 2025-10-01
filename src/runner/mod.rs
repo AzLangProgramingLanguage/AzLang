@@ -30,8 +30,8 @@ struct StructDef<'a> {
 #[derive(Debug)]
 pub struct FunctionDef<'a> {
     params: Vec<(String, Type<'a>)>,
-    body: &'a [Expr<'a>], // arena-dan slice
-    return_type: Option<Type<'a>>,
+    body: Vec<Expr<'a>>, // arena-dan slice
+    return_type: Type<'a>,
 }
 
 #[derive(Debug)]

@@ -9,7 +9,6 @@ use crate::{
 };
 
 use super::Runner;
-use bumpalo::Bump;
 
 pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
     match expr {
@@ -20,6 +19,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
             value,
         } => {
             let eval_value = {
+                println!("Decl: {:?}", value);
                 let value = eval(&*value, ctx);
                 value
             };
@@ -44,10 +44,12 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
             return_type: _,
         } => match function {
             BuiltInFunction::Print => {
-                print_interpreter(&args[0], ctx);
+                let arg = eval(&args[0], ctx);
+                print_interpreter(&arg, ctx);
             }
             BuiltInFunction::LastWord => {
-                print_interpreter(&args[0], ctx);
+                let arg = eval(&args[0], ctx);
+                print_interpreter(&arg, ctx);
                 std::process::exit(0);
             }
             _ => {}
@@ -65,6 +67,76 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                         .map(|s| s.typ)
                         .unwrap_or_else(|| helpers::get_run_type(&value)),
                     is_mutable: true,
+                },
+            );
+        }
+        Expr::FunctionDef {
+            name,
+            params,
+            body,
+            return_type,
+        } => {
+            ctx.functions.insert(
+                name.to_string(),
+                FunctionDef {
+                    params: params.into_iter().map(|p| (p.name, p.typ)).collect(),
+                    body: body,
+                    return_type: return_type.unwrap_or(Type::Any),
+                },
+            );
+        }
+
+        Expr::Call {
+            target,
+            name,
+            args: _,
+            returned_type: _,
+        } => {
+            if let Some(expr) = target {
+                let target = eval(&*expr, ctx);
+                match target {
+                    /* FIXME: Burası tamamlanmayıb */
+                    Expr::StructInit { name, args } => {
+                        let structdef = ctx.structdefs.get(&name.to_string()).unwrap();
+                        /* for (field, value) in args {
+
+                        } */
+                    }
+                    _ => {}
+                }
+
+                /* runner_interpretator(ctx, *expr); */
+            }
+            let func = ctx.functions.get(&name.to_string()).unwrap();
+            /* TODO:Burada body clone açığı var. */
+            for expr in func.body.clone().into_iter() {
+                runner_interpretator(ctx, expr);
+            }
+        }
+
+        Expr::StructDef {
+            name,
+            fields,
+            methods,
+        } => {
+            ctx.structdefs.insert(
+                name.to_string(),
+                StructDef {
+                    name,
+                    fields,
+                    methods: methods
+                        .into_iter()
+                        .map(|method| Method {
+                            name: method.name,
+                            params: method
+                                .params
+                                .into_iter()
+                                .map(|param| (param.name, param.typ))
+                                .collect(),
+                            body: method.body,
+                            return_type: method.return_type,
+                        })
+                        .collect(),
                 },
             );
         }
@@ -108,69 +180,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                 }
             }
         }
-        /*
-        Expr::StructDef {
-            name,
-            fields,
-            methods,
-        } => {
-            ctx.structdefs.insert(
-                name.to_string(),
-                StructDef {
-                    name,
-                    fields,
-                    methods: methods
-                        .into_iter()
-                        .map(|method| Method {
-                            name: method.name,
-                            params: method
-                                .params
-                                .into_iter()
-                                .map(|param| (param.name, param.typ))
-                                .collect(),
-                            body: method.body,
-                            return_type: method.return_type,
-                        })
-                        .collect(),
-                },
-            );
-        }
 
-        Expr::FunctionDef {
-            name,
-            params,
-            body,
-            return_type,
-        } => {
-            ctx.functions.insert(
-                name.to_string(),
-                FunctionDef {
-                    params: params
-                        .into_iter()
-                        .map(|param| (param.name, param.typ))
-                        .collect(),
-                    body: &body, /* `body` does not live long enough
-                                 borrowed value does not live long enough */
-                    return_type,
-                },
-            );
-        }
-        Expr::Call {
-            target,
-            name,
-            args,
-            returned_type,
-        } => {
-            //TODO:  Burada expr üçün  clone traitini implement etmemizi isteyir
-            if let Some(func_def) = ctx.functions.remove(&name.to_string()) {
-                /*    for expr in func_def.body.into_iter() {
-                    runner_interpretator(ctx, expr);
-                } */
-            }
-        }
-
-
-        }, */
         _ => {}
     }
 }
@@ -190,9 +200,21 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
             if let Some(var) = ctx.variables.get(&name.to_string()) {
                 eval(&var.value, ctx)
             } else {
-                Expr::Number(0)
+                /* TODO: Burası Enum initilization olmalıdır amma başqa kod yazılmış Diqqet et. */
+                Expr::DynamicString(Rc::new(name.to_string()))
             }
         }
+
+        Expr::StructInit { name, args } => {
+            /* TODO: Burası Best Practice Deyil. Random yazılıb */
+            /*             let structdef = ctx.structdefs.get(&name.to_string()).unwrap();
+             */
+            Expr::StructInit {
+                name: name.to_string().into(),
+                args: args.to_vec(),
+            }
+        }
+
         Expr::BinaryOp { left, op, right } => {
             let left_val = eval(left, ctx);
             let right_val = eval(right, ctx);
@@ -217,7 +239,33 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                 _ => Expr::Bool(false),
             }
         }
+        Expr::BuiltInCall {
+            function,
+            args,
+            return_type,
+        } => match function {
+            BuiltInFunction::Ceil => {
+                let arg = eval(&args[0], ctx);
+                match arg {
+                    Expr::Float(f) => Expr::Float(f.ceil()),
+                    Expr::Number(n) => Expr::Float(n as f64),
+                    Expr::UnaryOp { op, expr } => {
+                        let expr = eval(&*expr, ctx);
+                        match expr {
+                            Expr::Float(f) => Expr::Float(f.ceil()),
+                            Expr::Number(n) => Expr::Float(n as f64),
+                            _ => Expr::Float(0.0),
+                        }
+                    }
+                    _ => Expr::Float(0.0),
+                }
+            }
+            _ => Expr::Number(0),
+        },
 
-        other => other.clone(),
+        other => {
+            println!(" Other {:?}", other);
+            other.clone()
+        }
     }
 }

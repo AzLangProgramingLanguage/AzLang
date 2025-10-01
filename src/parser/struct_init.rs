@@ -52,9 +52,5 @@ where
         }
     }
 
-    Ok(Expr::StructInit {
-        name,
-        transpiled_name: None,
-        args,
-    })
+    Ok(Expr::StructInit { name, args })
 }
