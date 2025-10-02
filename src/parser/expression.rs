@@ -73,6 +73,8 @@ where
         Token::StringLiteral(_s) => literals_parse(token, tokens),
         Token::True => Ok(Expr::Bool(true)),
         Token::False => Ok(Expr::Bool(false)),
+        Token::Break => Ok(Expr::Break),
+        Token::Continue => Ok(Expr::Continue),
 
         Token::Float(_num) => literals_parse(&token, tokens),
         Token::Backtick => {

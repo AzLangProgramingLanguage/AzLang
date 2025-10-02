@@ -1,5 +1,5 @@
 use crate::parser::ast::{TemplateChunk, Type};
-use crate::runner::runner_interpretator::eval;
+use crate::runner::eval::eval;
 use crate::{parser::ast::Expr, runner::Runner};
 
 pub fn print_interpreter(expr: &Expr, ctx: &mut Runner) {

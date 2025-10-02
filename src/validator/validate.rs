@@ -218,11 +218,14 @@ pub fn validate_expr<'a>(
                 }
                 BuiltInFunction::Len => {
                     if let Some(t) = get_type(&args[0], ctx, None) {
-                        if t != Type::Siyahi(Box::new(Type::Any)) {
-                            return Err(ValidatorError::TypeMismatch {
-                                expected: "Siyahi".to_string(),
-                                found: format!("{t:?}"),
-                            });
+                        match t {
+                            Type::Siyahi(_) => {}
+                            _ => {
+                                return Err(ValidatorError::TypeMismatch {
+                                    expected: "Siyahi".to_string(),
+                                    found: format!("{t:?}"),
+                                });
+                            }
                         }
                     }
                     if args.len() != 1 {

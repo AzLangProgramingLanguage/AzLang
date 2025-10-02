@@ -4,7 +4,8 @@ use crate::{
     dd,
     parser::ast::{BuiltInFunction, Expr, Symbol, Type},
     runner::{
-        FunctionDef, Method, StructDef, Variable, builtin::print::print_interpreter, helpers,
+        FunctionDef, Method, StructDef, Variable, builtin::print::print_interpreter, eval::eval,
+        helpers,
     },
 };
 
@@ -54,6 +55,51 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
             }
             _ => {}
         },
+        Expr::Loop {
+            var_name,
+            iterable,
+            body,
+        } => {
+            let iterable = eval(&*iterable, ctx);
+            match iterable {
+                Expr::List(list) => {
+                    for item in list {
+                        let mut if_break = false;
+                        let mut if_continue = false;
+                        let item = eval(&item, ctx);
+                        ctx.variables.insert(
+                            var_name.to_string(),
+                            Variable {
+                                value: item,
+                                typ: Type::Any,
+                                is_mutable: true,
+                            },
+                        );
+                        if if_break {
+                            break;
+                        }
+                        if if_continue {
+                            continue;
+                        }
+                        for expr in body.clone().into_iter() {
+                            match expr {
+                                Expr::Break => if_break = true,
+                                Expr::Continue => if_continue = true,
+                                _ => runner_interpretator(ctx, expr),
+                            }
+                            if if_break {
+                                break;
+                            }
+                            if if_continue {
+                                break;
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+            ctx.variables.remove(var_name);
+        }
         Expr::Assignment {
             name,
             value,
@@ -182,90 +228,5 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
         }
 
         _ => {}
-    }
-}
-pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
-    match expr {
-        Expr::Number(n) => Expr::Number(*n),
-        Expr::Float(f) => Expr::Float(*f),
-        Expr::Bool(b) => Expr::Bool(*b),
-        Expr::Char(c) => Expr::Char(*c),
-        Expr::String(s, t) => Expr::String(s, *t),
-        Expr::DynamicString(s) => Expr::DynamicString(s.clone()),
-        Expr::List(list) => {
-            let elems: Vec<Expr> = list.iter().map(|e| eval(e, ctx)).collect();
-            Expr::List(elems)
-        }
-        Expr::VariableRef { name, .. } => {
-            if let Some(var) = ctx.variables.get(&name.to_string()) {
-                eval(&var.value, ctx)
-            } else {
-                /* TODO: Burası Enum initilization olmalıdır amma başqa kod yazılmış Diqqet et. */
-                Expr::DynamicString(Rc::new(name.to_string()))
-            }
-        }
-
-        Expr::StructInit { name, args } => {
-            /* TODO: Burası Best Practice Deyil. Random yazılıb */
-            /*             let structdef = ctx.structdefs.get(&name.to_string()).unwrap();
-             */
-            Expr::StructInit {
-                name: name.to_string().into(),
-                args: args.to_vec(),
-            }
-        }
-
-        Expr::BinaryOp { left, op, right } => {
-            let left_val = eval(left, ctx);
-            let right_val = eval(right, ctx);
-
-            match (&left_val, &right_val) {
-                (Expr::Number(l), Expr::Number(r)) => match *op {
-                    "+" => Expr::Number(l + r),
-                    "-" => Expr::Number(l - r),
-                    "*" => Expr::Number(l * r),
-                    "/" => Expr::Number(l / r),
-                    "==" => Expr::Bool(l == r),
-                    _ => Expr::Bool(false), // naməlum operator
-                },
-
-                (Expr::Bool(l), Expr::Bool(r)) => match *op {
-                    "&&" => Expr::Bool(*l && *r),
-                    "||" => Expr::Bool(*l || *r),
-                    "==" => Expr::Bool(l == r),
-                    _ => Expr::Bool(false),
-                },
-
-                _ => Expr::Bool(false),
-            }
-        }
-        Expr::BuiltInCall {
-            function,
-            args,
-            return_type,
-        } => match function {
-            BuiltInFunction::Ceil => {
-                let arg = eval(&args[0], ctx);
-                match arg {
-                    Expr::Float(f) => Expr::Float(f.ceil()),
-                    Expr::Number(n) => Expr::Float(n as f64),
-                    Expr::UnaryOp { op, expr } => {
-                        let expr = eval(&*expr, ctx);
-                        match expr {
-                            Expr::Float(f) => Expr::Float(f.ceil()),
-                            Expr::Number(n) => Expr::Float(n as f64),
-                            _ => Expr::Float(0.0),
-                        }
-                    }
-                    _ => Expr::Float(0.0),
-                }
-            }
-            _ => Expr::Number(0),
-        },
-
-        other => {
-            println!(" Other {:?}", other);
-            other.clone()
-        }
     }
 }

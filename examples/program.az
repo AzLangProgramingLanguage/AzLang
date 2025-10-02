@@ -4,13 +4,6 @@
 
 Çap(5+2.1)
 */
-
-
-növ Reng
-    Qırmızı
-    Qara
-
-
-sabit renk: Reng = Qırmızı
-Çap(renk)
-
+gəz aralıq(1,10) içində x
+    Çap(x)
+    dayan
