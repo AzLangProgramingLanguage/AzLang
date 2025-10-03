@@ -60,25 +60,27 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
             iterable,
             body,
         } => {
+            /* FIXME   Burası buglu variable any tipinde olmamalı işleyir. Onu düzelt.*/
             let iterable = eval(&*iterable, ctx);
             match iterable {
                 Expr::List(list) => {
+                    let mut if_break = false;
+                    let mut if_continue = false;
                     for item in list {
-                        let mut if_break = false;
-                        let mut if_continue = false;
                         let item = eval(&item, ctx);
                         ctx.variables.insert(
                             var_name.to_string(),
                             Variable {
                                 value: item,
                                 typ: Type::Any,
-                                is_mutable: true,
+                                is_mutable: false,
                             },
                         );
                         if if_break {
                             break;
                         }
                         if if_continue {
+                            if_continue = false;
                             continue;
                         }
                         for expr in body.clone().into_iter() {

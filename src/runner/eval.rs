@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use crate::dd;
 use crate::parser::ast::{BuiltInFunction, Expr};
 use crate::runner::Runner;
 
@@ -46,6 +47,10 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                     "/" => Expr::Number(l / r),
                     "==" => Expr::Bool(l == r),
                     _ => Expr::Bool(false), // naməlum operator
+                },
+                (Expr::Time(l), Expr::Time(r)) => match *op {
+                    "-" => Expr::Number(l.duration_since(*r).as_millis() as i64),
+                    _ => Expr::Bool(false),
                 },
 
                 (Expr::Bool(l), Expr::Bool(r)) => match *op {
@@ -204,6 +209,11 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                     _ => Expr::Number(0),
                 }
             }
+            BuiltInFunction::Timer => {
+                let a = std::time::Instant::now();
+                return Expr::Time(a);
+            }
+
             BuiltInFunction::Max => {
                 let arg = eval(&args[0], ctx);
                 match arg {
@@ -241,6 +251,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                     _ => Expr::Number(0),
                 }
             }
+
             BuiltInFunction::Range => {
                 /* TODO: Burası Xoşuma gelmedi */
                 let arg1 = eval(&args[0], ctx);
