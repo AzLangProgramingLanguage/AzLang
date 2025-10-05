@@ -137,6 +137,8 @@ fn run(input_path: &str) -> Result<()> {
             .map_err(|e| eyre!("Validator xətası: {e}"))?;
     }
 
+    dd!(parsed_program);
+
     /* Cleaner */
     drop(validator_ctx);
     let mut bump = Bump::new();

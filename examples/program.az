@@ -4,17 +4,10 @@
 
 Çap(5+2.1)
 */
-sabit a = VaxtAl()
-
-gəz aralıq(1,10000) içində x
-    Çap(x)
-
-
-sabit b = VaxtAl()
-
-
-
-Çap(` ${b-a} ms `)
-gəz aralıq(1,10) içində x
-    Çap(x)
-    davam
+Obyekt Adam
+    ad: mətn
+    soyad: mətn
+    yas: ədəd
+sabit adam = Adam{ad:"Ahmet", soyad:"Ali", yas:25}
+Çap(adam.ad)
+    

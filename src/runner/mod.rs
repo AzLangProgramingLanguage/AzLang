@@ -22,7 +22,7 @@ struct Method<'a> {
 }
 
 #[derive(Debug)]
-struct StructDef<'a> {
+pub struct StructDef<'a> {
     name: &'a str,
     fields: Vec<(&'a str, Type<'a>, Option<Expr<'a>>)>,
     methods: Vec<Method<'a>>,

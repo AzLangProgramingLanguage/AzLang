@@ -1,8 +1,10 @@
+use std::io::Write;
 use std::rc::Rc;
 
 use crate::dd;
 use crate::parser::ast::{BuiltInFunction, Expr};
 use crate::runner::Runner;
+use crate::runner::builtin::print::print_interpreter;
 
 pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
     match expr {
@@ -15,6 +17,14 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
         Expr::List(list) => {
             let elems: Vec<Expr> = list.iter().map(|e| eval(e, ctx)).collect();
             Expr::List(elems)
+        }
+        Expr::Index {
+            target,
+            index,
+            target_type,
+        } => {
+            dd!(target);
+            Expr::DynamicString(Rc::new("".to_string()))
         }
         Expr::VariableRef { name, .. } => {
             if let Some(var) = ctx.variables.get(&name.to_string()) {
@@ -235,6 +245,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                     _ => Expr::Number(0),
                 }
             }
+
             BuiltInFunction::Round => {
                 let arg = eval(&args[0], ctx);
                 match arg {
@@ -243,6 +254,16 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                     _ => Expr::Number(0),
                 }
             }
+            BuiltInFunction::Input => {
+                let arg = eval(&args[0], ctx);
+                let output = print_interpreter(&arg, &ctx);
+                print!("{}", output);
+                std::io::stdout().flush().unwrap();
+                let mut input = String::new();
+                std::io::stdin().read_line(&mut input).unwrap();
+                Expr::DynamicString(Rc::new(input))
+            }
+
             BuiltInFunction::Sqrt => {
                 let arg = eval(&args[0], ctx);
                 match arg {
@@ -276,9 +297,6 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
             _ => Expr::Number(0),
         },
 
-        other => {
-            println!(" Other {:?}", other);
-            other.clone()
-        }
+        other => other.clone(),
     }
 }

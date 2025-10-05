@@ -19,11 +19,14 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
             is_mutable,
             value,
         } => {
-            let eval_value = {
-                println!("Decl: {:?}", value);
-                let value = eval(&*value, ctx);
-                value
-            };
+            match &*value {
+                Expr::StructInit { name, args } => {
+                    println!("StructInit: {}", name);
+                    println!("Args: {:?}", args);
+                }
+                _ => {}
+            }
+            let eval_value = eval(&*value, ctx);
 
             let type_ref = match typ {
                 Some(rc_type) => (*rc_type).clone(),
@@ -46,13 +49,17 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
         } => match function {
             BuiltInFunction::Print => {
                 let arg = eval(&args[0], ctx);
-                print_interpreter(&arg, ctx);
+                dd!(arg);
+                let output = print_interpreter(&arg, ctx);
+                println!("{}", output);
             }
             BuiltInFunction::LastWord => {
                 let arg = eval(&args[0], ctx);
-                print_interpreter(&arg, ctx);
+                let output = print_interpreter(&arg, ctx);
+                println!("{}", output);
                 std::process::exit(0);
             }
+
             _ => {}
         },
         Expr::Loop {

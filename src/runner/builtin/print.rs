@@ -2,25 +2,26 @@ use crate::parser::ast::TemplateChunk;
 use crate::runner::eval::eval;
 use crate::{parser::ast::Expr, runner::Runner};
 
-pub fn print_interpreter(expr: &Expr, ctx: &mut Runner) {
+pub fn print_interpreter(expr: &Expr, ctx: &Runner) -> String {
+    let mut output = String::new();
     match expr {
         Expr::TemplateString(chunks) => {
             for chunk in chunks {
                 match chunk {
-                    TemplateChunk::Literal(s) => print!("{}", s),
+                    TemplateChunk::Literal(s) => output.push_str(s),
                     TemplateChunk::Expr(expr) => {
                         let arg = eval(expr, ctx);
-                        print!("{}", exporter(&arg, ctx));
+                        output.push_str(&exporter(&arg, ctx));
                     }
                 }
             }
-            print!("\n");
         }
         _ => {
             let arg = eval(expr, ctx);
-            println!("{}", exporter(&arg, ctx));
+            output.push_str(&exporter(&arg, ctx));
         }
     }
+    output
 }
 
 pub fn exporter(expr: &Expr, ctx: &Runner) -> String {
