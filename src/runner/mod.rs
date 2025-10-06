@@ -36,10 +36,18 @@ pub struct FunctionDef<'a> {
 }
 
 #[derive(Debug)]
+pub struct UnionType<'a> {
+    name: &'a str,
+    fields: Vec<(&'a str, Type<'a>)>,
+    methods: Vec<Method<'a>>,
+}
+
+#[derive(Debug)]
 pub struct Runner<'a> {
     variables: HashMap<String, Variable<'a>>,
     structdefs: HashMap<String, StructDef<'a>>,
     functions: HashMap<String, FunctionDef<'a>>,
+    uniontypes: HashMap<String, UnionType<'a>>,
     arena: &'a Bump,
 }
 
@@ -49,6 +57,7 @@ impl<'a> Runner<'a> {
             variables: HashMap::new(),
             structdefs: HashMap::new(),
             functions: HashMap::new(),
+            uniontypes: HashMap::new(),
             arena,
         }
     }

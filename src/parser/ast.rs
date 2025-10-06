@@ -103,7 +103,6 @@ pub enum Expr<'a> {
     Number(i64),
     Char(char),
     EnumDecl(EnumDecl<'a>),
-    Return(Box<Expr<'a>>),
     List(Vec<Expr<'a>>),
     UnaryOp {
         op: &'a str,
@@ -169,6 +168,7 @@ pub enum Expr<'a> {
         params: Vec<Parameter<'a>>,
         body: Vec<Expr<'a>>,
         return_type: Option<Type<'a>>,
+        return_value: Option<Box<Expr<'a>>>,
     },
     UnionType {
         name: &'a str,

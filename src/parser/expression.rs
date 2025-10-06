@@ -89,12 +89,11 @@ where
         Token::ListStart => Ok(parse_list(tokens)),
         Token::ConstantDecl => Ok(parse_decl(tokens, false).unwrap()),
         Token::MutableDecl => Ok(parse_decl(tokens, true).unwrap()),
-        Token::Return => {
+        /*    Token::Return => {
             let returned_value =
                 parse_expression(tokens).map_err(|e| eyre!("Qaytarma  parsing xətası: {}", e))?;
             Ok(Expr::Return(Box::new(returned_value)))
-        }
-
+        } */
         Token::Match => parse_match(tokens).map_err(|e| eyre!("Match parsing xətası: {}", e)),
         Token::FunctionDef => {
             parse_function_def(tokens).map_err(|e| eyre!("Funksiya parsing xətası: {}", e))

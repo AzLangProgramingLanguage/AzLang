@@ -81,7 +81,7 @@ where
                     target: Some(Box::new(expr)),
                     name: field_or_method,
                     args,
-                    returned_type: Some(Type::Any),
+                    returned_type: None,
                 };
             }
             _ => {

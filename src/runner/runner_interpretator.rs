@@ -4,8 +4,8 @@ use crate::{
     dd,
     parser::ast::{BuiltInFunction, Expr, Symbol, Type},
     runner::{
-        FunctionDef, Method, StructDef, Variable, builtin::print::print_interpreter, eval::eval,
-        helpers,
+        FunctionDef, Method, StructDef, UnionType, Variable, builtin::print::print_interpreter,
+        eval::eval, helpers,
     },
 };
 
@@ -42,6 +42,32 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                 },
             );
         }
+        Expr::UnionType {
+            name,
+            fields,
+            methods,
+        } => {
+            ctx.uniontypes.insert(
+                name.to_string(),
+                UnionType {
+                    name,
+                    fields: fields,
+                    methods: methods
+                        .into_iter()
+                        .map(|method| Method {
+                            name: method.name,
+                            params: method
+                                .params
+                                .into_iter()
+                                .map(|param| (param.name, param.typ))
+                                .collect(),
+                            body: method.body,
+                            return_type: method.return_type,
+                        })
+                        .collect(),
+                },
+            );
+        }
         Expr::BuiltInCall {
             function,
             args,
@@ -49,7 +75,6 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
         } => match function {
             BuiltInFunction::Print => {
                 let arg = eval(&args[0], ctx);
-                dd!(arg);
                 let output = print_interpreter(&arg, ctx);
                 println!("{}", output);
             }

@@ -4,10 +4,21 @@
 
 Çap(5+2.1)
 */
+
+
+sabit a = [1,2,3]
+sabit c = "salam".böyüt()
+Çap(c)
+Çap(a[0])
+
 Obyekt Adam
     ad: mətn
     soyad: mətn
     yas: ədəd
 sabit adam = Adam{ad:"Ahmet", soyad:"Ali", yas:25}
 Çap(adam.ad)
+
+
+
+
     

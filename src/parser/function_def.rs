@@ -23,6 +23,7 @@ where
     expect_token(tokens, Token::LParen)?;
 
     let mut params = Vec::new();
+    let mut return_value = None;
 
     while let Some(token) = tokens.peek() {
         match token {
@@ -103,6 +104,12 @@ where
                 tokens.next();
             }
             Token::Eof => break,
+
+            Token::Return => {
+                tokens.next();
+                return_value = Some(Box::new(parse_expression(tokens)?));
+                expect_token(tokens, Token::Newline)?;
+            }
             _ => {
                 let expr = parse_expression(tokens)?;
                 body.push(expr);
@@ -115,5 +122,6 @@ where
         params,
         body,
         return_type,
+        return_value,
     })
 }

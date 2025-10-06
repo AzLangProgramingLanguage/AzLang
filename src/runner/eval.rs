@@ -18,13 +18,45 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
             let elems: Vec<Expr> = list.iter().map(|e| eval(e, ctx)).collect();
             Expr::List(elems)
         }
+        Expr::Call {
+            target,
+            name,
+            args,
+            returned_type,
+        } => {
+            /* FIXME: Bu problemi hell et. Return value hesablaması lazımdır */
+            let target = eval(target, ctx);
+            let name = eval(name, ctx);
+            let args: Vec<Expr> = args.iter().map(|e| eval(e, ctx)).collect();
+        }
+
         Expr::Index {
             target,
             index,
             target_type,
         } => {
-            dd!(target);
-            Expr::DynamicString(Rc::new("".to_string()))
+            let target = eval(target, ctx);
+            let index = eval(index, ctx);
+            match target {
+                Expr::List(list) => match index {
+                    Expr::Number(n) => list[n as usize].clone(),
+                    _ => Expr::String("", false),
+                },
+                Expr::StructInit { name, args } => {
+                    /*TODO: Hashmapa keçid etmek lazımdı */
+                    if let Expr::String(field_name, _) = &index {
+                        if let Some((_, value)) = args.iter().find(|(k, _)| k == field_name) {
+                            value.clone()
+                        } else {
+                            Expr::String("Field not found", false)
+                        }
+                    } else {
+                        Expr::String("Invalid field name", false)
+                    }
+                }
+
+                _ => Expr::String("", false),
+            }
         }
         Expr::VariableRef { name, .. } => {
             if let Some(var) = ctx.variables.get(&name.to_string()) {
