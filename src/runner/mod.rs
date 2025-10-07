@@ -33,6 +33,7 @@ pub struct FunctionDef<'a> {
     params: Vec<(String, Type<'a>)>,
     body: Vec<Expr<'a>>, // arena-dan slice
     return_type: Type<'a>,
+    return_value: Option<Box<Expr<'a>>>,
 }
 
 #[derive(Debug)]

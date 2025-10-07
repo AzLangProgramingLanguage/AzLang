@@ -97,6 +97,8 @@ pub struct EnumDecl<'a> {
 #[derive(Debug, Clone)]
 pub enum Expr<'a> {
     DynamicString(Rc<String>),
+    Void,
+    Return(Box<Expr<'a>>), /* TODO: Heleki bunu qoyuram amma gelecekde silinecek */
     Time(std::time::Instant),
     String(&'a str, bool),
     Bool(bool),

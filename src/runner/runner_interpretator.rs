@@ -155,6 +155,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
             params,
             body,
             return_type,
+            return_value,
         } => {
             ctx.functions.insert(
                 name.to_string(),
@@ -162,6 +163,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                     params: params.into_iter().map(|p| (p.name, p.typ)).collect(),
                     body: body,
                     return_type: return_type.unwrap_or(Type::Any),
+                    return_value: return_value,
                 },
             );
         }

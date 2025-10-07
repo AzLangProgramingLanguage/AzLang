@@ -2,6 +2,7 @@ use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 
 use crate::{
+    dd,
     lexer::Token,
     parser::{
         ast::Expr,
@@ -15,17 +16,8 @@ where
     I: Iterator<Item = &'a Token>,
 {
     let target = Box::new(parse_single_expr(tokens)?);
-
-    match tokens.peek() {
-        Some(Token::Newline) => {
-            tokens.next();
-        }
-        other => {
-            return Err(eyre!("Match parsing xətası: {:?}", other));
-        }
-    }
-
     let mut arms = Vec::new();
+    expect_token(tokens, Token::Newline)?;
     expect_token(tokens, Token::Indent)?;
 
     while let Some(token) = tokens.peek() {

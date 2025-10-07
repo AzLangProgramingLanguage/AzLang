@@ -57,6 +57,7 @@ pub fn validate_expr<'a>(
                 return Err(ValidatorError::DeclTypeUnknown);
             }
         }
+
         Expr::Assignment {
             name,
             value,
@@ -612,8 +613,10 @@ pub fn validate_expr<'a>(
             name,
             params,
             body,
+            return_value,
             return_type,
         } => {
+            /*TODO: Burada value+ tip yoxlanılması et */
             log(&format!("Funksiya tərifi yoxlanılır: {}", name));
             if ctx.current_function.is_some() {
                 return Err(ValidatorError::NestedFunctionDefinition);
@@ -668,9 +671,7 @@ pub fn validate_expr<'a>(
             ctx.current_return = None;
             *body = owned_body;
         }
-        Expr::Return(value) => {
-            validate_expr(value, ctx, log)?;
-        }
+
         _ => {}
     }
     Ok(())

@@ -25,9 +25,8 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
             returned_type,
         } => {
             /* FIXME: Bu problemi hell et. Return value hesablaması lazımdır */
-            let target = eval(target, ctx);
-            let name = eval(name, ctx);
-            let args: Vec<Expr> = args.iter().map(|e| eval(e, ctx)).collect();
+            dd!(target);
+            Expr::Void
         }
 
         Expr::Index {

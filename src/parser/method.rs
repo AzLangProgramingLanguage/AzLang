@@ -1,8 +1,9 @@
 use crate::{
+    dd,
     lexer::Token,
     parser::{
         ast::{Expr, Parameter, Type},
-        expression::parse_single_expr,
+        expression::parse_expression,
         types::parse_type,
     },
 };
@@ -59,6 +60,7 @@ where
                     }
                     Some(Token::Colon) => {
                         tokens.next();
+
                         param_type = parse_type(tokens)?;
                     }
                     Some(Token::RParen) => break,
@@ -87,15 +89,9 @@ where
     }
 
     expect_token(tokens, Token::RParen)?;
-    // Return tipi varsa oxu
-    let mut return_type = None;
-    match tokens.next() {
-        Some(Token::Colon) => {
-            return_type = Some(parse_type(tokens).unwrap());
-        }
-        None => {}
-        _ => {}
-    }
+    expect_token(tokens, Token::Colon)?;
+    let return_type = Some(parse_type(tokens)?);
+    let mut return_value = None;
     expect_token(tokens, Token::Newline)?;
     expect_token(tokens, Token::Indent)?;
 
@@ -110,13 +106,15 @@ where
             Token::Newline => {
                 tokens.next();
             }
+            Token::Return => {
+                tokens.next();
+                return_value = Some(Box::new(parse_expression(tokens)?));
+                expect_token(tokens, Token::Newline)?;
+            }
             Token::Eof => break,
             _ => {
-                let expr = parse_single_expr(tokens)?;
+                let expr = parse_expression(tokens)?;
                 body.push(expr);
-                while matches!(tokens.peek(), Some(Token::Semicolon | Token::Newline)) {
-                    tokens.next();
-                }
             }
         }
     }
