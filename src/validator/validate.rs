@@ -174,7 +174,6 @@ pub fn validate_expr<'a>(
                     ctx.is_allocator_used = true;
                 }
                 BuiltInFunction::Print => {
-                    /* TODO: Burada Void geçmesine icaze verme */
                     validate_expr(&mut args[0], ctx, log)?;
                     log(&format!("✅ Print funksiyası yoxlanılır"));
                     if let Some(t) = get_type(&args[0], ctx, None) {
@@ -186,37 +185,24 @@ pub fn validate_expr<'a>(
                         }
                     }
                 }
-                BuiltInFunction::StrLower => {
-                    log(&format!("✅ StrLower funksiyası yoxlanılır"));
-                    ctx.is_allocator_used = true;
-                }
-                BuiltInFunction::StrReverse => {
-                    log(&format!("✅ StrReverse funksiyası yoxlanılır"));
-                    ctx.is_allocator_used = true;
-                }
                 BuiltInFunction::ConvertString => {
                     log(&format!("✅ ConvertString funksiyası yoxlanılır"));
-                    ctx.is_allocator_used = true;
                 }
 
-                BuiltInFunction::StrUpper => {
+                BuiltInFunction::StrUpper
+                | BuiltInFunction::StrLower
+                | BuiltInFunction::StrReverse => {
                     log(&format!("✅ StrUpper funksiyası yoxlanılır"));
-                    ctx.is_allocator_used = true;
-                    /* TODO burada içeriden yoxlamanı et */
-                    /*    if let Some(t) = get_type(&args[0], ctx, None) {
+                    if let Some(t) = get_type(&args[0], ctx, None) {
                         if t != Type::Metn {
                             return Err(ValidatorError::TypeMismatch {
-                                expected: "Metn".to_string(),
+                                expected: "Yazı".to_string(),
                                 found: format!("{t:?}"),
                             });
                         }
                     }
-                    if args.len() != 1 {
-                        return Err(ValidatorError::InvalidOneArgumentCount {
-                            name: "StrUpper".to_string(),
-                        });
-                    } */
                 }
+
                 BuiltInFunction::Len => {
                     if let Some(t) = get_type(&args[0], ctx, None) {
                         match t {

@@ -5,13 +5,13 @@ use crate::{
     parser::ast::{BuiltInFunction, Expr, Symbol, Type},
     runner::{
         FunctionDef, Method, StructDef, UnionType, Variable, builtin::print::print_interpreter,
-        eval::eval, helpers,
+        eval::eval, helpers, runner_interpretator,
     },
 };
 
 use super::Runner;
 
-pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
+pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<Expr<'a>> {
     match expr {
         Expr::Decl {
             name,
@@ -26,7 +26,26 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                 }
                 _ => {}
             }
-            let eval_value = eval(&*value, ctx);
+            let eval_value = {
+                match *value {
+                    Expr::Call {
+                        target,
+                        name,
+                        args,
+                        returned_type,
+                    } => runner_interpretator(
+                        ctx,
+                        Expr::Call {
+                            target,
+                            name,
+                            args,
+                            returned_type,
+                        },
+                    )
+                    .unwrap_or(Expr::Void),
+                    _ => eval(&value, ctx),
+                }
+            };
 
             let type_ref = match typ {
                 Some(rc_type) => (*rc_type).clone(),
@@ -41,6 +60,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                     is_mutable,
                 },
             );
+            None
         }
         Expr::UnionType {
             name,
@@ -67,6 +87,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                         .collect(),
                 },
             );
+            None
         }
         Expr::BuiltInCall {
             function,
@@ -77,6 +98,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                 let arg = eval(&args[0], ctx);
                 let output = print_interpreter(&arg, ctx);
                 println!("{}", output);
+                None
             }
             BuiltInFunction::LastWord => {
                 let arg = eval(&args[0], ctx);
@@ -85,7 +107,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                 std::process::exit(0);
             }
 
-            _ => {}
+            _ => None,
         },
         Expr::Loop {
             var_name,
@@ -119,7 +141,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                             match expr {
                                 Expr::Break => if_break = true,
                                 Expr::Continue => if_continue = true,
-                                _ => runner_interpretator(ctx, expr),
+                                _ => return runner_interpretator(ctx, expr),
                             }
                             if if_break {
                                 break;
@@ -133,6 +155,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                 _ => {}
             }
             ctx.variables.remove(var_name);
+            Some(Expr::Void)
         }
         Expr::Assignment {
             name,
@@ -149,6 +172,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                     is_mutable: true,
                 },
             );
+            Some(Expr::Void)
         }
         Expr::FunctionDef {
             name,
@@ -166,6 +190,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                     return_value: return_value,
                 },
             );
+            Some(Expr::Void)
         }
 
         Expr::Call {
@@ -192,8 +217,15 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
             let func = ctx.functions.get(&name.to_string()).unwrap();
             /* TODO:Burada body clone açığı var. */
             for expr in func.body.clone().into_iter() {
-                runner_interpretator(ctx, expr);
+                match expr {
+                    Expr::Return(value) => {
+                        let value = eval(&*value, ctx);
+                        return Some(value);
+                    }
+                    _ => return runner_interpretator(ctx, expr),
+                }
             }
+            Some(Expr::Void)
         }
 
         Expr::StructDef {
@@ -221,6 +253,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                         .collect(),
                 },
             );
+            Some(Expr::Void)
         }
         Expr::If {
             condition,
@@ -261,8 +294,9 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) {
                     }
                 }
             }
+            Some(Expr::Void)
         }
 
-        _ => {}
+        _ => None,
     }
 }

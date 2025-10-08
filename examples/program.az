@@ -7,7 +7,7 @@
 
 
 sabit a = [1,2,3]
-sabit c = "salam".böyüt()
+sabit c = "salam".tərs()
 Çap(c)
 Çap(a[0])
 

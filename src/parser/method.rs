@@ -91,7 +91,6 @@ where
     expect_token(tokens, Token::RParen)?;
     expect_token(tokens, Token::Colon)?;
     let return_type = Some(parse_type(tokens)?);
-    let mut return_value = None;
     expect_token(tokens, Token::Newline)?;
     expect_token(tokens, Token::Indent)?;
 
@@ -105,11 +104,6 @@ where
             }
             Token::Newline => {
                 tokens.next();
-            }
-            Token::Return => {
-                tokens.next();
-                return_value = Some(Box::new(parse_expression(tokens)?));
-                expect_token(tokens, Token::Newline)?;
             }
             Token::Eof => break,
             _ => {

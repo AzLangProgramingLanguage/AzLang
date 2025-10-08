@@ -2,9 +2,11 @@ use std::io::Write;
 use std::rc::Rc;
 
 use crate::dd;
-use crate::parser::ast::{BuiltInFunction, Expr};
-use crate::runner::Runner;
+use crate::parser::ast::{BuiltInFunction, Expr, Type};
 use crate::runner::builtin::print::print_interpreter;
+use crate::runner::helpers::get_run_type;
+use crate::runner::runner_interpretator::runner_interpretator;
+use crate::runner::{Runner, runner_interpretator};
 
 pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
     match expr {
@@ -18,17 +20,36 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
             let elems: Vec<Expr> = list.iter().map(|e| eval(e, ctx)).collect();
             Expr::List(elems)
         }
-        Expr::Call {
+        /*  Expr::Call {
             target,
             name,
             args,
             returned_type,
         } => {
-            /* FIXME: Bu problemi hell et. Return value hesablaması lazımdır */
-            dd!(target);
-            Expr::Void
-        }
+            if let Some(expr) = target {
+                let expr_type = get_run_type(&expr);
 
+                match expr_type {
+                    Type::Metn => {
+                        let method = ctx.uniontypes.get("Yazı").unwrap();
+                        let method = method.methods.iter().find(|m| m.name == *name);
+                        for m in method.unwrap().body.clone().into_iter() {
+                            runner_interpretator(ctx, m);
+                        }
+                    }
+                    _ => {}
+                }
+
+                dd!(ctx.uniontypes);<
+                dd!(expr);
+
+                /* if let Some() =  */
+
+                Expr::Void
+            } else {
+                Expr::Void
+            }
+        } */
         Expr::Index {
             target,
             index,
