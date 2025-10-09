@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use std::rc::Rc;
 
+use crate::runner::FunctionDef;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum BuiltInFunction {
     Print,
@@ -170,7 +172,6 @@ pub enum Expr<'a> {
         params: Vec<Parameter<'a>>,
         body: Vec<Expr<'a>>,
         return_type: Option<Type<'a>>,
-        return_value: Option<Box<Expr<'a>>>,
     },
     UnionType {
         name: &'a str,
@@ -202,6 +203,7 @@ pub enum Expr<'a> {
 
 #[derive(Debug)]
 pub struct Program<'a> {
+    pub function_defs: Vec<FunctionDef<'a>>,
     pub expressions: Vec<Expr<'a>>,
 }
 

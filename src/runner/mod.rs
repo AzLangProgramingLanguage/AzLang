@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 mod builtin;
 mod helpers;
 mod runner_interpretator;
@@ -31,9 +31,8 @@ pub struct StructDef<'a> {
 #[derive(Debug)]
 pub struct FunctionDef<'a> {
     params: Vec<(String, Type<'a>)>,
-    body: Vec<Expr<'a>>, // arena-dan slice
+    body: Rc<Vec<Expr<'a>>>,
     return_type: Type<'a>,
-    return_value: Option<Box<Expr<'a>>>,
 }
 
 #[derive(Debug)]
@@ -79,13 +78,7 @@ impl<'a> Runner<'a> {
 
     pub fn run(&mut self, program: Program<'a>) {
         for expr in program.expressions.into_iter() {
-            runner_interpretator::runner_interpretator(self, expr); /* lifetime may not live long enough
-            requirement occurs because of a mutable reference to `Runner<'_>`
-            mutable references are invariant over their type parameter
-            see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variancerustcClick for full compiler diagnostic
-            mod.rs(68, 16): let's call the lifetime of this reference `'1`
-            mod.rs(44, 6): lifetime `'a` defined here
-             */
+            runner_interpretator::runner_interpretator(self, expr);
         }
     }
 }

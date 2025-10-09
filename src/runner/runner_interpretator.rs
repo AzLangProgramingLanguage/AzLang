@@ -26,6 +26,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                 }
                 _ => {}
             }
+            println!("Decl: {}", name);
             let eval_value = {
                 match *value {
                     Expr::Call {
@@ -42,7 +43,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                             returned_type,
                         },
                     )
-                    .unwrap_or(Expr::Void),
+                    .expect("Failed to run call"),
                     _ => eval(&value, ctx),
                 }
             };
@@ -179,15 +180,13 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             params,
             body,
             return_type,
-            return_value,
         } => {
             ctx.functions.insert(
                 name.to_string(),
                 FunctionDef {
                     params: params.into_iter().map(|p| (p.name, p.typ)).collect(),
-                    body: body,
+                    body: Rc::new(body),
                     return_type: return_type.unwrap_or(Type::Any),
-                    return_value: return_value,
                 },
             );
             Some(Expr::Void)
@@ -215,14 +214,16 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                 /* runner_interpretator(ctx, *expr); */
             }
             let func = ctx.functions.get(&name.to_string()).unwrap();
-            /* TODO:Burada body clone açığı var. */
-            for expr in func.body.clone().into_iter() {
+
+            for expr in func.body.iter() {
                 match expr {
                     Expr::Return(value) => {
                         let value = eval(&*value, ctx);
                         return Some(value);
                     }
-                    _ => return runner_interpretator(ctx, expr),
+                    _ => {
+                        runner_interpretator(ctx, expr.clone());
+                    }
                 }
             }
             Some(Expr::Void)

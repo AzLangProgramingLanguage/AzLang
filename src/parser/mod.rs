@@ -35,10 +35,13 @@ impl<'a> Parser<'a> {
     }
     pub fn parse(&mut self) -> Result<Program> {
         let tokens = &mut self.tokens.iter().peekmore();
-
+        let mut program = Program {
+            expressions: Vec::new(),
+            function_defs: Vec::new(),
+        };
         let ast = parse_expression_block(tokens)?;
 
-        let program = Program { expressions: ast };
+        program.expressions = ast;
         Ok(program)
     }
 }

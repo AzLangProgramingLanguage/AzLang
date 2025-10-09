@@ -6,19 +6,11 @@
 */
 
 
-sabit a = [1,2,3]
-sabit c = "salam".tərs()
-Çap(c)
-Çap(a[0])
+funksiya salam(): ədəd
+    Çap("salam")
+    qaytar 1
 
-Obyekt Adam
-    ad: mətn
-    soyad: mətn
-    yas: ədəd
-sabit adam = Adam{ad:"Ahmet", soyad:"Ali", yas:25}
-Çap(adam.ad)
+sabit a = salam()
+sabit c = salam()
 
-
-
-
-    
+Çap(a+c)

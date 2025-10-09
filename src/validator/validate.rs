@@ -599,7 +599,6 @@ pub fn validate_expr<'a>(
             name,
             params,
             body,
-            return_value,
             return_type,
         } => {
             /*TODO: Burada value+ tip yoxlanılması et */
