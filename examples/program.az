@@ -6,11 +6,13 @@
 */
 
 
-funksiya salam(): ədəd
-    Çap("salam")
-    qaytar 1
+Obyekt Adam
+    ad: mətn
+    soyad: mətn
+    yas: ədəd
+    metod adiniGoster(): heçnə
+        Çap(öz.ad)
 
-sabit a = salam()
-sabit c = salam()
 
-Çap(a+c)
+sabit a = Adam{ad:"Sebuhi", soyad:"Soyad", yas:20}
+a.adiniGoster()

@@ -201,32 +201,52 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             if let Some(expr) = target {
                 let target = eval(&*expr, ctx);
                 match target {
-                    /* FIXME: Burası tamamlanmayıb */
-                    Expr::StructInit { name, args } => {
-                        let structdef = ctx.structdefs.get(&name.to_string()).unwrap();
-                        /* for (field, value) in args {
+                    Expr::StructInit {
+                        name: struct_name,
+                        args,
+                    } => {
+                        let structdef = ctx.structdefs.get(&struct_name.to_string()).unwrap();
 
-                        } */
+                        let method = structdef.methods.iter().find(|m| m.name == name);
+                        match method {
+                            Some(method) => {
+                                for expr in method.body.clone().iter() {
+                                    match expr {
+                                        Expr::Return(value) => {
+                                            let value = eval(&*value, ctx);
+                                            return Some(value);
+                                        }
+                                        _ => {
+                                            runner_interpretator(ctx, expr.to_owned());
+                                        }
+                                    }
+                                }
+                            }
+                            None => {
+                                return None;
+                            }
+                        }
+                        None
                     }
-                    _ => {}
+                    _ => None,
                 }
+            } else {
+                /* TODO: funktionlar üst seviyeye qalxmalıdır. */
+                let func = ctx.functions.get(&name.to_string()).unwrap();
 
-                /* runner_interpretator(ctx, *expr); */
-            }
-            let func = ctx.functions.get(&name.to_string()).unwrap();
-
-            for expr in func.body.iter() {
-                match expr {
-                    Expr::Return(value) => {
-                        let value = eval(&*value, ctx);
-                        return Some(value);
-                    }
-                    _ => {
-                        runner_interpretator(ctx, expr.clone());
+                for expr in func.body.clone().iter() {
+                    match expr {
+                        Expr::Return(value) => {
+                            let value = eval(&*value, ctx);
+                            return Some(value);
+                        }
+                        _ => {
+                            runner_interpretator(ctx, expr.to_owned());
+                        }
                     }
                 }
+                Some(Expr::Void)
             }
-            Some(Expr::Void)
         }
 
         Expr::StructDef {

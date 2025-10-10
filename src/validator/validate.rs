@@ -288,7 +288,6 @@ pub fn validate_expr<'a>(
                 ctx.is_allocator_used = false;
                 ctx.current_struct = None;
             }
-            std::mem::take(name);
         }
 
         Expr::EnumDecl(EnumDecl { name, variants }) => {
