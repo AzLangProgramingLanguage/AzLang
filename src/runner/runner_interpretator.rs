@@ -205,6 +205,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                         name: struct_name,
                         args,
                     } => {
+                        /* TODO: Öz variable have to be in struct */
                         let structdef = ctx.structdefs.get(&struct_name.to_string()).unwrap();
 
                         let method = structdef.methods.iter().find(|m| m.name == name);
