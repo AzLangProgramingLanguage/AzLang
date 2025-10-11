@@ -27,8 +27,8 @@ pub enum ValidatorError<'a> {
         expected: String,
         found: String,
     },
-    #[error("Bu bir dəyişən deyil")]
-    AssignmentToImmutableVariable(String),
+    #[error("{name} Bu bir dəyişən deyil")]
+    AssignmentToImmutableVariable { name: String },
     #[error("Dəyər enum variantı deyil")]
     NotAnEnumVariant,
 

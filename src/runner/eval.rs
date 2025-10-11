@@ -20,36 +20,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
             let elems: Vec<Expr> = list.iter().map(|e| eval(e, ctx)).collect();
             Expr::List(elems)
         }
-        /*  Expr::Call {
-            target,
-            name,
-            args,
-            returned_type,
-        } => {
-            if let Some(expr) = target {
-                let expr_type = get_run_type(&expr);
 
-                match expr_type {
-                    Type::Metn => {
-                        let method = ctx.uniontypes.get("Yazı").unwrap();
-                        let method = method.methods.iter().find(|m| m.name == *name);
-                        for m in method.unwrap().body.clone().into_iter() {
-                            runner_interpretator(ctx, m);
-                        }
-                    }
-                    _ => {}
-                }
-
-                dd!(ctx.uniontypes);<
-                dd!(expr);
-
-                /* if let Some() =  */
-
-                Expr::Void
-            } else {
-                Expr::Void
-            }
-        } */
         Expr::Index {
             target,
             index,

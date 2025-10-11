@@ -77,9 +77,9 @@ pub fn validate_expr<'a>(
                     }
                     var.is_used = true;
                     if !var.is_mutable {
-                        return Err(ValidatorError::AssignmentToImmutableVariable(
-                            name.to_string(),
-                        ));
+                        return Err(ValidatorError::AssignmentToImmutableVariable {
+                            name: name.to_string(),
+                        });
                     }
                 }
             } else {

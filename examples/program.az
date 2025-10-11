@@ -4,15 +4,9 @@
 
 Çap(5+2.1)
 */
+sabit b ="Salam"
 
+funksiya salamla(c: yazı): yazı
+    qaytar c
 
-Obyekt Adam
-    ad: mətn
-    soyad: mətn
-    yas: ədəd
-    metod adiniGoster(): heçnə
-        Çap(öz.ad)
-
-
-sabit a = Adam{ad:"Sebuhi", soyad:"Soyad", yas:20}
-a.adiniGoster()
+Çap(salamla(b))

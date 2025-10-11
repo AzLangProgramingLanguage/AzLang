@@ -8,8 +8,8 @@ mod eval;
 
 #[derive(Debug)]
 struct Variable<'a> {
-    value: Expr<'a>, // artıq Rc deyil
-    typ: Type<'a>,   // artıq Rc deyil
+    value: Expr<'a>,
+    typ: Type<'a>,
     is_mutable: bool,
 }
 

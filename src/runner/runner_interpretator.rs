@@ -97,6 +97,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
         } => match function {
             BuiltInFunction::Print => {
                 let arg = eval(&args[0], ctx);
+                /* TODO: Call funksiyalarındaki printi düzelt */
                 let output = print_interpreter(&arg, ctx);
                 println!("{}", output);
                 None
@@ -195,9 +196,14 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
         Expr::Call {
             target,
             name,
-            args: _,
+            args,
             returned_type: _,
         } => {
+            dd!(args);
+            for arg in args {
+                dd!(arg);
+            }
+
             if let Some(expr) = target {
                 let target = eval(&*expr, ctx);
                 match target {
@@ -211,6 +217,17 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                         let method = structdef.methods.iter().find(|m| m.name == name);
                         match method {
                             Some(method) => {
+                                ctx.variables.insert(
+                                    "self".to_string(),
+                                    Variable {
+                                        value: Expr::StructInit {
+                                            name: struct_name.clone(), /* Diqqet */
+                                            args,
+                                        },
+                                        typ: Type::Istifadeci(struct_name),
+                                        is_mutable: false,
+                                    },
+                                );
                                 for expr in method.body.clone().iter() {
                                     match expr {
                                         Expr::Return(value) => {
@@ -222,6 +239,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                                         }
                                     }
                                 }
+                                ctx.variables.remove("self");
                             }
                             None => {
                                 return None;
