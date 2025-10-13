@@ -51,7 +51,7 @@ enum Commands {
 #[macro_export]
 macro_rules! dd {
     ($x:expr) => {
-        println!("{:#?}", $x); // daha rahat debug üçün Debug trait istifadə et
+        println!("{:#?}", $x);
         std::process::exit(0);
     };
 }

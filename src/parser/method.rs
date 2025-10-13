@@ -1,9 +1,9 @@
 use crate::{
-    dd,
     lexer::Token,
     parser::{
         ast::{Expr, Parameter, Type},
         expression::parse_expression,
+        helper::expect_token,
         types::parse_type,
     },
 };
@@ -114,14 +114,4 @@ where
     }
 
     Ok((name, params, body, return_type, false))
-}
-
-fn expect_token<'a, I>(tokens: &mut PeekMoreIterator<I>, expected: Token) -> Result<()>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    match tokens.next() {
-        Some(t) if *t == expected => Ok(()),
-        other => Err(eyre!("Gözlənilirdi: {:?}, tapıldı: {:?}", expected, other)),
-    }
 }

@@ -1,4 +1,6 @@
+use crate::dd;
 use crate::parser::ast::{Expr, TemplateChunk};
+use crate::runner::builtin::print;
 use crate::runner::eval::eval;
 use crate::runner::{Runner, eval};
 use std::fmt::Write;

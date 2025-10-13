@@ -43,7 +43,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                             returned_type,
                         },
                     )
-                    .expect("Failed to run call"),
+                    .unwrap_or(Expr::Void),
                     _ => eval(&value, ctx),
                 }
             };
@@ -96,8 +96,26 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             return_type: _,
         } => match function {
             BuiltInFunction::Print => {
-                let arg = eval(&args[0], ctx);
-                /* TODO: Call funksiyalarındaki printi düzelt */
+                let arg = {
+                    match &args[0] {
+                        Expr::Call {
+                            target,
+                            name,
+                            args,
+                            returned_type,
+                        } => runner_interpretator(
+                            ctx,
+                            Expr::Call {
+                                target: target.clone(),
+                                name: name,
+                                args: args.to_vec(),
+                                returned_type: returned_type.clone(),
+                            },
+                        )
+                        .unwrap(),
+                        _ => eval(&args[0], ctx),
+                    }
+                };
                 let output = print_interpreter(&arg, ctx);
                 println!("{}", output);
                 None
@@ -199,11 +217,6 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             args,
             returned_type: _,
         } => {
-            dd!(args);
-            for arg in args {
-                dd!(arg);
-            }
-
             if let Some(expr) = target {
                 let target = eval(&*expr, ctx);
                 match target {
@@ -250,17 +263,34 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                     _ => None,
                 }
             } else {
-                /* TODO: funktionlar üst seviyeye qalxmalıdır. */
-                let func = ctx.functions.get(&name.to_string()).unwrap();
+                /* TODO: funktionlar üst seviyeye qalxmalıdır. Dahada Optimize edilmeli */
+                let func_params;
+                let func_body;
+                {
+                    let func = ctx.functions.get(&name.to_string()).unwrap();
+                    func_params = func.params.clone();
+                    func_body = func.body.clone();
+                }
 
-                for expr in func.body.clone().iter() {
+                for (i, (param_name, param_type)) in func_params.iter().enumerate() {
+                    ctx.variables.insert(
+                        param_name.clone(),
+                        Variable {
+                            value: eval(&args[i], ctx),
+                            typ: param_type.clone(),
+                            is_mutable: false,
+                        },
+                    );
+                }
+
+                for expr in func_body.iter() {
                     match expr {
                         Expr::Return(value) => {
-                            let value = eval(&*value, ctx);
+                            let value: Expr<'_> = eval(&*value, ctx);
                             return Some(value);
                         }
                         _ => {
-                            runner_interpretator(ctx, expr.to_owned());
+                            runner_interpretator(ctx, expr.clone());
                         }
                     }
                 }

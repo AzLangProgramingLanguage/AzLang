@@ -14,7 +14,6 @@ pub fn parse_function_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Exp
 where
     I: Iterator<Item = &'a Token>,
 {
-    // Funksiya adı
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => (*name).as_str(),
         other => return Err(eyre!("Funksiya adı gözlənilirdi, tapıldı: {:?}", other)),
@@ -27,7 +26,6 @@ where
     while let Some(token) = tokens.peek() {
         match token {
             Token::ConstantDecl | Token::MutableDecl | Token::Identifier(_) => {
-                // Mutability
                 let is_mutable = match tokens.peek() {
                     Some(Token::MutableDecl) => {
                         tokens.next();
@@ -72,6 +70,9 @@ where
                     is_pointer: false,
                 });
             }
+            Token::Comma => {
+                tokens.next();
+            }
             Token::RParen => break,
             other => {
                 return Err(eyre!(
@@ -83,8 +84,6 @@ where
     }
 
     expect_token(tokens, Token::RParen)?;
-
-    // Return tipi varsa
 
     expect_token(tokens, Token::Colon)?;
     let return_type = Some(parse_type(tokens)?);

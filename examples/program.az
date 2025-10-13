@@ -4,9 +4,12 @@
 
 Çap(5+2.1)
 */
-sabit b ="Salam"
 
-funksiya salamla(c: yazı): yazı
-    qaytar c
+sabit c= "asda".böyüt()
+Çap(c)
 
-Çap(salamla(b))
+funksiya topla(y: ədəd, a: ədəd): ədəd
+    qaytar y + a
+Çap(topla(5, 6))
+
+
