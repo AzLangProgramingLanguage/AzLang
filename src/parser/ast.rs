@@ -107,6 +107,7 @@ pub enum Expr<'a> {
     Number(i64),
     Char(char),
     EnumDecl(EnumDecl<'a>),
+    Comment(&'a str),
     List(Vec<Expr<'a>>),
     UnaryOp {
         op: &'a str,

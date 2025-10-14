@@ -2,9 +2,9 @@ tip Yazı
   Const: zigsabityazı
   Mut: zigyazı
   metod Yeni(): yazı
-    qaytar öz
+    // Burasını Sistem Qərar Versin
   metod böyüt(): yazı
-    qaytar YazıBöyüt(öz)
+    // Burasını Sistem Qərar Versin
   metod kiçilt(): yazı
     qaytar YazıKiçilt(öz)
   metod tərs(): yazı

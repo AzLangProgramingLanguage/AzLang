@@ -18,6 +18,7 @@ pub enum Token {
     Timer,
     Sqrt,
     End,
+    Comment(String),
     Max,
     Min,
     Trim,

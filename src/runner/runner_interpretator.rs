@@ -220,6 +220,48 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             if let Some(expr) = target {
                 let target = eval(&*expr, ctx);
                 match target {
+                    Expr::String(s, bool) => {
+                        let uniontype = ctx.uniontypes.get(&"Yazı".to_string()).unwrap();
+                        let method = uniontype.methods.iter().find(|m| m.name == name);
+                        match method {
+                            Some(existmethod) => {
+                                ctx.variables.insert(
+                                    "self".to_string(),
+                                    Variable {
+                                        value: Expr::String(s, bool),
+                                        typ: Type::Istifadeci("Yazı".into()),
+                                        is_mutable: false,
+                                    },
+                                );
+                                for expr in existmethod.body.clone().iter() {
+                                    match expr {
+                                        Expr::Return(value) => {
+                                            let value = eval(&*value, ctx);
+                                            return Some(value);
+                                        }
+                                        Expr::Comment(s) => {
+                                            if *s == "Burasını Sistem Qərar Versin" {
+                                                match existmethod.name {
+                                                    "tərs" => {
+                                                        let value = eval(&*value, ctx);
+                                                        return Some(value);
+                                                    }
+                                                    _ => {}
+                                                }
+                                            }
+                                        }
+                                        _ => {
+                                            runner_interpretator(ctx, expr.to_owned());
+                                        }
+                                    }
+                                }
+                                ctx.variables.remove("self");
+                            }
+                            None => return None,
+                        }
+                        Some(Expr::Void)
+                    }
+
                     Expr::StructInit {
                         name: struct_name,
                         args,

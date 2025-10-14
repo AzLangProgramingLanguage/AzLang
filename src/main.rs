@@ -120,7 +120,6 @@ fn run(input_path: &str) -> Result<()> {
         utils::read_file_with_imports(input_path).map_err(|e| eyre!("Fayl oxunmadı!: {}", e))?;
     let mut tokens = lexer::Lexer::new(&stk_code).tokenize();
     let user_tokens = lexer::Lexer::new(&full_code).tokenize();
-
     tokens.extend(user_tokens);
 
     let mut parser = parser::Parser::new(&mut tokens);

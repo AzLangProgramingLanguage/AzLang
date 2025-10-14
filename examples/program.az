@@ -4,12 +4,7 @@
 
 Çap(5+2.1)
 */
-
-sabit c= "asda".böyüt()
-Çap(c)
-
-funksiya topla(y: ədəd, a: ədəd): ədəd
-    qaytar y + a
-Çap(topla(5, 6))
+dəyişən a= "asda".böyüt()
+Çap(a)
 
 

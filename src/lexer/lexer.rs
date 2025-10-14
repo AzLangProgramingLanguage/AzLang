@@ -78,12 +78,15 @@ impl<'a> Lexer<'a> {
         None
     }
     fn skip_comment_line(&mut self) {
+        let mut commentline = String::new();
         while let Some(&ch) = self.chars.peek() {
             if ch == '\n' {
                 break; // sətrin sonuna qədər ignore elə
             }
+            commentline.push(ch);
             self.chars.next();
         }
+        self.token_buffer.push(Token::Comment(commentline));
     }
     fn skip_comment_block(&mut self) {
         while let Some(ch) = self.chars.next() {

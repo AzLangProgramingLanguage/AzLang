@@ -103,7 +103,7 @@ where
             op,
             expr: Box::new(parse_single_expr(tokens)?),
         }),
-
+        Token::Comment(s) => Ok(Expr::Comment(s)),
         Token::Loop => parse_loop(tokens).map_err(|e| eyre!("Loop parsing xətası: {}", e)),
         Token::Identifier(s) => {
             parse_identifier(tokens, s).map_err(|e| eyre!("Identifier parsing xətası: {}", e))
