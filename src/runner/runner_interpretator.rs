@@ -4,8 +4,14 @@ use crate::{
     dd,
     parser::ast::{BuiltInFunction, Expr, Symbol, Type},
     runner::{
-        FunctionDef, Method, StructDef, UnionType, Variable, builtin::print::print_interpreter,
-        eval::eval, helpers, runner_interpretator,
+        FunctionDef, Method, StructDef, UnionType, Variable,
+        builtin::print::print_interpreter,
+        eval::eval,
+        handlers::{
+            list_handler::handle_list_call, number_handler::handle_number_call,
+            string_handler::handle_string_call,
+        },
+        helpers, runner_interpretator,
     },
 };
 
@@ -220,46 +226,15 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             if let Some(expr) = target {
                 let target = eval(&*expr, ctx);
                 match target {
+                    /* Burada dynamik Stringler üçündə düşün. */
                     Expr::String(s, bool) => {
-                        let uniontype = ctx.uniontypes.get(&"Yazı".to_string()).unwrap();
-                        let method = uniontype.methods.iter().find(|m| m.name == name);
-                        match method {
-                            Some(existmethod) => {
-                                ctx.variables.insert(
-                                    "self".to_string(),
-                                    Variable {
-                                        value: Expr::String(s, bool),
-                                        typ: Type::Istifadeci("Yazı".into()),
-                                        is_mutable: false,
-                                    },
-                                );
-                                for expr in existmethod.body.clone().iter() {
-                                    match expr {
-                                        Expr::Return(value) => {
-                                            let value = eval(&*value, ctx);
-                                            return Some(value);
-                                        }
-                                        Expr::Comment(s) => {
-                                            if *s == "Burasını Sistem Qərar Versin" {
-                                                match existmethod.name {
-                                                    "tərs" => {
-                                                        let value = eval(&*value, ctx);
-                                                        return Some(value);
-                                                    }
-                                                    _ => {}
-                                                }
-                                            }
-                                        }
-                                        _ => {
-                                            runner_interpretator(ctx, expr.to_owned());
-                                        }
-                                    }
-                                }
-                                ctx.variables.remove("self");
-                            }
-                            None => return None,
-                        }
-                        Some(Expr::Void)
+                        return handle_string_call(&name, &s, ctx);
+                    }
+                    Expr::Number(s) => {
+                        return handle_number_call(&name, s, ctx);
+                    }
+                    Expr::List(list) => {
+                        return handle_list_call(&name, list, ctx);
                     }
 
                     Expr::StructInit {

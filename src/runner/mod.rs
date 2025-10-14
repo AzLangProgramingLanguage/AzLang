@@ -5,6 +5,7 @@ mod runner_interpretator;
 use crate::parser::ast::{Expr, MethodType, Program, Type};
 use bumpalo::Bump;
 mod eval;
+mod handlers;
 
 #[derive(Debug)]
 struct Variable<'a> {

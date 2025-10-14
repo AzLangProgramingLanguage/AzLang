@@ -30,7 +30,6 @@ pub fn print_interpreter(expr: &Expr, ctx: &Runner) -> String {
 }
 
 fn exporter_to_string(expr: &Expr, ctx: &Runner, out: &mut String) {
-    dd!(expr);
     match expr {
         Expr::String(s, _) => out.push_str(s),
         Expr::DynamicString(s) => out.push_str(s),

@@ -6,18 +6,15 @@ tip Yazı
   metod böyüt(): yazı
     // Burasını Sistem Qərar Versin
   metod kiçilt(): yazı
-    qaytar YazıKiçilt(öz)
+    // Burasını Sistem Qərar Versin
   metod tərs(): yazı
-    qaytar YazıTərs(öz)
+    // Burasını Sistem Qərar Versin
   metod qırx(): yazı
-    qaytar YazıQırx(öz)
+    // Burasını Sistem Qərar Versin
   metod TipVer(): zigsabityazı
-    Zig(`_ = self`)
-    qaytar "Yazı"
+    // Burasını Sistem Qərar Versin
   metod uzunluq(): ədəd
-    uyğun öz
-      Const -> qaytar Zig(`azlangEded.Yeni(azlangEded{.natural = self.Const.len})`)
-      Mut -> qaytar Zig(`azlangEded.Yeni(azlangEded{.natural = self.Mut.len})`)
+    // Burasını Sistem Qərar Versin
 
 
 
@@ -28,10 +25,9 @@ tip Ədəd
   metod Yeni(): ədəd
     qaytar öz
   metod yazıya_çevir(): yazı
-    qaytar YazıyaÇevir(öz)
+    // Burasını Sistem Qərar Versin
   metod TipVer(): zigsabityazı
-    Zig(`_ = self`)
-    qaytar "Ədəd"
+    // Burasını Sistem Qərar Versin
 
 
 tip Siyahı

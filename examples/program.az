@@ -1,10 +1,6 @@
 
-/* sabit c = "asda".böyüt().tərs()
-Çap(c)
 
-Çap(5+2.1)
-*/
-dəyişən a= "asda".böyüt()
+dəyişən a= "   asda ".qırx()
 Çap(a)
 
 
