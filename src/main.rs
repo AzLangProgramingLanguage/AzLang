@@ -1,4 +1,3 @@
-pub mod interpretator;
 pub mod utils;
 use std::{env, panic};
 
@@ -9,7 +8,6 @@ mod lexer;
 mod parser;
 pub mod translations;
 pub mod validator;
-use interpretator::InterPretator;
 use limit_alloc::Limit;
 use std::alloc::System;
 pub use utils::*;
@@ -150,7 +148,7 @@ fn build(input_path: &str) -> Result<()> {
 
     /* Cleaner */
 
-    clean_ast(&mut parsed_program, &validator_ctx);
+    // clean_ast(&mut parsed_program, &validator_ctx);
     drop(validator_ctx);
 
     /* Transpiler */
@@ -195,9 +193,16 @@ fn run(input_path: &str) -> Result<()> {
 
     clean_ast(&mut parsed_program, &validator_ctx);
     drop(validator_ctx);
-    let mut interpretator_ctx = InterPretator::new();
-    InterPretator::run(&mut interpretator_ctx, parsed_program);
-    /* Intepretator. */
 
+    /* Transpiler */
+    let mut ctx = TranspileContext::new();
+    let zig_code = ctx.transpile(&parsed_program);
+    let mut temp_path = env::temp_dir();
+    temp_path.push("azlang_output.zig");
+    utils::write_file(temp_path.to_str().unwrap(), &zig_code)
+        .map_err(|e| eyre!("Zig faylı yazıla bilmədi: {}", e))?;
+    if runner::runner(temp_path.to_str().unwrap()).is_err() {
+        eprintln!("❌ Proqram işləmədi.");
+    }
     Ok(())
 }

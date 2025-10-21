@@ -1,4 +1,7 @@
+use std::process;
+
 use crate::{
+    dd,
     parser::ast::{BuiltInFunction, Expr, Type},
     transpiler::{TranspileContext, helpers::map_type, transpile::transpile_expr},
 };
@@ -11,7 +14,6 @@ pub fn transpile_decl<'a>(
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let type_str = map_type(typ.unwrap_or(&Type::Any), !is_mutable);
-
     let value_code: String = transpile_expr(value, ctx);
 
     let decl_code = match typ {

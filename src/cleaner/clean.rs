@@ -16,3 +16,8 @@ pub fn clean_ast<'a>(program: &mut Program<'a>, ctx: &ValidatorContext<'a>) {
         }
     });
 }
+
+// Böyük Qardaş Parserci  ->  
+// Dəmir Validator ->  
+// Valida Xala Optimizator ->  
+// Kiçik Bacı Transpiler ->   

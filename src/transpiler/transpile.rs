@@ -486,7 +486,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                     Expr::Number(n) => format!("azlangEded{{.natural={}}}", n),
                     Expr::Float(n) => format!("azlangEded{{.float={}}}", n),
                     Expr::String(s, _) => format!("\"{}\"", s),
-                    _ => transpile_expr(arg, ctx),
+                    _ => transpile_expr(&arg, ctx),
                 })
                 .collect();
 

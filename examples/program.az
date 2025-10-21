@@ -1,18 +1,14 @@
-sabit b = 3
-dəyişən a = 5
-a=1
-Çap(b*2)
-Çap(b)
-Çap(a)
-Sonsöz("Salam")
-Çap(` Salam ${b} `)
-/* sabit c = "asda".böyüt().tərs()
-Çap(c)
 funksiya faktorial(x: ədəd):ədəd
     əgər x == 0
         qaytar 1
     əks
         qaytar x * faktorial(x - 1)
 Çap(faktorial(5))
+/* sabit c = "asda".böyüt().tərs()
+Çap(c)
+
 Çap(5+2.1)
 */
+
+sabit ab = "Salam"
+Çap(ab)
