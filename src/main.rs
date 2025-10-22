@@ -46,19 +46,10 @@ enum Commands {
     },
 }
 
-/* const MAX_RAM_MB: u64 = 1024;
- */
-/* fn xala_opti_error(msg: &str) {
-    eprintln!(
-        "{} Cəza gəlir! \"Burda həqiqətən problem var, düzəlməsə sənə şillə vuracam! Xəta: {}\"",
-        XALA_OPTI, msg
-    );
-} */
-
 #[macro_export]
 macro_rules! dd {
     ($x:expr) => {
-        println!("{:#?}", $x); // daha rahat debug üçün Debug trait istifadə et
+        println!("{:#?}", $x);
         std::process::exit(0);
     };
 }
@@ -89,11 +80,6 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-/* fn emi_validator_error(msg: &str) {
-    eprintln!(
-        "{EMI_VALIDATOR} Əmi xəbər verir: \"Kodun bura gəlməməli idi, bir az tərbiyə lazımdır! Problem: {msg}\"",
-    );
-} */
 const QARDAS_PARSE: &str = "\x1b[36m[Böyük Qardaş Parserci]:\x1b[0m";
 const EMI_VALIDATOR: &str = "\x1b[33m[Dəmir Əmi Validator]:\x1b[0m";
 /* const XALA_OPTI: &str = "\x1b[32m[Validə Xala Optimizator]:\x1b[0m";
@@ -148,7 +134,7 @@ fn build(input_path: &str) -> Result<()> {
 
     /* Cleaner */
 
-    // clean_ast(&mut parsed_program, &validator_ctx);
+    clean_ast(&mut parsed_program, &validator_ctx);
     drop(validator_ctx);
 
     /* Transpiler */

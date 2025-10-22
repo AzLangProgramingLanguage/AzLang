@@ -374,7 +374,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             BuiltInFunction::Max => transpile_max(&args, ctx),
             BuiltInFunction::Sum => transpile_sum(&args, ctx),
             BuiltInFunction::ConvertString => {
-                ctx.is_used_allocator = true;
+                ctx.is_used_allocator = false;
                 let arg_code = transpile_expr(&args[0], ctx);
                 format!("try convert_string(allocator, {},false)", arg_code)
             }
@@ -440,7 +440,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
             BuiltInFunction::Trim => {
                 ctx.is_used_allocator = true;
-                ctx.needs_allocator = true;
+                ctx.needs_allocator = false;
                 let code = transpile_expr(&args[0], ctx);
                 if let Expr::String(_, _) = &args[0] {
                     format!(

@@ -3,6 +3,7 @@ pub enum Token {
     MutableDecl,
     ConstantDecl,
     FunctionDef,
+    Comment(String),
     Conditional,
     Underscore,
     Void,

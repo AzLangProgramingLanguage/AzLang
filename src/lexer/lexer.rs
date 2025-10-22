@@ -9,9 +9,9 @@ use super::token::Token;
 pub struct Lexer<'a> {
     pub chars: PeekMoreIterator<Chars<'a>>,
     token_buffer: Vec<Token>,
-    indent_stack: Vec<usize>, // İndentasiya səviyyələrini izləmək üçün
-    current_indent: usize,    // Cari sətirin indentasiya səviyyəsi
-    pending_dedents: usize,   // Gözləyən dedent sayı
+    indent_stack: Vec<usize>,
+    current_indent: usize,
+    pending_dedents: usize,
     at_line_start: bool,
 }
 
@@ -78,12 +78,15 @@ impl<'a> Lexer<'a> {
         None
     }
     fn skip_comment_line(&mut self) {
+        let mut commentline = String::new();
         while let Some(&ch) = self.chars.peek() {
             if ch == '\n' {
                 break; // sətrin sonuna qədər ignore elə
             }
+            commentline.push(ch);
             self.chars.next();
         }
+        self.token_buffer.push(Token::Comment(commentline));
     }
     fn skip_comment_block(&mut self) {
         while let Some(ch) = self.chars.next() {
@@ -96,13 +99,11 @@ impl<'a> Lexer<'a> {
         }
     }
     fn next_token(&mut self) -> Option<Token> {
-        // Əvvəlcə gözləyən dedentləri yoxla
         if self.pending_dedents > 0 {
             self.pending_dedents -= 1;
             return Some(Token::Dedent);
         }
 
-        // Bufferdə token varsa onu qaytar
         if let Some(token) = self.token_buffer.pop() {
             return Some(token);
         }
@@ -111,7 +112,6 @@ impl<'a> Lexer<'a> {
 
         let ch = *self.chars.peek()?; // Eof yoxlaması
 
-        // Sətir əvvəlində indent emalı
         if self.at_line_start && ch != '\n' {
             self.at_line_start = false;
 
@@ -249,11 +249,8 @@ impl<'a> Lexer<'a> {
                             tokens.push(Token::StringLiteral(takes));
                         }
                         tokens.push(Token::InterpolationStart);
-
-                        // 🔥 yeni expression oxuma
                         let expr_tokens = self.read_interpolated_expr_tokens();
                         tokens.extend(expr_tokens);
-
                         tokens.push(Token::InterpolationEnd);
                     } else {
                         current.push(ch);
@@ -289,10 +286,10 @@ impl<'a> Lexer<'a> {
                             num_str.push(ch);
                             self.chars.next();
                         } else {
-                            break; // nöqtədən sonra rəqəm yoxdursa, ayrı token
+                            break;
                         }
                     } else {
-                        break; // son char `.` idisə, float etmə
+                        break;
                     }
                 }
                 _ => break,
@@ -329,7 +326,7 @@ impl<'a> Lexer<'a> {
                 ('-', '>') => {
                     op.push(next_ch);
                     self.chars.next();
-                    return Some(Token::Arrow); // <<< Əsas düzəliş burada
+                    return Some(Token::Arrow);
                 }
                 _ => {}
             }
