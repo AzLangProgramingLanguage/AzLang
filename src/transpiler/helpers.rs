@@ -5,7 +5,7 @@ use crate::{
 
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     match expr {
-        Expr::String(_, _) => Type::Metn,
+        Expr::String(_, _) => Type::String,
         Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
@@ -76,18 +76,18 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         } => target_type.clone(),
         Expr::List(items) => {
             if items.is_empty() {
-                return Type::Siyahi(Box::new(Type::Any));
+                return Type::Array(Box::new(Type::Any));
             }
             let item_type = get_expr_type(&items[0]);
 
             for item in &items[1..] {
                 let t = get_expr_type(item);
                 if t != item_type {
-                    return Type::Siyahi(Box::new(Type::Any));
+                    return Type::Array(Box::new(Type::Any));
                 }
             }
 
-            Type::Siyahi(Box::new(item_type))
+            Type::Array(Box::new(item_type))
         }
 
         _ => Type::Any,
@@ -96,7 +96,7 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
 
 pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str {
     match t {
-        Type::Metn => {
+        Type::String => {
             if is_allocator {
                 "{!s}"
             } else {
@@ -152,15 +152,15 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
         }
         Type::Allocator => "",
         Type::Any => "{any}",
-        Type::Siyahi(_) => "{any}",
-        Type::Istifadeci(_, _) => {
+        Type::Array(_) => "{any}",
+        Type::User(_, _) => {
             if is_allocator {
                 "{!any}"
             } else {
                 "{any}"
             }
         }
-        Type::ZigString => {
+        Type::LiteralString => {
             if is_allocator {
                 "{!s}"
             } else {
@@ -169,7 +169,7 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
         }
         Type::ZigConstArray => "{any}",
         Type::ZigArray => "{any}",
-        Type::ZigConstString => {
+        Type::LiteralConstString => {
             if is_allocator {
                 "{!s}"
             } else {
@@ -204,25 +204,25 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
                 Cow::Borrowed("u8")
             }
         }
-        Type::Metn => {
+        Type::String => {
             if is_const {
                 Cow::Borrowed("azlangYazi")
             } else {
                 Cow::Borrowed("azlangYazi")
             }
         }
-        Type::ZigString => Cow::Borrowed("[]u8"),
+        Type::LiteralString => Cow::Borrowed("[]u8"),
         Type::ZigNatural => Cow::Borrowed("usize"),
         Type::ZigInteger => Cow::Borrowed("isize"),
-        Type::ZigConstString => Cow::Borrowed("[]const u8"),
+        Type::LiteralConstString => Cow::Borrowed("[]const u8"),
         Type::ZigArray => Cow::Borrowed("[]usize"),
         Type::ZigConstArray => Cow::Borrowed("[]const usize"),
         Type::Bool => Cow::Borrowed("bool"),
-        Type::Siyahi(inner) => {
+        Type::Array(inner) => {
             let inner_str = map_type(inner, is_const);
             inner_str
         }
-        Type::Istifadeci(_, s) => Cow::Borrowed(s),
+        Type::User(_, s) => Cow::Borrowed(s),
         Type::Allocator => Cow::Borrowed("std.mem.Allocator"),
     }
 }

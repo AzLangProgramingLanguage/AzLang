@@ -23,18 +23,18 @@ pub fn get_type<'a>(
         Expr::Bool(_) => Some(Type::Bool),
 
         Expr::Float(_) => Some(Type::Float),
-        Expr::String(_, _) => Some(Type::Metn),
+        Expr::String(_, _) => Some(Type::String),
         Expr::List(items) => {
             if items.len() > 0 {
                 let item_type = get_type(&items[0], ctx, typ)?;
                 for item in &items[1..] {
                     let t = get_type(item, ctx, typ)?;
                     if t != item_type {
-                        return Some(Type::Siyahi(Box::new(Type::Any))); // qarışıq tiplər
+                        return Some(Type::Array(Box::new(Type::Any))); // qarışıq tiplər
                     }
                 }
 
-                Some(Type::Siyahi(Box::new(item_type)))
+                Some(Type::Array(Box::new(item_type)))
             } else {
                 Some(Type::Any)
             }
@@ -54,7 +54,7 @@ pub fn get_type<'a>(
             }
 
             if let Some(t) = typ {
-                if let Type::Istifadeci(enum_name, _) = t {
+                if let Type::User(enum_name, _) = t {
                     if let Some(variants) = ctx.enum_defs.get(enum_name) {
                         if variants.contains(name) {
                             return Some(t.clone());
@@ -66,12 +66,12 @@ pub fn get_type<'a>(
         }
         Expr::StructInit { name, .. } => {
             if let Some((s, ..)) = ctx.struct_defs.get(name.as_ref()) {
-                Some(Type::Istifadeci(
+                Some(Type::User(
                     Cow::Owned(name.to_string()),
                     Cow::Owned(s.clone()),
                 ))
             } else if let Some((s, ..)) = ctx.union_defs.get(name.as_ref()) {
-                Some(Type::Istifadeci(
+                Some(Type::User(
                     Cow::Owned(name.to_string()),
                     Cow::Owned(s.clone()),
                 ))

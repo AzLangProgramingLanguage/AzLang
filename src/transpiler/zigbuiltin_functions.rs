@@ -1,6 +1,10 @@
 pub const BUILTIN_FUNCTIONS: &str = r#"
 
-
+const ValueEnum = union(enum) {
+   Array: azlangSiyahi,
+   Number: azlangEded,
+   String: azlangYazi,
+};
 
 pub fn str_uppercase(allocator: std.mem.Allocator, self: azlangYazi, mut: bool) !azlangYazi {
     const slice = switch (self) {

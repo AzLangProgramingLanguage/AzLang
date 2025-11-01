@@ -35,8 +35,8 @@ tip Ədəd
   
 
 tip Siyahı
-  Const: zigsabitsiyahı
-  Mut: zigsiyahı
+  Const: siyahı<DəyərTipi>
+  Mut: siyahı<DəyərTipi>
   metod uzunluq(): ədəd
     uyğun öz
       Const -> qaytar Zig(`azlangEded.Yeni(azlangEded{.natural = self.Const.len})`)

@@ -67,10 +67,11 @@ pub fn tokenize_word(word: &str) -> Token {
             "növ" => Token::Enum,
             "metod" => Token::Method,
             "Zig" => Token::Zig,
-            "ƏlavəEt" => Token::Import,
+            "İSTİFADƏ" => Token::Import,
             "tip" => Token::Type,
             "YaddaşAl" => Token::Allocator,
             "YazıKiçilt" => Token::StrLower,
+            "DəyərTipi" => Token::Value,
             other => Token::Identifier(other.to_string()),
         },
     }

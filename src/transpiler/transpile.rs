@@ -1,7 +1,5 @@
-use std::borrow::Cow;
-
+use crate::dd;
 use crate::{
-    dd,
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     transpiler::{
         TranspileContext,
@@ -15,6 +13,7 @@ use crate::{
         struct_def::transpile_struct_def,
     },
 };
+use std::borrow::Cow;
 
 use super::union_def::transpile_union_def;
 
@@ -113,7 +112,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             let items_code: Vec<String> =
                 items.iter().map(|item| transpile_expr(item, ctx)).collect();
             let items_str = items_code.join(", ");
-            format!("[{items_str}]")
+            format!(".{{{items_str}}}")
         }
 
         Expr::If {
@@ -177,7 +176,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                     } else {
                         code
                     }
-                }) //Bu iterator neden Result tipinde birşey döndürüyor
+                })
                 .collect();
             let else_code = else_code.join("\n    ");
 
@@ -612,7 +611,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
 
             let index_type_expr = get_expr_type(index);
             match index_type_expr {
-                Type::Metn => {
+                Type::String => {
                     format!("{}.{}", target_code, index_code.trim_matches('"'))
                 }
                 _ => {

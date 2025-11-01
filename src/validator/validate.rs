@@ -3,7 +3,6 @@ use std::{borrow::Cow, rc::Rc};
 use color_eyre::eyre::Result;
 
 use crate::{
-    dd,
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
     validator::{
@@ -139,7 +138,7 @@ pub fn validate_expr<'a>(
                 ));
                 method.is_allocator = ctx.is_allocator_used;
                 method.transpiled_name = Some(transpile_az_chars(method.name.as_ref()));
-                if let Some(Type::Istifadeci(name, transpiled_type)) = &mut method.return_type {
+                if let Some(Type::User(name, transpiled_type)) = &mut method.return_type {
                     match ctx.validate_user_type(name.as_ref()) {
                         Ok(_) => {
                             *transpiled_type = Cow::Owned(transpile_az_chars(name).to_string());
@@ -240,9 +239,9 @@ pub fn validate_expr<'a>(
                 }
                 BuiltInFunction::Len => {
                     if let Some(t) = get_type(&args[0], ctx, None) {
-                        if t != Type::Siyahi(Box::new(Type::Any)) {
+                        if t != Type::Array(Box::new(Type::Any)) {
                             return Err(ValidatorError::TypeMismatch {
-                                expected: "Siyahi".to_string(),
+                                expected: "Siyahı".to_string(),
                                 found: format!("{t:?}"),
                             });
                         }
@@ -293,7 +292,7 @@ pub fn validate_expr<'a>(
                 .iter()
                 .map(|method| {
                     let mut cloned_ret_type = method.return_type.clone();
-                    if let Some(Type::Istifadeci(name, transpiled_type)) = &mut cloned_ret_type {
+                    if let Some(Type::User(name, transpiled_type)) = &mut cloned_ret_type {
                         match ctx.validate_user_type(name.as_ref()) {
                             Ok(_) => {
                                 *transpiled_type =
@@ -363,7 +362,7 @@ pub fn validate_expr<'a>(
 
             if name == "self" && ctx.current_struct.is_some() {
                 *symbol = Some(Symbol {
-                    typ: Type::Istifadeci(
+                    typ: Type::User(
                         Cow::Borrowed(ctx.current_struct.unwrap()),
                         Cow::Borrowed(ctx.current_struct.unwrap()),
                     ),
@@ -442,7 +441,7 @@ pub fn validate_expr<'a>(
             validate_expr(iterable, ctx, log)?;
             let iterable_type =
                 get_type(iterable, ctx, None).ok_or(ValidatorError::LoopIterableTypeNotFound)?;
-            if let Type::Siyahi(inner) = iterable_type {
+            if let Type::Array(inner) = iterable_type {
                 let symbol = Symbol {
                     typ: *inner,
                     is_mutable: false,
@@ -484,7 +483,7 @@ pub fn validate_expr<'a>(
                     let variable_type = get_type(variable, ctx, None);
 
                     match variable_type {
-                        Some(Type::Metn) => {
+                        Some(Type::String) => {
                             let union = ctx
                                 .union_defs
                                 .get("Yazı")
@@ -532,7 +531,7 @@ pub fn validate_expr<'a>(
                             *is_allocator = method.is_allocator_used;
                             *returned_type = method.return_type.clone();
                         }
-                        Some(Type::Istifadeci(s, _)) => {
+                        Some(Type::User(s, _)) => {
                             let union = ctx
                                 .union_defs
                                 .get(&s.to_string())
@@ -542,9 +541,8 @@ pub fn validate_expr<'a>(
                                 .2
                                 .iter()
                                 .find(|m| m.name.to_string() == name.to_string());
-                            let method = maybe_method.ok_or_else(|| {
-                                ValidatorError::FunctionNotFound(name) // Əgər ayrıca MethodNotFound error varsa onu istifadə et
-                            })?;
+                            let method = maybe_method
+                                .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
                             if method.parameters.len() != args.len() + 1 {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
                                     name: name.to_string(),
@@ -614,7 +612,7 @@ pub fn validate_expr<'a>(
                 Type::Integer => {
                     *target_type = Type::Integer;
                 }
-                Type::Metn => {
+                Type::String => {
                     log("Dəmir Əmi indeksləmə2  əməliyyatını yoxlayır...");
                     let index_name = match &**index {
                         Expr::String(s, _) => s,
@@ -624,7 +622,7 @@ pub fn validate_expr<'a>(
 
                     println!("Sruktur tipi {target:?}");
                     let struct_name = match struct_type {
-                        Some(Type::Istifadeci(name, _)) => name,
+                        Some(Type::User(name, _)) => name,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
 
@@ -668,7 +666,7 @@ pub fn validate_expr<'a>(
             if ctx.current_function.is_some() {
                 return Err(ValidatorError::NestedFunctionDefinition);
             }
-            if let Some(Type::Istifadeci(name, _)) = return_type {
+            if let Some(Type::User(name, _)) = return_type {
                 match ctx.validate_user_type(name) {
                     Ok(_) => {}
                     Err(e) => return Err(e),

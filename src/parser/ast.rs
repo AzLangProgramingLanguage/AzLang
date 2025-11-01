@@ -59,16 +59,16 @@ impl BuiltInFunction {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type<'a> {
-    Metn,
-    ZigString,
-    ZigConstString,
+    String,
+    LiteralString,
+    LiteralConstString,
     ZigFloat,
     ZigArray,
     ZigConstArray,
     ZigNatural,
     ZigInteger,
-    Siyahi(Box<Type<'a>>),
-    Istifadeci(Cow<'a, str>, Cow<'a, str>),
+    Array(Box<Type<'a>>),
+    User(Cow<'a, str>, Cow<'a, str>),
     Integer,
     Natural,
     BigInteger,

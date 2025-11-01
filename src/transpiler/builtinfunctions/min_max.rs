@@ -57,7 +57,7 @@ fn transpile_min_max<'a>(
 
 pub fn inner_typer(inner_type: Type<'_>) -> &'static str {
     match inner_type {
-        Type::Siyahi(inner) => inner_typer(*inner),
+        Type::Array(inner) => inner_typer(*inner),
         Type::Integer => "usize",
         Type::LowInteger => "u8",
         Type::BigInteger => "i128",

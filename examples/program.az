@@ -1,14 +1,3 @@
-funksiya faktorial(x: ədəd):ədəd
-    əgər x == 0
-        qaytar 1
-    əks
-        qaytar x * faktorial(x - 1)
-Çap(faktorial(5))
-/* sabit c = "asda".böyüt().tərs()
-Çap(c)
+sabit a = "Salam"
+Çap(a)
 
-Çap(5+2.1)
-*/
-
-sabit ab = "Salam"
-Çap(ab)

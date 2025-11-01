@@ -17,6 +17,7 @@ fn arg_code_for_expr<'a>(
         Expr::String(_, _)
         | Expr::TemplateString(_)
         | Expr::Number(_)
+        | Expr::List(_)
         | Expr::Float(_)
         | Expr::UnaryOp { op: _, expr: _ } => {
             return transpile_expr(expr, ctx);
@@ -25,7 +26,7 @@ fn arg_code_for_expr<'a>(
         _ => {}
     }
     match typ {
-        Type::Metn => {
+        Type::String => {
             let name = transpile_expr(expr, ctx);
             if is_muttable(expr) {
                 format!("{}.Mut", name)
@@ -33,6 +34,7 @@ fn arg_code_for_expr<'a>(
                 format!("{}.Const", name)
             }
         }
+        Type::LiteralConstString => transpile_expr(expr, ctx),
         Type::Natural | Type::Integer => {
             let name = transpile_expr(expr, ctx);
 

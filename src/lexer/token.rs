@@ -9,6 +9,7 @@ pub enum Token {
     Void,
     Float(f64),
     Backtick,
+    Value,
     InterpolationStart,
     InterpolationEnd,
     Array,

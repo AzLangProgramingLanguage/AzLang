@@ -17,7 +17,7 @@ pub fn transpile_decl<'a>(
     let value_code: String = transpile_expr(value, ctx);
 
     let decl_code = match typ {
-        Some(Type::Metn) => match value {
+        Some(Type::String) => match value {
             Expr::String(_, _) => {
                 if is_mutable {
                     format!(
@@ -162,7 +162,7 @@ pub fn transpile_decl<'a>(
             }
         },
 
-        Some(Type::Siyahi(inner)) => match value {
+        Some(Type::Array(inner)) => match value {
             Expr::List(items) => {
                 let items_code: Vec<String> =
                     items.iter().map(|i| transpile_expr(i, ctx)).collect();
