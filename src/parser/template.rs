@@ -1,24 +1,24 @@
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
-use std::borrow::Cow;
 
 use crate::{
     lexer::Token,
     parser::{
         ast::{Expr, TemplateChunk},
-        expression::{parse_expression, parse_single_expr},
+        expression::parse_expression,
     },
+    translations::parser_errors::ParserError,
 };
 
-pub fn parse_template_string_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_template_string_expr<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
     let mut chunks = Vec::new();
     loop {
-        let token = tokens
-            .peek()
-            .ok_or_else(|| eyre!("Template string bitmədi (EOF)"))?;
+        let token = tokens.peek().ok_or(ParserError::Eof)?;
 
         match token {
             Token::StringLiteral(s) => {
@@ -34,11 +34,11 @@ where
                             tokens.next();
                             break;
                         }
-                        Some(token) => {
+                        Some(_) => {
                             chunks.push(TemplateChunk::Expr(Box::new(parse_expression(tokens)?)));
                         }
                         None => {
-                            return Err(eyre!("Template string bitmədi (EOF)"));
+                            return Err(ParserError::Eof);
                         }
                     }
                 }
@@ -47,10 +47,7 @@ where
                 break;
             }
             other => {
-                return Err(eyre!(
-                    "Template string içində tanınmayan token: {:?}",
-                    other
-                ));
+                return Err(ParserError::TemplateTokenNotFound(other.to_string()));
             }
         }
     }

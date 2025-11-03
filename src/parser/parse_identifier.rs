@@ -5,14 +5,18 @@ use crate::{
         expression::parse_single_expr,
         structs::parse_structs_init,
     },
+    translations::parser_errors::ParserError,
 };
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 
 use super::expression::parse_expression;
 
-pub fn parse_identifier<'a, I>(tokens: &mut PeekMoreIterator<I>, s: &'a str) -> Result<Expr<'a>>
+pub fn parse_identifier<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+    s: &'a str,
+) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -25,16 +29,14 @@ where
     match tokens.peek() {
         Some(Token::ListStart) => {
             tokens.next();
-            let index_expr =
-                parse_single_expr(tokens).map_err(|e| eyre!("İndeks ifadəsi səhv: {}", e))?;
-            if matches!(tokens.next(), Some(Token::ListEnd)) {
-                Ok(Expr::Index {
+            let index_expr = parse_single_expr(tokens)?;
+            match tokens.next() {
+                Some(Token::ListEnd) => Ok(Expr::Index {
                     target: Box::new(expr),
                     index: Box::new(index_expr),
                     target_type: Type::Any,
-                })
-            } else {
-                Err(eyre!("Siyahı düzgün bağlanılmadı: ']' gözlənilirdi"))
+                }),
+                other => Err(ParserError::ArrayEndError(format!("{other:?}"))),
             }
         }
         Some(Token::LParen) => {
@@ -51,13 +53,14 @@ where
                         let arg = parse_expression(tokens)?;
                         args.push(arg);
 
-                        if let Some(Token::Comma) = tokens.peek() {
-                            tokens.next();
-                        } else {
-                            if !matches!(tokens.peek(), Some(Token::RParen)) {
-                                return Err(eyre!(
+                        match tokens.peek() {
+                            Some(Token::Comma) | Some(Token::RParen) => {
+                                tokens.next();
+                            }
+                            _ => {
+                                return Err(ParserError::ArgsError(format!(
                                     "Arqument siyahısında ',' və ya ')' gözlənilirdi"
-                                ));
+                                )));
                             }
                         }
                     }
@@ -97,7 +100,7 @@ where
             tokens.next();
             let field_or_method = match tokens.next() {
                 Some(Token::Identifier(name)) => (*name).as_str(),
-                _ => return Err(eyre!("Metod və ya sahə adı gözlənilirdi")),
+                other => return Err(ParserError::MethodName(format!("{other:?}"))),
             };
 
             match tokens.peek() {
@@ -145,6 +148,6 @@ where
             parse_structs_init(tokens, Cow::Borrowed(s))
         }
         Some(_) => Ok(expr),
-        None => Err(eyre!("İdentifikator sonrası gözlənilməz EOF")),
+        None => Err(ParserError::Eof),
     }
 }

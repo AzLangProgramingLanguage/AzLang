@@ -1,15 +1,16 @@
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
 
 use crate::{
     lexer::Token,
     parser::{ast::Expr, expression::parse_single_expr},
+    translations::parser_errors::ParserError,
 };
 
 pub fn parse_binary_op_expr<'a, I>(
     tokens: &mut PeekMoreIterator<I>,
     min_prec: u8,
-) -> Result<Expr<'a>>
+) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -54,7 +55,7 @@ where
                     symbol: None,
                 };
             } else {
-                return Err(eyre!("Sol tərəfdə dəyişən gözlənilirdi"));
+                return Err(ParserError::VariableNotFound);
             }
         } else {
             left = Expr::BinaryOp {

@@ -1,12 +1,13 @@
 use crate::{
     lexer::Token,
     parser::ast::{EnumDecl, Expr},
+    translations::parser_errors::ParserError,
 };
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
-use std::borrow::Cow;
+use std::{borrow::Cow, f64::EPSILON, string::ParseError};
 
-pub fn parse_enum_decl<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_enum_decl<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -14,10 +15,7 @@ where
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed((*name).as_str()),
         other => {
-            return Err(eyre!(
-                "`tip`-dən sonra identifikator gözlənilirdi, tapıldı: {:?}",
-                other
-            ));
+            return Err(ParserError::UnionIdentifierNotFound(format!("{:?}", other)));
         }
     };
 
@@ -25,10 +23,7 @@ where
     match tokens.next() {
         Some(Token::Newline) => {}
         other => {
-            return Err(eyre!(
-                "Enum tərifindən sonra `newline` gözlənilirdi, tapıldı: {:?}",
-                other
-            ));
+            return Err(ParserError::EnumNewlineError(format!("{:?}", other)));
         }
     }
 
@@ -52,9 +47,9 @@ where
             }
             Some(Token::Eof) => break,
             Some(tok) => {
-                return Err(eyre!("Enum variantında gözlənilməz token: {:?}", tok));
+                return Err(ParserError::EnumVariantNotFound(format!("{:?}", tok)));
             }
-            None => return Err(eyre!("Enum tərifi gözlənilmədən bitdi")),
+            None => return Err(ParserError::Eof),
         }
     }
     Ok(Expr::EnumDecl(EnumDecl { name, variants }))

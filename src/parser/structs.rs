@@ -1,16 +1,17 @@
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 
 use crate::{
     lexer::Token,
     parser::{ast::Expr, expression::parse_single_expr},
+    translations::parser_errors::ParserError,
 };
 
 pub fn parse_structs_init<'a, I>(
     tokens: &mut PeekMoreIterator<I>,
     name: Cow<'a, str>,
-) -> Result<Expr<'a>>
+) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -26,15 +27,13 @@ where
                 let arg_name = match tokens.next() {
                     Some(Token::Identifier(s)) => s.as_str(),
                     _ => {
-                        return Err(eyre!(
-                            "Struct init argümentləri arasında ',' və ya '}}' gözlənilirdi"
-                        ));
+                        return Err(ParserError::StructInitError);
                     }
                 };
                 match tokens.next() {
                     Some(Token::Colon) => {}
                     _ => {
-                        return Err(eyre!("Struct init argümentləri arasında ':' gözlənilirdi"));
+                        return Err(ParserError::StructInitColonError);
                     }
                 }
                 let arg_value = parse_single_expr(tokens)?;
@@ -43,9 +42,7 @@ where
                     tokens.next();
                 } else {
                     if !matches!(tokens.peek(), Some(Token::RBrace)) {
-                        return Err(eyre!(
-                            "Struct init argümentləri arasında ',' və ya '}}' gözlənilirdi"
-                        ));
+                        return Err(ParserError::StructInitError);
                     }
                 }
             }

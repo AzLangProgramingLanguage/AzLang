@@ -1,3 +1,4 @@
+use crate::translations::parser_errors::ParserError;
 use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 
@@ -58,18 +59,18 @@ where
     Ok(ast)
 }
 
-pub fn parse_expression<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_expression<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
     parse_binary_op_expr(tokens, 0)
 }
 
-pub fn parse_single_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_single_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
-    let token = tokens.next().ok_or_else(|| eyre!("Gözlənilməz Eof"))?;
+    let token = tokens.next().ok_or(ParserError::Eof)?;
 
     match token {
         Token::StringLiteral(_s) => literals_parse(token, tokens),
@@ -77,25 +78,20 @@ where
         Token::False => Ok(Expr::Bool(false)),
 
         Token::Float(_num) => literals_parse(token, tokens),
-        Token::Backtick => {
-            parse_template_string_expr(tokens).map_err(|e| eyre!("Sablon parsing xətası: {}", e))
-        }
+        Token::Backtick => parse_template_string_expr(tokens),
         Token::Number(_num) => literals_parse(token, tokens),
         Token::This => parse_identifier(tokens, "self"),
-        Token::Object => parse_struct_def(tokens).map_err(|e| eyre!("Obyekt parsing xətası {}", e)),
-        Token::Enum => {
-            parse_enum_decl(tokens).map_err(|e| eyre!("Növləndirmə parsing xətası: {}", e))
-        }
+        Token::Object => parse_struct_def(tokens),
+        Token::Enum => parse_enum_decl(tokens),
         Token::ListStart => Ok(parse_list(tokens)),
         Token::ConstantDecl => Ok(parse_decl(tokens, false).unwrap()),
         Token::MutableDecl => Ok(parse_decl(tokens, true).unwrap()),
         Token::Return => {
-            let returned_value =
-                parse_expression(tokens).map_err(|e| eyre!("Qaytarma  parsing xətası: {}", e))?;
+            let returned_value = parse_expression(tokens)?;
             Ok(Expr::Return(Box::new(returned_value)))
         }
 
-        Token::Match => parse_match(tokens).map_err(|e| eyre!("Match parsing xətası: {}", e)),
+        Token::Match => parse_match(tokens)?,
         Token::FunctionDef => {
             parse_function_def(tokens).map_err(|e| eyre!("Funksiya parsing xətası: {}", e))
         }
@@ -104,16 +100,12 @@ where
             expr: Box::new(parse_single_expr(tokens)?),
         }),
 
-        Token::Loop => parse_loop(tokens).map_err(|e| eyre!("Loop parsing xətası: {}", e)),
-        Token::Identifier(s) => {
-            parse_identifier(tokens, s).map_err(|e| eyre!("Identifier parsing xətası: {}", e))
-        }
-        Token::Type => {
-            parse_union_type(tokens).map_err(|e| eyre!("Tip yaradılmasında problem oldu: {}", e))
-        }
-        Token::Conditional => parse_if_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
-        Token::ElseIf => parse_else_if_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
-        Token::Else => parse_else_expr(tokens).map_err(|e| eyre!("Şərt parsing xətası {}", e)),
+        Token::Loop => parse_loop(tokens),
+        Token::Identifier(s) => parse_identifier(tokens, s),
+        Token::Type => parse_union_type(tokens),
+        Token::Conditional => parse_if_expr(tokens),
+        Token::ElseIf => parse_else_if_expr(tokens),
+        Token::Else => parse_else_expr(tokens),
 
         Token::Print
         | Token::Input
@@ -139,9 +131,6 @@ where
             let result = parse_builtin(tokens, token)?;
             Ok(result)
         }
-        Token::Eof | Token::Semicolon | Token::Newline => {
-            Err(eyre!("Boş və ya gözlənilməz token: {:?}", token))
-        }
-        other => Err(eyre!("Naməlum token: {:?}", other)),
+        other => Err(ParserError::UnexpectedToken(format!("{:?}", other))),
     }
 }

@@ -8,9 +8,10 @@ use crate::{
         expression::{parse_expression, parse_single_expr},
         helper::expect_token,
     },
+    translations::parser_errors::ParserError,
 };
 
-pub fn parse_match<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_match<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -21,7 +22,7 @@ where
             tokens.next();
         }
         other => {
-            return Err(eyre!("Match parsing xətası: {:?}", other));
+            return Err(ParserError::MatchError(format!("{:?}", other)));
         }
     }
 

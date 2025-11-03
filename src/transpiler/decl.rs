@@ -1,9 +1,6 @@
-use std::process;
-
 use crate::{
-    dd,
     parser::ast::{BuiltInFunction, Expr, Type},
-    transpiler::{TranspileContext, helpers::map_type, transpile::transpile_expr},
+    transpiler::{helpers::map_type, transpile::transpile_expr, TranspileContext},
 };
 
 pub fn transpile_decl<'a>(

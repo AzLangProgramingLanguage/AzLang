@@ -35,7 +35,7 @@ tip Ədəd
   
 
 tip Siyahı
-  Const: siyahı<DəyərTipi>
+  Const:  siyahı<DəyərTipi>
   Mut: siyahı<DəyərTipi>
   metod uzunluq(): ədəd
     uyğun öz
@@ -45,4 +45,3 @@ tip Siyahı
     Zig(`_ = self`)
     qaytar "Siyahi"
   
-

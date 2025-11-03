@@ -6,8 +6,8 @@ use crate::{
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     translations::validator_messages::ValidatorError,
     validator::{
-        FunctionInfo, MethodInfo, ValidatorContext,
         helpers::{get_type, transpile_az_chars},
+        FunctionInfo, MethodInfo, ValidatorContext,
     },
 };
 
@@ -19,7 +19,7 @@ pub fn validate_expr<'a>(
     match expr {
         Expr::Decl {
             name,
-
+            is_primitive,
             transpiled_name,
             typ,
             is_mutable,

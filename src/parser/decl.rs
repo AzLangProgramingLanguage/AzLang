@@ -6,19 +6,24 @@ use crate::{
         structs::parse_structs_init,
         types::parse_type,
     },
+    translations::parser_errors::ParserError,
 };
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
 use std::{borrow::Cow, rc::Rc};
 
-pub fn parse_decl<'a, I>(tokens: &mut PeekMoreIterator<I>, is_mutable: bool) -> Result<Expr<'a>>
+pub fn parse_decl<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+    is_mutable: bool,
+) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
-        other => return Err(eyre!("Dəyişən adı gözlənilirdi, tapıldı: {:?}", other)),
+        other => return Err(ParserError::VariableName(format!("{:?}", other))),
     };
+    let mut is_primitive = false;
 
     let typ = if let Some(Token::Colon) = tokens.peek() {
         tokens.next();
@@ -29,7 +34,7 @@ where
 
     match tokens.next() {
         Some(Token::Operator(op)) if op == "=" => {}
-        other => return Err(eyre!("'=' operatoru gözlənilirdi, tapıldı: {:?}", other)),
+        other => return Err(ParserError::OperatorError('=', format!("{:?}", other))),
     }
     let value_expr;
     if let Some(Token::LBrace) = tokens.peek() {
@@ -39,10 +44,16 @@ where
             tokens.next();
             value_expr = parse_structs_init(tokens, n.clone())?;
         } else {
-            return Err(eyre!("Obyekt tipi gözlənilirdi"));
+            return Err(ParserError::ObjectTypeNotFound);
         }
     } else {
         value_expr = parse_expression(tokens)?;
+        match value_expr {
+            Expr::String(..) | Expr::Number(..) | Expr::Bool(..) | Expr::List(..) => {
+                is_primitive = true;
+            }
+            _ => {}
+        }
     }
 
     let value = Box::new(value_expr);
@@ -50,6 +61,7 @@ where
     let expr: Expr<'_> = Expr::Decl {
         name,
         transpiled_name: None,
+        is_primitive,
         typ,
         is_mutable,
         value,

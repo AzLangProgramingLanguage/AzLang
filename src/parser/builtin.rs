@@ -7,9 +7,13 @@ use crate::{
         ast::{BuiltInFunction, Expr, Type},
         expression::parse_expression,
     },
+    translations::parser_errors::ParserError,
 };
 
-pub fn parse_builtin<'a, I>(tokens: &mut PeekMoreIterator<I>, token: &Token) -> Result<Expr<'a>>
+pub fn parse_builtin<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+    token: &Token,
+) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -37,7 +41,7 @@ where
         Token::Trim => (BuiltInFunction::Trim, Type::String),
         Token::StrReverse => (BuiltInFunction::StrReverse, Type::String),
         Token::ConvertString => (BuiltInFunction::ConvertString, Type::String),
-        other => return Err(eyre!("Bilinməyən funksiya: {:?}", other)),
+        other => return Err(ParserError::UnknownFunction(format!("{:?}", other))),
     };
     let mut args = Vec::new();
 

@@ -1,3 +1,4 @@
-sabit a = "Salam"
+dəyişən a = "Salam"
+a = "ss"
 Çap(a)
 

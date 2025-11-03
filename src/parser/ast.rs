@@ -132,6 +132,7 @@ pub enum Expr<'a> {
         transpiled_name: Option<String>,
         typ: Option<Rc<Type<'a>>>,
         is_mutable: bool,
+        is_primitive: bool,
         value: Box<Expr<'a>>,
     },
     VariableRef {

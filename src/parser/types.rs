@@ -1,15 +1,13 @@
-use crate::{lexer::Token, parser::ast::Type};
-use color_eyre::eyre::{Result, eyre};
+use crate::{lexer::Token, parser::ast::Type, translations::parser_errors::ParserError};
+use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 
-pub fn parse_type<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Type<'a>>
+pub fn parse_type<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Type<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
-    let token = tokens
-        .next()
-        .ok_or_else(|| eyre!("Tip gözlənilirdi, amma EOF tapıldı"))?;
+    let token = tokens.next().ok_or(ParserError::TypeNotFound)?;
 
     let typ = match token {
         Token::Identifier(name) => Type::User(Cow::Borrowed(name), Cow::Borrowed(name)),
@@ -33,19 +31,19 @@ where
         Token::Array => {
             match tokens.next() {
                 Some(Token::Operator(op)) if op == "<" => {}
-                other => return Err(eyre!("Siyahı üçün '<' gözlənilirdi, tapıldı: {:?}", other)),
+                other => return Err(ParserError::ArrayError('<', format!("{:?}", other))),
             }
 
             let inner_type = parse_type(tokens)?;
 
             match tokens.next() {
                 Some(Token::Operator(op)) if op == ">" => {}
-                other => return Err(eyre!("Siyahı üçün '>' gözlənilirdi, tapıldı: {:?}", other)),
+                other => return Err(ParserError::ArrayError('>', format!("{:?}", other))),
             }
 
             Type::Array(Box::new(inner_type))
         }
-        other => return Err(eyre!("Tanınmayan tip tokeni: {:?}", other)),
+        _ => return Err(ParserError::TypeNotFound),
     };
 
     Ok(typ)

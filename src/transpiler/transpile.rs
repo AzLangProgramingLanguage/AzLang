@@ -2,7 +2,6 @@ use crate::dd;
 use crate::{
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     transpiler::{
-        TranspileContext,
         builtinfunctions::{
             min_max::{transpile_max, transpile_min},
             print::transpile_print,
@@ -11,6 +10,7 @@ use crate::{
         decl::transpile_decl,
         helpers::{get_expr_type, is_semicolon_needed, map_type, transpile_function_def},
         struct_def::transpile_struct_def,
+        TranspileContext,
     },
 };
 use std::borrow::Cow;
@@ -36,12 +36,14 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             name: _,
             transpiled_name,
             typ,
+            is_primitive,
             is_mutable,
             value,
         } => transpile_decl(
             transpiled_name.as_ref().unwrap(),
             typ.as_deref(),
             *is_mutable,
+            is_primitive,
             value,
             ctx,
         ),

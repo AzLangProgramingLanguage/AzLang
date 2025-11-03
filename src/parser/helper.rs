@@ -1,6 +1,6 @@
 use peekmore::PeekMoreIterator;
 
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 
 use crate::{
     lexer::Token,
@@ -8,6 +8,7 @@ use crate::{
         ast::{Expr, Type},
         expression::parse_single_expr,
     },
+    translations::parser_errors::ParserError,
 };
 
 pub fn skip_newlines<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<()>
@@ -20,17 +21,23 @@ where
     Ok(())
 }
 
-pub fn expect_token<'a, I>(tokens: &mut PeekMoreIterator<I>, expected: Token) -> Result<()>
+pub fn expect_token<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+    expected: Token,
+) -> Result<(), ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
     match tokens.next() {
         Some(t) if *t == expected => Ok(()),
-        other => Err(eyre!("Gözlənilirdi {:?}, tapıldı {:?}", expected, other)),
+        other => Err(ParserError::OtherError(expected, format!("{:?}", other))),
     }
 }
 
-pub fn literals_parse<'a, I>(token: &'a Token, tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn literals_parse<'a, I>(
+    token: &'a Token,
+    tokens: &mut PeekMoreIterator<I>,
+) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -39,32 +46,28 @@ where
         Token::StringLiteral(s) => Expr::String(s, false),
         Token::Number(num) => Expr::Number(*num),
         Token::Float(num) => Expr::Float(*num),
-        _ => return Err(eyre!("Literal gözlənilirdi, alındı {:?}", token)),
+        _ => return Err(ParserError::LiteralNotFound(token.to_string())),
     };
 
-    // Dot-chaining üçün loop
     while let Some(Token::Dot) = tokens.peek() {
-        tokens.next(); // consume '.'
+        tokens.next();
 
         let field_or_method = match tokens.next() {
             Some(Token::Identifier(name)) => (*name).as_str(),
             other => {
-                return Err(eyre!(
-                    "Metod və ya sahə adı gözlənilirdi, alındı {:?}",
-                    other
-                ));
+                return Err(ParserError::OperatorError('.', format!("{other:?}")));
             }
         };
 
         match tokens.peek() {
             Some(Token::LParen) => {
-                tokens.next(); // consume '('
+                tokens.next();
                 let mut args = Vec::new();
 
                 while let Some(token) = tokens.peek() {
                     match token {
                         Token::RParen => {
-                            tokens.next(); // consume ')'
+                            tokens.next();
                             break;
                         }
                         Token::Comma => {
