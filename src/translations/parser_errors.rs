@@ -1,5 +1,4 @@
 use crate::lexer::Token;
-use clap::error;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -48,6 +47,9 @@ pub enum ParserError {
     #[error("Obyekt tipi gözlənilirdi")]
     ObjectTypeNotFound,
 
+    #[error("Struct daxilində gözlənilməz token: {0}")]
+    ObjectUnknownToken(String),
+
     /* Template Errors */
     #[error("Template string içində tanınmayan token: '{0}'")]
     TemplateTokenNotFound(String),
@@ -63,6 +65,12 @@ pub enum ParserError {
     #[error("tip`-dən sonra identifikator gözlənilirdi, tapıldı: {0}")]
     UnionIdentifierNotFound(String),
 
+    #[error("Birləşik tip daxilində gözlənilməz token: {0}")]
+    UnionUnknownToken(String),
+
+    #[error("Birləşik tip adı gözlənilirdi, tapıldı: {0}")]
+    UnionNameNotFound(String),
+
     #[error("Enum tərifindən sonra `newline` gözlənilirdi, tapıldı: {0}")]
     EnumNewlineError(String),
 
@@ -74,7 +82,20 @@ pub enum ParserError {
 
     #[error("Bilinməyən hazır funksiya: {0}")]
     UnknownFunction(String),
-
+    /* Match Errors */
     #[error("Match parsing xətası: {0}")]
     MatchError(String),
+
+    #[error("Gözlənilməz token match armında: {0}")]
+    MatchUnknownToken(String),
+
+    /* Function Errors */
+    #[error("Funksiya adı gözlənilirdi, tapıldı '{0}'")]
+    FunctionName(String),
+
+    #[error("Parametr adı gözlənilirdi, tapıldı: {0}")]
+    ParamNameNotFound(String),
+
+    #[error("Parametrdən sonra ',' və ya ')' gözlənilirdi, tapıldı: {0}")]
+    ParamError(String),
 }

@@ -6,18 +6,17 @@ use crate::{
         helper::expect_token,
         types::parse_type,
     },
+    translations::parser_errors::ParserError,
 };
-use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 
-pub fn parse_function_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_function_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
-    // Funksiya adı
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => (*name).as_str(),
-        other => return Err(eyre!("Funksiya adı gözlənilirdi, tapıldı: {:?}", other)),
+        other => return Err(ParserError::FunctionName(format!("{:?}", other))),
     };
 
     expect_token(tokens, Token::LParen)?;
@@ -43,7 +42,7 @@ where
                 // Parametr adı
                 let param_name = match tokens.next() {
                     Some(Token::Identifier(s)) => (*s).as_str(),
-                    other => return Err(eyre!("Parametr adı gözlənilirdi, tapıldı: {:?}", other)),
+                    other => return Err(ParserError::ParamNameNotFound(format!("{:?}", other))),
                 };
 
                 // Tip varsa oxu
@@ -59,10 +58,7 @@ where
                     }
                     Some(Token::RParen) => break,
                     other => {
-                        return Err(eyre!(
-                            "Parametrdən sonra ',' və ya ')' gözlənilirdi, tapıldı: {:?}",
-                            other
-                        ));
+                        return Err(ParserError::ParamError(format!("{:?}", other)));
                     }
                 }
                 params.push(Parameter {
@@ -74,10 +70,7 @@ where
             }
             Token::RParen => break,
             other => {
-                return Err(eyre!(
-                    "Parametr və ya ')' gözlənilirdi, tapıldı: {:?}",
-                    other
-                ));
+                return Err(ParserError::ParamError(format!("{:?}", other)));
             }
         }
     }

@@ -11,7 +11,7 @@ use crate::{
     translations::parser_errors::ParserError,
 };
 
-pub fn skip_newlines<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<()>
+pub fn skip_newlines<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<(), ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {

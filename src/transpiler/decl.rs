@@ -7,6 +7,7 @@ pub fn transpile_decl<'a>(
     name: &'a String,
     typ: Option<&Type<'a>>,
     is_mutable: bool,
+    is_primitive: bool,
     value: &'a Expr<'a>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {

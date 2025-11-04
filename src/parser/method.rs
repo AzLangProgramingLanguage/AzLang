@@ -3,10 +3,11 @@ use crate::{
     parser::{
         ast::{Expr, Parameter, Type},
         expression::parse_single_expr,
+        helper::expect_token,
         types::parse_type,
     },
+    translations::parser_errors::ParserError,
 };
-use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 type MethodResultType<'a> = (
     &'a str,
@@ -15,7 +16,9 @@ type MethodResultType<'a> = (
     Option<Type<'a>>,
     bool,
 );
-pub fn parse_method<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<MethodResultType<'a>>
+pub fn parse_method<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+) -> Result<MethodResultType<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -23,7 +26,7 @@ where
 
     let name = match tokens.next() {
         Some(Token::Identifier(n)) => (*n).as_str(),
-        other => return Err(eyre!("Method adı gözlənilirdi, tapıldı: {:?}", other)),
+        other => return Err(ParserError::MethodName(format!("{:?}", other))),
     };
 
     expect_token(tokens, Token::LParen)?;
@@ -47,7 +50,7 @@ where
 
                 let param_name = match tokens.next() {
                     Some(Token::Identifier(s)) => (*s).as_str(),
-                    other => return Err(eyre!("Parametr adı gözlənilirdi, tapıldı: {:?}", other)),
+                    other => return Err(ParserError::ParamNameNotFound(format!("{:?}", other))),
                 };
                 dbg!(param_name);
 
@@ -63,10 +66,7 @@ where
                     }
                     Some(Token::RParen) => break,
                     other => {
-                        return Err(eyre!(
-                            "Parametrdən sonra ',' və ya ')' gözlənilirdi, tapıldı: {:?}",
-                            other
-                        ));
+                        return Err(ParserError::ParamError(format!("{:?}", other)));
                     }
                 }
                 params.push(Parameter {
@@ -78,10 +78,7 @@ where
             }
             Token::RParen => break,
             other => {
-                return Err(eyre!(
-                    "Parametr və ya ')' gözlənilirdi, tapıldı: {:?}",
-                    other
-                ));
+                return Err(ParserError::ParamError(format!("{:?}", other)));
             }
         }
     }
@@ -122,14 +119,4 @@ where
     }
 
     Ok((name, params, body, return_type, false))
-}
-
-fn expect_token<'a, I>(tokens: &mut PeekMoreIterator<I>, expected: Token) -> Result<()>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    match tokens.next() {
-        Some(t) if *t == expected => Ok(()),
-        other => Err(eyre!("Gözlənilirdi: {:?}, tapıldı: {:?}", expected, other)),
-    }
 }

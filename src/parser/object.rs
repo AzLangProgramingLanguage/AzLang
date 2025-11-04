@@ -9,15 +9,13 @@ use crate::{
     },
     translations::parser_errors::ParserError,
 };
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 use peekmore::PeekMoreIterator;
 
 pub fn parse_struct_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
-    // tokens.next();
-    // Struktur adını al
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => (*name).as_str(),
         other => {
@@ -69,7 +67,7 @@ where
             }
             Token::Eof => break,
             other => {
-                return Err(eyre!("Struct daxilində gözlənilməz token: {:?}", other));
+                return Err(ParserError::ObjectUnknownToken(format!("{:?}", other)));
             }
         }
     }

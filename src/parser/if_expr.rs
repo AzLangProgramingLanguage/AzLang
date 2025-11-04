@@ -4,13 +4,14 @@ use peekmore::PeekMoreIterator;
 use crate::{
     lexer::Token,
     parser::{ast::Expr, expression::parse_expression, op_expr::parse_binary_op_expr},
+    translations::parser_errors::ParserError,
 };
 
-pub fn parse_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
-    let condition = parse_binary_op_expr(tokens, 0)?; //Problem burada
+    let condition = parse_binary_op_expr(tokens, 0)?;
 
     let then_branch = parse_block(tokens)?;
 
@@ -32,14 +33,12 @@ where
         else_branch,
     })
 }
-pub fn parse_else_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_else_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
     tokens.next();
-    let condition = parse_binary_op_expr(tokens, 0)?; //Problem burada
-    // expect_token(tokens, Token::Newline)?;
-    // expect_token(tokens, Token::Indent)?;
+    let condition = parse_binary_op_expr(tokens, 0)?;
     let then_branch = parse_block(tokens)?;
 
     Ok(Expr::ElseIf {
@@ -48,7 +47,7 @@ where
     })
 }
 
-pub fn parse_else_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_else_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -59,7 +58,7 @@ where
     let then_branch = parse_block(tokens)?;
     Ok(Expr::Else { then_branch })
 }
-fn parse_block<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Vec<Expr<'a>>>
+fn parse_block<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Vec<Expr<'a>>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {

@@ -91,10 +91,8 @@ where
             Ok(Expr::Return(Box::new(returned_value)))
         }
 
-        Token::Match => parse_match(tokens)?,
-        Token::FunctionDef => {
-            parse_function_def(tokens).map_err(|e| eyre!("Funksiya parsing xətası: {}", e))
-        }
+        Token::Match => parse_match(tokens),
+        Token::FunctionDef => parse_function_def(tokens),
         Token::Operator(op) if op == "-" => Ok(Expr::UnaryOp {
             op,
             expr: Box::new(parse_single_expr(tokens)?),

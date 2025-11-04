@@ -1,4 +1,3 @@
-use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 
 use crate::{
@@ -56,7 +55,7 @@ where
 
             Token::Eof => break,
             unexpected => {
-                return Err(eyre!("Gözlənilməz token match armında: {:?}", unexpected));
+                return Err(ParserError::MatchUnknownToken(format!("{:?}", unexpected)));
             }
         }
     }

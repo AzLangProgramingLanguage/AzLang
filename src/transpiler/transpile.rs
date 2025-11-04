@@ -43,7 +43,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             transpiled_name.as_ref().unwrap(),
             typ.as_deref(),
             *is_mutable,
-            is_primitive,
+            *is_primitive,
             value,
             ctx,
         ),

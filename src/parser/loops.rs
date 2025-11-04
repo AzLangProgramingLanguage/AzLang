@@ -1,11 +1,11 @@
 use crate::{
     lexer::Token,
     parser::{ast::Expr, expression::parse_single_expr, helper::expect_token},
+    translations::parser_errors::ParserError,
 };
-use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 
-pub fn parse_loop<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_loop<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -17,7 +17,7 @@ where
     // dəyişən adı gözlənilir
     let var_name = match tokens.next() {
         Some(Token::Identifier(name)) => (*name).as_str(),
-        other => return Err(eyre!("Dəyişən adı gözlənilirdi, tapıldı: {:?}", other)),
+        other => return Err(ParserError::VariableName(format!("{:?}", other))),
     };
 
     expect_token(tokens, Token::Newline)?;

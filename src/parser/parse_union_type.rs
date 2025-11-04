@@ -1,4 +1,3 @@
-use color_eyre::eyre::{Result, eyre};
 use peekmore::PeekMoreIterator;
 
 use crate::{
@@ -9,15 +8,16 @@ use crate::{
         method::parse_method,
         types::parse_type,
     },
+    translations::parser_errors::ParserError,
 };
 
-pub fn parse_union_type<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>>
+pub fn parse_union_type<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => (*name).as_str(),
-        other => return Err(eyre!("Birləşik tip adı gözlənilirdi, tapıldı: {:?}", other)),
+        other => return Err(ParserError::UnionNameNotFound(format!("{:?}", other))),
     };
     expect_token(tokens, Token::Newline)?;
     let mut fields = Vec::new();
@@ -53,10 +53,7 @@ where
             }
             Token::Eof => break,
             other => {
-                return Err(eyre!(
-                    "Birləşik tip daxilində gözlənilməz token: {:?}",
-                    other
-                ));
+                return Err(ParserError::UnionUnknownToken(format!("{:?}", other)));
             }
         }
     }
