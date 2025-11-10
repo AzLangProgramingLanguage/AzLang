@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 tokenizer = { path = "../crates/tokenizer/" }
+errors = { path = "../crates/errors/" }

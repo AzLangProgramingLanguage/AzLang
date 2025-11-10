@@ -11,3 +11,4 @@ cli = { path = "./crates/cli"}
 tokenizer = { path = "./crates/tokenizer"}
 interpreter = { path = "./interpreter"}
 compiler = { path = "./compiler"}
+errors = { path = "./crates/errors"}

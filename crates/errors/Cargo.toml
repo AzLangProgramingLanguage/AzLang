@@ -1,7 +1,6 @@
 [package]
-name = "compiler"
+name = "errors"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-errors = { path = "../crates/errors" }
