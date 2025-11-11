@@ -1,5 +1,6 @@
 use logging::error;
 use peekmore::{PeekMore, PeekMoreIterator};
+pub mod token_display;
 pub mod tokens;
 mod words;
 use crate::words::tokenize_word;
@@ -376,4 +377,3 @@ impl<'a> Lexer<'a> {
         tokens
     }
 }
-

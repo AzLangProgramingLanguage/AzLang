@@ -127,6 +127,16 @@ dependencies = [
 [[package]]
 name = "errors"
 version = "0.1.0"
+dependencies = [
+ "tokenizer",
+]
+
+[[package]]
+name = "file_system"
+version = "0.1.0"
+dependencies = [
+ "errors",
+]
 
 [[package]]
 name = "heck"
@@ -139,6 +149,8 @@ name = "interpreter"
 version = "0.1.0"
 dependencies = [
  "errors",
+ "file_system",
+ "peekmore",
  "tokenizer",
 ]
 

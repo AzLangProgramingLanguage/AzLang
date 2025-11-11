@@ -1,8 +1,7 @@
 [package]
-name = "errors"
+name = "file_system"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-tokenizer = { path = "../tokenizer" }
-
+errors = { path = "../errors" }

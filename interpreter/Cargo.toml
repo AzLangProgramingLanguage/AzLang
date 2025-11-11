@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 tokenizer = { path = "../crates/tokenizer/" }
 errors = { path = "../crates/errors/" }
+file_system = { path = "../crates/file_system/" }
+peekmore = "1.3.0"

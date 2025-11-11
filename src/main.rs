@@ -1,6 +1,5 @@
 use cli::{cli, Commands};
 use compiler::compiler;
-use errors::{Errors, ParserError};
 use interpreter::interpreter;
 use logging::{error, parser_log};
 
