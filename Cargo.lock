@@ -11,7 +11,6 @@ dependencies = [
  "errors",
  "interpreter",
  "logging",
- "tokenizer",
 ]
 
 [[package]]
@@ -122,6 +121,7 @@ name = "compiler"
 version = "0.1.0"
 dependencies = [
  "errors",
+ "tokenizer",
 ]
 
 [[package]]

@@ -13,6 +13,13 @@ pub enum ParserError {
     ExpectedToken(Token, Token),
     LoopVarNameNotFound(Token),
     StructNameNotFound(Token),
+    ArrayExpected(char, Token),
+    FunctionNameNotFound(Token),
+    ParameterNameNotFound(Token),
+    ParameterNotExpected(Token),
+    RParenNotFound(Token),
+    StructNotExpected(Token),
+    BinaryOpLeftNotExpected(String),
 }
 
 impl Display for ParserError {
@@ -44,6 +51,30 @@ impl Display for ParserError {
             }
             ParserError::StructNameNotFound(token) => {
                 write!(f, "Struktur adı gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::ArrayExpected(char, token) => {
+                write!(f, "Siyahı üçün '{char}', gözlənilirdi tapıldı '{token}'")
+            }
+            ParserError::FunctionNameNotFound(token) => {
+                write!(f, "Funksiya adı gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::ParameterNameNotFound(token) => {
+                write!(f, "Parametr adı gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::ParameterNotExpected(token) => {
+                write!(
+                    f,
+                    "Parametrdən sonra ',' və ya ')' gözlənilirdi, tapıldı: '{token}'"
+                )
+            }
+            ParserError::RParenNotFound(token) => {
+                write!(f, "')' gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::StructNotExpected(token) => {
+                write!(f, "Struct daxilində gözlənilməz token: '{token}'")
+            }
+            ParserError::BinaryOpLeftNotExpected(string) => {
+                write!(f, "Sol tərəf gözlənilirdi, tapıldı: '{string}'")
             }
         }
     }

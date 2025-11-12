@@ -3,5 +3,19 @@
 version = 4
 
 [[package]]
+name = "corelib"
+version = "0.1.0"
+dependencies = [
+ "errors",
+]
+
+[[package]]
+name = "errors"
+version = "0.1.0"
+
+[[package]]
 name = "logging"
 version = "0.1.0"
+dependencies = [
+ "corelib",
+]

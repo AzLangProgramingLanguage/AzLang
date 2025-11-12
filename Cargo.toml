@@ -8,7 +8,6 @@ edition = "2024"
 [dependencies]
 logging = { path = "./crates/logging" }
 cli = { path = "./crates/cli"}
-tokenizer = { path = "./crates/tokenizer"}
 interpreter = { path = "./interpreter"}
 compiler = { path = "./compiler"}
 errors = { path = "./crates/errors"}

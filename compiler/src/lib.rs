@@ -1,5 +1,6 @@
 use errors::{Errors, ParserError};
+use tokenizer::tokens::Token;
 pub fn compiler(path: &str) -> Result<(), impl Errors> {
     println!("Hello");
-    Err(ParserError::UnexpectedToken("Salam".into()))
+    Err(ParserError::UnexpectedToken(Token::Eof))
 }

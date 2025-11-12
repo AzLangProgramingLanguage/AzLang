@@ -34,20 +34,19 @@ where
         Token::Array => {
             match tokens.next() {
                 Some(Token::Operator(op)) if op == "<" => {}
-                other => return Err(ParserError::UnexpectedToken(other)),
+                other => return Err(ParserError::ArrayExpected('<', other.unwrap().clone())), /* TODO: Badcode unwrapp using */
             }
 
             let inner_type = parse_type(tokens)?;
 
-            // '>' gözlənilir
             match tokens.next() {
                 Some(Token::Operator(op)) if op == ">" => {}
-                other => return Err(eyre!("Siyahı üçün '>' gözlənilirdi, tapıldı: {:?}", other)),
+                other => return Err(ParserError::ArrayExpected('>', other.unwrap().clone())), /* TODO: Badcode unwrapp using */
             }
 
             Type::Siyahi(Box::new(inner_type))
         }
-        other => return Err(eyre!("Tanınmayan tip tokeni: {:?}", other)),
+        other => return Err(ParserError::UnexpectedToken(other.clone())),
     };
 
     Ok(typ)

@@ -11,30 +11,30 @@ impl Errors for ParserError {}
 impl Errors for FileSystem {}
 
 #[derive(Debug)]
-pub enum InterpreterError {
+pub enum InterPreterError {
     Io(FileSystem),
     Parser(ParserError),
 }
 
-impl fmt::Display for InterpreterError {
+impl fmt::Display for InterPreterError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            InterpreterError::Io(e) => write!(f, "{}", e),
-            InterpreterError::Parser(e) => write!(f, "Böyük Qardaş: {}", e),
+            InterPreterError::Io(e) => write!(f, "{}", e),
+            InterPreterError::Parser(e) => write!(f, "Böyük Qardaş: {}", e),
         }
     }
 }
 
-impl Errors for InterpreterError {}
+impl Errors for InterPreterError {}
 
-impl From<FileSystem> for InterpreterError {
+impl From<FileSystem> for InterPreterError {
     fn from(e: FileSystem) -> Self {
-        InterpreterError::Io(e)
+        InterPreterError::Io(e)
     }
 }
 
-impl From<ParserError> for InterpreterError {
+impl From<ParserError> for InterPreterError {
     fn from(e: ParserError) -> Self {
-        InterpreterError::Parser(e)
+        InterPreterError::Parser(e)
     }
 }

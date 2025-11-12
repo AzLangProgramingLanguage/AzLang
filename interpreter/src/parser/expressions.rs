@@ -3,7 +3,8 @@ use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
 use crate::parser::{
-    ast::Expr, builtin::parse_builtin, helpers::literals_parse, r#loop::parse_loop,
+    ast::Expr, builtin::parse_builtin, function::parse_function_def, helpers::literals_parse,
+    r#loop::parse_loop, template::parse_template_string_expr,
 };
 
 use super::{identifier::parse_identifier, structs::parse_struct_def, union::parse_union_type};
@@ -79,7 +80,7 @@ where
             let returned_value = parse_expression(tokens);
             Ok(Expr::Return(Box::new(returned_value)))
         }
-        Token::FunctionDef => parse_function_def(tokens)?,
+        Token::FunctionDef => parse_function_def(tokens),
         Token::Operator(op) if op == "-" => Ok(Expr::UnaryOp {
             op,
             expr: Box::new(parse_single_expr(tokens)?),

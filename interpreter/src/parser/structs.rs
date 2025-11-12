@@ -4,7 +4,10 @@ use tokenizer::tokens::Token;
 
 use crate::parser::{
     ast::{Expr, MethodType},
-    helpers::expect_token,
+    expressions::parse_expression,
+    helpers::{expect_token, skip_newlines},
+    method::parse_method,
+    types::parse_type,
 };
 
 pub fn parse_struct_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
@@ -58,7 +61,7 @@ where
             }
             Token::Eof => break,
             other => {
-                return Err(eyre!("Struct daxilində gözlənilməz token: {:?}", other));
+                return Err(ParserError::StructNotExpected(other.clone().clone())); /* FIXME: Double clone */
             }
         }
     }
