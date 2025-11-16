@@ -3,11 +3,10 @@ use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
 use crate::parser::{
-    ast::Expr, builtin::parse_builtin, function::parse_function_def, helpers::literals_parse,
-    r#loop::parse_loop, template::parse_template_string_expr,
+    ast::Expr, binary_op::parse_binary_op_expr, builtin::parse_builtin,
+    function::parse_function_def, helpers::literals_parse, r#loop::parse_loop,
+    structs::parse_struct_def, template::parse_template_string_expr,
 };
-
-use super::{identifier::parse_identifier, structs::parse_struct_def, union::parse_union_type};
 
 pub fn parse_expression_block<'a, I>(
     tokens: &mut PeekMoreIterator<I>,

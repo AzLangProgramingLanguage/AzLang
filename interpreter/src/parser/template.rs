@@ -1,12 +1,10 @@
+use errors::ParserError;
 use peekmore::PeekMoreIterator;
-use std::borrow::Cow;
+use tokenizer::tokens::Token;
 
-use crate::{
-    lexer::Token,
-    parser::{
-        ast::{Expr, TemplateChunk},
-        expression::{parse_expression, parse_single_expr},
-    },
+use crate::parser::{
+    ast::{Expr, TemplateChunk},
+    expressions::parse_expression,
 };
 
 pub fn parse_template_string_expr<'a, I>(
@@ -17,9 +15,10 @@ where
 {
     let mut chunks = Vec::new();
     loop {
-        let token = tokens
-            .peek()
-            .ok_or_else(|| eyre!("Template string bitmədi (EOF)"))?;
+        let token = match tokens.peek() {
+            Some(token) => *token,
+            None => break,
+        };
 
         match token {
             Token::StringLiteral(s) => {
@@ -35,11 +34,11 @@ where
                             tokens.next();
                             break;
                         }
-                        Some(token) => {
+                        Some(_) => {
                             chunks.push(TemplateChunk::Expr(Box::new(parse_expression(tokens)?)));
                         }
                         None => {
-                            return Err(eyre!("Template string bitmədi (EOF)"));
+                            return Err(ParserError::UnexpectedEOF);
                         }
                     }
                 }
@@ -48,10 +47,7 @@ where
                 break;
             }
             other => {
-                return Err(eyre!(
-                    "Template string içində tanınmayan token: {:?}",
-                    other
-                ));
+                return Err(ParserError::UnexpectedToken(other.clone()));
             }
         }
     }

@@ -1,5 +1,5 @@
 use core::fmt;
-use std::fmt::Display;
+use std::{fmt::Display, rc::Rc};
 
 use tokenizer::tokens::Token;
 
@@ -20,6 +20,11 @@ pub enum ParserError {
     RParenNotFound(Token),
     StructNotExpected(Token),
     BinaryOpLeftNotExpected(String),
+    StructInitArgNotExpected(Token),
+    StructInitArgSeparatorNotFound,
+    DeclNameNotFound(Token),
+    DeclAssignNotFound(Token),
+    ObjectTypeNotExpected(Rc<Token>),
 }
 
 impl Display for ParserError {
@@ -75,6 +80,27 @@ impl Display for ParserError {
             }
             ParserError::BinaryOpLeftNotExpected(string) => {
                 write!(f, "Sol tərəf gözlənilirdi, tapıldı: '{string}'")
+            }
+            ParserError::StructInitArgSeparatorNotFound => {
+                write!(
+                    f,
+                    "Struct init argümentləri arasında ',' və ya '}}' gözlənilirdi"
+                )
+            }
+            ParserError::StructInitArgNotExpected(token) => {
+                write!(
+                    f,
+                    "Struct init argümentləri arasında ':' gözlənilirdi, tapıldı: '{token}'"
+                )
+            }
+            ParserError::DeclNameNotFound(token) => {
+                write!(f, "Dəyişən adı gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::DeclAssignNotFound(token) => {
+                write!(f, "'=' operatoru gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::ObjectTypeNotExpected(token) => {
+                write!(f, "Obyekt tipi gözlənilirdi, tapıldı: '{token}'")
             }
         }
     }
