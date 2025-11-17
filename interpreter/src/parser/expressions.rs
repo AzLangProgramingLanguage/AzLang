@@ -3,9 +3,20 @@ use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
 use crate::parser::{
-    ast::Expr, binary_op::parse_binary_op_expr, builtin::parse_builtin,
-    function::parse_function_def, helpers::literals_parse, r#loop::parse_loop,
-    structs::parse_struct_def, template::parse_template_string_expr,
+    ast::Expr,
+    binary_op::parse_binary_op_expr,
+    builtin::parse_builtin,
+    condition::{parse_else_expr, parse_else_if_expr, parse_if_expr},
+    decl::parse_decl,
+    r#enum::parse_enum_decl,
+    function::parse_function_def,
+    helpers::literals_parse,
+    identifier::parse_identifier,
+    r#loop::parse_loop,
+    r#match::parse_match,
+    structs::parse_struct_def,
+    template::parse_template_string_expr,
+    union::parse_union_type,
 };
 
 pub fn parse_expression_block<'a, I>(
@@ -76,7 +87,7 @@ where
         Token::MutableDecl => parse_decl(tokens, true),
         Token::Match => parse_match(tokens),
         Token::Return => {
-            let returned_value = parse_expression(tokens);
+            let returned_value = parse_expression(tokens)?;
             Ok(Expr::Return(Box::new(returned_value)))
         }
         Token::FunctionDef => parse_function_def(tokens),
@@ -85,7 +96,7 @@ where
             expr: Box::new(parse_single_expr(tokens)?),
         }),
         Token::Comment(s) => Ok(Expr::Comment(s)),
-        Token::Loop => parse_loop(tokens)?,
+        Token::Loop => parse_loop(tokens),
         Token::Identifier(s) => parse_identifier(tokens, s),
         Token::Type => parse_union_type(tokens),
         Token::Conditional => parse_if_expr(tokens),
@@ -117,6 +128,6 @@ where
             Ok(result)
         }
         Token::Eof | Token::Semicolon | Token::Newline => Err(ParserError::UnexpectedEOF),
-        other => Err(ParserError::UnexpectedToken(*other)),
+        other => Err(ParserError::UnexpectedToken(other.clone())),
     }
 }

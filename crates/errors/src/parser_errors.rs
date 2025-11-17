@@ -25,6 +25,10 @@ pub enum ParserError {
     DeclNameNotFound(Token),
     DeclAssignNotFound(Token),
     ObjectTypeNotExpected(Rc<Token>),
+    ArrayNotClosed(Token),
+    EnumDeclNameNotFound(Token),
+    EnumNewLineNotFound(Token),
+    UnionDeclNameNotFound(Token),
 }
 
 impl Display for ParserError {
@@ -101,6 +105,24 @@ impl Display for ParserError {
             }
             ParserError::ObjectTypeNotExpected(token) => {
                 write!(f, "Obyekt tipi gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::ArrayNotClosed(token) => {
+                write!(f, "Siyahı sonuna ']' gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::EnumDeclNameNotFound(token) => {
+                write!(
+                    f,
+                    "tip`-dən sonra identifikator gözlənilirdi, tapıldı: '{token}'"
+                )
+            }
+            ParserError::EnumNewLineNotFound(token) => {
+                write!(
+                    f,
+                    "Enum tərifindən sonra `newline` gözlənilirdi, tapıldı: '{token}'"
+                )
+            }
+            ParserError::UnionDeclNameNotFound(token) => {
+                write!(f, "Birləşik tip adı gözlənilirdi, tapıldı: '{token}'")
             }
         }
     }

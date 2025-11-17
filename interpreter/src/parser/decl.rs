@@ -7,7 +7,6 @@ use tokenizer::tokens::Token;
 use crate::parser::{
     ast::{Expr, Type},
     expressions::parse_expression,
-    struct_init::parse_structs_init,
     types::parse_type,
 };
 
@@ -24,37 +23,27 @@ where
         None => return Err(ParserError::DeclNameNotFound(Token::Eof)),
     };
 
-    let typ = if let Some(Token::Colon) = tokens.peek() {
-        tokens.next();
-        Some(Rc::new(parse_type(tokens)?))
-    } else {
-        None
+    let typ = match tokens.next() {
+        Some(Token::Colon) => parse_type(tokens)?,
+        Some(_) => Type::Any,
+        None => Type::Any,
     };
+    println!("typ: {typ:?}");
+
+    std::process::exit(1);
 
     match tokens.next() {
         Some(Token::Operator(op)) if op == "=" => {}
         Some(other) => return Err(ParserError::DeclAssignNotFound(other.clone())),
         None => return Err(ParserError::DeclAssignNotFound(Token::Eof)),
     }
-    let value_expr;
-    if let Some(Token::LBrace) = tokens.peek() {
-        let typ_clone = typ.clone().unwrap();
-
-        if let Type::Istifadeci(n) = &*typ_clone {
-            tokens.next();
-            value_expr = parse_structs_init(tokens, n.clone())?;
-        } else {
-            return Err(ParserError::ObjectTypeNotExpected(typ_clone)); /* TODO: Dependency Problem */
-        }
-    } else {
-        value_expr = parse_expression(tokens)?;
-    }
+    let value_expr = parse_expression(tokens)?;
 
     let value = Box::new(value_expr);
 
     let expr: Expr<'_> = Expr::Decl {
         name,
-        typ,
+        typ: Some(Rc::new(typ)),
         is_mutable,
         value,
     };

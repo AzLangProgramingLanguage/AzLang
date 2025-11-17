@@ -15,4 +15,3 @@ pub fn read_file(path: &str) -> Result<String, FileSystem> {
         },
     };
 }
-
