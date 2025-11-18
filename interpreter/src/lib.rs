@@ -2,7 +2,6 @@ use errors::InterPreterError;
 use file_system;
 use tokenizer::tokens::Token;
 mod parser;
-mod validator;
 pub fn interpreter(path: &str) -> Result<String, InterPreterError> {
     let mut tokens: Vec<Token> = Vec::new();
     let sdk = file_system::read_file("sdk/data_structures.az")?;

@@ -15,6 +15,7 @@ pub mod method;
 pub mod struct_init;
 pub mod structs;
 pub mod template;
+mod tests;
 pub mod types;
 pub mod union;
 use ast::Program;
