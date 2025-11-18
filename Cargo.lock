@@ -150,6 +150,7 @@ version = "0.1.0"
 dependencies = [
  "errors",
  "file_system",
+ "logging",
  "peekmore",
  "tokenizer",
 ]

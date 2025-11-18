@@ -1,8 +1,10 @@
+use std::{borrow::Cow, rc::Rc};
+
 use errors::validator_error::ValidatorError;
 
 use crate::{
-    parser::ast::{BuiltInFunction, Expr, Type},
-    validator::{ValidatorContext, helper::get_type},
+    parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
+    validator::{FunctionInfo, MethodInfo, ValidatorContext, helper::get_type},
 };
 
 pub fn validate_expr<'a>(
@@ -34,8 +36,8 @@ pub fn validate_expr<'a>(
                     if *typ_ref != s {
                         return Err(ValidatorError::DeclTypeMismatch {
                             name: name.to_string(),
-                            expected: format!("{s:?}"),
-                            found: format!("{typ_ref:?}"),
+                            expected: s.to_string(),
+                            found: typ_ref.to_string(),
                         });
                     }
                 }
@@ -50,7 +52,7 @@ pub fn validate_expr<'a>(
                     },
                 );
             } else {
-                return Err(ValidatorError::DeclTypeUnknown);
+                return Err(ValidatorError::DeclTypeUnknown(name.to_string()));
             }
         }
 
@@ -65,16 +67,16 @@ pub fn validate_expr<'a>(
             if let Some(mut var) = ctx.lookup_variable(name) {
                 var.is_used = true;
                 if !var.is_mutable {
-                    return Err(ValidatorError::AssignmentToImmutableVariable {
-                        name: name.to_string(),
-                    });
+                    return Err(ValidatorError::AssignmentToImmutableVariable(
+                        name.to_string(),
+                    ));
                 }
                 if let Some(s) = inferred {
                     if var.typ != s {
                         return Err(ValidatorError::AssignmentTypeMismatch {
                             name: name.to_string(),
-                            expected: format!("{s:?}"),
-                            found: format!("{:?}", var.typ),
+                            expected: s.to_string(),
+                            found: var.typ.to_string(),
                         });
                     }
                 }
@@ -104,7 +106,7 @@ pub fn validate_expr<'a>(
                         is_allocator_used: false,
                     })
                 })
-                .collect::<Result<_, ValidatorError<'a>>>()?;
+                .collect::<Result<_, ValidatorError>>()?;
 
             let newfields: Vec<(&str, Type)> = fields
                 .iter()
@@ -206,15 +208,17 @@ pub fn validate_expr<'a>(
                             Type::Siyahi(_) => {}
                             _ => {
                                 return Err(ValidatorError::TypeMismatch {
-                                    expected: "Siyahi".to_string(),
+                                    expected: "Siyahi".to_string(), /* TODO: HardCode */
                                     found: format!("{t:?}"),
                                 });
                             }
                         }
                     }
                     if args.len() != 1 {
-                        return Err(ValidatorError::InvalidOneArgumentCount {
-                            name: "Uzunluq".to_string(),
+                        return Err(ValidatorError::InvalidArgumentCount {
+                            name: function.to_string(),
+                            expected: 1,
+                            found: args.len(),
                         });
                     }
                 }
@@ -244,7 +248,7 @@ pub fn validate_expr<'a>(
         } => {
             log(&format!("✅ Struct tərifi yoxlanılır: '{}'", name));
             if ctx.struct_defs.contains_key(*name) {
-                return Err(ValidatorError::DuplicateStruct(name));
+                return Err(ValidatorError::DuplicateStruct(name.to_string()));
             }
 
             let method_infos = methods
@@ -264,7 +268,7 @@ pub fn validate_expr<'a>(
                         is_allocator_used: false, // bu sonra müəyyən olunacaq
                     })
                 })
-                .collect::<Result<Vec<_>, ValidatorError<'a>>>()?;
+                .collect::<Result<Vec<_>, ValidatorError>>()?;
 
             let newfields: Vec<(&str, Type)> = fields
                 .iter()
@@ -339,7 +343,9 @@ pub fn validate_expr<'a>(
             let cond_type =
                 get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
             if cond_type != Type::Bool {
-                return Err(ValidatorError::IfConditionTypeMismatch(cond_type));
+                return Err(ValidatorError::IfConditionTypeMismatch(
+                    cond_type.to_string(),
+                ));
             }
 
             for expr in then_branch {
@@ -361,7 +367,9 @@ pub fn validate_expr<'a>(
             let cond_type =
                 get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
             if cond_type != Type::Bool {
-                return Err(ValidatorError::IfConditionTypeMismatch(cond_type));
+                return Err(ValidatorError::IfConditionTypeMismatch(
+                    cond_type.to_string(),
+                ));
             }
 
             for expr in then_branch {
@@ -433,8 +441,9 @@ pub fn validate_expr<'a>(
                                 .1
                                 .iter()
                                 .find(|m| m.name.to_string() == name.to_string());
-                            let method = maybe_method
-                                .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
+                            let method = maybe_method.ok_or_else(|| {
+                                ValidatorError::FunctionNotFound(name.to_string())
+                            })?;
                             /* TODO: Burada parametr ve args qiymetini yoxla */
 
                             if method.parameters.len() != args.len() {
@@ -456,8 +465,9 @@ pub fn validate_expr<'a>(
                                 .1
                                 .iter()
                                 .find(|m| m.name.to_string() == name.to_string());
-                            let method = maybe_method
-                                .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
+                            let method = maybe_method.ok_or_else(|| {
+                                ValidatorError::FunctionNotFound(name.to_string())
+                            })?;
                             /* TODO: Burada parametr ve args qiymetini yoxla */
 
                             if method.parameters.len() != args.len() {
@@ -481,7 +491,7 @@ pub fn validate_expr<'a>(
                                 .iter()
                                 .find(|m| m.name.to_string() == name.to_string());
                             let method = maybe_method.ok_or_else(|| {
-                                ValidatorError::FunctionNotFound(name) // Əgər ayrıca MethodNotFound error varsa onu istifadə et
+                                ValidatorError::FunctionNotFound(name.to_string()) // Əgər ayrıca MethodNotFound error varsa onu istifadə et
                             })?;
                             if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
@@ -503,8 +513,9 @@ pub fn validate_expr<'a>(
                                 .1
                                 .iter()
                                 .find(|m| m.name.to_string() == name.to_string());
-                            let method = maybe_method
-                                .ok_or_else(|| ValidatorError::FunctionNotFound(name))?;
+                            let method = maybe_method.ok_or_else(|| {
+                                ValidatorError::FunctionNotFound(name.to_string())
+                            })?;
                             if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
                                     name: name.to_string(),
@@ -525,7 +536,7 @@ pub fn validate_expr<'a>(
                     let func = ctx
                         .functions
                         .get(&Cow::Owned(name.to_string()))
-                        .ok_or(ValidatorError::FunctionNotFound(name))?;
+                        .ok_or(ValidatorError::FunctionNotFound(name.to_string()))?;
                     log(&format!("Funksiya çağırışı yoxlanılır: {}", name));
 
                     if func.parameters.len() != args.len() {
