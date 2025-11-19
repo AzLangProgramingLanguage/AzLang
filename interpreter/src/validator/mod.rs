@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashMap};
 
 use errors::validator_error::ValidatorError;
 mod helper;
-mod validate;
+pub mod validate;
 use crate::parser::ast::{Expr, Parameter, Symbol, Type};
 
 #[derive(Debug)]

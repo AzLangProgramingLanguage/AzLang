@@ -1,3 +1,6 @@
+/**
+ *! Hey bro. I writed this code with ai.  Please check it. If you have time  
+ */
 #[cfg(test)]
 mod tests {
     use crate::parser::ast::Expr;
@@ -75,7 +78,7 @@ mod tests {
             Token::Newline,
             Token::Indent,
             Token::Newline,
-            Token::Number(42), // unexpected token
+            Token::Number(42),
             Token::Dedent,
         ];
         let mut iter = tokens.iter().peekmore();

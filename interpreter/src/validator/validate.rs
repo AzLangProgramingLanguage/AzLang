@@ -1,16 +1,15 @@
 use std::{borrow::Cow, rc::Rc};
 
-use errors::validator_error::ValidatorError;
-
 use crate::{
     parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
     validator::{FunctionInfo, MethodInfo, ValidatorContext, helper::get_type},
 };
+use errors::validator_error::ValidatorError;
+use logging::validator_log;
 
 pub fn validate_expr<'a>(
     expr: &mut Expr<'a>,
     ctx: &mut ValidatorContext<'a>,
-    log: &mut dyn FnMut(&str),
 ) -> Result<(), ValidatorError> {
     match expr {
         Expr::Decl {
@@ -19,8 +18,8 @@ pub fn validate_expr<'a>(
             is_mutable,
             value,
         } => {
-            log(&format!("✅ Declarasiya yaradılır: {name}"));
-            log(&format!(
+            validator_log(&format!("✅ Declarasiya yaradılır: {name}"));
+            validator_log(&format!(
                 "{} yaradılır: '{}'",
                 if *is_mutable { "Dəyişən" } else { "Sabit" },
                 name
@@ -29,7 +28,7 @@ pub fn validate_expr<'a>(
                 return Err(ValidatorError::AlreadyDecl(name.to_string()));
             }
 
-            validate_expr(value, ctx, log)?;
+            validate_expr(value, ctx)?;
             let inferred = get_type(value, ctx, typ.as_deref());
             if let Some(s) = inferred {
                 if let Some(typ_ref) = typ.as_deref() {
@@ -61,8 +60,8 @@ pub fn validate_expr<'a>(
             value,
             symbol,
         } => {
-            log(&format!("✅ Assignment yoxlanılır: '{name}'"));
-            validate_expr(value, ctx, log)?;
+            validator_log(&format!("✅ Assignment yoxlanılır: '{name}'"));
+            validate_expr(value, ctx)?;
             let inferred = get_type(value, ctx, None);
             if let Some(mut var) = ctx.lookup_variable(name) {
                 var.is_used = true;
@@ -89,7 +88,7 @@ pub fn validate_expr<'a>(
             fields,
             methods,
         } => {
-            log(&format!("✅ Union tərifi yoxlanılır: '{name}'"));
+            validator_log(&format!("✅ Union tərifi yoxlanılır: '{name}'"));
             if ctx.union_defs.contains_key(*name) {
                 return Err(ValidatorError::DuplicateUnion(name.to_string()));
             }
@@ -117,7 +116,7 @@ pub fn validate_expr<'a>(
             for method in methods.iter_mut() {
                 ctx.current_struct = Some(name);
                 for expr in &mut method.body {
-                    validate_expr(expr, ctx, log)?;
+                    validate_expr(expr, ctx)?;
                 }
 
                 if let Some(Type::Istifadeci(name)) = &mut method.return_type {
@@ -138,11 +137,11 @@ pub fn validate_expr<'a>(
             ctx.current_struct = None;
         }
         Expr::Match { target, arms } => {
-            log(&format!("✅ Match ifadəsi yoxlanılır"));
-            validate_expr(target, ctx, log)?;
+            validator_log(&format!("✅ Match ifadəsi yoxlanılır"));
+            validate_expr(target, ctx)?;
             for arm in arms {
                 for expr in arm.1.iter_mut() {
-                    validate_expr(expr, ctx, log)?;
+                    validate_expr(expr, ctx)?;
                 }
             }
         }
@@ -156,7 +155,7 @@ pub fn validate_expr<'a>(
             args,
             return_type: _,
         } => {
-            log(&format!("✅ Built-in funksiya yoxlanılır: {function:?}"));
+            validator_log(&format!("✅ Built-in funksiya yoxlanılır: {function:?}"));
 
             if function.expected_arg_count().is_some() {
                 let expected = function.expected_arg_count().unwrap();
@@ -173,8 +172,8 @@ pub fn validate_expr<'a>(
                     ctx.is_allocator_used = true;
                 }
                 BuiltInFunction::Print => {
-                    validate_expr(&mut args[0], ctx, log)?;
-                    log(&format!("✅ Print funksiyası yoxlanılır"));
+                    validate_expr(&mut args[0], ctx)?;
+                    validator_log(&format!("✅ Print funksiyası yoxlanılır"));
                     if let Some(t) = get_type(&args[0], ctx, None) {
                         if t == Type::Void {
                             return Err(ValidatorError::TypeMismatch {
@@ -185,13 +184,13 @@ pub fn validate_expr<'a>(
                     }
                 }
                 BuiltInFunction::ConvertString => {
-                    log(&format!("✅ ConvertString funksiyası yoxlanılır"));
+                    validator_log(&format!("✅ ConvertString funksiyası yoxlanılır"));
                 }
 
                 BuiltInFunction::StrUpper
                 | BuiltInFunction::StrLower
                 | BuiltInFunction::StrReverse => {
-                    log(&format!("✅ StrUpper funksiyası yoxlanılır"));
+                    validator_log(&format!("✅ StrUpper funksiyası yoxlanılır"));
                     if let Some(t) = get_type(&args[0], ctx, None) {
                         if t != Type::Metn {
                             return Err(ValidatorError::TypeMismatch {
@@ -225,11 +224,11 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
             for arg in args {
-                validate_expr(arg, ctx, log)?;
+                validate_expr(arg, ctx)?;
             }
         }
         Expr::StructInit { name, args } => {
-            log(&format!("✅ Struct yoxlanılır: '{}'", name));
+            validator_log(&format!("✅ Struct yoxlanılır: '{}'", name));
 
             if let Some((s, ..)) = ctx.struct_defs.get(name.as_ref()) {
             } else if let Some((s, ..)) = ctx.union_defs.get(name.as_ref()) {
@@ -238,7 +237,7 @@ pub fn validate_expr<'a>(
             }
 
             for arg in args.iter_mut() {
-                validate_expr(&mut arg.1, ctx, log)?;
+                validate_expr(&mut arg.1, ctx)?;
             }
         }
         Expr::StructDef {
@@ -246,7 +245,7 @@ pub fn validate_expr<'a>(
             fields,
             methods,
         } => {
-            log(&format!("✅ Struct tərifi yoxlanılır: '{}'", name));
+            validator_log(&format!("✅ Struct tərifi yoxlanılır: '{}'", name));
             if ctx.struct_defs.contains_key(*name) {
                 return Err(ValidatorError::DuplicateStruct(name.to_string()));
             }
@@ -279,9 +278,9 @@ pub fn validate_expr<'a>(
             for method in methods.iter_mut() {
                 ctx.current_struct = Some(name);
                 for expr in &mut method.body {
-                    validate_expr(expr, ctx, log)?;
+                    validate_expr(expr, ctx)?;
                 }
-                log(&format!(
+                validator_log(&format!(
                     "✅ Struct metodları yoxlanılır: '{}'",
                     method.name
                 ));
@@ -292,7 +291,7 @@ pub fn validate_expr<'a>(
         }
 
         Expr::EnumDecl(EnumDecl { name, variants }) => {
-            log(&format!("Enum tərifi yoxlanılır: '{}'", name));
+            validator_log(&format!("Enum tərifi yoxlanılır: '{}'", name));
 
             if ctx.enum_defs.contains_key(name.as_ref()) {
                 return Err(ValidatorError::DuplicateEnum(name.to_string()));
@@ -302,7 +301,7 @@ pub fn validate_expr<'a>(
                 .insert(Cow::Owned(name.to_string()), variants.clone());
         }
         Expr::VariableRef { name, symbol } => {
-            log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
+            validator_log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
             if let Some(sym) = ctx.lookup_variable_mut(name) {
                 sym.is_used = true;
@@ -336,9 +335,9 @@ pub fn validate_expr<'a>(
             then_branch,
             else_branch,
         } => {
-            log("Şərt yoxlanılır");
+            validator_log("Şərt yoxlanılır");
 
-            validate_expr(condition, ctx, log)?;
+            validate_expr(condition, ctx)?;
 
             let cond_type =
                 get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
@@ -349,20 +348,20 @@ pub fn validate_expr<'a>(
             }
 
             for expr in then_branch {
-                validate_expr(expr, ctx, log)?;
+                validate_expr(expr, ctx)?;
             }
 
             for expr in else_branch {
-                validate_expr(expr, ctx, log)?;
+                validate_expr(expr, ctx)?;
             }
         }
         Expr::ElseIf {
             condition,
             then_branch,
         } => {
-            log("Şərt yoxlanılır");
+            validator_log("Şərt yoxlanılır");
 
-            validate_expr(condition, ctx, log)?;
+            validate_expr(condition, ctx)?;
 
             let cond_type =
                 get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
@@ -373,14 +372,14 @@ pub fn validate_expr<'a>(
             }
 
             for expr in then_branch {
-                validate_expr(expr, ctx, log)?;
+                validate_expr(expr, ctx)?;
             }
         }
         Expr::Else { then_branch } => {
-            log("Şərt yoxlanılır");
+            validator_log("Şərt yoxlanılır");
 
             for expr in then_branch {
-                validate_expr(expr, ctx, log)?;
+                validate_expr(expr, ctx)?;
             }
         }
 
@@ -389,8 +388,8 @@ pub fn validate_expr<'a>(
             iterable,
             body,
         } => {
-            log("Dövr yoxlanılır");
-            validate_expr(iterable, ctx, log)?;
+            validator_log("Dövr yoxlanılır");
+            validate_expr(iterable, ctx)?;
             let iterable_type =
                 get_type(iterable, ctx, None).ok_or(ValidatorError::LoopIterableTypeNotFound)?;
             if let Type::Siyahi(inner) = iterable_type {
@@ -405,17 +404,17 @@ pub fn validate_expr<'a>(
                 return Err(ValidatorError::LoopRequiresList);
             }
             for expr in body {
-                validate_expr(expr, ctx, log)?;
+                validate_expr(expr, ctx)?;
             }
         }
 
         Expr::TemplateString(chunks) => {
-            log("Template string yoxlanılır");
+            validator_log("Template string yoxlanılır");
             for chunk in chunks.iter_mut() {
                 match chunk {
                     TemplateChunk::Literal(_) => {}
                     TemplateChunk::Expr(expr) => {
-                        validate_expr(expr, ctx, log)?;
+                        validate_expr(expr, ctx)?;
                     }
                 }
             }
@@ -428,7 +427,7 @@ pub fn validate_expr<'a>(
         } => {
             match target {
                 Some(variable) => {
-                    validate_expr(variable, ctx, log)?;
+                    validate_expr(variable, ctx)?;
                     let variable_type = get_type(variable, ctx, None);
 
                     match variable_type {
@@ -537,7 +536,7 @@ pub fn validate_expr<'a>(
                         .functions
                         .get(&Cow::Owned(name.to_string()))
                         .ok_or(ValidatorError::FunctionNotFound(name.to_string()))?;
-                    log(&format!("Funksiya çağırışı yoxlanılır: {}", name));
+                    validator_log(&format!("Funksiya çağırışı yoxlanılır: {}", name));
 
                     if func.parameters.len() != args.len() {
                         return Err(ValidatorError::FunctionArgCountMismatch {
@@ -551,7 +550,7 @@ pub fn validate_expr<'a>(
                 }
             }
             for arg in args.iter_mut() {
-                validate_expr(arg, ctx, log)?;
+                validate_expr(arg, ctx)?;
             }
         }
         Expr::Index {
@@ -559,10 +558,10 @@ pub fn validate_expr<'a>(
             index,
             target_type,
         } => {
-            log("Dəmir Əmi indeksləmə əməliyyatını yoxlayır...");
+            validator_log("indeksləmə əməliyyatını yoxlayır...");
 
-            validate_expr(target, ctx, log)?;
-            validate_expr(index, ctx, log)?;
+            validate_expr(target, ctx)?;
+            validate_expr(index, ctx)?;
             /*             validate_expr(index, ctx, log)?;
              */
             let index_type = get_type(index, ctx, None);
@@ -575,14 +574,14 @@ pub fn validate_expr<'a>(
             if index_type == Type::Integer {
                 *target_type = Type::Integer;
             }
-            log("Dəmir Əmi indeksləmə2  əməliyyatını yoxlayır...");
+            validator_log("indeksləmə2  əməliyyatını yoxlayır...");
 
             match index_type {
                 Type::Integer => {
                     *target_type = Type::Integer;
                 }
                 Type::Metn => {
-                    log("Dəmir Əmi indeksləmə2  əməliyyatını yoxlayır...");
+                    validator_log("indeksləmə2  əməliyyatını yoxlayır...");
                     let index_name = match &**index {
                         Expr::String(s, _) => s,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
@@ -605,7 +604,7 @@ pub fn validate_expr<'a>(
 
                     match &**index {
                         Expr::String(index_name, _) => {
-                            log(&format!("Dəmir Əmi sindeksləmə əməliyyatını yoxlayır..."));
+                            validator_log(&format!("sindeksləmə əməliyyatını yoxlayır..."));
                             for (fname, ftype) in struct_def {
                                 if fname == *index_name {
                                     *target_type = ftype.clone();
@@ -620,8 +619,8 @@ pub fn validate_expr<'a>(
             }
         }
         Expr::BinaryOp { left, op, right } => {
-            validate_expr(left, ctx, log)?;
-            validate_expr(right, ctx, log)?;
+            validate_expr(left, ctx)?;
+            validate_expr(right, ctx)?;
         }
         Expr::FunctionDef {
             name,
@@ -630,7 +629,7 @@ pub fn validate_expr<'a>(
             return_type,
         } => {
             /*TODO: Burada value+ tip yoxlanılması et */
-            log(&format!("Funksiya tərifi yoxlanılır: {}", name));
+            validator_log(&format!("Funksiya tərifi yoxlanılır: {}", name));
             if ctx.current_function.is_some() {
                 return Err(ValidatorError::NestedFunctionDefinition);
             }
@@ -645,7 +644,7 @@ pub fn validate_expr<'a>(
             ctx.push_scope();
 
             for param in params.iter_mut() {
-                log(&format!("Parametri yoxlanılır: {}", param.name));
+                validator_log(&format!("Parametri yoxlanılır: {}", param.name));
                 param.is_pointer = param.is_mutable;
                 let symbol = Symbol {
                     typ: param.typ.clone(),
@@ -668,7 +667,7 @@ pub fn validate_expr<'a>(
             );
 
             for expr in owned_body.iter_mut() {
-                validate_expr(expr, ctx, log)?;
+                validate_expr(expr, ctx)?;
             }
             ctx.functions.insert(
                 Cow::Borrowed(*name),
