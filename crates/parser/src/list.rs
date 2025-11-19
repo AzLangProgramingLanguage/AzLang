@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use tokenizer::tokens::Token;
 
-use crate::parser::ast::Expr;
+use crate::ast::Expr;
 
 pub fn parse_list<'a, I>(tokens: &mut I) -> Expr<'a>
 where

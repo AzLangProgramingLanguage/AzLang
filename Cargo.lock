@@ -8,7 +8,6 @@ version = "0.1.0"
 dependencies = [
  "cli",
  "compiler",
- "errors",
  "interpreter",
  "logging",
 ]
@@ -120,23 +119,14 @@ checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 name = "compiler"
 version = "0.1.0"
 dependencies = [
- "errors",
- "tokenizer",
-]
-
-[[package]]
-name = "errors"
-version = "0.1.0"
-dependencies = [
+ "file_system",
+ "parser",
  "tokenizer",
 ]
 
 [[package]]
 name = "file_system"
 version = "0.1.0"
-dependencies = [
- "errors",
-]
 
 [[package]]
 name = "heck"
@@ -148,11 +138,10 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 name = "interpreter"
 version = "0.1.0"
 dependencies = [
- "errors",
  "file_system",
  "logging",
+ "parser",
  "peekmore",
- "tokenizer",
 ]
 
 [[package]]
@@ -170,6 +159,14 @@ name = "once_cell_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
+
+[[package]]
+name = "parser"
+version = "0.1.0"
+dependencies = [
+ "peekmore",
+ "tokenizer",
+]
 
 [[package]]
 name = "peekmore"

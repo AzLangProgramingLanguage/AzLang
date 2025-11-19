@@ -1,8 +1,8 @@
-use crate::{
-    Runner,
-    parser::ast::{Expr, Type},
-    runner::{Variable, eval::eval, runner::runner_interpretator},
-};
+use parser::ast::{Expr, Type};
+
+use crate::runner::eval::eval;
+use crate::runner::runner::runner_interpretator;
+use crate::runner::{Runner, Variable};
 
 pub fn handle_list_call<'a>(
     name: &str,

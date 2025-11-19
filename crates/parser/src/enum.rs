@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
-use errors::ParserError;
+use crate::errors::ParserError;
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::parser::ast::{EnumDecl, Expr};
+use crate::ast::{EnumDecl, Expr};
 
 pub fn parse_enum_decl<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where

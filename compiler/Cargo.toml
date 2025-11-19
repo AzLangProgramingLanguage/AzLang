@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-errors = { path = "../crates/errors" }
 tokenizer = { path = "../crates/tokenizer" }
+file_system = { path = "../crates/file_system" }
+parser = { path = "../crates/parser" }

@@ -1,8 +1,8 @@
-use errors::ParserError;
+use crate::errors::ParserError;
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::parser::{
+use crate::{
     ast::{Expr, Type},
     expressions::parse_single_expr,
     list::parse_list,

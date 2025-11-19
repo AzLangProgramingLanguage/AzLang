@@ -1,9 +1,11 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use errors::validator_error::ValidatorError;
+pub mod errors;
 mod helper;
 pub mod validate;
-use crate::parser::ast::{Expr, Parameter, Symbol, Type};
+use parser::ast::{Expr, Parameter, Symbol, Type};
+
+use crate::validator::errors::ValidatorError;
 
 #[derive(Debug)]
 pub struct FunctionInfo<'a> {

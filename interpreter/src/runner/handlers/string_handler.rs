@@ -1,9 +1,5 @@
-use crate::{
-    Runner,
-    parser::ast::{Expr, Type},
-    runner::{Variable, eval::eval, runner::runner_interpretator},
-};
-
+use crate::runner::{Runner, Variable, eval::eval, runner::runner_interpretator};
+use parser::ast::{Expr, Type};
 pub fn handle_string_call<'a>(
     name: &str,
     s: &'a str,

@@ -1,5 +1,5 @@
-use crate::parser::ast::Type;
-use errors::ParserError;
+use crate::ast::Type;
+use crate::errors::ParserError;
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 use tokenizer::tokens::Token;

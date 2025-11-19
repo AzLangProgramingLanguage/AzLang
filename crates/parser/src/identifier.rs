@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
-use errors::ParserError;
+use crate::errors::ParserError;
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::parser::{
+use crate::{
     ast::{Expr, Type},
     expressions::{parse_expression, parse_single_expr},
     struct_init::parse_structs_init,

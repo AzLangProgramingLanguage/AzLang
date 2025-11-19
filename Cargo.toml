@@ -10,4 +10,3 @@ logging = { path = "./crates/logging" }
 cli = { path = "./crates/cli"}
 interpreter = { path = "./interpreter"}
 compiler = { path = "./compiler"}
-errors = { path = "./crates/errors"}

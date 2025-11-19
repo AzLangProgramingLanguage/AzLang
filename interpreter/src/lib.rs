@@ -1,13 +1,13 @@
-use errors::InterPreterError;
 use file_system;
+mod errors;
 mod runner;
 mod validator;
+use parser::Parser;
 use tokenizer::tokens::Token;
 pub use validator::validate::validate_expr;
 
-use crate::runner::Runner;
-mod parser;
-pub fn interpreter(path: &str) -> Result<String, InterPreterError> {
+use crate::{errors::InterPreterError, runner::Runner};
+pub fn interpreter(path: &str) -> Result<(), InterPreterError> {
     let mut tokens: Vec<Token> = Vec::new();
     let sdk = file_system::read_file("sdk/data_structures.az")?;
     let sdk_tokens = {
@@ -17,7 +17,7 @@ pub fn interpreter(path: &str) -> Result<String, InterPreterError> {
     tokens.extend(sdk_tokens);
     /*     let user_input = file_system::read_file(path)?;
      */
-    let parser = parser::Parser::new(&mut tokens);
+    let parser = Parser::new(&mut tokens);
     let mut parsed_program = parser.parse()?;
     let mut validator = validator::ValidatorContext::new();
     for expr in parsed_program.expressions.iter_mut() {
@@ -26,5 +26,5 @@ pub fn interpreter(path: &str) -> Result<String, InterPreterError> {
     let mut runner = Runner::new();
     runner.run(parsed_program);
 
-    Ok("Works".to_string())
+    Ok(())
 }

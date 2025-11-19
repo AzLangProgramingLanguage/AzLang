@@ -1,12 +1,9 @@
-pub mod file_system;
-pub mod parser_errors;
-pub mod validator_error;
 use core::fmt;
-pub use file_system::FileSystem;
-pub use parser_errors::ParserError;
+use file_system::errors::FileSystem;
+use parser::errors::ParserError;
 use std::fmt::{Debug, Display};
 
-use crate::validator_error::ValidatorError;
+use crate::validator::errors::ValidatorError;
 
 pub trait Errors: Debug + Display {}
 

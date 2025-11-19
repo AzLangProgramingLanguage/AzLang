@@ -1,8 +1,8 @@
-use errors::ParserError;
+use crate::errors::ParserError;
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::parser::{ast::Expr, expressions::parse_single_expr, helpers::expect_token};
+use crate::{ast::Expr, expressions::parse_single_expr, helpers::expect_token};
 
 pub fn parse_loop<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where

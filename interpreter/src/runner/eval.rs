@@ -1,9 +1,9 @@
 use std::io::Write;
 use std::rc::Rc;
 
-use crate::parser::ast::{BuiltInFunction, Expr};
 use crate::runner::Runner;
 use crate::runner::builtin::print::print_interpreter;
+use parser::ast::{BuiltInFunction, Expr};
 
 pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
     match expr {

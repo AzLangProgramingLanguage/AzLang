@@ -1,10 +1,10 @@
 use std::{borrow::Cow, rc::Rc};
 
-use errors::ParserError;
+use crate::errors::ParserError;
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::parser::{
+use crate::{
     ast::{Expr, Type},
     expressions::parse_expression,
     types::parse_type,
@@ -28,9 +28,6 @@ where
         Some(_) => Type::Any,
         None => Type::Any,
     };
-    println!("typ: {typ:?}");
-
-    std::process::exit(1);
 
     match tokens.next() {
         Some(Token::Operator(op)) if op == "=" => {}
