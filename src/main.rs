@@ -1,4 +1,4 @@
-use cli::{cli, Commands};
+use cli::{Commands, cli};
 use compiler::compiler;
 use interpreter::interpreter;
 use logging::{error, parser_log};

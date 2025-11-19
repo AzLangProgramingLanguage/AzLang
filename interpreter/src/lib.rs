@@ -3,28 +3,30 @@ mod errors;
 mod runner;
 mod validator;
 use parser::Parser;
-use tokenizer::tokens::Token;
 pub use validator::validate::validate_expr;
 
 use crate::{errors::InterPreterError, runner::Runner};
 pub fn interpreter(path: &str) -> Result<(), InterPreterError> {
-    let mut tokens: Vec<Token> = Vec::new();
     let sdk = file_system::read_file("sdk/data_structures.az")?;
-    let sdk_tokens = {
-        let mut lexer = tokenizer::Lexer::new(sdk.as_str());
-        lexer.tokenize()
-    };
-    tokens.extend(sdk_tokens);
-    /*     let user_input = file_system::read_file(path)?;
-     */
-    let parser = Parser::new(&mut tokens);
-    let mut parsed_program = parser.parse()?;
-    let mut validator = validator::ValidatorContext::new();
+    let mut parser = Parser::new(sdk);
+    let parsed_program = parser
+        .parse()
+        .map_err(|err| InterPreterError::Parser(err))?;
+    /*    let mut validator = validator::ValidatorContext::new();
     for expr in parsed_program.expressions.iter_mut() {
         validate_expr(expr, &mut validator)?;
     }
     let mut runner = Runner::new();
-    runner.run(parsed_program);
+    runner.run(parsed_program); */
+    /*     let sdk_tokens = {
+        let mut lexer = tokenizer::Lexer::new(sdk.as_str());
+        lexer.tokenize()
+    }; */
+    /*     let user_input = file_system::read_file(path)?;
+     */
+    /*   let mut parser = Parser::new(sdk);
+    let mut parsed_program = parser.parse()?;
+    */
 
     Ok(())
 }

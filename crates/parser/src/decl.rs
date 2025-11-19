@@ -17,6 +17,7 @@ pub fn parse_decl<'a, I>(
 where
     I: Iterator<Item = &'a Token>,
 {
+    /* BUG: Burada ciddi problem var */
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
         Some(other) => return Err(ParserError::DeclNameNotFound(other.clone())),
@@ -28,12 +29,16 @@ where
         Some(_) => Type::Any,
         None => Type::Any,
     };
+    return Err(ParserError::DeclAssignNotFound(Token::Eof));
+
+    std::process::exit(1);
 
     match tokens.next() {
         Some(Token::Operator(op)) if op == "=" => {}
         Some(other) => return Err(ParserError::DeclAssignNotFound(other.clone())),
         None => return Err(ParserError::DeclAssignNotFound(Token::Eof)),
     }
+
     let value_expr = parse_expression(tokens)?;
 
     let value = Box::new(value_expr);

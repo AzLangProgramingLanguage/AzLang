@@ -28,16 +28,16 @@ use tokenizer::tokens::Token;
 use crate::expressions::parse_expression_block;
 
 #[derive(Debug)]
-pub struct Parser<'a> {
-    tokens: &'a mut Vec<Token>,
+pub struct Parser {
+    tokens: Vec<Token>,
 }
-impl<'a> Parser<'a> {
-    pub fn new(tokens: &'a mut Vec<Token>) -> Self {
+impl Parser {
+    pub fn new(string: String) -> Self {
+        let tokens = tokenizer::Lexer::new(&string).tokenize();
         Self { tokens }
     }
-    pub fn parse(&self) -> Result<Program, errors::ParserError> {
-        let tokens = &mut self.tokens.iter().peekmore();
-        let ast = parse_expression_block(tokens)?;
+    pub fn parse(&mut self) -> Result<Program, errors::ParserError> {
+        let ast = parse_expression_block(&mut self.tokens.iter().peekmore())?;
         Ok(Program {
             function_defs: Vec::new(),
             expressions: ast,

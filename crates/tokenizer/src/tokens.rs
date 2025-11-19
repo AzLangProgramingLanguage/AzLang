@@ -67,10 +67,10 @@ pub enum Token {
     ListEnd,
     Return,
     Eof,
-    And,       // və
-    Or,        // və ya
-    DoubleAnd, // &&
-    DoubleOr,  // ||
+    And,
+    Or,
+    DoubleAnd,
+    DoubleOr,
     NumberFn,
     RangeFn,
     Input,

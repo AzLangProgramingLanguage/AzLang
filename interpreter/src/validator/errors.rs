@@ -1,8 +1,6 @@
 use core::fmt;
 use std::fmt::Display;
 
-use tokenizer::tokens::Token;
-
 #[derive(Debug)]
 pub enum ValidatorError {
     UnknownType(String),

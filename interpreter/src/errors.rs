@@ -1,14 +1,10 @@
+use crate::validator::errors::ValidatorError;
 use core::fmt;
 use file_system::errors::FileSystem;
 use parser::errors::ParserError;
-use std::fmt::{Debug, Display};
 
-use crate::validator::errors::ValidatorError;
-
-pub trait Errors: Debug + Display {}
-
-impl Errors for ParserError {}
-impl Errors for FileSystem {}
+// NOTE: parser::errors::ParserError istifadə etməyə ehtiyac yoxdur
+// biz ParserError-i interpreter səviyyəsində string-ləşdirəcəyik.
 
 #[derive(Debug)]
 pub enum InterPreterError {
@@ -18,7 +14,6 @@ pub enum InterPreterError {
 }
 
 impl fmt::Display for InterPreterError {
-    /* TODO:  Əslində burası lazımsızdır */
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InterPreterError::Io(e) => write!(f, "{}", e),
@@ -28,20 +23,13 @@ impl fmt::Display for InterPreterError {
     }
 }
 
-impl Errors for InterPreterError {}
-
 impl From<FileSystem> for InterPreterError {
     fn from(e: FileSystem) -> Self {
         InterPreterError::Io(e)
     }
 }
 
-impl From<ParserError> for InterPreterError {
-    fn from(e: ParserError) -> Self {
-        InterPreterError::Parser(e)
-    }
-}
-
+// From<ValidatorError> saxla əgər lazım olsa
 impl From<ValidatorError> for InterPreterError {
     fn from(e: ValidatorError) -> Self {
         InterPreterError::Validator(e)

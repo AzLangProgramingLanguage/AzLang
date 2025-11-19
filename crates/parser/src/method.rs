@@ -61,10 +61,9 @@ where
                         tokens.next();
                     }
                     Some(Token::RParen) => break,
-                    other => {
-                        return Err(ParserError::ParameterNotExpected(
-                            other.unwrap().clone().clone(),
-                        )); /* FIXME: Double clone */
+                    None => return Err(ParserError::RParenNotFound(Token::Eof)),
+                    Some(other) => {
+                        return Err(ParserError::ParameterNotExpected((*other).clone()));
                     }
                 }
                 params.push(Parameter {
@@ -79,7 +78,7 @@ where
                 tokens.next();
             }
             other => {
-                return Err(ParserError::RParenNotFound(other.clone().clone())); /* FIXME: Double clone */
+                return Err(ParserError::RParenNotFound((*other).clone()));
             }
         }
     }
