@@ -5,7 +5,7 @@ mod helper;
 pub mod validate;
 use parser::ast::{Expr, Parameter, Symbol, Type};
 
-use crate::validator::errors::ValidatorError;
+use crate::errors::ValidatorError;
 
 #[derive(Debug)]
 pub struct FunctionInfo<'a> {

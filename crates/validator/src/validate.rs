@@ -3,9 +3,7 @@ use std::{borrow::Cow, rc::Rc};
 use logging::validator_log;
 use parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type};
 
-use crate::validator::{
-    FunctionInfo, MethodInfo, ValidatorContext, errors::ValidatorError, helper::get_type,
-};
+use crate::{FunctionInfo, MethodInfo, ValidatorContext, errors::ValidatorError, helper::get_type};
 pub fn validate_expr<'a>(
     expr: &mut Expr<'a>,
     ctx: &mut ValidatorContext<'a>,

@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-tokenizer = { path = "../crates/tokenizer" }
 file_system = { path = "../crates/file_system" }
 parser = { path = "../crates/parser" }
+validator = { path = "../crates/validator" }

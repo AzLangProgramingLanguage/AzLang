@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 
-use crate::validator::ValidatorContext;
 use parser::ast::{Expr, Type};
+
+use crate::ValidatorContext;
 
 pub fn get_type<'a>(
     value: &Expr<'a>,

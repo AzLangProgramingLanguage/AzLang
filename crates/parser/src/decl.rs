@@ -29,9 +29,6 @@ where
         Some(_) => Type::Any,
         None => Type::Any,
     };
-    return Err(ParserError::DeclAssignNotFound(Token::Eof));
-
-    std::process::exit(1);
 
     match tokens.next() {
         Some(Token::Operator(op)) if op == "=" => {}

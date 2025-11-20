@@ -1,10 +1,7 @@
-use crate::validator::errors::ValidatorError;
 use core::fmt;
 use file_system::errors::FileSystem;
 use parser::errors::ParserError;
-
-// NOTE: parser::errors::ParserError istifadə etməyə ehtiyac yoxdur
-// biz ParserError-i interpreter səviyyəsində string-ləşdirəcəyik.
+use validator::errors::ValidatorError;
 
 #[derive(Debug)]
 pub enum InterPreterError {
@@ -29,7 +26,6 @@ impl From<FileSystem> for InterPreterError {
     }
 }
 
-// From<ValidatorError> saxla əgər lazım olsa
 impl From<ValidatorError> for InterPreterError {
     fn from(e: ValidatorError) -> Self {
         InterPreterError::Validator(e)

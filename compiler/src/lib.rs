@@ -1,9 +1,21 @@
 /* use errors::{CompilerError, Errors, ParserError};
  */
 use parser::Parser;
-use tokenizer::tokens::Token;
+use validator::validate::validate_expr;
+
+use crate::errors::CompilerError;
+mod errors;
 //mod parser;
-pub fn compiler(path: &str) -> Result<(), String> {
+pub fn compiler(path: &str) -> Result<(), CompilerError> {
+    let sdk = file_system::read_file("sdk/data_structures.az")?;
+    let mut parser = Parser::new(sdk);
+    let mut parsed_program = parser.parse().map_err(|err| CompilerError::Parser(err))?;
+
+    let mut validator = validator::ValidatorContext::new();
+    for expr in parsed_program.expressions.iter_mut() {
+        validate_expr(expr, &mut validator)?;
+    }
+
     /*     let mut tokens: Vec<Token> = Vec::new();
     let sdk = file_system::read_file("sdk/data_structures.az")?;
     let sdk_tokens = {
