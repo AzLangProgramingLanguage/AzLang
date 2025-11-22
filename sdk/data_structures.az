@@ -59,4 +59,10 @@ tip Siyahı
   metod sondansil(): heçnə
     // Burasını Sistem Qərar Versin
 
-sabit a: yazı = 2
+
+əgər yalan
+  Çap(1)
+yoxsa 1==0+1
+  Çap(2)
+əks
+  Çap(3)

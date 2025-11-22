@@ -1,11 +1,8 @@
-/* use errors::{CompilerError, Errors, ParserError};
- */
+mod cleaner;
+use crate::{cleaner::clean_ast, errors::CompilerError};
 use parser::Parser;
 use validator::validate::validate_expr;
-
-use crate::errors::CompilerError;
 mod errors;
-//mod parser;
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let sdk = file_system::read_file("sdk/data_structures.az")?;
     let mut parser = Parser::new(sdk);
@@ -15,18 +12,7 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     for expr in parsed_program.expressions.iter_mut() {
         validate_expr(expr, &mut validator)?;
     }
-
-    /*     let mut tokens: Vec<Token> = Vec::new();
-    let sdk = file_system::read_file("sdk/data_structures.az")?;
-    let sdk_tokens = {
-        let mut lexer = tokenizer::Lexer::new(sdk.as_str());
-        lexer.tokenize()
-    };
-    tokens.extend(sdk_tokens); */
-    /*     let user_input = file_system::read_file(path)?;
-     */
-    /*     let parser = Parser::new(&mut tokens);
-    let mut parsed_program = parser.parse()?; */
+    clean_ast(&mut parsed_program, &validator);
 
     /*     let mut validator = validator::ValidatorContext::new();
     for expr in parsed_program.expressions.iter_mut() {

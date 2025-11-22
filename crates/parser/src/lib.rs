@@ -43,4 +43,11 @@ impl Parser {
             expressions: ast,
         })
     }
+    pub fn parse_for_transpile(&mut self) -> Result<Program, errors::ParserError> {
+        let ast = parse_expression_block(&mut self.tokens.iter().peekmore())?;
+        Ok(Program {
+            function_defs: Vec::new(),
+            expressions: ast,
+        })
+    }
 }

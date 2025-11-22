@@ -1,7 +1,5 @@
-use crate::{
-    parser::ast::{Expr, Program},
-    validator::ValidatorContext,
-};
+use parser::ast::{Expr, Program};
+use validator::ValidatorContext;
 
 pub fn clean_ast<'a>(program: &mut Program<'a>, ctx: &ValidatorContext<'a>) {
     program.expressions.retain(|expr| match expr {

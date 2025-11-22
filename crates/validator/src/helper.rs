@@ -74,6 +74,7 @@ pub fn get_type<'a>(
         Expr::BinaryOp { left, op, right } => {
             let left_type = get_type(left, ctx, typ)?;
             let right_type = get_type(right, ctx, typ)?;
+
             if left_type != right_type {
                 return None;
             }

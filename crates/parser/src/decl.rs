@@ -17,7 +17,6 @@ pub fn parse_decl<'a, I>(
 where
     I: Iterator<Item = &'a Token>,
 {
-    /* BUG: Burada ciddi problem var */
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
         Some(other) => return Err(ParserError::DeclNameNotFound(other.clone())),
