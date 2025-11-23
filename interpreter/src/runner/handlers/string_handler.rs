@@ -1,5 +1,5 @@
-use crate::runner::{Runner, Variable, eval::eval, runner::runner_interpretator};
-use parser::ast::{Expr, Type};
+use crate::runner::{eval::eval, runner::runner_interpretator, Runner, Variable};
+use parser::{ast::Expr, shared_ast::Type};
 pub fn handle_string_call<'a>(
     name: &str,
     s: &'a str,
@@ -16,7 +16,7 @@ pub fn handle_string_call<'a>(
         "self".to_string(),
         Variable {
             value: Expr::String(s, false),
-            typ: Type::Istifadeci("Yazı".into()),
+            typ: Type::User("Yazı".into()),
             is_mutable: false,
         },
     );

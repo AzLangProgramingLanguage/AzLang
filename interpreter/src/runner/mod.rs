@@ -2,7 +2,10 @@ use std::{collections::HashMap, rc::Rc};
 mod builtin;
 mod helpers;
 mod runner;
-use parser::ast::{Expr, MethodType, Program, Type};
+use parser::{
+    ast::{Expr, MethodType, Program},
+    shared_ast::Type,
+};
 mod eval;
 mod handlers;
 

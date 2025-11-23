@@ -1,12 +1,8 @@
-use crate::errors::ParserError;
+use crate::{errors::ParserError, shared_ast::Type};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::{
-    ast::{Expr, Type},
-    expressions::parse_single_expr,
-    list::parse_list,
-};
+use crate::{ast::Expr, expressions::parse_single_expr, list::parse_list};
 
 pub fn literals_parse<'a, I>(
     token: &'a Token,
@@ -32,8 +28,8 @@ where
             None => {
                 return Err(ParserError::UnexpectedEOF);
             }
-            other => {
-                return Err(ParserError::MethodNameNotFound(other.unwrap().clone())); /* TODO: Burası hardcode. */
+            Some(other) => {
+                return Err(ParserError::MethodNameNotFound(other.clone()));
             }
         };
 
@@ -97,6 +93,7 @@ where
 {
     match tokens.next() {
         Some(t) if *t == expected => Ok(()),
-        other => Err(ParserError::ExpectedToken(expected, other.unwrap().clone())), /* TODO: Burası hardcode. unwap istifadə edilmiş. Qurtul ondan */
+        None => Err(ParserError::UnexpectedEOF),
+        Some(other) => Err(ParserError::ExpectedToken(expected, other.clone())),
     }
 }

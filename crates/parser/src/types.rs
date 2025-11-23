@@ -1,5 +1,4 @@
-use crate::ast::Type;
-use crate::errors::ParserError;
+use crate::{errors::ParserError, shared_ast::Type};
 use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
 use tokenizer::tokens::Token;
@@ -14,7 +13,7 @@ where
     };
 
     let typ = match token {
-        Token::Identifier(name) => Type::Istifadeci(Cow::Borrowed(name)),
+        Token::Identifier(name) => Type::User(Cow::Borrowed(name)),
         Token::IntegerType => Type::Integer,
         Token::BigIntegerType => Type::BigInteger,
         Token::LowIntegerType => Type::LowInteger,
@@ -27,7 +26,7 @@ where
         Token::ZigInteger => Type::ZigInteger,
         Token::BoolType => Type::Bool,
         Token::NaturalType => Type::Natural,
-        Token::StringType => Type::Metn,
+        Token::StringType => Type::String,
         Token::CharType => Type::Char,
         Token::Void => Type::Void,
         Token::FloatType => Type::Float,
@@ -44,7 +43,7 @@ where
                 other => return Err(ParserError::ArrayExpected('>', other.unwrap().clone())), /* TODO: Badcode unwrapp using */
             }
 
-            Type::Siyahi(Box::new(inner_type))
+            Type::Array(Box::new(inner_type))
         }
         other => return Err(ParserError::UnexpectedToken(other.clone())),
     };

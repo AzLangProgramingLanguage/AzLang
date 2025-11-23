@@ -61,7 +61,7 @@ where
             }
             Token::Eof => break,
             other => {
-                return Err(ParserError::StructNotExpected(other.clone().clone())); /* FIXME: Double clone */
+                return Err(ParserError::StructNotExpected((*other).clone())); /* FIXME: Double clone */
             }
         }
     }

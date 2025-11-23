@@ -1,9 +1,9 @@
-use crate::errors::ParserError;
+use crate::{errors::ParserError, shared_ast::Type};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
 use crate::{
-    ast::{Expr, Parameter, Type},
+    ast::{Expr, Parameter},
     expressions::parse_expression,
     helpers::expect_token,
     types::parse_type,
@@ -15,7 +15,8 @@ where
 {
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => (*name).as_str(),
-        other => return Err(ParserError::FunctionNameNotFound(other.unwrap().clone())), /* TODO: using unwrap */
+        None => return Err(ParserError::UnexpectedEOF),
+        Some(other) => return Err(ParserError::FunctionNameNotFound(other.clone())),
     };
 
     expect_token(tokens, Token::LParen)?;
@@ -37,15 +38,13 @@ where
                     _ => false,
                 };
 
-                // Parametr adı
                 let param_name = match tokens.next() {
                     Some(Token::Identifier(s)) => (*s).as_str(),
                     other => {
                         return Err(ParserError::ParameterNameNotFound(other.unwrap().clone()));
-                    } /* TODO: using unwrap */
+                    }
                 };
 
-                // Tip varsa oxu
                 let mut param_type = Type::Any;
 
                 match tokens.peek() {

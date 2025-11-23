@@ -3,11 +3,12 @@
  */
 #[cfg(test)]
 mod tests {
-    use crate::parser::ast::Expr;
-    use crate::parser::r#enum::parse_enum_decl;
+
+    use crate::ast::Expr;
+    use crate::errors::ParserError;
+    use crate::r#enum::parse_enum_decl;
 
     use super::*;
-    use errors::ParserError;
     use peekmore::PeekMore;
     use peekmore::PeekMoreIterator;
     use std::borrow::Cow;

@@ -1,4 +1,5 @@
-use parser::ast::{Expr, Type};
+use parser::ast::Expr;
+use parser::shared_ast::Type;
 
 use crate::runner::eval::eval;
 use crate::runner::runner::runner_interpretator;
@@ -21,7 +22,7 @@ pub fn handle_list_call<'a>(
         "self".to_string(),
         Variable {
             value: Expr::List(s.clone()),
-            typ: Type::Istifadeci("Siyahı".into()),
+            typ: Type::User("Siyahı".into()),
             is_mutable: false,
         },
     );
@@ -63,7 +64,7 @@ pub fn handle_list_call<'a>(
                                 name,
                                 Variable {
                                     value: Expr::List(list),
-                                    typ: Type::Istifadeci("Siyahı".into()),
+                                    typ: Type::User("Siyahı".into()),
                                     is_mutable: false,
                                 },
                             );
@@ -73,7 +74,7 @@ pub fn handle_list_call<'a>(
                     return None;
                 }
                 "əlavə_et" => {
-                    /* TOOD: Burası tamamlanmayıb. */
+                    /* TODO: Burası tamamlanmayıb. */
                     let mut list = ctx.variables.get("self").unwrap().value.clone();
                     return Some(list);
                 }

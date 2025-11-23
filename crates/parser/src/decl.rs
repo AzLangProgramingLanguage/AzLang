@@ -1,14 +1,10 @@
 use std::{borrow::Cow, rc::Rc};
 
-use crate::errors::ParserError;
+use crate::{errors::ParserError, shared_ast::Type};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::{
-    ast::{Expr, Type},
-    expressions::parse_expression,
-    types::parse_type,
-};
+use crate::{ast::Expr, expressions::parse_expression, types::parse_type};
 
 pub fn parse_decl<'a, I>(
     tokens: &mut PeekMoreIterator<I>,

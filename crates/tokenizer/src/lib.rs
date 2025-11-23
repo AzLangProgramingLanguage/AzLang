@@ -8,6 +8,10 @@ use std::mem;
 use std::str::Chars;
 
 use crate::tokens::Token;
+pub struct SourceSpan {
+    line: u32,
+    start: u32,
+}
 
 pub struct Lexer<'a> {
     pub chars: PeekMoreIterator<Chars<'a>>,
@@ -16,6 +20,7 @@ pub struct Lexer<'a> {
     current_indent: usize,
     pending_dedents: usize,
     at_line_start: bool,
+    src_span: SourceSpan,
 }
 
 impl<'a> Lexer<'a> {
@@ -27,6 +32,7 @@ impl<'a> Lexer<'a> {
             current_indent: 0,
             pending_dedents: 0,
             at_line_start: true,
+            src_span: SourceSpan { line: 1, start: 0 },
         }
     }
 

@@ -1,8 +1,9 @@
 use parser::ast::Expr;
+use parser::shared_ast::Type;
 
 use crate::runner::eval::eval;
 use crate::runner::runner::runner_interpretator;
-use crate::runner::{Runner, Type, Variable};
+use crate::runner::{Runner, Variable};
 
 pub fn handle_number_call<'a>(
     name: &str,
@@ -20,7 +21,7 @@ pub fn handle_number_call<'a>(
         "self".to_string(),
         Variable {
             value: Expr::Number(s),
-            typ: Type::Istifadeci("Ədəd".into()),
+            typ: Type::User("Ədəd".into()),
             is_mutable: false,
         },
     );

@@ -3,7 +3,10 @@ use std::{borrow::Cow, collections::HashMap};
 pub mod errors;
 mod helper;
 pub mod validate;
-use parser::ast::{Expr, Parameter, Symbol, Type};
+use parser::{
+    ast::{Expr, Parameter, Symbol},
+    shared_ast::Type,
+};
 
 use crate::errors::ValidatorError;
 

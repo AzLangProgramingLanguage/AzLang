@@ -1,9 +1,12 @@
 use std::{borrow::Cow, rc::Rc};
 
 use logging::validator_log;
-use parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type};
+use parser::{
+    ast::{EnumDecl, Expr, Symbol, TemplateChunk},
+    shared_ast::{BuiltInFunction, Type},
+};
 
-use crate::{FunctionInfo, MethodInfo, ValidatorContext, errors::ValidatorError, helper::get_type};
+use crate::{errors::ValidatorError, helper::get_type, FunctionInfo, MethodInfo, ValidatorContext};
 pub fn validate_expr<'a>(
     expr: &mut Expr<'a>,
     ctx: &mut ValidatorContext<'a>,
@@ -116,7 +119,7 @@ pub fn validate_expr<'a>(
                     validate_expr(expr, ctx)?;
                 }
 
-                if let Some(Type::Istifadeci(name)) = &mut method.return_type {
+                if let Some(Type::User(name)) = &mut method.return_type {
                     match ctx.validate_user_type(name.as_ref()) {
                         Ok(_) => {}
                         Err(e) => return Err(e),
@@ -189,9 +192,9 @@ pub fn validate_expr<'a>(
                 | BuiltInFunction::StrReverse => {
                     validator_log(&format!("✅ StrUpper funksiyası yoxlanılır"));
                     if let Some(t) = get_type(&args[0], ctx, None) {
-                        if t != Type::Metn {
+                        if t != Type::String {
                             return Err(ValidatorError::TypeMismatch {
-                                expected: "Yazı".to_string(),
+                                expected: Type::String.to_string(),
                                 found: format!("{t:?}"),
                             });
                         }
@@ -201,10 +204,10 @@ pub fn validate_expr<'a>(
                 BuiltInFunction::Len => {
                     if let Some(t) = get_type(&args[0], ctx, None) {
                         match t {
-                            Type::Siyahi(_) => {}
+                            Type::Array(_) => {}
                             _ => {
                                 return Err(ValidatorError::TypeMismatch {
-                                    expected: "Siyahi".to_string(), /* TODO: HardCode */
+                                    expected: "Array".to_string(), /* TODO: HardCode */
                                     found: format!("{t:?}"),
                                 });
                             }
@@ -251,7 +254,7 @@ pub fn validate_expr<'a>(
                 .iter()
                 .map(|method| {
                     let mut cloned_ret_type = method.return_type.clone();
-                    if let Some(Type::Istifadeci(name)) = &mut cloned_ret_type {
+                    if let Some(Type::User(name)) = &mut cloned_ret_type {
                         match ctx.validate_user_type(name.as_ref()) {
                             Ok(_) => {}
                             Err(e) => return Err(e),
@@ -310,7 +313,7 @@ pub fn validate_expr<'a>(
 
             if name == "self" && ctx.current_struct.is_some() {
                 *symbol = Some(Symbol {
-                    typ: Type::Istifadeci(Cow::Borrowed(ctx.current_struct.unwrap())),
+                    typ: Type::User(Cow::Borrowed(ctx.current_struct.unwrap())),
                     is_mutable: false,
                     is_used: true,
                     is_pointer: false,
@@ -389,7 +392,7 @@ pub fn validate_expr<'a>(
             validate_expr(iterable, ctx)?;
             let iterable_type =
                 get_type(iterable, ctx, None).ok_or(ValidatorError::LoopIterableTypeNotFound)?;
-            if let Type::Siyahi(inner) = iterable_type {
+            if let Type::Array(inner) = iterable_type {
                 let symbol = Symbol {
                     typ: *inner,
                     is_mutable: false,
@@ -428,7 +431,7 @@ pub fn validate_expr<'a>(
                     let variable_type = get_type(variable, ctx, None);
 
                     match variable_type {
-                        Some(Type::Metn) => {
+                        Some(Type::String) => {
                             let union = ctx
                                 .union_defs
                                 .get("Yazı")
@@ -476,7 +479,7 @@ pub fn validate_expr<'a>(
 
                             *returned_type = method.return_type.clone();
                         }
-                        Some(Type::Istifadeci(s)) => {
+                        Some(Type::User(s)) => {
                             let union = ctx
                                 .union_defs
                                 .get(&s.to_string())
@@ -487,7 +490,8 @@ pub fn validate_expr<'a>(
                                 .iter()
                                 .find(|m| m.name.to_string() == name.to_string());
                             let method = maybe_method.ok_or_else(|| {
-                                ValidatorError::FunctionNotFound(name.to_string()) // Əgər ayrıca MethodNotFound error varsa onu istifadə et
+                                ValidatorError::FunctionNotFound(name.to_string())
+                                // Əgər ayrıca MethodNotFound error varsa onu istifadə et
                             })?;
                             if method.parameters.len() != args.len() {
                                 return Err(ValidatorError::FunctionArgCountMismatch {
@@ -499,7 +503,7 @@ pub fn validate_expr<'a>(
 
                             *returned_type = method.return_type.clone();
                         }
-                        Some(Type::Siyahi(_)) => {
+                        Some(Type::Array(_)) => {
                             let union = ctx
                                 .union_defs
                                 .get("Siyahı")
@@ -577,7 +581,7 @@ pub fn validate_expr<'a>(
                 Type::Integer => {
                     *target_type = Type::Integer;
                 }
-                Type::Metn => {
+                Type::String => {
                     validator_log("indeksləmə2  əməliyyatını yoxlayır...");
                     let index_name = match &**index {
                         Expr::String(s, _) => s,
@@ -587,7 +591,7 @@ pub fn validate_expr<'a>(
 
                     println!("Sruktur tipi {target:?}");
                     let struct_name = match struct_type {
-                        Some(Type::Istifadeci(name)) => name,
+                        Some(Type::User(name)) => name,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
 
@@ -630,7 +634,7 @@ pub fn validate_expr<'a>(
             if ctx.current_function.is_some() {
                 return Err(ValidatorError::NestedFunctionDefinition);
             }
-            if let Some(Type::Istifadeci(name)) = return_type {
+            if let Some(Type::User(name)) = return_type {
                 match ctx.validate_user_type(name) {
                     Ok(_) => {}
                     Err(e) => return Err(e),

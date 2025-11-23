@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use super::Runner;
 use crate::runner::{
-    FunctionDef, Method, StructDef, UnionType, Variable,
     builtin::print::print_interpreter,
     eval::eval,
     handlers::{
@@ -10,8 +9,12 @@ use crate::runner::{
         string_handler::handle_string_call,
     },
     helpers::{self, exec_block},
+    FunctionDef, Method, StructDef, UnionType, Variable,
 };
-use parser::ast::{BuiltInFunction, Expr, Type};
+use parser::{
+    ast::Expr,
+    shared_ast::{BuiltInFunction, Type},
+};
 pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<Expr<'a>> {
     match expr {
         Expr::Decl {
@@ -310,7 +313,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                                     name: struct_name.clone(),
                                     args,
                                 },
-                                typ: Type::Istifadeci(struct_name.clone()),
+                                typ: Type::User(struct_name.clone()),
                                 is_mutable: false,
                             },
                         );

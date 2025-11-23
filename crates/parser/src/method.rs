@@ -1,9 +1,9 @@
-use crate::errors::ParserError;
+use crate::{errors::ParserError, shared_ast::Type};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
 use crate::{
-    ast::{Expr, Parameter, Type},
+    ast::{Expr, Parameter},
     expressions::parse_expression,
     helpers::expect_token,
     types::parse_type,
@@ -25,8 +25,9 @@ where
 
     let name = match tokens.next() {
         Some(Token::Identifier(n)) => (*n).as_str(),
-        other => {
-            return Err(ParserError::MethodNameNotFound(other.unwrap().clone())); /* TODO: using unwrap */
+        None => return Err(ParserError::UnexpectedEOF),
+        Some(other) => {
+            return Err(ParserError::MethodNameNotFound(other.clone()));
         }
     };
 

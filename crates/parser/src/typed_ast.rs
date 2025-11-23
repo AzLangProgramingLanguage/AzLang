@@ -4,37 +4,29 @@ use std::rc::Rc;
 use crate::shared_ast::{BuiltInFunction, Type};
 
 #[derive(Debug)]
-pub struct FunctionDef<'a> {
-    params: Vec<(String, Type<'a>)>,
-    body: Rc<Vec<Expr<'a>>>,
-    return_type: Type<'a>,
-}
-
-#[derive(Debug, Clone)]
 pub struct MethodType<'a> {
     pub name: &'a str,
+    pub transpiled_name: Option<Cow<'a, str>>,
     pub params: Vec<Parameter<'a>>,
     pub body: Vec<Expr<'a>>,
     pub return_type: Option<Type<'a>>,
+    pub is_allocator: bool,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct EnumDecl<'a> {
     pub name: Cow<'a, str>,
     pub variants: Vec<Cow<'a, str>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Expr<'a> {
     DynamicString(Rc<String>),
-    Void,
-    Return(Box<Expr<'a>>),
-    Time(std::time::Instant),
     String(&'a str, bool),
     Bool(bool),
     Number(i64),
     Char(char),
     EnumDecl(EnumDecl<'a>),
-    Comment(&'a str),
+    Return(Box<Expr<'a>>),
     List(Vec<Expr<'a>>),
     UnaryOp {
         op: &'a str,
@@ -52,18 +44,22 @@ pub enum Expr<'a> {
     },
     Assingment {
         name: &'a str,
+        transpiled_name: &'a str,
         value: Box<Expr<'a>>,
         is_pointer: bool,
     },
     Float(f64),
     Decl {
         name: Cow<'a, str>,
+        transpiled_name: Option<String>,
         typ: Option<Rc<Type<'a>>>,
         is_mutable: bool,
+        is_primitive: bool,
         value: Box<Expr<'a>>,
     },
     VariableRef {
         name: Cow<'a, str>,
+        transpiled_name: Option<String>,
         symbol: Option<Symbol<'a>>,
     },
     TemplateString(Vec<TemplateChunk<'a>>),
@@ -87,27 +83,34 @@ pub enum Expr<'a> {
     Call {
         target: Option<Box<Expr<'a>>>,
         name: &'a str,
+        transpiled_name: Option<String>,
         args: Vec<Expr<'a>>,
         returned_type: Option<Type<'a>>,
+        is_allocator: bool,
     },
     StructDef {
         name: &'a str,
+        transpiled_name: Option<Cow<'a, str>>,
         fields: Vec<(&'a str, Type<'a>, Option<Expr<'a>>)>,
         methods: Vec<MethodType<'a>>,
     },
     FunctionDef {
         name: &'a str,
+        transpiled_name: Option<Cow<'a, str>>,
         params: Vec<Parameter<'a>>,
         body: Vec<Expr<'a>>,
         return_type: Option<Type<'a>>,
+        is_allocator: bool,
     },
     UnionType {
         name: &'a str,
+        transpiled_name: Option<Cow<'a, str>>,
         fields: Vec<(&'a str, Type<'a>)>,
         methods: Vec<MethodType<'a>>,
     },
     StructInit {
         name: Cow<'a, str>,
+        transpiled_name: Option<Cow<'a, str>>,
         args: Vec<(&'a str, Expr<'a>)>,
     },
 
@@ -131,7 +134,6 @@ pub enum Expr<'a> {
 
 #[derive(Debug)]
 pub struct Program<'a> {
-    pub function_defs: Vec<FunctionDef<'a>>,
     pub expressions: Vec<Expr<'a>>,
 }
 
@@ -141,10 +143,11 @@ pub struct Symbol<'a> {
     pub is_mutable: bool,
     pub is_pointer: bool,
     pub is_used: bool,
+    pub transpiled_name: Option<String>,
     //pub source_location: Option<Location>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum TemplateChunk<'a> {
     Literal(&'a str),
     Expr(Box<Expr<'a>>),

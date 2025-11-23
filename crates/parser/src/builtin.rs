@@ -1,11 +1,11 @@
-use crate::errors::ParserError;
+use crate::{
+    errors::ParserError,
+    shared_ast::{BuiltInFunction, Type},
+};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::{
-    ast::{BuiltInFunction, Expr, Type},
-    expressions::parse_expression,
-};
+use crate::{ast::Expr, expressions::parse_expression};
 
 pub fn parse_builtin<'a, I>(
     tokens: &mut PeekMoreIterator<I>,
@@ -16,26 +16,23 @@ where
 {
     let (function, return_type) = match token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
-        Token::Input => (BuiltInFunction::Input, Type::Metn),
+        Token::Input => (BuiltInFunction::Input, Type::String),
         Token::Len => (BuiltInFunction::Len, Type::Integer),
         Token::NumberFn => (BuiltInFunction::Number, Type::Integer),
         Token::Sum => (BuiltInFunction::Sum, Type::Integer),
-        Token::RangeFn => (
-            BuiltInFunction::Range,
-            Type::Siyahi(Box::new(Type::Integer)),
-        ),
+        Token::RangeFn => (BuiltInFunction::Range, Type::Array(Box::new(Type::Integer))),
 
-        Token::LastWord => (BuiltInFunction::LastWord, Type::Metn),
+        Token::LastWord => (BuiltInFunction::LastWord, Type::String),
         Token::Timer => (BuiltInFunction::Timer, Type::Integer),
         Token::Max => (BuiltInFunction::Max, Type::Integer),
         Token::Zig => (BuiltInFunction::Zig, Type::Void),
-        Token::StrLower => (BuiltInFunction::StrLower, Type::Metn),
+        Token::StrLower => (BuiltInFunction::StrLower, Type::String),
         Token::Allocator => (BuiltInFunction::Allocator, Type::Void),
-        Token::StrUpper => (BuiltInFunction::StrUpper, Type::Metn),
-        Token::Trim => (BuiltInFunction::Trim, Type::Metn),
+        Token::StrUpper => (BuiltInFunction::StrUpper, Type::String),
+        Token::Trim => (BuiltInFunction::Trim, Type::String),
         Token::Min => (BuiltInFunction::Min, Type::Integer),
-        Token::StrReverse => (BuiltInFunction::StrReverse, Type::Metn),
-        Token::ConvertString => (BuiltInFunction::ConvertString, Type::Metn),
+        Token::StrReverse => (BuiltInFunction::StrReverse, Type::String),
+        Token::ConvertString => (BuiltInFunction::ConvertString, Type::String),
         other => return Err(ParserError::UnsupportedBuiltInFunction(other.clone())),
     };
     let mut args = Vec::new();

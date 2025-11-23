@@ -13,15 +13,15 @@ pub mod list;
 pub mod r#loop;
 pub mod r#match;
 pub mod method;
+pub mod shared_ast;
 pub mod struct_init;
 pub mod structs;
 pub mod template;
 mod tests;
+pub mod typed_ast;
 pub mod types;
 pub mod union;
 use ast::Program;
-
-use errors::ParserError;
 use peekmore::PeekMore;
 use tokenizer::tokens::Token;
 
