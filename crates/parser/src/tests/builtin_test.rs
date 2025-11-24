@@ -1,22 +1,18 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::ast::Expr;
     use crate::builtin::parse_builtin;
     use crate::errors::ParserError;
     use crate::shared_ast::{BuiltInFunction, Type};
     use peekmore::PeekMore;
-    use peekmore::PeekMoreIterator;
     use tokenizer::tokens::Token;
-
-    // Helper to create iterator
 
     #[test]
     fn test_parse_builtin_simple_no_args() {
         let tokens = vec![Token::Print];
         let mut it = tokens.iter().peekmore();
 
-        let first = it.peek().unwrap().clone();
+        let first = it.next().unwrap();
         let result = parse_builtin(&mut it, first);
 
         assert!(result.is_ok());
@@ -45,7 +41,7 @@ mod tests {
         ];
 
         let mut it = tokens.iter().peekmore();
-        let f = it.peek().unwrap().clone();
+        let f = it.next().unwrap();
 
         let result = parse_builtin(&mut it, f);
         assert!(result.is_ok());
@@ -60,7 +56,6 @@ mod tests {
 
     #[test]
     fn test_parse_builtin_nested_expression() {
-        // len(1 + 2)
         let tokens = vec![
             Token::Len,
             Token::LParen,
@@ -71,16 +66,15 @@ mod tests {
         ];
 
         let mut it = tokens.iter().peekmore();
-        let f = it.peek().unwrap().clone();
+        let f = it.next().unwrap();
         let result = parse_builtin(&mut it, f);
 
         assert!(result.is_ok());
 
         if let Ok(Expr::BuiltInCall { args, .. }) = result {
             assert_eq!(args.len(), 1);
-            // Ensure it's an expression tree
             match &args[0] {
-                Expr::BinaryOp { .. } => {} // OK
+                Expr::BinaryOp { .. } => {}
                 other => panic!("Expected BinaryOp, got {:?}", other),
             }
         }
@@ -91,7 +85,7 @@ mod tests {
         let tokens = vec![Token::Identifier("UnknownFn".into())];
         let mut it = tokens.iter().peekmore();
 
-        let first = it.peek().unwrap().clone();
+        let first = it.next().unwrap();
         let result = parse_builtin(&mut it, first);
 
         assert!(matches!(

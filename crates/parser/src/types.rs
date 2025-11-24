@@ -33,14 +33,16 @@ where
         Token::Array => {
             match tokens.next() {
                 Some(Token::Operator(op)) if op == "<" => {}
-                other => return Err(ParserError::ArrayExpected('<', other.unwrap().clone())), /* TODO: Badcode unwrapp using */
+                None => return Err(ParserError::UnexpectedEOF),
+                Some(other) => return Err(ParserError::ArrayExpected('<', other.clone())),
             }
 
             let inner_type = parse_type(tokens)?;
 
             match tokens.next() {
                 Some(Token::Operator(op)) if op == ">" => {}
-                other => return Err(ParserError::ArrayExpected('>', other.unwrap().clone())), /* TODO: Badcode unwrapp using */
+                None => return Err(ParserError::UnexpectedEOF),
+                Some(other) => return Err(ParserError::ArrayExpected('>', other.clone())),
             }
 
             Type::Array(Box::new(inner_type))

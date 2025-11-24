@@ -8,7 +8,7 @@ pub struct MethodType<'a> {
     pub name: &'a str,
     pub transpiled_name: Option<Cow<'a, str>>,
     pub params: Vec<Parameter<'a>>,
-    pub body: Vec<Expr<'a>>,
+    pub body: Vec<TypedExpr<'a>>,
     pub return_type: Option<Type<'a>>,
     pub is_allocator: bool,
 }
@@ -19,33 +19,33 @@ pub struct EnumDecl<'a> {
 }
 
 #[derive(Debug)]
-pub enum Expr<'a> {
+pub enum TypedExpr<'a> {
     DynamicString(Rc<String>),
     String(&'a str, bool),
     Bool(bool),
     Number(i64),
     Char(char),
     EnumDecl(EnumDecl<'a>),
-    Return(Box<Expr<'a>>),
-    List(Vec<Expr<'a>>),
+    Return(Box<TypedExpr<'a>>),
+    List(Vec<TypedExpr<'a>>),
     UnaryOp {
         op: &'a str,
-        expr: Box<Expr<'a>>,
+        expr: Box<TypedExpr<'a>>,
     },
     Index {
-        target: Box<Expr<'a>>,
-        index: Box<Expr<'a>>,
+        target: Box<TypedExpr<'a>>,
+        index: Box<TypedExpr<'a>>,
         target_type: Type<'a>,
     },
     Loop {
         var_name: &'a str,
-        iterable: Box<Expr<'a>>,
-        body: Vec<Expr<'a>>,
+        iterable: Box<TypedExpr<'a>>,
+        body: Vec<TypedExpr<'a>>,
     },
     Assingment {
         name: &'a str,
         transpiled_name: &'a str,
-        value: Box<Expr<'a>>,
+        value: Box<TypedExpr<'a>>,
         is_pointer: bool,
     },
     Float(f64),
@@ -55,7 +55,7 @@ pub enum Expr<'a> {
         typ: Option<Rc<Type<'a>>>,
         is_mutable: bool,
         is_primitive: bool,
-        value: Box<Expr<'a>>,
+        value: Box<TypedExpr<'a>>,
     },
     VariableRef {
         name: Cow<'a, str>,
@@ -64,41 +64,41 @@ pub enum Expr<'a> {
     },
     TemplateString(Vec<TemplateChunk<'a>>),
     If {
-        condition: Box<Expr<'a>>,
-        then_branch: Vec<Expr<'a>>,
-        else_branch: Vec<Expr<'a>>,
+        condition: Box<TypedExpr<'a>>,
+        then_branch: Vec<TypedExpr<'a>>,
+        else_branch: Vec<TypedExpr<'a>>,
     },
     ElseIf {
-        condition: Box<Expr<'a>>,
-        then_branch: Vec<Expr<'a>>,
+        condition: Box<TypedExpr<'a>>,
+        then_branch: Vec<TypedExpr<'a>>,
     },
     Else {
-        then_branch: Vec<Expr<'a>>,
+        then_branch: Vec<TypedExpr<'a>>,
     },
     BuiltInCall {
         function: BuiltInFunction,
-        args: Vec<Expr<'a>>,
+        args: Vec<TypedExpr<'a>>,
         return_type: Type<'a>,
     },
     Call {
-        target: Option<Box<Expr<'a>>>,
+        target: Option<Box<TypedExpr<'a>>>,
         name: &'a str,
         transpiled_name: Option<String>,
-        args: Vec<Expr<'a>>,
+        args: Vec<TypedExpr<'a>>,
         returned_type: Option<Type<'a>>,
         is_allocator: bool,
     },
     StructDef {
         name: &'a str,
         transpiled_name: Option<Cow<'a, str>>,
-        fields: Vec<(&'a str, Type<'a>, Option<Expr<'a>>)>,
+        fields: Vec<(&'a str, Type<'a>, Option<TypedExpr<'a>>)>,
         methods: Vec<MethodType<'a>>,
     },
     FunctionDef {
         name: &'a str,
         transpiled_name: Option<Cow<'a, str>>,
         params: Vec<Parameter<'a>>,
-        body: Vec<Expr<'a>>,
+        body: Vec<TypedExpr<'a>>,
         return_type: Option<Type<'a>>,
         is_allocator: bool,
     },
@@ -111,30 +111,30 @@ pub enum Expr<'a> {
     StructInit {
         name: Cow<'a, str>,
         transpiled_name: Option<Cow<'a, str>>,
-        args: Vec<(&'a str, Expr<'a>)>,
+        args: Vec<(&'a str, TypedExpr<'a>)>,
     },
 
     Assignment {
         name: Cow<'a, str>,
-        value: Box<Expr<'a>>,
+        value: Box<TypedExpr<'a>>,
         symbol: Option<Symbol<'a>>,
     },
     BinaryOp {
-        left: Box<Expr<'a>>,
+        left: Box<TypedExpr<'a>>,
         op: &'a str,
-        right: Box<Expr<'a>>,
+        right: Box<TypedExpr<'a>>,
     },
     Break,
     Continue,
     Match {
-        target: Box<Expr<'a>>,
-        arms: Vec<(Expr<'a>, Vec<Expr<'a>>)>,
+        target: Box<TypedExpr<'a>>,
+        arms: Vec<(TypedExpr<'a>, Vec<TypedExpr<'a>>)>,
     },
 }
 
 #[derive(Debug)]
-pub struct Program<'a> {
-    pub expressions: Vec<Expr<'a>>,
+pub struct CompiledProgram<'a> {
+    pub expressions: Vec<TypedExpr<'a>>,
 }
 
 #[derive(Clone, Debug)]
@@ -150,7 +150,7 @@ pub struct Symbol<'a> {
 #[derive(Debug)]
 pub enum TemplateChunk<'a> {
     Literal(&'a str),
-    Expr(Box<Expr<'a>>),
+    TypedExpr(Box<TypedExpr<'a>>),
 }
 
 #[derive(Clone, Debug)]

@@ -60,9 +60,7 @@ tip Siyahı
     // Burasını Sistem Qərar Versin
 
 
-əgər yalan
-  Çap(1)
-yoxsa 1==0+1
-  Çap(2)
-əks
-  Çap(3)
+dəyişən ədəd a  = 0
+gəz aralıq(1,20) içində i
+  a=a+0.1
+  Çap(a)

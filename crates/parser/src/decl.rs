@@ -13,16 +13,21 @@ pub fn parse_decl<'a, I>(
 where
     I: Iterator<Item = &'a Token>,
 {
+    let typ = match tokens.peek() {
+        Some(Token::BoolType)
+        | Some(Token::NaturalType)
+        | Some(Token::IntegerType)
+        | Some(Token::FloatType)
+        | Some(Token::StringType)
+        | Some(Token::Void) => parse_type(tokens)?,
+        Some(_) => Type::Any,
+        None => Type::Any,
+    };
+
     let name = match tokens.next() {
         Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
         Some(other) => return Err(ParserError::DeclNameNotFound(other.clone())),
         None => return Err(ParserError::DeclNameNotFound(Token::Eof)),
-    };
-
-    let typ = match tokens.next() {
-        Some(Token::Colon) => parse_type(tokens)?,
-        Some(_) => Type::Any,
-        None => Type::Any,
     };
 
     match tokens.next() {
@@ -30,7 +35,6 @@ where
         Some(other) => return Err(ParserError::DeclAssignNotFound(other.clone())),
         None => return Err(ParserError::DeclAssignNotFound(Token::Eof)),
     }
-
     let value_expr = parse_expression(tokens)?;
 
     let value = Box::new(value_expr);

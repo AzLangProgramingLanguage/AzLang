@@ -13,6 +13,7 @@ pub mod list;
 pub mod r#loop;
 pub mod r#match;
 pub mod method;
+//pub mod parsing_for;
 pub mod shared_ast;
 pub mod struct_init;
 pub mod structs;
@@ -24,9 +25,9 @@ pub mod union;
 use ast::Program;
 use peekmore::PeekMore;
 use tokenizer::tokens::Token;
+use typed_ast::CompiledProgram;
 
 use crate::expressions::parse_expression_block;
-
 #[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
@@ -43,11 +44,8 @@ impl Parser {
             expressions: ast,
         })
     }
-    pub fn parse_for_transpile(&mut self) -> Result<Program, errors::ParserError> {
-        let ast = parse_expression_block(&mut self.tokens.iter().peekmore())?;
-        Ok(Program {
-            function_defs: Vec::new(),
-            expressions: ast,
-        })
-    }
+    // pub fn parse_for_transpile(&mut self) -> Result<CompiledProgram, errors::ParserError> {
+    //     let ast = parse_expression_for_typed_ast(&mut self.tokens.iter().peekmore())?;
+    //     Ok(CompiledProgram { expressions: ast })
+    // }
 }
