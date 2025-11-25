@@ -183,13 +183,12 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             value,
             symbol,
         } => {
+            let new_value = runner_interpretator(ctx, *value).unwrap_or(Expr::Void);
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
-                    value: eval(&*value, ctx),
-                    typ: symbol
-                        .map(|s| s.typ)
-                        .unwrap_or_else(|| helpers::get_run_type(&value)),
+                    value: new_value,
+                    typ: symbol.map(|s| s.typ).unwrap_or(Type::Any),
                     is_mutable: true,
                 },
             );
@@ -263,7 +262,15 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                     "*" => Some(Expr::Number(l * r)),
                     "/" => Some(Expr::Number(l / r)),
                     "==" => Some(Expr::Bool(l == r)),
-                    _ => Some(Expr::Bool(false)), // naməlum operator
+                    _ => Some(Expr::Bool(false)),
+                },
+                (Expr::Float(l), Expr::Number(r)) => match op {
+                    "+" => { let new_r: f64 = r as &f64;   Some(Expr::Float(l + r))  },
+                    "-" => Some(Expr::Number(l - r)),
+                    "*" => Some(Expr::Number(l * r)),
+                    "/" => Some(Expr::Number(l / r)),
+                    "==" => Some(Expr::Bool(l == r)),
+                    _ => Some(Expr::Bool(false)),
                 },
                 (Expr::Time(l), Expr::Time(r)) => match op {
                     "-" => Some(Expr::Number(l.duration_since(*r).as_millis() as i64)),
@@ -276,6 +283,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                     "==" => Some(Expr::Bool(l == r)),
                     _ => Some(Expr::Bool(false)),
                 },
+                std::process::exit(1);
 
                 _ => Some(Expr::Bool(false)),
             }

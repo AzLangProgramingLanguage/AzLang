@@ -42,6 +42,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "böyük_ədəd" => Token::BigIntegerType,
             "kiçik_ədəd" => Token::LowIntegerType,
             "zigfloat" => Token::ZigFloat,
+            "kəsr" => Token::FloatType,
             "qərar" => Token::BoolType,
             "heçnə" => Token::Void,
             "Çap" => Token::Print,
