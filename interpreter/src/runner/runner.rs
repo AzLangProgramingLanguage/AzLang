@@ -139,37 +139,42 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             let iterable = eval(&*iterable, ctx);
             match iterable {
                 Expr::List(list) => {
+                    //BUG: burada ciddi problem var 
                     let mut if_break = false;
                     let mut if_continue = false;
+                    println!("asdas,{:?}",list);
                     for item in list {
+                        println!("Looping, {:?}",item);
+                        println!("Loos, {:?}",if_break);
+                        println!("Loos, {:?}",if_continue);
                         let item = eval(&item, ctx);
                         ctx.variables.insert(
                             var_name.to_string(),
-                            Variable {
+                            Variable { 
                                 value: item,
                                 typ: Type::Any,
                                 is_mutable: false,
                             },
                         );
-                        if if_break {
-                            break;
-                        }
-                        if if_continue {
-                            if_continue = false;
-                            continue;
-                        }
+                        // if if_break {
+                        //     break;
+                        // }
+                        // if if_continue {
+                        //     if_continue = false;
+                        //     continue;
+                        // }
                         for expr in body.clone().into_iter() {
                             match expr {
                                 Expr::Break => if_break = true,
                                 Expr::Continue => if_continue = true,
                                 _ => return runner_interpretator(ctx, expr),
                             }
-                            if if_break {
-                                break;
-                            }
-                            if if_continue {
-                                break;
-                            }
+                            // if if_break {
+                            //     break;
+                            // }
+                            // if if_continue {
+                            //     break;
+                            // }
                         }
                     }
                 }
@@ -247,6 +252,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
         }
 
         Expr::BinaryOp { left, op, right } => {
+            /*TODO:  Burada kod çox uzun və təkrarlanandır.  */
             let left_val = match *left {
                 Expr::Call { .. } => runner_interpretator(ctx, *left).unwrap_or(Expr::Void),
                 _ => eval(&left, ctx),
@@ -265,13 +271,49 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                     _ => Some(Expr::Bool(false)),
                 },
                 (Expr::Float(l), Expr::Number(r)) => match op {
-                    "+" => { let new_r: f64 = r as &f64;   Some(Expr::Float(l + r))  },
-                    "-" => Some(Expr::Number(l - r)),
-                    "*" => Some(Expr::Number(l * r)),
-                    "/" => Some(Expr::Number(l / r)),
-                    "==" => Some(Expr::Bool(l == r)),
-                    _ => Some(Expr::Bool(false)),
+
+                    "+" =>  {
+                        Some(Expr::Float(l + *r as f64))  
+                    }
+                    "-" => {
+                        Some(Expr::Float(l - *r as f64))
+                    }
+                    "/" => {
+                        Some(Expr::Float(l / *r as f64))
+                    }
+                    "*" => {
+                        Some(Expr::Float(l * *r as f64))
+                    }
+                    "==" => {
+                        Some(Expr::Bool(*l == *r as f64))
+                    }
+                    _ => {
+                        Some(Expr::Bool(false))
+                    }
                 },
+                    (Expr::Number(l), Expr::Float(r)) => match op {
+
+                    "+" =>  {
+                        Some(Expr::Float(*l as f64 + r))  
+                    }
+                    "-" => {
+                        Some(Expr::Float(*l as f64 - *r as f64))
+
+                    }
+                    "/" => {
+                        Some(Expr::Float(*l as f64 / r))
+                    }
+                    "*" => {
+                        Some(Expr::Float(*l as f64 * r))
+                    }
+                    "==" => {
+                        Some(Expr::Bool(*l as f64 == *r))
+                    }
+                    _ => {
+                        Some(Expr::Bool(false))
+                    }
+                },
+
                 (Expr::Time(l), Expr::Time(r)) => match op {
                     "-" => Some(Expr::Number(l.duration_since(*r).as_millis() as i64)),
                     _ => Some(Expr::Bool(false)),
@@ -283,7 +325,6 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                     "==" => Some(Expr::Bool(l == r)),
                     _ => Some(Expr::Bool(false)),
                 },
-                std::process::exit(1);
 
                 _ => Some(Expr::Bool(false)),
             }

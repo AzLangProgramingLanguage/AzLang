@@ -61,5 +61,5 @@ tip Siyahı
 
 
 dəyişən kəsr a  = 0.0
-a = 0.2 + 1
-Çap(a)
+gəz [1,2,3,4] içində i
+    Çap(i)
