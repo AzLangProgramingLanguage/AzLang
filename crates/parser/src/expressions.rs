@@ -1,4 +1,4 @@
-use crate::errors::ParserError;
+use crate::{errors::ParserError, literal_parse::literals_parse};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
@@ -10,7 +10,6 @@ use crate::{
     decl::parse_decl,
     r#enum::parse_enum_decl,
     function::parse_function_def,
-    helpers::literals_parse,
     identifier::parse_identifier,
     r#loop::parse_loop,
     r#match::parse_match,

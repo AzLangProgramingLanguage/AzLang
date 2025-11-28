@@ -1,6 +1,8 @@
 pub mod ast;
 pub mod binary_op;
+pub mod binary_op_typed;
 pub mod builtin;
+pub mod builtin_typed;
 pub mod condition;
 pub mod decl;
 pub mod r#enum;
@@ -10,10 +12,12 @@ pub mod function;
 pub mod helpers;
 pub mod identifier;
 pub mod list;
+pub mod literal_parse;
+pub mod literal_parse_typed;
 pub mod r#loop;
 pub mod r#match;
 pub mod method;
-//pub mod parsing_for;
+pub mod parsing_for;
 pub mod shared_ast;
 pub mod struct_init;
 pub mod structs;
@@ -25,9 +29,11 @@ pub mod union;
 use ast::Program;
 use peekmore::PeekMore;
 use tokenizer::tokens::Token;
-use typed_ast::CompiledProgram;
 
-use crate::expressions::parse_expression_block;
+use crate::{
+    expressions::parse_expression_block, parsing_for::parse_expression_for_typed_ast,
+    typed_ast::CompiledProgram,
+};
 #[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
@@ -44,8 +50,8 @@ impl Parser {
             expressions: ast,
         })
     }
-    // pub fn parse_for_transpile(&mut self) -> Result<CompiledProgram, errors::ParserError> {
-    //     let ast = parse_expression_for_typed_ast(&mut self.tokens.iter().peekmore())?;
-    //     Ok(CompiledProgram { expressions: ast })
-    // }
+    pub fn parse_for_transpile(&mut self) -> Result<CompiledProgram, errors::ParserError> {
+        let ast = parse_expression_for_typed_ast(&mut self.tokens.iter().peekmore())?;
+        Ok(CompiledProgram { expressions: ast })
+    }
 }

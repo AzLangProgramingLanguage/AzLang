@@ -1,4 +1,9 @@
-use crate::{errors::ParserError, shared_ast::Type};
+use crate::{
+    errors::ParserError,
+    parsing_for::parse_expression_typed,
+    shared_ast::Type,
+    typed_ast::{ParameterTyped, TypedExpr},
+};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
@@ -12,6 +17,13 @@ type MethodResultType<'a> = (
     &'a str,
     Vec<Parameter<'a>>,
     Vec<Expr<'a>>,
+    Option<Type<'a>>,
+    bool,
+);
+type MethodResultTypeTyped<'a> = (
+    &'a str,
+    Vec<ParameterTyped<'a>>,
+    Vec<TypedExpr<'a>>,
     Option<Type<'a>>,
     bool,
 );
@@ -52,9 +64,10 @@ where
 
                 let param_name = match tokens.next() {
                     Some(Token::Identifier(s)) => (*s).as_str(),
-                    other => {
-                        return Err(ParserError::ParameterNameNotFound(other.unwrap().clone()));
-                    } /* TODO: using unwrap */
+                    None => return Err(ParserError::UnexpectedEOF),
+                    Some(other) => {
+                        return Err(ParserError::ParameterNameNotFound(other.clone()));
+                    }
                 };
 
                 match tokens.peek() {
@@ -104,6 +117,102 @@ where
             Token::Eof => break,
             _ => {
                 let expr = parse_expression(tokens)?;
+                body.push(expr);
+            }
+        }
+    }
+
+    Ok((name, params, body, return_type, false))
+}
+pub fn parse_method_typed<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+) -> Result<MethodResultTypeTyped<'a>, ParserError>
+where
+    I: Iterator<Item = &'a Token>,
+{
+    expect_token(tokens, Token::Method)?;
+
+    let name = match tokens.next() {
+        Some(Token::Identifier(n)) => (*n).as_str(),
+        None => return Err(ParserError::UnexpectedEOF),
+        Some(other) => {
+            return Err(ParserError::MethodNameNotFound(other.clone()));
+        }
+    };
+
+    expect_token(tokens, Token::LParen)?;
+
+    let mut params = Vec::new();
+    while let Some(token) = tokens.peek() {
+        match token {
+            Token::ConstantDecl | Token::MutableDecl | Token::Identifier(_) => {
+                let is_mutable = match tokens.peek() {
+                    Some(Token::MutableDecl) => {
+                        tokens.next();
+                        true
+                    }
+                    Some(Token::ConstantDecl) => {
+                        tokens.next();
+                        false
+                    }
+                    _ => false,
+                };
+
+                let param_name = match tokens.next() {
+                    Some(Token::Identifier(s)) => (*s).as_str(),
+                    None => return Err(ParserError::UnexpectedEOF),
+                    Some(other) => {
+                        return Err(ParserError::ParameterNameNotFound(other.clone()));
+                    }
+                };
+
+                match tokens.peek() {
+                    Some(Token::Colon) => {
+                        tokens.next();
+                    }
+                    Some(Token::RParen) => break,
+                    None => return Err(ParserError::RParenNotFound(Token::Eof)),
+                    Some(other) => {
+                        return Err(ParserError::ParameterNotExpected((*other).clone()));
+                    }
+                }
+                params.push(ParameterTyped {
+                    name: param_name.to_string(),
+                    typ: parse_type(tokens)?,
+                    is_mutable,
+                    is_pointer: false,
+                });
+            }
+            Token::RParen => break,
+            Token::Comma => {
+                tokens.next();
+            }
+            other => {
+                return Err(ParserError::RParenNotFound((*other).clone()));
+            }
+        }
+    }
+
+    expect_token(tokens, Token::RParen)?;
+    expect_token(tokens, Token::Colon)?;
+    let return_type = Some(parse_type(tokens)?);
+    expect_token(tokens, Token::Newline)?;
+    expect_token(tokens, Token::Indent)?;
+
+    let mut body = Vec::new();
+
+    while let Some(token) = tokens.peek() {
+        match token {
+            Token::Dedent => {
+                tokens.next();
+                break;
+            }
+            Token::Newline => {
+                tokens.next();
+            }
+            Token::Eof => break,
+            _ => {
+                let expr = parse_expression_typed(tokens)?;
                 body.push(expr);
             }
         }

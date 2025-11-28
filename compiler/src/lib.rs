@@ -14,10 +14,7 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     }
     clean_ast(&mut parsed_program, &validator);
 
-    /*     let mut validator = validator::ValidatorContext::new();
-    for expr in parsed_program.expressions.iter_mut() {
-        validate_expr(expr, &mut validator)?;
-    }
+    /*
     let mut runner = Runner::new(); */
     /*     runner.run(parsed_program);
      */

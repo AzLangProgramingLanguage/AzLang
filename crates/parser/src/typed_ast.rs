@@ -4,10 +4,10 @@ use std::rc::Rc;
 use crate::shared_ast::{BuiltInFunction, Type};
 
 #[derive(Debug)]
-pub struct MethodType<'a> {
+pub struct MethodTypeTyped<'a> {
     pub name: &'a str,
     pub transpiled_name: Option<Cow<'a, str>>,
-    pub params: Vec<Parameter<'a>>,
+    pub params: Vec<ParameterTyped<'a>>,
     pub body: Vec<TypedExpr<'a>>,
     pub return_type: Option<Type<'a>>,
     pub is_allocator: bool,
@@ -62,7 +62,7 @@ pub enum TypedExpr<'a> {
         transpiled_name: Option<String>,
         symbol: Option<Symbol<'a>>,
     },
-    TemplateString(Vec<TemplateChunk<'a>>),
+    TemplateString(Vec<TypedTemplateChunk<'a>>),
     If {
         condition: Box<TypedExpr<'a>>,
         then_branch: Vec<TypedExpr<'a>>,
@@ -92,12 +92,12 @@ pub enum TypedExpr<'a> {
         name: &'a str,
         transpiled_name: Option<Cow<'a, str>>,
         fields: Vec<(&'a str, Type<'a>, Option<TypedExpr<'a>>)>,
-        methods: Vec<MethodType<'a>>,
+        methods: Vec<MethodTypeTyped<'a>>,
     },
     FunctionDef {
         name: &'a str,
         transpiled_name: Option<Cow<'a, str>>,
-        params: Vec<Parameter<'a>>,
+        params: Vec<ParameterTyped<'a>>,
         body: Vec<TypedExpr<'a>>,
         return_type: Option<Type<'a>>,
         is_allocator: bool,
@@ -106,7 +106,7 @@ pub enum TypedExpr<'a> {
         name: &'a str,
         transpiled_name: Option<Cow<'a, str>>,
         fields: Vec<(&'a str, Type<'a>)>,
-        methods: Vec<MethodType<'a>>,
+        methods: Vec<MethodTypeTyped<'a>>,
     },
     StructInit {
         name: Cow<'a, str>,
@@ -124,6 +124,7 @@ pub enum TypedExpr<'a> {
         op: &'a str,
         right: Box<TypedExpr<'a>>,
     },
+    Comment(&'a str),
     Break,
     Continue,
     Match {
@@ -148,13 +149,13 @@ pub struct Symbol<'a> {
 }
 
 #[derive(Debug)]
-pub enum TemplateChunk<'a> {
+pub enum TypedTemplateChunk<'a> {
     Literal(&'a str),
     TypedExpr(Box<TypedExpr<'a>>),
 }
 
 #[derive(Clone, Debug)]
-pub struct Parameter<'a> {
+pub struct ParameterTyped<'a> {
     pub name: String,
     pub typ: Type<'a>,
     pub is_mutable: bool,
