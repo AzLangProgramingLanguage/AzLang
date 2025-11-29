@@ -1,16 +1,18 @@
 mod cleaner;
 use crate::{cleaner::clean_ast, errors::CompilerError};
 use parser::Parser;
-use validator::validate::validate_expr;
+use validator::validate_typed::validate_expr_typed;
 mod errors;
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let sdk = file_system::read_file("sdk/data_structures.az")?;
     let mut parser = Parser::new(sdk);
-    let mut parsed_program = parser.parse().map_err(|err| CompilerError::Parser(err))?;
+    let mut parsed_program = parser
+        .parse_for_transpile()
+        .map_err(|err| CompilerError::Parser(err))?;
 
     let mut validator = validator::ValidatorContext::new();
     for expr in parsed_program.expressions.iter_mut() {
-        validate_expr(expr, &mut validator)?;
+        validate_expr_typed(expr, &mut validator)?;
     }
     clean_ast(&mut parsed_program, &validator);
 

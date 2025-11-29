@@ -4,6 +4,7 @@ use crate::{
     errors::ParserError,
     parsing_for::{parse_expression_typed, parse_single_expr_typed},
     shared_ast::Type,
+    struct_init::parse_structs_init_typed,
     typed_ast::TypedExpr,
 };
 use peekmore::PeekMoreIterator;
@@ -275,7 +276,7 @@ where
         }
         Some(Token::LBrace) => {
             tokens.next();
-            parse_structs_init(tokens, Cow::Borrowed(s))
+            parse_structs_init_typed(tokens, Cow::Borrowed(s))
         }
         Some(_) => Ok(expr),
         None => Err(ParserError::UnexpectedEOF),

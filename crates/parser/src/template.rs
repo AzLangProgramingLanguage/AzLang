@@ -11,13 +11,18 @@ use crate::{
     expressions::parse_expression,
 };
 
-pub fn parse_template_string_expr<'a, I>(
+fn parse_template_core<'a, I, Chunk, Out>(
     tokens: &mut PeekMoreIterator<I>,
-) -> Result<Expr<'a>, ParserError>
+    literal_fn: impl Fn(&'a str) -> Chunk,
+    expr_fn: impl Fn(Out) -> Chunk,
+    parse_expr: impl Fn(&mut PeekMoreIterator<I>) -> Result<Out, ParserError>,
+    finish: impl Fn(Vec<Chunk>) -> Out,
+) -> Result<Out, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
     let mut chunks = Vec::new();
+
     loop {
         let token = match tokens.peek() {
             Some(token) => *token,
@@ -26,7 +31,7 @@ where
 
         match token {
             Token::StringLiteral(s) => {
-                chunks.push(TemplateChunk::Literal(s));
+                chunks.push(literal_fn(s));
                 tokens.next();
             }
             Token::InterpolationStart => {
@@ -39,25 +44,20 @@ where
                             break;
                         }
                         Some(_) => {
-                            chunks.push(TemplateChunk::Expr(Box::new(parse_expression(tokens)?)));
+                            let expr_parsed = parse_expr(tokens)?;
+                            chunks.push(expr_fn(expr_parsed));
                         }
-                        None => {
-                            return Err(ParserError::UnexpectedEOF);
-                        }
+                        None => return Err(ParserError::UnexpectedEOF),
                     }
                 }
             }
-            Token::Backtick => {
-                break;
-            }
-            other => {
-                return Err(ParserError::UnexpectedToken(other.clone()));
-            }
+            Token::Backtick => break,
+            other => return Err(ParserError::UnexpectedToken(other.clone())),
         }
     }
 
     tokens.next();
-    Ok(Expr::TemplateString(chunks))
+    Ok(finish(chunks))
 }
 
 pub fn parse_template_string_expr_typed<'a, I>(
@@ -66,47 +66,26 @@ pub fn parse_template_string_expr_typed<'a, I>(
 where
     I: Iterator<Item = &'a Token>,
 {
-    let mut chunks = Vec::new();
-    loop {
-        let token = match tokens.peek() {
-            Some(token) => *token,
-            None => break,
-        };
+    parse_template_core(
+        tokens,
+        |s| TypedTemplateChunk::Literal(s),
+        |expr| TypedTemplateChunk::TypedExpr(Box::new(expr)),
+        |toks| parse_expression_typed(toks),
+        |chunks| TypedExpr::TemplateString(chunks),
+    )
+}
 
-        match token {
-            Token::StringLiteral(s) => {
-                chunks.push(TypedTemplateChunk::Literal(s));
-                tokens.next();
-            }
-            Token::InterpolationStart => {
-                tokens.next();
-
-                loop {
-                    match tokens.peek() {
-                        Some(Token::InterpolationEnd) => {
-                            tokens.next();
-                            break;
-                        }
-                        Some(_) => {
-                            chunks.push(TypedTemplateChunk::TypedExpr(Box::new(
-                                parse_expression_typed(tokens)?,
-                            )));
-                        }
-                        None => {
-                            return Err(ParserError::UnexpectedEOF);
-                        }
-                    }
-                }
-            }
-            Token::Backtick => {
-                break;
-            }
-            other => {
-                return Err(ParserError::UnexpectedToken(other.clone()));
-            }
-        }
-    }
-
-    tokens.next();
-    Ok(TypedExpr::TemplateString(chunks))
+pub fn parse_template_string_expr<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+) -> Result<Expr<'a>, ParserError>
+where
+    I: Iterator<Item = &'a Token>,
+{
+    parse_template_core(
+        tokens,
+        |s| TemplateChunk::Literal(s),
+        |expr| TemplateChunk::Expr(Box::new(expr)),
+        |toks| parse_expression(toks),
+        |chunks| Expr::TemplateString(chunks),
+    )
 }

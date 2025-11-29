@@ -12,11 +12,6 @@ pub struct MethodTypeTyped<'a> {
     pub return_type: Option<Type<'a>>,
     pub is_allocator: bool,
 }
-#[derive(Debug)]
-pub struct EnumDecl<'a> {
-    pub name: Cow<'a, str>,
-    pub variants: Vec<Cow<'a, str>>,
-}
 
 #[derive(Debug)]
 pub enum TypedExpr<'a> {
@@ -25,7 +20,10 @@ pub enum TypedExpr<'a> {
     Bool(bool),
     Number(i64),
     Char(char),
-    EnumDecl(EnumDecl<'a>),
+    EnumDecl {
+        name: Cow<'a, str>,
+        variants: Vec<Cow<'a, str>>,
+    },
     Return(Box<TypedExpr<'a>>),
     List(Vec<TypedExpr<'a>>),
     UnaryOp {

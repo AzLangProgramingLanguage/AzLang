@@ -18,12 +18,6 @@ pub struct MethodType<'a> {
     pub return_type: Option<Type<'a>>,
 }
 #[derive(Debug, Clone)]
-pub struct EnumDecl<'a> {
-    pub name: Cow<'a, str>,
-    pub variants: Vec<Cow<'a, str>>,
-}
-
-#[derive(Debug, Clone)]
 pub enum Expr<'a> {
     DynamicString(Rc<String>),
     Void,
@@ -33,7 +27,10 @@ pub enum Expr<'a> {
     Bool(bool),
     Number(i64),
     Char(char),
-    EnumDecl(EnumDecl<'a>),
+    EnumDecl {
+        name: Cow<'a, str>,
+        variants: Vec<Cow<'a, str>>,
+    },
     Comment(&'a str),
     List(Vec<Expr<'a>>),
     UnaryOp {

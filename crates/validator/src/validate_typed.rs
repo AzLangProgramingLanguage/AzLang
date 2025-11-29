@@ -2,21 +2,23 @@ use std::{borrow::Cow, rc::Rc};
 
 use logging::validator_log;
 use parser::{
-    ast::{Expr, Symbol, TemplateChunk},
     shared_ast::{BuiltInFunction, Type},
+    typed_ast::{Symbol, TypedExpr},
 };
 
 use crate::{FunctionInfo, MethodInfo, ValidatorContext, errors::ValidatorError, helper::get_type};
-pub fn validate_expr<'a>(
-    expr: &mut Expr<'a>,
+pub fn validate_expr_typed<'a>(
+    expr: &mut TypedExpr<'a>,
     ctx: &mut ValidatorContext<'a>,
 ) -> Result<(), ValidatorError> {
     match expr {
-        Expr::Decl {
+        TypedExpr::Decl {
             name,
             typ,
             is_mutable,
             value,
+            transpiled_name,
+            is_primitive,
         } => {
             validator_log(&format!("✅ Declarasiya yaradılır: {name}"));
             validator_log(&format!(
@@ -28,7 +30,7 @@ pub fn validate_expr<'a>(
                 return Err(ValidatorError::AlreadyDecl(name.to_string()));
             }
 
-            validate_expr(value, ctx)?;
+            validate_expr_typed(value, ctx)?;
             let inferred = get_type(value, ctx, typ.as_deref());
             if let Some(s) = inferred {
                 if let Some(typ_ref) = typ.as_deref() {
@@ -48,6 +50,8 @@ pub fn validate_expr<'a>(
                         is_mutable: *is_mutable,
                         is_used: false,
                         is_pointer: false,
+                        transpiled_name,
+                        is_allocator: false,
                     },
                 );
             } else {
@@ -55,13 +59,13 @@ pub fn validate_expr<'a>(
             }
         }
 
-        Expr::Assignment {
+        TypedExpr::Assignment {
             name,
             value,
             symbol,
         } => {
             validator_log(&format!("✅ Assignment yoxlanılır: '{name}'"));
-            validate_expr(value, ctx)?;
+            validate_TypedExpr_typed(value, ctx)?;
             let inferred = get_type(value, ctx, None);
             if let Some(mut var) = ctx.lookup_variable(name) {
                 var.is_used = true;
@@ -83,7 +87,7 @@ pub fn validate_expr<'a>(
                 return Err(ValidatorError::UndefinedVariable(name.to_string()));
             }
         }
-        Expr::UnionType {
+        TypedExpr::UnionType {
             name,
             fields,
             methods,
@@ -116,7 +120,7 @@ pub fn validate_expr<'a>(
             for method in methods.iter_mut() {
                 ctx.current_struct = Some(name);
                 for expr in &mut method.body {
-                    validate_expr(expr, ctx)?;
+                    validate_expr_typed(expr, ctx)?;
                 }
 
                 if let Some(Type::User(name)) = &mut method.return_type {
@@ -136,21 +140,21 @@ pub fn validate_expr<'a>(
 
             ctx.current_struct = None;
         }
-        Expr::Match { target, arms } => {
+        TypedExpr::Match { target, arms } => {
             validator_log(&format!("✅ Match ifadəsi yoxlanılır"));
-            validate_expr(target, ctx)?;
+            validate_expr_typed(target, ctx)?;
             for arm in arms {
                 for expr in arm.1.iter_mut() {
-                    validate_expr(expr, ctx)?;
+                    validate_expr_typed(expr, ctx)?;
                 }
             }
         }
-        Expr::String(_, _)
-        | Expr::Float(_)
-        | Expr::Bool(_)
-        | Expr::Number(_)
-        | Expr::UnaryOp { .. } => {}
-        Expr::BuiltInCall {
+        TypedExpr::String(_, _)
+        | TypedExpr::Float(_)
+        | TypedExpr::Bool(_)
+        | TypedExpr::Number(_)
+        | TypedExpr::UnaryOp { .. } => {}
+        TypedExpr::BuiltInCall {
             function,
             args,
             return_type: _,
@@ -172,7 +176,7 @@ pub fn validate_expr<'a>(
                     ctx.is_allocator_used = true;
                 }
                 BuiltInFunction::Print => {
-                    validate_expr(&mut args[0], ctx)?;
+                    validate_expr_typed(&mut args[0], ctx)?;
                     validator_log(&format!("✅ Print funksiyası yoxlanılır"));
                     if let Some(t) = get_type(&args[0], ctx, None) {
                         if t == Type::Void {
@@ -224,10 +228,10 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
             for arg in args {
-                validate_expr(arg, ctx)?;
+                validate_expr_typed(arg, ctx)?;
             }
         }
-        Expr::StructInit { name, args } => {
+        TypedExpr::StructInit { name, args } => {
             validator_log(&format!("✅ Struct yoxlanılır: '{}'", name));
 
             if let Some((s, ..)) = ctx.struct_defs.get(name.as_ref()) {
@@ -237,10 +241,10 @@ pub fn validate_expr<'a>(
             }
 
             for arg in args.iter_mut() {
-                validate_expr(&mut arg.1, ctx)?;
+                validate_expr_typed(&mut arg.1, ctx)?;
             }
         }
-        Expr::StructDef {
+        TypedExpr::StructDef {
             name,
             fields,
             methods,
@@ -278,7 +282,7 @@ pub fn validate_expr<'a>(
             for method in methods.iter_mut() {
                 ctx.current_struct = Some(name);
                 for expr in &mut method.body {
-                    validate_expr(expr, ctx)?;
+                    validate_expr_typed(expr, ctx)?;
                 }
                 validator_log(&format!(
                     "✅ Struct metodları yoxlanılır: '{}'",
@@ -290,7 +294,7 @@ pub fn validate_expr<'a>(
             }
         }
 
-        Expr::EnumDecl { name, variants } => {
+        TypedExpr::EnumDecl { name, variants } => {
             validator_log(&format!("Enum tərifi yoxlanılır: '{}'", name));
 
             if ctx.enum_defs.contains_key(name.as_ref()) {
@@ -300,7 +304,7 @@ pub fn validate_expr<'a>(
             ctx.enum_defs
                 .insert(Cow::Owned(name.to_string()), variants.clone());
         }
-        Expr::VariableRef { name, symbol } => {
+        TypedExpr::VariableRef { name, symbol } => {
             validator_log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
             if let Some(sym) = ctx.lookup_variable_mut(name) {
@@ -330,14 +334,14 @@ pub fn validate_expr<'a>(
             }
             return Ok(());
         }
-        Expr::If {
+        TypedExpr::If {
             condition,
             then_branch,
             else_branch,
         } => {
             validator_log("Şərt yoxlanılır");
 
-            validate_expr(condition, ctx)?;
+            validate_expr_typed(condition, ctx)?;
 
             let cond_type =
                 get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
@@ -348,20 +352,20 @@ pub fn validate_expr<'a>(
             }
 
             for expr in then_branch {
-                validate_expr(expr, ctx)?;
+                validate_expr_typed(expr, ctx)?;
             }
 
             for expr in else_branch {
-                validate_expr(expr, ctx)?;
+                validate_expr_typed(expr, ctx)?;
             }
         }
-        Expr::ElseIf {
+        TypedExpr::ElseIf {
             condition,
             then_branch,
         } => {
             validator_log("Şərt yoxlanılır");
 
-            validate_expr(condition, ctx)?;
+            validate_expr_typed(condition, ctx)?;
 
             let cond_type =
                 get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
@@ -372,24 +376,24 @@ pub fn validate_expr<'a>(
             }
 
             for expr in then_branch {
-                validate_expr(expr, ctx)?;
+                validate_expr_typed(expr, ctx)?;
             }
         }
-        Expr::Else { then_branch } => {
+        TypedExpr::Else { then_branch } => {
             validator_log("Şərt yoxlanılır");
 
             for expr in then_branch {
-                validate_expr(expr, ctx)?;
+                validate_expr_typed(expr, ctx)?;
             }
         }
 
-        Expr::Loop {
+        TypedExpr::Loop {
             var_name,
             iterable,
             body,
         } => {
             validator_log("Dövr yoxlanılır");
-            validate_expr(iterable, ctx)?;
+            validate_expr_typed(iterable, ctx)?;
             let iterable_type =
                 get_type(iterable, ctx, None).ok_or(ValidatorError::LoopIterableTypeNotFound)?;
             if let Type::Array(inner) = iterable_type {
@@ -404,22 +408,22 @@ pub fn validate_expr<'a>(
                 return Err(ValidatorError::LoopRequiresList);
             }
             for expr in body {
-                validate_expr(expr, ctx)?;
+                validate_expr_typed(expr, ctx)?;
             }
         }
 
-        Expr::TemplateString(chunks) => {
+        TypedExpr::TemplateString(chunks) => {
             validator_log("Template string yoxlanılır");
             for chunk in chunks.iter_mut() {
                 match chunk {
                     TemplateChunk::Literal(_) => {}
                     TemplateChunk::Expr(expr) => {
-                        validate_expr(expr, ctx)?;
+                        validate_expr_typed(expr, ctx)?;
                     }
                 }
             }
         }
-        Expr::Call {
+        TypedExpr::Call {
             target,
             args,
             returned_type,
@@ -427,7 +431,7 @@ pub fn validate_expr<'a>(
         } => {
             match target {
                 Some(variable) => {
-                    validate_expr(variable, ctx)?;
+                    validate_expr_typed(variable, ctx)?;
                     let variable_type = get_type(variable, ctx, None);
 
                     match variable_type {
@@ -551,19 +555,19 @@ pub fn validate_expr<'a>(
                 }
             }
             for arg in args.iter_mut() {
-                validate_expr(arg, ctx)?;
+                validate_expr_typed(arg, ctx)?;
             }
         }
-        Expr::Index {
+        TypedExpr::Index {
             target,
             index,
             target_type,
         } => {
             validator_log("indeksləmə əməliyyatını yoxlayır...");
 
-            validate_expr(target, ctx)?;
-            validate_expr(index, ctx)?;
-            /*             validate_expr(index, ctx, log)?;
+            validate_expr_typed(target, ctx)?;
+            validate_expr_typed(index, ctx)?;
+            /*             validate_expr_typed(index, ctx, log)?;
              */
             let index_type = get_type(index, ctx, None);
 
@@ -584,7 +588,7 @@ pub fn validate_expr<'a>(
                 Type::String => {
                     validator_log("indeksləmə2  əməliyyatını yoxlayır...");
                     let index_name = match &**index {
-                        Expr::String(s, _) => s,
+                        TypedExpr::String(s, _) => s,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
                     let struct_type = get_type(target, ctx, None);
@@ -604,7 +608,7 @@ pub fn validate_expr<'a>(
                         .clone();
 
                     match &**index {
-                        Expr::String(index_name, _) => {
+                        TypedExpr::String(index_name, _) => {
                             validator_log(&format!("sindeksləmə əməliyyatını yoxlayır..."));
                             for (fname, ftype) in struct_def {
                                 if fname == *index_name {
@@ -619,11 +623,11 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
         }
-        Expr::BinaryOp { left, op, right } => {
-            validate_expr(left, ctx)?;
-            validate_expr(right, ctx)?;
+        TypedExpr::BinaryOp { left, op, right } => {
+            validate_expr_typed(left, ctx)?;
+            validate_expr_typed(right, ctx)?;
         }
-        Expr::FunctionDef {
+        TypedExpr::FunctionDef {
             name,
             params,
             body,
@@ -668,7 +672,7 @@ pub fn validate_expr<'a>(
             );
 
             for expr in owned_body.iter_mut() {
-                validate_expr(expr, ctx)?;
+                validate_expr_typed(expr, ctx)?;
             }
             ctx.functions.insert(
                 Cow::Borrowed(*name),
