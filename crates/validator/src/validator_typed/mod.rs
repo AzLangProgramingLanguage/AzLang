@@ -1,12 +1,8 @@
 use std::{borrow::Cow, collections::HashMap};
-
-pub mod errors;
-mod helper;
-pub mod validate;
-pub mod validator_typed;
+pub mod validate_typed;
 use parser::{
-    ast::{Expr, Parameter, Symbol},
     shared_ast::Type,
+    typed_ast::{ParameterTyped, Symbol, TypedExpr},
 };
 
 use crate::errors::ValidatorError;
@@ -15,18 +11,18 @@ use crate::errors::ValidatorError;
 pub struct FunctionInfo<'a> {
     pub name: Cow<'a, str>,
     pub return_type: Option<Type<'a>>,
-    pub parameters: Vec<Parameter<'a>>,
+    pub parameters: Vec<ParameterTyped<'a>>,
 }
 
 #[derive(Debug)]
 pub struct MethodInfo<'a> {
     pub name: Cow<'a, str>,
     pub return_type: Option<Type<'a>>,
-    pub parameters: Vec<Parameter<'a>>,
+    pub parameters: Vec<ParameterTyped<'a>>,
     pub is_allocator_used: bool,
 }
 #[derive(Debug)]
-pub struct ValidatorContext<'a> {
+pub struct ValidatorTypedContext<'a> {
     pub scopes: Vec<HashMap<String, Symbol<'a>>>,
     pub functions: HashMap<Cow<'a, str>, FunctionInfo<'a>>,
     pub struct_defs: HashMap<String, (Vec<(&'a str, Type<'a>)>, Vec<MethodInfo<'a>>)>,
@@ -34,17 +30,17 @@ pub struct ValidatorContext<'a> {
     pub enum_defs: HashMap<Cow<'a, str>, Vec<Cow<'a, str>>>,
     pub is_allocator_used: bool,
     pub current_function: Option<String>,
-    pub current_return: Option<Box<Expr<'a>>>,
+    pub current_return: Option<Box<TypedExpr<'a>>>,
     pub current_struct: Option<&'a str>,
 }
 
-impl<'a> Default for ValidatorContext<'a> {
+impl<'a> Default for ValidatorTypedContext<'a> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> ValidatorContext<'a> {
+impl<'a> ValidatorTypedContext<'a> {
     pub fn new() -> Self {
         Self {
             scopes: vec![HashMap::new()],

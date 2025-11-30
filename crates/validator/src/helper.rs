@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
-use parser::{ast::Expr, shared_ast::Type};
+use parser::{ast::Expr, shared_ast::Type, typed_ast::TypedExpr};
 
-use crate::ValidatorContext;
+use crate::{ValidatorContext, validator_typed::ValidatorTypedContext};
 
 pub fn get_type<'a>(
     value: &Expr<'a>,
@@ -74,6 +74,99 @@ pub fn get_type<'a>(
         Expr::BinaryOp { left, op, right } => {
             let left_type = get_type(left, ctx, typ)?;
             let right_type = get_type(right, ctx, typ)?;
+
+            if left_type != right_type {
+                return None;
+            }
+
+            let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
+            let logic_ops = ["&&", "||"];
+            let arithmetic_ops = ["+", "-", "*", "/", "%"];
+
+            if comparison_ops.contains(&op) || logic_ops.contains(&op) {
+                return Some(Type::Bool);
+            }
+
+            if arithmetic_ops.contains(&op) {
+                return Some(left_type);
+            }
+
+            None
+        }
+        _ => None,
+    }
+}
+
+pub fn get_type_extented<'a>(
+    value: &TypedExpr<'a>,
+    ctx: &ValidatorTypedContext<'a>,
+    typ: Option<&Type<'a>>,
+) -> Option<Type<'a>> {
+    match value {
+        TypedExpr::Number(_) => Some(Type::Natural),
+        TypedExpr::UnaryOp { op, expr } => {
+            get_type_extented(expr, ctx, typ)?;
+            match &**op {
+                "-" => Some(Type::Integer),
+                "!" => Some(Type::Bool),
+                _ => None,
+            }
+        }
+        TypedExpr::Bool(_) => Some(Type::Bool),
+
+        TypedExpr::Float(_) => Some(Type::Float),
+        TypedExpr::String(_, _) => Some(Type::String),
+        TypedExpr::List(items) => {
+            if items.len() > 0 {
+                let item_type = get_type_extented(&items[0], ctx, typ)?;
+                for item in &items[1..] {
+                    let t = get_type_extented(item, ctx, typ)?;
+                    if t != item_type {
+                        return Some(Type::Array(Box::new(Type::Any))); // qarışıq tiplər
+                    }
+                }
+
+                Some(Type::Array(Box::new(item_type)))
+            } else {
+                Some(Type::Any)
+            }
+        }
+        TypedExpr::Index {
+            target: _,
+            index: _,
+            target_type,
+        } => Some(target_type.clone()),
+        TypedExpr::VariableRef { name, symbol, .. } => {
+            if let Some(s) = ctx.lookup_variable(name) {
+                return Some(s.typ.clone());
+            }
+
+            if let Some(t) = typ {
+                if let Type::User(enum_name) = t {
+                    if let Some(variants) = ctx.enum_defs.get(enum_name) {
+                        if variants.contains(name) {
+                            return Some(t.clone());
+                        }
+                    }
+                }
+            }
+            return Some(symbol.as_ref().unwrap().typ.clone());
+        }
+        TypedExpr::StructInit { name, .. } => {
+            if let Some((..)) = ctx.struct_defs.get(name.as_ref()) {
+                Some(Type::User(Cow::Owned(name.to_string())))
+            } else if let Some((..)) = ctx.union_defs.get(name.as_ref()) {
+                Some(Type::User(Cow::Owned(name.to_string())))
+            } else {
+                None
+            }
+        }
+
+        TypedExpr::BuiltInCall { return_type, .. } => Some(return_type.clone()),
+        TypedExpr::Call { returned_type, .. } => returned_type.clone(),
+        TypedExpr::BinaryOp { left, op, right } => {
+            let left_type = get_type_extented(left, ctx, typ)?;
+            let right_type = get_type_extented(right, ctx, typ)?;
 
             if left_type != right_type {
                 return None;
