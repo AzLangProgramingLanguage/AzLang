@@ -1,18 +1,17 @@
-use crate::{
-    parser::ast::{Expr, Type},
-    transpiler::{TranspileContext, helpers::get_expr_type, transpile::transpile_expr},
-};
+use parser::{shared_ast::Type, typed_ast::TypedExpr};
 
-pub fn transpile_min<'a>(args: &'a [Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
+use crate::transpiler::{TranspileContext, helper::get_expr_type, transpile::transpile_expr};
+
+pub fn transpile_min<'a>(args: &'a [TypedExpr<'a>], ctx: &mut TranspileContext<'a>) -> String {
     transpile_min_max(args, ctx, "min")
 }
 
-pub fn transpile_max<'a>(args: &'a [Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_max<'a>(args: &'a [TypedExpr<'a>], ctx: &mut TranspileContext<'a>) -> String {
     transpile_min_max(args, ctx, "max")
 }
 
 fn transpile_min_max<'a>(
-    args: &'a [Expr<'a>],
+    args: &'a [TypedExpr<'a>],
     ctx: &mut TranspileContext<'a>,
     fn_name: &str,
 ) -> String {
@@ -29,7 +28,7 @@ fn transpile_min_max<'a>(
     }
 
     let final_list_code = match list_expr {
-        Expr::VariableRef {
+        TypedExpr::VariableRef {
             name: _,
             transpiled_name,
             symbol: Some(sym),

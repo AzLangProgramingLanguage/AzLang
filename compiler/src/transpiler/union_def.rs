@@ -1,11 +1,10 @@
 use std::borrow::Cow;
 
-use crate::{
-    parser::ast::{Expr, MethodType, Parameter, Type},
-    transpiler::{
-        helpers::{is_semicolon_needed, map_type},
-        transpile::transpile_expr,
-    },
+use parser::{shared_ast::Type, typed_ast::MethodTypeTyped};
+
+use crate::transpiler::{
+    helper::{is_semicolon_needed, map_type},
+    transpile::transpile_expr,
 };
 
 use super::TranspileContext;
@@ -14,7 +13,7 @@ pub fn transpile_union_def<'a>(
     name: &'a str,
     transpiled_name: &'a str,
     fields: &'a Vec<(&str, Type<'_>)>,
-    methods: &'a Vec<MethodType<'a>>,
+    methods: &'a Vec<MethodTypeTyped<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let old_union = ctx.current_union.clone();

@@ -1,15 +1,17 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
-mod union_def;
-use crate::parser::ast::{Program, Type};
-mod builtinfunctions;
 mod codegen;
 mod decl;
-pub mod helpers;
+pub mod helper;
 mod struct_def;
 mod transpile;
+mod union_def;
 mod zigbuiltin_functions;
+use parser::shared_ast::Type;
+mod builtin;
+use parser::typed_ast::CompiledProgram;
+
 use crate::transpiler::zigbuiltin_functions::BUILTIN_FUNCTIONS;
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext<'a> {
@@ -64,7 +66,7 @@ impl<'a> TranspileContext<'a> {
             Some(import.to_string())
         }
     }
-    pub fn transpile(&mut self, program: &'a Program<'a>) -> String {
+    pub fn transpile(&mut self, program: &'a CompiledProgram<'a>) -> String {
         let imports = codegen::prelude::generate_imports(self);
 
         let defs = codegen::top_level::generate_top_level_defs(program, self);

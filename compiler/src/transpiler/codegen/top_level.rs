@@ -1,20 +1,19 @@
-use crate::{
-    parser::ast::{Expr, Program},
-    transpiler::{
-        TranspileContext, helpers::transpile_function_def, struct_def::transpile_struct_def,
-        union_def::transpile_union_def,
-    },
+use parser::typed_ast::{CompiledProgram, TypedExpr};
+
+use crate::transpiler::{
+    TranspileContext, helper::transpile_function_def, struct_def::transpile_struct_def,
+    union_def::transpile_union_def,
 };
 
 pub fn generate_top_level_defs<'a>(
-    program: &'a Program<'a>,
+    program: &'a CompiledProgram<'a>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let mut code = String::new();
 
     for expr in &program.expressions {
         match expr {
-            Expr::FunctionDef {
+            TypedExpr::FunctionDef {
                 name,
                 transpiled_name: _,
                 params,
@@ -34,7 +33,7 @@ pub fn generate_top_level_defs<'a>(
                 code.push_str(&def);
                 code.push_str("\n\n");
             }
-            Expr::UnionType {
+            TypedExpr::UnionType {
                 name,
                 transpiled_name,
                 fields,
@@ -50,7 +49,7 @@ pub fn generate_top_level_defs<'a>(
                 code.push_str(&union);
                 code.push_str("\n\n");
             }
-            Expr::StructDef {
+            TypedExpr::StructDef {
                 name,
                 transpiled_name,
                 fields,

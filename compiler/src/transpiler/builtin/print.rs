@@ -1,25 +1,23 @@
-use crate::{
-    dd,
-    parser::ast::{Expr, TemplateChunk, Type},
-    transpiler::{
-        TranspileContext,
-        helpers::{get_expr_type, get_format_str_from_type, is_muttable},
-        transpile::transpile_expr,
-    },
+use parser::{shared_ast::Type, typed_ast::TypedExpr, typed_ast::TypedTemplateChunk};
+
+use crate::transpiler::{
+    TranspileContext,
+    helper::{get_expr_type, get_format_str_from_type, is_muttable},
+    transpile::transpile_expr,
 };
 
 fn arg_code_for_expr<'a>(
-    expr: &'a Expr<'a>,
+    expr: &'a TypedExpr<'a>,
     ctx: &mut TranspileContext<'a>,
     typ: Type<'_>,
 ) -> String {
     match expr {
-        Expr::String(_, _)
-        | Expr::TemplateString(_)
-        | Expr::Number(_)
-        | Expr::List(_)
-        | Expr::Float(_)
-        | Expr::UnaryOp { op: _, expr: _ } => {
+        TypedExpr::String(_, _)
+        | TypedExpr::TemplateString(_)
+        | TypedExpr::Number(_)
+        | TypedExpr::List(_)
+        | TypedExpr::Float(_)
+        | TypedExpr::UnaryOp { op: _, expr: _ } => {
             return transpile_expr(expr, ctx);
         }
 
@@ -49,21 +47,21 @@ fn arg_code_for_expr<'a>(
     }
 }
 
-pub fn transpile_print<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_print<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     ctx.uses_stdout = true;
 
     match expr {
         // Template string variantı
-        Expr::TemplateString(chunks) => {
+        TypedExpr::TemplateString(chunks) => {
             let mut format_parts = String::new();
             let mut args = Vec::new();
 
             for chunk in chunks {
                 match chunk {
-                    TemplateChunk::Literal(s) => {
+                    TypedTemplateChunk::Literal(s) => {
                         format_parts.push_str(&s.replace('\\', "\\\\").replace('"', "\\\""));
                     }
-                    TemplateChunk::Expr(inner_expr) => {
+                    TypedTemplateChunk::TypedExpr(inner_expr) => {
                         let typ = get_expr_type(inner_expr);
                         format_parts
                             .push_str(get_format_str_from_type(&typ, ctx.is_used_allocator));
@@ -85,7 +83,7 @@ pub fn transpile_print<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -
         _ => {
             let typ: Type<'_> = get_expr_type(expr);
             let is_allocator = {
-                if let Expr::Call {
+                if let TypedExpr::Call {
                     target: _,
                     name: _,
                     transpiled_name: _,

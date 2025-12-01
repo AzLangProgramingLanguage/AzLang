@@ -1,25 +1,26 @@
-use crate::dd;
-use crate::{
-    parser::ast::{BuiltInFunction, EnumDecl, Expr, Symbol, TemplateChunk, Type},
-    transpiler::{
-        TranspileContext,
-        builtinfunctions::{
-            min_max::{transpile_max, transpile_min},
-            print::transpile_print,
-            sum::transpile_sum,
-        },
-        decl::transpile_decl,
-        helpers::{get_expr_type, is_semicolon_needed, map_type, transpile_function_def},
-        struct_def::transpile_struct_def,
-    },
+use parser::{
+    shared_ast::{BuiltInFunction, Type},
+    typed_ast::{TypedExpr, TypedTemplateChunk},
 };
-use std::borrow::Cow;
+
+use crate::transpiler::{
+    TranspileContext,
+    builtin::{
+        min_max::{transpile_max, transpile_min},
+        print::transpile_print,
+        sum::transpile_sum,
+    },
+    decl::transpile_decl,
+    helper::{get_expr_type, is_semicolon_needed, map_type, transpile_function_def},
+    struct_def::transpile_struct_def,
+};
+use std::{borrow::Cow, env::args};
 
 use super::union_def::transpile_union_def;
 
-pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_expr<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     match expr {
-        Expr::String(s, b) => {
+        TypedExpr::String(s, b) => {
             if *b {
                 format!("try allocator.dupe(u8, \"{}\")", s.escape_default())
             } else {
@@ -27,12 +28,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
         }
 
-        Expr::Number(n) => n.to_string(),
-        Expr::Float(n) => n.to_string(),
-        Expr::Bool(b) => b.to_string(),
-        Expr::Break => "break".to_string(),
-        Expr::Continue => "continue".to_string(),
-        Expr::Decl {
+        TypedExpr::Number(n) => n.to_string(),
+        TypedExpr::Float(n) => n.to_string(),
+        TypedExpr::Bool(b) => b.to_string(),
+        TypedExpr::Break => "break".to_string(),
+        TypedExpr::Continue => "continue".to_string(),
+        TypedExpr::Decl {
             name: _,
             transpiled_name,
             typ,
@@ -48,16 +49,16 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             ctx,
         ),
         /* TODO: Buraya Diqqət yetir. */
-        Expr::Return(expr) => {
+        TypedExpr::Return(expr) => {
             let code = match &**expr {
-                Expr::Number(n) => match get_expr_type(expr) {
+                TypedExpr::Number(n) => match get_expr_type(expr) {
                     Type::Natural => format!("azlangEded{{.natural={}}}", n),
                     Type::Integer => format!("azlangEded{{.integer={}}}", n),
                     Type::Float => format!("azlangEded{{.float={}}}", n),
                     _ => transpile_expr(expr, ctx),
                 },
 
-                Expr::VariableRef {
+                TypedExpr::VariableRef {
                     transpiled_name,
                     symbol,
                     ..
@@ -71,8 +72,8 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                     }
                 }
 
-                Expr::Float(n) => n.to_string(),
-                Expr::String(s, _) => format!("\"{}\"", s.escape_default()),
+                TypedExpr::Float(n) => n.to_string(),
+                TypedExpr::String(s, _) => format!("\"{}\"", s.escape_default()),
 
                 _ => transpile_expr(expr, ctx),
             };
@@ -80,7 +81,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             format!("return {}", code)
         }
 
-        Expr::VariableRef {
+        TypedExpr::VariableRef {
             name,
             transpiled_name,
             symbol,
@@ -110,14 +111,14 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 format!("{name}")
             }
         }
-        Expr::List(items) => {
+        TypedExpr::List(items) => {
             let items_code: Vec<String> =
                 items.iter().map(|item| transpile_expr(item, ctx)).collect();
             let items_str = items_code.join(", ");
             format!(".{{{items_str}}}")
         }
 
-        Expr::If {
+        TypedExpr::If {
             condition,
             then_branch,
             else_branch,
@@ -145,7 +146,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
 
             format!("if ({condition_code}) {{\n    {then_code}\n}}{else_code}",)
         }
-        Expr::ElseIf {
+        TypedExpr::ElseIf {
             condition,
             then_branch,
         } => {
@@ -167,7 +168,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             format!("else if ({}) {{\n    {}\n}}", condition_code, then_code)
         }
 
-        Expr::Else { then_branch } => {
+        TypedExpr::Else { then_branch } => {
             let else_code: Vec<String> = then_branch
                 .iter()
                 .map(|e| {
@@ -185,7 +186,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             format!("else {{\n    {}\n}}", else_code)
         }
 
-        Expr::EnumDecl(EnumDecl { name, variants }) => {
+        TypedExpr::EnumDecl { name, variants } => {
             ctx.enum_defs.insert(name.clone(), variants.clone());
             let variants_code = variants
                 .iter()
@@ -197,12 +198,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
         }
 
         /* TODO:  Bu kodu optimallaşdırmam lazım.*/
-        Expr::BinaryOp { left, op, right } => {
+        TypedExpr::BinaryOp { left, op, right } => {
             let left_type = get_expr_type(left);
             let right_type = get_expr_type(right);
 
             let mut left_code = match &**left {
-                Expr::VariableRef { name, symbol, .. } => {
+                TypedExpr::VariableRef { name, symbol, .. } => {
                     if let Some(symbol) = symbol {
                         if symbol.is_pointer {
                             format!("{}.*", name)
@@ -217,7 +218,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             };
 
             let mut right_code = match &**right {
-                Expr::VariableRef { name, symbol, .. } => {
+                TypedExpr::VariableRef { name, symbol, .. } => {
                     if let Some(symbol) = symbol {
                         if symbol.is_pointer {
                             format!("{}.*", name)
@@ -253,23 +254,23 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 "+" => {
                     /* Buradada  */
 
-                    if let Expr::Number(value) = &**left {
+                    if let TypedExpr::Number(value) = &**left {
                         if left_type == Type::Integer {
                             left_code = format!("azlangEded{{.integer = {value}}}");
                         } else if left_type == Type::Natural {
                             left_code = format!("azlangEded{{.natural = {value}}}");
                         }
-                    } else if let Expr::Float(value) = &**right {
+                    } else if let TypedExpr::Float(value) = &**right {
                         left_code = format!("azlangEded{{.float = {value}}}");
                     }
 
-                    if let Expr::Number(value) = &**right {
+                    if let TypedExpr::Number(value) = &**right {
                         if right_type == Type::Integer {
                             right_code = format!("azlangEded{{.integer = {value}}}");
                         } else if right_type == Type::Natural {
                             right_code = format!("azlangEded{{.natural = {value}}}");
                         }
-                    } else if let Expr::Float(value) = &**right {
+                    } else if let TypedExpr::Float(value) = &**right {
                         right_code = format!("azlangEded{{.float = {value}}}");
                     }
 
@@ -277,7 +278,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 }
                 "-" => {
                     /* Buradada  */
-                    if let Expr::Number(value) = &**left {
+                    if let TypedExpr::Number(value) = &**left {
                         if left_type == Type::Integer {
                             left_code = format!("azlangEded{{.integer = {value}}}");
                         } else if left_type == Type::Natural {
@@ -286,7 +287,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                             left_code = format!("azlangEded{{.float = {value}}}");
                         }
                     }
-                    if let Expr::Number(value) = &**right {
+                    if let TypedExpr::Number(value) = &**right {
                         if right_type == Type::Integer {
                             right_code = format!("azlangEded{{.integer = {value}}}");
                         } else if right_type == Type::Natural {
@@ -306,7 +307,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         || left_type == Type::Natural
                         || left_type == Type::Float
                     {
-                        if let Expr::VariableRef { name, symbol, .. } = &**left {
+                        if let TypedExpr::VariableRef { name, symbol, .. } = &**left {
                             left_code = format!("toFloat({})", name);
                         }
                     }
@@ -314,7 +315,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         || right_type == Type::Natural
                         || right_type == Type::Float
                     {
-                        if let Expr::VariableRef { name, symbol, .. } = &**right {
+                        if let TypedExpr::VariableRef { name, symbol, .. } = &**right {
                             right_code = format!("toFloat({})", name);
                         }
                     }
@@ -324,7 +325,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
         }
 
-        Expr::StructDef {
+        TypedExpr::StructDef {
             name,
             transpiled_name,
             fields,
@@ -336,7 +337,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             methods,
             ctx,
         ),
-        Expr::UnionType {
+        TypedExpr::UnionType {
             name,
             transpiled_name,
             fields,
@@ -345,12 +346,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             let new_name = transpiled_name.as_deref().unwrap();
             transpile_union_def(name, new_name, fields, methods, ctx)
         }
-        Expr::TemplateString(template) => {
+        TypedExpr::TemplateString(template) => {
             let mut lines = Vec::new();
             for part in template {
                 match part {
-                    TemplateChunk::Literal(lit) => lines.push(format!("{}", lit)),
-                    TemplateChunk::Expr(expr) => {
+                    TypedTemplateChunk::Literal(lit) => lines.push(format!("{}", lit)),
+                    TypedTemplateChunk::TypedExpr(expr) => {
                         lines.push(format!("{}", transpile_expr(expr, ctx)))
                     }
                 }
@@ -358,7 +359,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             lines.join("\n")
         }
 
-        Expr::FunctionDef {
+        TypedExpr::FunctionDef {
             name,
             transpiled_name: _,
             params,
@@ -366,7 +367,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             return_type,
             is_allocator,
         } => transpile_function_def(name, params, body, return_type, None, ctx, is_allocator),
-        Expr::BuiltInCall {
+        TypedExpr::BuiltInCall {
             function,
             args,
             return_type: _,
@@ -443,7 +444,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 ctx.is_used_allocator = true;
                 ctx.needs_allocator = false;
                 let code = transpile_expr(&args[0], ctx);
-                if let Expr::String(_, _) = &args[0] {
+                if let TypedExpr::String(_, _) = &args[0] {
                     format!(
                         "try str_trim(azlangYazi.Yeni(azlangYazi{{.Const ={}}}),allocator,false)",
                         code
@@ -459,7 +460,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
             _ => todo!("Bilinməyən funksiya"),
         },
-        Expr::Call {
+        TypedExpr::Call {
             target,
             name: _,
             args,
@@ -471,7 +472,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             let mut args_code: Vec<String> = args
                 .iter()
                 .map(|arg| match arg {
-                    Expr::VariableRef {
+                    TypedExpr::VariableRef {
                         transpiled_name,
                         symbol: Some(sym),
                         ..
@@ -484,9 +485,9 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         }
                     }
 
-                    Expr::Number(n) => format!("azlangEded{{.natural={}}}", n),
-                    Expr::Float(n) => format!("azlangEded{{.float={}}}", n),
-                    Expr::String(s, _) => format!("\"{}\"", s),
+                    TypedExpr::Number(n) => format!("azlangEded{{.natural={}}}", n),
+                    TypedExpr::Float(n) => format!("azlangEded{{.float={}}}", n),
+                    TypedExpr::String(s, _) => format!("\"{}\"", s),
                     _ => transpile_expr(&arg, ctx),
                 })
                 .collect();
@@ -505,12 +506,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             // Target-ə görə prefix hazırlayırıq
 
             let call_expr = match target.as_deref() {
-                Some(Expr::VariableRef {
+                Some(TypedExpr::VariableRef {
                     name: target_name, ..
                 }) => {
                     format!("{}.{}({})", target_name, func_name, args_code.join(", "))
                 }
-                Some(Expr::Number(n)) => {
+                Some(TypedExpr::Number(n)) => {
                     format!(
                         "azlangEded.Yeni(azlangEded{{.natural={}}}).{}({})",
                         n,
@@ -518,7 +519,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         args_code.join(", ")
                     )
                 }
-                Some(Expr::Float(n)) => {
+                Some(TypedExpr::Float(n)) => {
                     format!(
                         "azlangEded.Yeni(azlangEded{{.float = {}}}).{}({})",
                         n,
@@ -526,7 +527,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                         args_code.join(", ")
                     )
                 }
-                Some(Expr::String(s, _)) => {
+                Some(TypedExpr::String(s, _)) => {
                     format!(
                         "azlangYazi.Yeni(azlangYazi{{.Const = \"{}\"}}).{}({})",
                         s,
@@ -551,7 +552,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
         }
 
-        Expr::StructInit {
+        TypedExpr::StructInit {
             name,
             transpiled_name,
             args,
@@ -567,7 +568,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             format!("{}{{ {} }};", transpiled_name, body)
         }
 
-        Expr::Loop {
+        TypedExpr::Loop {
             var_name,
             iterable,
             body,
@@ -585,7 +586,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             let body_code = body_lines.join("\n");
 
             let loop_expr = match &**iterable {
-                Expr::VariableRef {
+                TypedExpr::VariableRef {
                     symbol: Some(sym), ..
                 } => {
                     if sym.is_mutable {
@@ -599,11 +600,11 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
 
             format!("for ({}) |{}| {{\n{}\n}}", loop_expr, var_name, body_code)
         }
-        Expr::UnaryOp { op, expr } => {
+        TypedExpr::UnaryOp { op, expr } => {
             let expr_code = transpile_expr(expr, ctx);
             format!("{}{}", op, expr_code)
         }
-        Expr::Index {
+        TypedExpr::Index {
             target,
             index,
             target_type: _,
@@ -621,7 +622,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 }
             }
         }
-        Expr::Match { target, arms } => {
+        TypedExpr::Match { target, arms } => {
             let target_code = transpile_expr(target, ctx);
             let mut arms_code = Vec::new();
             for arm in arms {
@@ -636,14 +637,14 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             }
             format!("switch ({}) {{\n{}\n}}", target_code, arms_code.join("\n"))
         }
-        Expr::Assignment {
+        TypedExpr::Assignment {
             name,
             value,
             symbol: _,
         } => {
             let mut value_code = String::new();
             match &**value {
-                Expr::StructInit {
+                TypedExpr::StructInit {
                     name: _,
                     transpiled_name,
                     args,

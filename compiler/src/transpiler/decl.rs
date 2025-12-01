@@ -1,14 +1,16 @@
-use crate::{
-    parser::ast::{BuiltInFunction, Expr, Type},
-    transpiler::{TranspileContext, helpers::map_type, transpile::transpile_expr},
+use parser::{
+    shared_ast::{BuiltInFunction, Type},
+    typed_ast::TypedExpr,
 };
+
+use crate::transpiler::{TranspileContext, helper::map_type, transpile::transpile_expr};
 
 pub fn transpile_decl<'a>(
     name: &'a String,
     typ: Option<&Type<'a>>,
     is_mutable: bool,
     is_primitive: bool,
-    value: &'a Expr<'a>,
+    value: &'a TypedExpr<'a>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let type_str = map_type(typ.unwrap_or(&Type::Any), !is_mutable);
@@ -16,7 +18,7 @@ pub fn transpile_decl<'a>(
 
     let decl_code = match typ {
         Some(Type::String) => match value {
-            Expr::String(_, _) => {
+            TypedExpr::String(_, _) => {
                 if is_mutable {
                     format!(
                         "var {}: {} = azlangYazi.Yeni(azlangYazi{{.Mut=try allocator.dupe(u8, {}) }});",
@@ -30,7 +32,7 @@ pub fn transpile_decl<'a>(
                 }
             }
 
-            Expr::BuiltInCall {
+            TypedExpr::BuiltInCall {
                 function,
                 args: s,
                 return_type: _,
@@ -95,7 +97,7 @@ pub fn transpile_decl<'a>(
             }
         },
         Some(Type::Natural) | Some(Type::Integer) | Some(Type::Float) => match value {
-            Expr::Number(_) | Expr::UnaryOp { op: _, expr: _ } | Expr::Float(_) => {
+            TypedExpr::Number(_) | TypedExpr::UnaryOp { op: _, expr: _ } | TypedExpr::Float(_) => {
                 let var_code = if is_mutable { "var" } else { "const" };
                 match typ {
                     Some(Type::Natural) => {
@@ -119,7 +121,7 @@ pub fn transpile_decl<'a>(
                     _ => todo!(),
                 }
             }
-            Expr::BuiltInCall {
+            TypedExpr::BuiltInCall {
                 function,
                 args: s,
                 return_type: _,
@@ -161,7 +163,7 @@ pub fn transpile_decl<'a>(
         },
 
         Some(Type::Array(inner)) => match value {
-            Expr::List(items) => {
+            TypedExpr::List(items) => {
                 let items_code: Vec<String> =
                     items.iter().map(|i| transpile_expr(i, ctx)).collect();
                 let items_str = items_code.join(", ");

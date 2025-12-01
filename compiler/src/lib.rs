@@ -1,6 +1,9 @@
 mod cleaner;
+use std::{env, process::Command};
+
 use crate::{cleaner::clean_ast, errors::CompilerError};
 use parser::Parser;
+mod transpiler;
 use validator::validator_typed::validate_typed::validate_expr_typed;
 mod errors;
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
@@ -15,10 +18,13 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
         validate_expr_typed(expr, &mut validator)?;
     }
     clean_ast(&mut parsed_program, &validator);
+    let mut ctx = transpiler::TranspileContext::new();
+    let code = ctx.transpile(&parsed_program);
+    let mut temp_path = env::temp_dir();
 
-    /*
-    let mut runner = Runner::new(); */
-    /*     runner.run(parsed_program);
-     */
+    temp_path.push("azlang_output.zig");
+    file_system::write_file(temp_path, &code)?;
+    let mut compile = Command::new("zig");
+
     Ok(())
 }

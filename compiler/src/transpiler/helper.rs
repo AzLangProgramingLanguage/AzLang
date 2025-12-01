@@ -1,16 +1,18 @@
-use crate::{
-    parser::ast::{Expr, Parameter, Type},
-    transpiler::{TranspileContext, transpile::transpile_expr},
+use parser::{
+    shared_ast::Type,
+    typed_ast::{ParameterTyped, TypedExpr},
 };
 
-pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
+use crate::transpiler::{TranspileContext, transpile::transpile_expr};
+
+pub fn get_expr_type<'a>(expr: &TypedExpr<'a>) -> Type<'a> {
     match expr {
-        Expr::String(_, _) => Type::String,
-        Expr::Number(_) => Type::Integer,
-        Expr::Float(_) => Type::Float,
-        Expr::Bool(_) => Type::Bool,
-        Expr::Char(_) => Type::Char,
-        Expr::UnaryOp { op, expr } => match *op {
+        TypedExpr::String(_, _) => Type::String,
+        TypedExpr::Number(_) => Type::Integer,
+        TypedExpr::Float(_) => Type::Float,
+        TypedExpr::Bool(_) => Type::Bool,
+        TypedExpr::Char(_) => Type::Char,
+        TypedExpr::UnaryOp { op, expr } => match *op {
             "!" => Type::Bool,
             "-" => Type::Integer,
             "+" => Type::Natural,
@@ -19,7 +21,7 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
             }
         },
 
-        Expr::Call {
+        TypedExpr::Call {
             target,
             name,
             transpiled_name,
@@ -27,18 +29,18 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
             returned_type,
             is_allocator,
         } => returned_type.as_ref().unwrap().clone(),
-        Expr::VariableRef {
+        TypedExpr::VariableRef {
             name: _,
             transpiled_name: _,
             symbol,
         } => symbol.as_ref().unwrap().typ.clone(),
-        Expr::BuiltInCall {
+        TypedExpr::BuiltInCall {
             function: _,
             args: _,
             return_type,
         } => return_type.clone(),
 
-        Expr::BinaryOp { left, op, right } => {
+        TypedExpr::BinaryOp { left, op, right } => {
             let left_type = get_expr_type(left);
             let right_type = get_expr_type(right);
 
@@ -69,12 +71,12 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
             }
             Type::Any
         }
-        Expr::Index {
+        TypedExpr::Index {
             target: _,
             index: _,
             target_type,
         } => target_type.clone(),
-        Expr::List(items) => {
+        TypedExpr::List(items) => {
             if items.is_empty() {
                 return Type::Array(Box::new(Type::Any));
             }
@@ -153,7 +155,7 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
         Type::Allocator => "",
         Type::Any => "{any}",
         Type::Array(_) => "{any}",
-        Type::User(_, _) => {
+        Type::User(_) => {
             if is_allocator {
                 "{!any}"
             } else {
@@ -222,31 +224,31 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
             let inner_str = map_type(inner, is_const);
             inner_str
         }
-        Type::User(_, s) => Cow::Borrowed(s),
+        Type::User(_) => Cow::Borrowed("any"),
         Type::Allocator => Cow::Borrowed("std.mem.Allocator"),
     }
 }
 
-pub fn is_semicolon_needed(expr: &Expr) -> bool {
+pub fn is_semicolon_needed(expr: &TypedExpr) -> bool {
     matches!(
         expr,
-        Expr::Assignment { .. }
-            | Expr::Break
-            | Expr::Continue
-            | Expr::Return(_)
-            | Expr::Decl { .. }
-            | Expr::Call { .. }
-            | Expr::BuiltInCall { .. }
-            | Expr::VariableRef { .. }
-            | Expr::Index { .. }
-            | Expr::BinaryOp { .. }
+        TypedExpr::Assignment { .. }
+            | TypedExpr::Break
+            | TypedExpr::Continue
+            | TypedExpr::Return(_)
+            | TypedExpr::Decl { .. }
+            | TypedExpr::Call { .. }
+            | TypedExpr::BuiltInCall { .. }
+            | TypedExpr::VariableRef { .. }
+            | TypedExpr::Index { .. }
+            | TypedExpr::BinaryOp { .. }
     )
 }
 
 pub fn transpile_function_def<'a>(
     name: &'a str,
-    params: &'_ [Parameter<'a>],
-    body: &'a [Expr<'a>],
+    params: &'_ [ParameterTyped<'a>],
+    body: &'a [TypedExpr<'a>],
     return_type: &Option<Type<'_>>,
     _parent: Option<&'a str>,
     ctx: &mut TranspileContext<'a>,
@@ -275,7 +277,7 @@ pub fn transpile_function_def<'a>(
     )
 }
 
-fn transpile_param(param: &Parameter) -> String {
+fn transpile_param(param: &ParameterTyped) -> String {
     let zig_type = map_type(&param.typ, !param.is_mutable);
     if param.is_mutable {
         format!("{}: *{}", param.name, zig_type)
@@ -284,9 +286,9 @@ fn transpile_param(param: &Parameter) -> String {
     }
 }
 
-pub fn is_muttable<'a>(expr: &'a Expr<'a>) -> bool {
+pub fn is_muttable<'a>(expr: &'a TypedExpr<'a>) -> bool {
     match expr {
-        Expr::VariableRef {
+        TypedExpr::VariableRef {
             name: _,
             transpiled_name: _,
             symbol,
@@ -295,9 +297,9 @@ pub fn is_muttable<'a>(expr: &'a Expr<'a>) -> bool {
                 return sym.is_mutable;
             }
         }
-        Expr::Call { target, .. } => match target {
+        TypedExpr::Call { target, .. } => match target {
             Some(boxed_expr) => match &**boxed_expr {
-                Expr::VariableRef {
+                TypedExpr::VariableRef {
                     name: _,
                     transpiled_name: _,
                     symbol,

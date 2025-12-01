@@ -1,19 +1,21 @@
 use std::borrow::Cow;
 
-use crate::{
-    parser::ast::{Expr, MethodType, Type},
-    transpiler::{
-        TranspileContext,
-        helpers::{is_semicolon_needed, map_type},
-        transpile::transpile_expr,
-    },
+use parser::{
+    shared_ast::Type,
+    typed_ast::{MethodTypeTyped, TypedExpr},
+};
+
+use crate::transpiler::{
+    TranspileContext,
+    helper::{is_semicolon_needed, map_type},
+    transpile::transpile_expr,
 };
 
 pub fn transpile_struct_def<'a>(
     name: &'a str,
     transpiled_name: &'a str,
-    fields: &'a Vec<(&str, Type<'a>, Option<Expr<'a>>)>,
-    methods: &'a Vec<MethodType<'a>>,
+    fields: &'a Vec<(&str, Type<'a>, Option<TypedExpr<'a>>)>,
+    methods: &'a Vec<MethodTypeTyped<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let old_struct = ctx.current_struct.clone();
