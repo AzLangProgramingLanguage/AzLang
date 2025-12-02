@@ -9,7 +9,7 @@ mod transpile;
 mod union_def;
 mod zigbuiltin_functions;
 use parser::shared_ast::Type;
-mod builtin;
+pub mod builtin;
 use parser::typed_ast::CompiledProgram;
 
 use crate::transpiler::zigbuiltin_functions::BUILTIN_FUNCTIONS;

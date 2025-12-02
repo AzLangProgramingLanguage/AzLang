@@ -20,6 +20,7 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     clean_ast(&mut parsed_program, &validator);
     let mut ctx = transpiler::TranspileContext::new();
     let code = ctx.transpile(&parsed_program);
+    println!("Code:  {}", code);
     let mut temp_path = env::temp_dir();
 
     temp_path.push("azlang_output.zig");

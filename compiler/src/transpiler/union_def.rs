@@ -34,7 +34,7 @@ pub fn transpile_union_def<'a>(
             let param_list: Vec<String> = method
                 .params
                 .iter()
-                .filter(|p| p.name != "self") // self ayrıca işlənəcək
+                .filter(|p| p.name != "self")
                 .map(|p| format!("{}: {}", p.name, map_type(&p.typ, true)))
                 .collect();
             let is_allocator_used = method.is_allocator;
@@ -88,12 +88,18 @@ pub fn transpile_union_def<'a>(
             if ctx.is_used_allocator {
                 header = format!(
                     "pub fn {}({all_params})  !{ret_type} {{",
-                    method.transpiled_name.as_ref().unwrap()
+                    method
+                        .transpiled_name
+                        .as_ref()
+                        .unwrap_or(&Cow::Borrowed(name))
                 );
             } else {
                 header = format!(
                     "pub fn {}({all_params})  {ret_type} {{",
-                    method.transpiled_name.as_ref().unwrap()
+                    method
+                        .transpiled_name
+                        .as_ref()
+                        .unwrap_or(&Cow::Borrowed(name))
                 );
             }
             ctx.is_used_allocator = false;
@@ -103,7 +109,7 @@ pub fn transpile_union_def<'a>(
         .collect::<Vec<_>>();
 
     let mut all_lines = field_lines;
-    all_lines.push("".to_string()); // boş sətr
+    all_lines.push("".to_string());
     all_lines.extend(method_lines);
     let full_body = all_lines.join("\n");
     ctx.current_union = old_union;

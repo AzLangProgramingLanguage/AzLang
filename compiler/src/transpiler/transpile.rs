@@ -11,10 +11,10 @@ use crate::transpiler::{
         sum::transpile_sum,
     },
     decl::transpile_decl,
-    helper::{get_expr_type, is_semicolon_needed, map_type, transpile_function_def},
+    helper::{get_expr_type, is_semicolon_needed, transpile_function_def},
     struct_def::transpile_struct_def,
 };
-use std::{borrow::Cow, env::args};
+use std::borrow::Cow;
 
 use super::union_def::transpile_union_def;
 
@@ -27,6 +27,7 @@ pub fn transpile_expr<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a
                 format!("\"{}\"", s.escape_default())
             }
         }
+        TypedExpr::Comment(s) => s.to_string(),
 
         TypedExpr::Number(n) => n.to_string(),
         TypedExpr::Float(n) => n.to_string(),
@@ -34,14 +35,14 @@ pub fn transpile_expr<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a
         TypedExpr::Break => "break".to_string(),
         TypedExpr::Continue => "continue".to_string(),
         TypedExpr::Decl {
-            name: _,
+            name,
             transpiled_name,
             typ,
             is_primitive,
             is_mutable,
             value,
         } => transpile_decl(
-            transpiled_name.as_ref().unwrap(),
+            transpiled_name.as_ref().unwrap_or(&name.to_string()),
             typ.as_deref(),
             *is_mutable,
             *is_primitive,
@@ -252,7 +253,7 @@ pub fn transpile_expr<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a
                 "/" => format!("(@divTrunc({left_code}, {right_code}))"),
                 "%" => format!("(@mod({left_code}, {right_code}))"),
                 "+" => {
-                    /* Buradada  */
+                    /* TODO: Buradada  */
 
                     if let TypedExpr::Number(value) = &**left {
                         if left_type == Type::Integer {
@@ -277,7 +278,7 @@ pub fn transpile_expr<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a
                     format!(" azlang_add( {left_code}, {right_code})")
                 }
                 "-" => {
-                    /* Buradada  */
+                    /*TODO:  Buradada  */
                     if let TypedExpr::Number(value) = &**left {
                         if left_type == Type::Integer {
                             left_code = format!("azlangEded{{.integer = {value}}}");
@@ -462,22 +463,23 @@ pub fn transpile_expr<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a
         },
         TypedExpr::Call {
             target,
-            name: _,
+            name,
             args,
             returned_type: _,
             is_allocator,
             transpiled_name,
         } => {
-            // Argümanları dönüştür
             let mut args_code: Vec<String> = args
                 .iter()
                 .map(|arg| match arg {
                     TypedExpr::VariableRef {
-                        transpiled_name,
+                        transpiled_name: tr_name,
+                        name: varname,
                         symbol: Some(sym),
-                        ..
                     } => {
-                        let new_name = transpiled_name.as_ref().unwrap();
+                        let new_name: String =
+                            tr_name.as_deref().unwrap_or(varname.as_ref()).to_string();
+
                         if sym.is_pointer {
                             format!("&{}", new_name)
                         } else {
@@ -494,16 +496,12 @@ pub fn transpile_expr<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a
 
             ctx.is_used_allocator = true;
 
-            // Eğer allocator gerekiyorsa ekle
             if *is_allocator {
                 ctx.needs_allocator = true;
                 args_code.push("allocator".to_string());
             }
 
-            // Fonksiyon adı
-            let func_name = transpiled_name.as_ref().unwrap();
-
-            // Target-ə görə prefix hazırlayırıq
+            let func_name = transpiled_name.as_deref().unwrap_or(&name.as_ref());
 
             let call_expr = match target.as_deref() {
                 Some(TypedExpr::VariableRef {

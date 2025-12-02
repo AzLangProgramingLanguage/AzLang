@@ -53,7 +53,7 @@ pub fn transpile_struct_def<'a>(
             let param_list: Vec<String> = method
                 .params
                 .iter()
-                .filter(|p| p.name != "self") // self ayrıca işlənəcək
+                .filter(|p| p.name != "self")
                 .map(|p| format!("{}: {}", p.name, map_type(&p.typ, true)))
                 .collect();
             let uses_self = ctx.is_used_self;

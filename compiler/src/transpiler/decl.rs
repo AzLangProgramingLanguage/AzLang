@@ -6,7 +6,7 @@ use parser::{
 use crate::transpiler::{TranspileContext, helper::map_type, transpile::transpile_expr};
 
 pub fn transpile_decl<'a>(
-    name: &'a String,
+    name: &String,
     typ: Option<&Type<'a>>,
     is_mutable: bool,
     is_primitive: bool,

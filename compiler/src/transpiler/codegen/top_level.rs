@@ -41,7 +41,7 @@ pub fn generate_top_level_defs<'a>(
             } => {
                 let union = transpile_union_def(
                     name,
-                    transpiled_name.as_deref().unwrap(),
+                    transpiled_name.as_deref().unwrap_or(name),
                     fields,
                     methods,
                     ctx,
@@ -57,7 +57,7 @@ pub fn generate_top_level_defs<'a>(
             } => {
                 let struct_def = transpile_struct_def(
                     name,
-                    transpiled_name.as_deref().unwrap(),
+                    transpiled_name.as_deref().unwrap_or(name),
                     fields,
                     methods,
                     ctx,
