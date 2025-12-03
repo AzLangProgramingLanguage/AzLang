@@ -91,7 +91,7 @@ pub fn transpile_union_def<'a>(
                     method
                         .transpiled_name
                         .as_ref()
-                        .unwrap_or(&Cow::Borrowed(name))
+                        .unwrap_or(&Cow::Borrowed(method.name))
                 );
             } else {
                 header = format!(
@@ -99,7 +99,7 @@ pub fn transpile_union_def<'a>(
                     method
                         .transpiled_name
                         .as_ref()
-                        .unwrap_or(&Cow::Borrowed(name))
+                        .unwrap_or(&Cow::Borrowed(method.name))
                 );
             }
             ctx.is_used_allocator = false;

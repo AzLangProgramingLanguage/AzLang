@@ -46,7 +46,7 @@ fn azlang_add(a: azlangEded, b: azlangEded) azlangEded {
         return switch (self) {
             .natural => |n| @intCast(n),
             .integer => |i| i,
-            .float => |f| @intFromFloat(f), // truncation ola bilər
+            .float => |f| @intFromFloat(f), 
         };
     }
 

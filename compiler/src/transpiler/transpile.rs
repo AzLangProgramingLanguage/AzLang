@@ -27,7 +27,7 @@ pub fn transpile_expr<'a>(expr: &'a TypedExpr<'a>, ctx: &mut TranspileContext<'a
                 format!("\"{}\"", s.escape_default())
             }
         }
-        TypedExpr::Comment(s) => s.to_string(),
+        TypedExpr::Comment(s) => format!("//{s}"),
 
         TypedExpr::Number(n) => n.to_string(),
         TypedExpr::Float(n) => n.to_string(),

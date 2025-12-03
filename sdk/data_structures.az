@@ -32,7 +32,7 @@ tip Yazı
   metod bitirirmi(suffix: yazı): qərar
     // Burasını Sistem Qərar Versin
 
-
+/*
 
 tip Ədəd
   natural: zignatural
@@ -64,3 +64,4 @@ dəyişən kəsr a  = 0.0
 gəz [1,2,3,4] içində i
     a = a + 0.1
     Çap(a)
+*/

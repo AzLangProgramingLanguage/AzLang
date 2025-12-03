@@ -16,7 +16,7 @@ pub fn read_file(path: &str) -> Result<String, FileSystem> {
         },
     };
 }
-pub fn write_file(path: PathBuf, content: &String) -> Result<(), FileSystem> {
+pub fn write_file(path: &PathBuf, content: &String) -> Result<(), FileSystem> {
     let write = fs::write(&path, content);
     return match write {
         Ok(_) => Ok(()),

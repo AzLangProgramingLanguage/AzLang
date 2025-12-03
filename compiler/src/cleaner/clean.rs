@@ -1,9 +1,9 @@
-use parser::typed_ast::{CompiledProgram, TypedExpr};
-use validator::validator_typed::ValidatorTypedContext;
+use parser::ast::{Expr, Program};
+use validator::ValidatorContext;
 
-pub fn clean_ast<'a>(program: &mut CompiledProgram<'a>, ctx: &ValidatorTypedContext<'a>) {
+pub fn clean_ast<'a>(program: &mut Program<'a>, ctx: &ValidatorContext<'a>) {
     program.expressions.retain(|expr| match expr {
-        TypedExpr::Decl { name, .. } => {
+        Expr::Decl { name, .. } => {
             let name_str: &str = name.as_ref();
             ctx.scopes
                 .iter()
