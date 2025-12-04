@@ -1,4 +1,4 @@
-use crate::{errors::ParserError, literal_parse::literals_parse};
+use crate::{decl::parse_decl, errors::ParserError, literal_parse::literals_parse};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
@@ -7,7 +7,6 @@ use crate::{
     binary_op::parse_binary_op_expr,
     builtin::parse_builtin,
     condition::{parse_else_expr, parse_else_if_expr, parse_if_expr},
-    decl::parse_decl,
     r#enum::parse_enum_decl,
     function::parse_function_def,
     identifier::parse_identifier,

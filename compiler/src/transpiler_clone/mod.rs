@@ -1,17 +1,22 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
+mod codegen;
+mod decl;
+pub mod helper;
+mod struct_def;
+mod transpile;
+mod union_def;
+mod zigbuiltin_functions;
 use parser::ast::Program;
 use parser::shared_ast::Type;
-mod codegen;
-mod definition;
-mod zigbuiltin_functions;
+pub mod builtin;
+
 use crate::transpiler::zigbuiltin_functions::BUILTIN_FUNCTIONS;
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext<'a> {
     pub imports: HashSet<String>,
-    pub allocator: Option<&'a str>,
-    /*     pub is_used_allocator: bool,
+    pub is_used_allocator: bool,
     pub current_struct: Option<&'a str>,
     pub current_union: Option<&'a str>,
     pub needs_allocator: bool,
@@ -27,15 +32,14 @@ pub struct TranspileContext<'a> {
     pub used_split_auto_fn: bool,
     pub used_split_alloc_fn: bool,
     pub is_find_method: bool,
-    pub is_used_self: bool, */
+    pub is_used_self: bool,
 }
 
 impl<'a> TranspileContext<'a> {
     pub fn new() -> Self {
         Self {
             imports: HashSet::new(),
-            allocator: None,
-            /*  is_used_allocator: false,
+            is_used_allocator: false,
             current_struct: None,
             current_union: None,
             needs_allocator: false,
@@ -51,7 +55,7 @@ impl<'a> TranspileContext<'a> {
             used_split_n_fn: false,
             used_split_auto_fn: false,
             is_find_method: false,
-            is_used_self: false, */
+            is_used_self: false,
         }
     }
     pub fn add_import(&mut self, import: &str) -> Option<String> {
@@ -63,9 +67,7 @@ impl<'a> TranspileContext<'a> {
         }
     }
     pub fn transpile(&mut self, program: &'a Program<'a>) -> String {
-        let defs = codegen::top_level::generate_top_level_defs(program, self);
-        return "Salam".to_string();
-        /*   let imports = codegen::prelude::generate_imports(self);
+        let imports = codegen::prelude::generate_imports(self);
 
         let defs = codegen::top_level::generate_top_level_defs(program, self);
         let main_body = codegen::main_body::generate_main_body(program, self);
@@ -96,6 +98,6 @@ impl<'a> TranspileContext<'a> {
 pub fn main() !void {{
 {allocator}{main_body}{cleanup}}}
 "#,
-        ) */
+        )
     }
 }

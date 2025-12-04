@@ -4,7 +4,7 @@ use parser::{
 };
 
 use crate::transpiler::{TranspileContext, helper::map_type, transpile::transpile_expr};
-
+/* BUG: Burasına baxılmalı */
 pub fn transpile_decl<'a>(
     name: &String,
     typ: Option<&Type<'a>>,

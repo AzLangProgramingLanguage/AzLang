@@ -1,25 +1,21 @@
 use std::borrow::Cow;
 
 use parser::{
+    ast::{Expr, MethodType},
     shared_ast::Type,
-    typed_ast::{MethodTypeTyped, TypedExpr},
 };
 
-use crate::transpiler::{
-    TranspileContext,
-    helper::{is_semicolon_needed, map_type},
-    transpile::transpile_expr,
-};
+use crate::transpiler::TranspileContext;
 
 pub fn transpile_struct_def<'a>(
     name: &'a str,
-    transpiled_name: &'a str,
-    fields: &'a Vec<(&str, Type<'a>, Option<TypedExpr<'a>>)>,
-    methods: &'a Vec<MethodTypeTyped<'a>>,
+    fields: &'a Vec<(&str, Type<'a>, Option<Expr<'a>>)>,
+    methods: &'a Vec<MethodType<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let old_struct = ctx.current_struct.clone();
 
+    let transpiled_name = name; /* TODO: Buraya Diqqət yetir. */
     ctx.current_struct = Some(transpiled_name);
     let field_lines: Vec<String> = fields
         .iter()

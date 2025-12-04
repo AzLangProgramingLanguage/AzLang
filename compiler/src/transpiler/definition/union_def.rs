@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use parser::{shared_ast::Type, typed_ast::MethodTypeTyped};
+use parser::{ast::MethodType, shared_ast::Type};
 
 use crate::transpiler::{
     helper::{is_semicolon_needed, map_type},
@@ -11,13 +11,13 @@ use super::TranspileContext;
 
 pub fn transpile_union_def<'a>(
     name: &'a str,
-    transpiled_name: &'a str,
     fields: &'a Vec<(&str, Type<'_>)>,
-    methods: &'a Vec<MethodTypeTyped<'a>>,
+    methods: &'a Vec<MethodType<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let old_union = ctx.current_union.clone();
 
+    let transpiled_name = name;
     ctx.current_union = Some(transpiled_name);
     let field_lines: Vec<String> = fields
         .iter()
@@ -37,7 +37,7 @@ pub fn transpile_union_def<'a>(
                 .filter(|p| p.name != "self")
                 .map(|p| format!("{}: {}", p.name, map_type(&p.typ, true)))
                 .collect();
-            let is_allocator_used = method.is_allocator;
+            let is_allocator_used = false;
             let mut prefix = String::new();
             if uses_self {
                 prefix.push_str("self: @This(),");

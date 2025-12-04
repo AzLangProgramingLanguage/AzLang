@@ -1,9 +1,4 @@
-use crate::{
-    errors::ParserError,
-    method::parse_method_typed,
-    parsing_for::parse_expression_typed,
-    typed_ast::{MethodTypeTyped, TypedExpr},
-};
+use crate::errors::ParserError;
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
@@ -75,73 +70,5 @@ where
         name,
         fields,
         methods,
-    })
-}
-
-pub fn parse_struct_def_typed<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
-) -> Result<TypedExpr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    let name = match tokens.next() {
-        Some(Token::Identifier(name)) => (*name).as_str(),
-        None => return Err(ParserError::UnexpectedEOF),
-        Some(other) => return Err(ParserError::StructNameNotFound(other.clone())),
-    };
-    expect_token(tokens, Token::Newline)?;
-
-    let mut fields = Vec::new();
-    let mut methods: Vec<MethodTypeTyped<'a>> = Vec::new();
-
-    expect_token(tokens, Token::Indent)?;
-
-    while let Some(token) = tokens.peek() {
-        match token {
-            Token::Identifier(field_name) => {
-                let field_name = (*field_name).as_str();
-                tokens.next();
-
-                expect_token(tokens, Token::Colon)?;
-                let field_type = parse_type(tokens)?;
-                if let Some(Token::Operator(s)) = tokens.next()
-                    && s == "="
-                {
-                    let value = parse_expression_typed(tokens)?;
-                    fields.push((field_name, field_type, Some(value)));
-                } else {
-                    fields.push((field_name, field_type, None));
-                }
-
-                skip_newlines(tokens)?;
-            }
-            Token::Method => {
-                let method_expr = parse_method_typed(tokens)?;
-                methods.push(MethodTypeTyped {
-                    name: method_expr.0,
-                    params: method_expr.1,
-                    body: method_expr.2,
-                    transpiled_name: None,
-                    return_type: method_expr.3,
-                    is_allocator: method_expr.4,
-                });
-
-                skip_newlines(tokens)?;
-            }
-            Token::Dedent => {
-                tokens.next();
-                break;
-            }
-            Token::Eof => break,
-            other => {
-                return Err(ParserError::StructNotExpected((*other).clone()));
-            }
-        }
-    }
-    Ok(TypedExpr::StructDef {
-        name,
-        fields,
-        methods,
-        transpiled_name: None,
     })
 }

@@ -3,7 +3,6 @@ use std::{borrow::Cow, collections::HashMap};
 pub mod errors;
 mod helper;
 pub mod validate;
-pub mod validator_typed;
 use parser::{
     ast::{Expr, Parameter, Symbol},
     shared_ast::Type,

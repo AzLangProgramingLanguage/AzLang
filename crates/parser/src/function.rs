@@ -1,30 +1,20 @@
 use crate::{
+    ast::{Expr, Parameter},
     errors::ParserError,
-    parsing_for::parse_expression_typed,
+    expressions::parse_expression,
+    helpers::expect_token,
     shared_ast::Type,
-    typed_ast::{ParameterTyped, TypedExpr},
+    types::parse_type,
 };
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
-use crate::{
-    ast::{Expr, Parameter},
-    expressions::parse_expression,
-    helpers::expect_token,
-    types::parse_type,
-};
-
-fn parse_function_core<'a, I, Param, ExprOut>(
-    tokens: &mut PeekMoreIterator<I>,
-    param_builder: impl Fn(String, Type<'a>, bool) -> Param,
-    expr_parser: impl Fn(&mut PeekMoreIterator<I>) -> Result<ExprOut, ParserError>,
-    result_builder: impl Fn(&'a str, Vec<Param>, Vec<ExprOut>, Option<Type<'a>>) -> ExprOut,
-) -> Result<ExprOut, ParserError>
+pub fn parse_function_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,
 {
     let name = match tokens.next() {
-        Some(Token::Identifier(name)) => (*name).as_str(),
+        Some(Token::Identifier(n)) => (*n).as_str(),
         None => return Err(ParserError::UnexpectedEOF),
         Some(other) => return Err(ParserError::FunctionNameNotFound(other.clone())),
     };
@@ -33,16 +23,16 @@ where
 
     let mut params = Vec::new();
 
-    while let Some(token) = tokens.peek() {
-        match token {
+    while let Some(tok) = tokens.peek() {
+        match tok {
             Token::ConstantDecl | Token::MutableDecl | Token::Identifier(_) => {
-                let is_mutable = matches!(tokens.peek(), Some(Token::MutableDecl));
-                if is_mutable || matches!(tokens.peek(), Some(Token::ConstantDecl)) {
+                let is_mutable = matches!(tok, Token::MutableDecl);
+                if matches!(tok, Token::MutableDecl | Token::ConstantDecl) {
                     tokens.next();
                 }
 
                 let param_name = match tokens.next() {
-                    Some(Token::Identifier(s)) => (*s).as_str(),
+                    Some(Token::Identifier(s)) => (*s).as_str().to_string(),
                     other => {
                         return Err(ParserError::ParameterNameNotFound(other.unwrap().clone()));
                     }
@@ -65,16 +55,20 @@ where
                     }
                 }
 
-                params.push(param_builder(
-                    param_name.to_string(),
-                    param_type,
+                params.push(Parameter {
+                    name: param_name,
+                    typ: param_type,
                     is_mutable,
-                ));
+                    is_pointer: false,
+                });
             }
+
             Token::Comma => {
                 tokens.next();
             }
+
             Token::RParen => break,
+
             other => return Err(ParserError::RParenNotFound((*other).clone())),
         }
     }
@@ -88,8 +82,9 @@ where
     expect_token(tokens, Token::Indent)?;
 
     let mut body = Vec::new();
-    while let Some(token) = tokens.peek() {
-        match token {
+
+    while let Some(tok) = tokens.peek() {
+        match tok {
             Token::Dedent => {
                 tokens.next();
                 break;
@@ -99,57 +94,15 @@ where
             }
             Token::Eof => break,
             _ => {
-                let expr = expr_parser(tokens)?;
-                body.push(expr);
+                body.push(parse_expression(tokens)?);
             }
         }
     }
 
-    Ok(result_builder(name, params, body, return_type))
-}
-pub fn parse_function_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    parse_function_core(
-        tokens,
-        |name, typ, is_mut| Parameter {
-            name,
-            typ,
-            is_mutable: is_mut,
-            is_pointer: false,
-        },
-        |toks| parse_expression(toks),
-        |name, params, body, ret| Expr::FunctionDef {
-            name,
-            params,
-            body,
-            return_type: ret,
-        },
-    )
-}
-pub fn parse_function_def_typed<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
-) -> Result<TypedExpr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    parse_function_core(
-        tokens,
-        |name, typ, is_mut| ParameterTyped {
-            name,
-            typ,
-            is_mutable: is_mut,
-            is_pointer: false,
-        },
-        |toks| parse_expression_typed(toks),
-        |name, params, body, ret| TypedExpr::FunctionDef {
-            name,
-            params,
-            body,
-            return_type: ret,
-            transpiled_name: None,
-            is_allocator: false,
-        },
-    )
+    Ok(Expr::FunctionDef {
+        name,
+        params,
+        body,
+        return_type,
+    })
 }
