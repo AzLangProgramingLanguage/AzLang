@@ -3,7 +3,7 @@ use parser::{
     shared_ast::Type,
 };
 
-use crate::transpiler::{TranspileContext, transpile::transpile_expr};
+use crate::transpiler::TranspileContext;
 
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     match expr {

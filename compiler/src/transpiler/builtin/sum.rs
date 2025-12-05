@@ -1,12 +1,12 @@
-use parser::typed_ast::TypedExpr;
+use parser::ast::Expr;
 
 use crate::transpiler::{
     TranspileContext, builtin::min_max::inner_typer, helper::get_expr_type,
     transpile::transpile_expr,
 };
 
-pub fn transpile_sum<'a>(args: &'a [TypedExpr<'a>], ctx: &mut TranspileContext<'a>) -> String {
-    ctx.used_sum_fn = true;
+pub fn transpile_sum<'a>(args: &'a [Expr<'a>], ctx: &mut TranspileContext<'a>) -> String {
+    // ctx.used_sum_fn = true;
 
     let expr_type = get_expr_type(&args[0]);
     let list_code = {
@@ -26,9 +26,8 @@ pub fn transpile_sum<'a>(args: &'a [TypedExpr<'a>], ctx: &mut TranspileContext<'
     };
     let inner_type = inner_typer(expr_type);
     let final_list_code = match &args[0] {
-        TypedExpr::VariableRef {
+        Expr::VariableRef {
             name,
-            transpiled_name: _,
             symbol: Some(sym),
         } => {
             if sym.is_mutable {

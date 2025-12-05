@@ -5,7 +5,7 @@ use parser::{
     shared_ast::Type,
 };
 
-use crate::transpiler::TranspileContext;
+use crate::transpiler::{TranspileContext, helper::map_type};
 
 pub fn transpile_struct_def<'a>(
     name: &'a str,
@@ -13,7 +13,7 @@ pub fn transpile_struct_def<'a>(
     methods: &'a Vec<MethodType<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
-    let old_struct = ctx.current_struct.clone();
+    /* let old_struct = ctx.current_struct.clone();
 
     let transpiled_name = name; /* TODO: Buraya Diqqət yetir. */
     ctx.current_struct = Some(transpiled_name);
@@ -87,6 +87,8 @@ pub fn transpile_struct_def<'a>(
     all_lines.extend(method_lines);
     let full_body = all_lines.join("\n");
     ctx.current_struct = old_struct;
-    let t = transpiled_name;
+    let t = transpiled_name; */
+    let t = "a";
+    let full_body = "asda";
     format!("const {t} = struct {{\n{full_body}\n}};")
 }

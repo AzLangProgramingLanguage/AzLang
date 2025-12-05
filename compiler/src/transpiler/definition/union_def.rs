@@ -2,12 +2,7 @@ use std::borrow::Cow;
 
 use parser::{ast::MethodType, shared_ast::Type};
 
-use crate::transpiler::{
-    helper::{is_semicolon_needed, map_type},
-    transpile::transpile_expr,
-};
-
-use super::TranspileContext;
+use crate::transpiler::TranspileContext;
 
 pub fn transpile_union_def<'a>(
     name: &'a str,
@@ -15,7 +10,7 @@ pub fn transpile_union_def<'a>(
     methods: &'a Vec<MethodType<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
-    let old_union = ctx.current_union.clone();
+    /* let old_union = ctx.current_union.clone();
 
     let transpiled_name = name;
     ctx.current_union = Some(transpiled_name);
@@ -114,6 +109,8 @@ pub fn transpile_union_def<'a>(
     let full_body = all_lines.join("\n");
     ctx.current_union = old_union;
 
-    let new_name = transpiled_name;
+    let new_name = transpiled_name; */
+    let new_name = "Salam";
+    let full_body = "salam";
     format!("const {new_name} = union(enum) {{\n{full_body}\n}};")
 }

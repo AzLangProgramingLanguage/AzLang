@@ -3,7 +3,7 @@ use parser::{
     shared_ast::Type,
 };
 
-use crate::transpiler::TranspileContext;
+use crate::transpiler::{TranspileContext, helper::map_type};
 /* BUG: Burasında boşluq var */
 
 pub fn transpile_function_def<'a>(
@@ -15,7 +15,7 @@ pub fn transpile_function_def<'a>(
     ctx: &mut TranspileContext<'a>,
     is_allocator: &bool,
 ) -> String {
-    let params_str: Vec<String> = params.iter().map(transpile_param).collect();
+    /*  let params_str: Vec<String> = params.iter().map(transpile_param).collect();
 
     let ret_type = return_type.as_ref().unwrap_or(&Type::Void);
     let ret_type_str = map_type(ret_type, true);
@@ -27,14 +27,14 @@ pub fn transpile_function_def<'a>(
             line.push(';');
         }
         body_lines.push(format!("    {}", line));
-    }
-
+    } */
+    let name = "asda";
+    let params_str = "";
+    let ret_type_str = "";
+    let body_lines = "";
     format!(
         "fn {}({}) {} {{\n{}\n}}",
-        name,
-        params_str.join(", "),
-        ret_type_str,
-        body_lines.join("\n")
+        name, params_str, ret_type_str, body_lines
     )
 }
 

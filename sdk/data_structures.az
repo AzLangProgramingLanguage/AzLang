@@ -1,4 +1,6 @@
+Çap("Salam")
 
+/*
 tip Yazı
   Const: zigsabityazı
   Mut: zigyazı
@@ -31,6 +33,8 @@ tip Yazı
     // Burasını Sistem Qərar Versin
   metod bitirirmi(suffix: yazı): qərar
     // Burasını Sistem Qərar Versin
+
+*/
 
 /*
 

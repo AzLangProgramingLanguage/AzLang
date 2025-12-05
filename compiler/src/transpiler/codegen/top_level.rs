@@ -1,11 +1,11 @@
-use parser::{
-    ast::{Expr, Program},
-    typed_ast::{CompiledProgram, TypedExpr},
-};
+use parser::ast::{Expr, Program};
 
 use crate::transpiler::{
-    TranspileContext, helper::transpile_function_def, struct_def::transpile_struct_def,
-    union_def::transpile_union_def,
+    TranspileContext,
+    definition::{
+        function_def::transpile_function_def, struct_def::transpile_struct_def,
+        union_def::transpile_union_def,
+    },
 };
 
 pub fn generate_top_level_defs<'a>(
@@ -22,7 +22,8 @@ pub fn generate_top_level_defs<'a>(
                 body,
                 return_type,
             } => {
-                let def = transpile_function_def(name, params, body, return_type, None, ctx);
+                let def =
+                    transpile_function_def(name, params, body, return_type, None, ctx, &false);
                 code.push_str(&def);
                 code.push_str("\n\n");
             }
