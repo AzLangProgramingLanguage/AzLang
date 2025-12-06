@@ -1,6 +1,6 @@
 use std::{borrow::Cow, rc::Rc};
 
-use crate::errors::ParserError;
+use crate::{errors::ParserError, shared_ast::Type};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
@@ -13,25 +13,32 @@ pub fn parse_decl<'a, I>(
 where
     I: Iterator<Item = &'a Token>,
 {
-    let typ = parse_type(tokens)?;
-
-    let name = match tokens.next() {
-        Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
-        Some(other) => return Err(ParserError::DeclNameNotFound(other.clone())),
-        None => return Err(ParserError::DeclNameNotFound(Token::Eof)),
-    };
-
-    match tokens.next() {
-        Some(Token::Operator(op)) if op == "=" => {}
-        Some(other) => return Err(ParserError::DeclAssignNotFound(other.clone())),
+    let mut typ = Type::Any;
+    let name: Cow<'a, str>;
+    match tokens.peek_nth(1) {
+        Some(Token::Operator(op)) if op == "=" => {
+            name = match tokens.next() {
+                Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
+                Some(other) => return Err(ParserError::DeclNameNotFound(other.clone())),
+                None => return Err(ParserError::DeclNameNotFound(Token::Eof)),
+            };
+        }
+        Some(Token::Identifier(s)) => {
+            typ = parse_type(tokens)?;
+            name = Cow::Borrowed(s.as_str());
+            tokens.next();
+        }
+        Some(other) => return Err(ParserError::DeclNameNotFound((*other).clone())),
         None => return Err(ParserError::DeclAssignNotFound(Token::Eof)),
     }
+
+    tokens.next();
     let value_expr = parse_expression(tokens)?;
 
     let value = Box::new(value_expr);
     Ok(Expr::Decl {
         name,
-        typ: Some(Rc::new(typ)),
+        typ: Rc::new(typ),
         value,
         is_mutable,
     })

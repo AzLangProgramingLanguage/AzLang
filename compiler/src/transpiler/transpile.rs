@@ -23,7 +23,7 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
         Expr::Bool(n) => n.to_string(),
         Expr::Break => "break".to_string(),
         Expr::Continue => "continue".to_string(),
-        Expr::Return(expr)=> {
+        /*    Expr::Return(expr)=> {
             /* BUG:  Hell et burayı */
             let code = match &**expr {
                 Expr::Number(n) => match get_expr_type(expr) {
@@ -48,12 +48,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
 
                 Expr::Float(n) => n.to_string(),
                 Expr::String(s, _) => format!("\"{}\"", s.escape_default()),
-   
-        }
 
+        } */
         Expr::BuiltInCall { function, args, .. } => match function {
             BuiltInFunction::Print => transpile_print(&args[0], ctx),
             BuiltInFunction::Sum => transpile_sum(&args, ctx),
+
             BuiltInFunction::Min => transpile_min(&args, ctx),
             BuiltInFunction::Max => transpile_max(&args, ctx),
 

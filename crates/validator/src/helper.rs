@@ -8,75 +8,75 @@ pub fn get_type<'a>(
     value: &Expr<'a>,
     ctx: &ValidatorContext<'a>,
     typ: Option<&Type<'a>>,
-) -> Option<Type<'a>> {
+) -> Type<'a> {
     match value {
-        Expr::Number(_) => Some(Type::Natural),
+        Expr::Number(_) => Type::Natural,
         Expr::UnaryOp { op, expr } => {
-            get_type(expr, ctx, typ)?;
+            get_type(expr, ctx, typ);
             match &**op {
-                "-" => Some(Type::Integer),
-                "!" => Some(Type::Bool),
-                _ => None,
+                "-" => Type::Integer,
+                "!" => Type::Bool,
+                _ => Type::Any,
             }
         }
-        Expr::Bool(_) => Some(Type::Bool),
+        Expr::Bool(_) => Type::Bool,
 
-        Expr::Float(_) => Some(Type::Float),
-        Expr::String(_, _) => Some(Type::String),
+        Expr::Float(_) => Type::Float,
+        Expr::String(_, _) => Type::String,
         Expr::List(items) => {
             if items.len() > 0 {
-                let item_type = get_type(&items[0], ctx, typ)?;
+                let item_type = get_type(&items[0], ctx, typ);
                 for item in &items[1..] {
-                    let t = get_type(item, ctx, typ)?;
+                    let t = get_type(item, ctx, typ);
                     if t != item_type {
-                        return Some(Type::Array(Box::new(Type::Any)));
+                        return Type::Array(Box::new(Type::Any));
                     }
                 }
 
-                Some(Type::Array(Box::new(item_type)))
+                Type::Array(Box::new(item_type))
             } else {
-                Some(Type::Any)
+                Type::Any
             }
         }
         Expr::Index {
             target: _,
             index: _,
             target_type,
-        } => Some(target_type.clone()),
+        } => target_type.clone(),
         Expr::VariableRef { name, symbol } => {
             if let Some(s) = ctx.lookup_variable(name) {
-                return Some(s.typ.clone());
+                return s.typ.clone();
             }
 
             if let Some(t) = typ {
                 if let Type::User(enum_name) = t {
                     if let Some(variants) = ctx.enum_defs.get(enum_name) {
                         if variants.contains(name) {
-                            return Some(t.clone());
+                            return t.clone();
                         }
                     }
                 }
             }
-            return Some(symbol.as_ref().unwrap().typ.clone());
+            return symbol.as_ref().unwrap().typ.clone();
         }
         Expr::StructInit { name, .. } => {
             if let Some((..)) = ctx.struct_defs.get(name.as_ref()) {
-                Some(Type::User(Cow::Owned(name.to_string())))
+                Type::User(Cow::Owned(name.to_string()))
             } else if let Some((..)) = ctx.union_defs.get(name.as_ref()) {
-                Some(Type::User(Cow::Owned(name.to_string())))
+                Type::User(Cow::Owned(name.to_string()))
             } else {
-                None
+                Type::Any
             }
         }
 
-        Expr::BuiltInCall { return_type, .. } => Some(return_type.clone()),
-        Expr::Call { returned_type, .. } => returned_type.clone(),
+        Expr::BuiltInCall { return_type, .. } => return_type.clone(),
+        Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
         Expr::BinaryOp { left, op, right } => {
-            let left_type = get_type(left, ctx, typ)?;
-            let right_type = get_type(right, ctx, typ)?;
+            let left_type = get_type(left, ctx, typ);
+            let right_type = get_type(right, ctx, typ);
 
             if left_type != right_type {
-                return None;
+                return Type::Any;
             }
 
             let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
@@ -84,15 +84,15 @@ pub fn get_type<'a>(
             let arithmetic_ops = ["+", "-", "*", "/", "%"];
 
             if comparison_ops.contains(&op) || logic_ops.contains(&op) {
-                return Some(Type::Bool);
+                return Type::Bool;
             }
 
             if arithmetic_ops.contains(&op) {
-                return Some(left_type);
+                return left_type;
             }
 
-            None
+            Type::Any
         }
-        _ => None,
+        _ => Type::Any,
     }
 }

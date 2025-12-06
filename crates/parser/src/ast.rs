@@ -55,7 +55,7 @@ pub enum Expr<'a> {
     Float(f64),
     Decl {
         name: Cow<'a, str>,
-        typ: Option<Rc<Type<'a>>>,
+        typ: Rc<Type<'a>>,
         is_mutable: bool,
         value: Box<Expr<'a>>,
     },

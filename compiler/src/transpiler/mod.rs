@@ -5,17 +5,22 @@ use parser::ast::Program;
 use parser::shared_ast::Type;
 pub mod builtin;
 mod codegen;
+pub mod declaration;
 mod definition;
 mod helper;
 pub mod transpile;
 mod zigbuiltin_functions;
 use crate::transpiler::zigbuiltin_functions::BUILTIN_FUNCTIONS;
+
+type Variable<'a> = HashMap<String, (bool, String)>;
+
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext<'a> {
     pub imports: HashSet<String>,
     pub uses_stdout: bool,
     pub used_min_fn: bool,
     pub used_max_fn: bool,
+    pub variables: Variable<'a>,
     pub allocator: Option<&'a str>,
     pub used_input_fn: bool,
     pub is_find_method: bool,
@@ -44,6 +49,7 @@ impl<'a> TranspileContext<'a> {
         Self {
             imports: HashSet::new(),
             allocator: None,
+            variables: HashMap::new(),
             uses_stdout: false,
             used_min_fn: false,
             used_max_fn: false,
@@ -85,7 +91,7 @@ impl<'a> TranspileContext<'a> {
 
 
 
-      {BUILTIN_FUNCTIONS}
+
 
 {defs}
 {utils}

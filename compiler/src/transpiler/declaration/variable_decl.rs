@@ -1,6 +1,6 @@
 use parser::{
+    ast::Expr,
     shared_ast::{BuiltInFunction, Type},
-    typed_ast::TypedExpr,
 };
 
 use crate::transpiler::{TranspileContext, helper::map_type, transpile::transpile_expr};
@@ -10,7 +10,7 @@ pub fn transpile_decl<'a>(
     typ: Option<&Type<'a>>,
     is_mutable: bool,
     is_primitive: bool,
-    value: &'a TypedExpr<'a>,
+    value: &'a Expr<'a>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let type_str = map_type(typ.unwrap_or(&Type::Any), !is_mutable);
@@ -18,7 +18,7 @@ pub fn transpile_decl<'a>(
 
     let decl_code = match typ {
         Some(Type::String) => match value {
-            TypedExpr::String(_, _) => {
+            Expr::String(_, _) => {
                 if is_mutable {
                     format!(
                         "var {}: {} = azlangYazi.Yeni(azlangYazi{{.Mut=try allocator.dupe(u8, {}) }});",
@@ -32,7 +32,7 @@ pub fn transpile_decl<'a>(
                 }
             }
 
-            TypedExpr::BuiltInCall {
+            Expr::BuiltInCall {
                 function,
                 args: s,
                 return_type: _,
@@ -97,7 +97,7 @@ pub fn transpile_decl<'a>(
             }
         },
         Some(Type::Natural) | Some(Type::Integer) | Some(Type::Float) => match value {
-            TypedExpr::Number(_) | TypedExpr::UnaryOp { op: _, expr: _ } | TypedExpr::Float(_) => {
+            Expr::Number(_) | Expr::UnaryOp { op: _, expr: _ } | Expr::Float(_) => {
                 let var_code = if is_mutable { "var" } else { "const" };
                 match typ {
                     Some(Type::Natural) => {
@@ -121,7 +121,7 @@ pub fn transpile_decl<'a>(
                     _ => todo!(),
                 }
             }
-            TypedExpr::BuiltInCall {
+            Expr::BuiltInCall {
                 function,
                 args: s,
                 return_type: _,
@@ -163,13 +163,13 @@ pub fn transpile_decl<'a>(
         },
 
         Some(Type::Array(inner)) => match value {
-            TypedExpr::List(items) => {
+            Expr::List(items) => {
                 let items_code: Vec<String> =
                     items.iter().map(|i| transpile_expr(i, ctx)).collect();
                 let items_str = items_code.join(", ");
                 if is_mutable {
-                    ctx.needs_allocator = true;
-                    ctx.cleanup_statements.push(format!("{}.deinit();", name));
+                    /*    ctx.needs_allocator = true;
+                    ctx.cleanup_statements.push(format!("{}.deinit();", name)); */
 
                     let inner_code = map_type(inner, false);
 

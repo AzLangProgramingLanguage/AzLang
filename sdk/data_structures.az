@@ -1,4 +1,5 @@
-Çap("Salam")
+sabit a = "Salam"
+Çap(a)
 
 /*
 tip Yazı

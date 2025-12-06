@@ -48,16 +48,11 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                 }
             };
 
-            let type_ref = match typ {
-                Some(rc_type) => (*rc_type).clone(),
-                None => Type::Any,
-            };
-
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
                     value: eval_value,
-                    typ: type_ref,
+                    typ: (*typ).clone(), /* TODO: Yersiz Clone */
                     is_mutable,
                 },
             );

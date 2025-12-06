@@ -29,10 +29,11 @@ pub fn validate_expr<'a>(
             }
 
             validate_expr(value, ctx)?;
-            let inferred = get_type(value, ctx, typ.as_deref());
-            if let Some(s) = inferred {
-                if let Some(typ_ref) = typ.as_deref() {
-                    if *typ_ref != s {
+            let inferred = get_type(value, ctx, Some(typ));
+
+            if let s = inferred {
+                if let typ_ref = typ {
+                    if **typ_ref != s && **typ_ref != Type::Any {
                         return Err(ValidatorError::DeclTypeMismatch {
                             name: name.to_string(),
                             expected: s.to_string(),
@@ -40,7 +41,6 @@ pub fn validate_expr<'a>(
                         });
                     }
                 }
-                *typ = Some(Rc::new(s.clone()));
                 ctx.declare_variable(
                     name.to_string(),
                     Symbol {
@@ -70,7 +70,7 @@ pub fn validate_expr<'a>(
                         name.to_string(),
                     ));
                 }
-                if let Some(s) = inferred {
+                if let s = inferred {
                     if var.typ != s {
                         return Err(ValidatorError::AssignmentTypeMismatch {
                             name: name.to_string(),
@@ -174,7 +174,7 @@ pub fn validate_expr<'a>(
                 BuiltInFunction::Print => {
                     validate_expr(&mut args[0], ctx)?;
                     validator_log(&format!("✅ Print funksiyası yoxlanılır"));
-                    if let Some(t) = get_type(&args[0], ctx, None) {
+                    if let t = get_type(&args[0], ctx, None) {
                         if t == Type::Void {
                             return Err(ValidatorError::TypeMismatch {
                                 expected: "Yazı".to_string(),
@@ -191,7 +191,7 @@ pub fn validate_expr<'a>(
                 | BuiltInFunction::StrLower
                 | BuiltInFunction::StrReverse => {
                     validator_log(&format!("✅ StrUpper funksiyası yoxlanılır"));
-                    if let Some(t) = get_type(&args[0], ctx, None) {
+                    if let t = get_type(&args[0], ctx, None) {
                         if t != Type::String {
                             return Err(ValidatorError::TypeMismatch {
                                 expected: Type::String.to_string(),
@@ -202,7 +202,7 @@ pub fn validate_expr<'a>(
                 }
 
                 BuiltInFunction::Len => {
-                    if let Some(t) = get_type(&args[0], ctx, None) {
+                    if let t = get_type(&args[0], ctx, None) {
                         match t {
                             Type::Array(_) => {}
                             _ => {
@@ -339,8 +339,10 @@ pub fn validate_expr<'a>(
 
             validate_expr(condition, ctx)?;
 
-            let cond_type =
-                get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
+            let cond_type = match get_type(condition, ctx, None) {
+                Type::Any => return Err(ValidatorError::IfConditionTypeUnknown),
+                other => other,
+            };
             if cond_type != Type::Bool {
                 return Err(ValidatorError::IfConditionTypeMismatch(
                     cond_type.to_string(),
@@ -363,8 +365,10 @@ pub fn validate_expr<'a>(
 
             validate_expr(condition, ctx)?;
 
-            let cond_type =
-                get_type(condition, ctx, None).ok_or(ValidatorError::IfConditionTypeUnknown)?;
+            let cond_type = match get_type(condition, ctx, None) {
+                Type::Any => return Err(ValidatorError::IfConditionTypeUnknown),
+                other => other,
+            };
             if cond_type != Type::Bool {
                 return Err(ValidatorError::IfConditionTypeMismatch(
                     cond_type.to_string(),
@@ -390,8 +394,10 @@ pub fn validate_expr<'a>(
         } => {
             validator_log("Dövr yoxlanılır");
             validate_expr(iterable, ctx)?;
-            let iterable_type =
-                get_type(iterable, ctx, None).ok_or(ValidatorError::LoopIterableTypeNotFound)?;
+            let iterable_type = match get_type(iterable, ctx, None) {
+                Type::Any => return Err(ValidatorError::LoopIterableTypeNotFound),
+                other => other,
+            };
             if let Type::Array(inner) = iterable_type {
                 let symbol = Symbol {
                     typ: *inner,
@@ -431,7 +437,7 @@ pub fn validate_expr<'a>(
                     let variable_type = get_type(variable, ctx, None);
 
                     match variable_type {
-                        Some(Type::String) => {
+                        Type::String => {
                             let union = ctx
                                 .union_defs
                                 .get("Yazı")
@@ -455,7 +461,7 @@ pub fn validate_expr<'a>(
 
                             *returned_type = method.return_type.clone();
                         }
-                        Some(Type::Natural) | Some(Type::Integer) | Some(Type::Float) => {
+                        Type::Natural | Type::Integer | Type::Float => {
                             let object = ctx
                                 .union_defs
                                 .get("Ədəd")
@@ -479,7 +485,7 @@ pub fn validate_expr<'a>(
 
                             *returned_type = method.return_type.clone();
                         }
-                        Some(Type::User(s)) => {
+                        Type::User(s) => {
                             let union = ctx
                                 .union_defs
                                 .get(&s.to_string())
@@ -503,7 +509,7 @@ pub fn validate_expr<'a>(
 
                             *returned_type = method.return_type.clone();
                         }
-                        Some(Type::Array(_)) => {
+                        Type::Array(_) => {
                             let union = ctx
                                 .union_defs
                                 .get("Siyahı")
@@ -563,14 +569,12 @@ pub fn validate_expr<'a>(
 
             validate_expr(target, ctx)?;
             validate_expr(index, ctx)?;
-            /*             validate_expr(index, ctx, log)?;
-             */
+
             let index_type = get_type(index, ctx, None);
 
-            if index_type.is_none() {
+            if index_type == Type::Any {
                 return Err(ValidatorError::IndexTargetTypeNotFound);
             }
-            let index_type = index_type.unwrap();
 
             if index_type == Type::Integer {
                 *target_type = Type::Integer;
@@ -591,7 +595,7 @@ pub fn validate_expr<'a>(
 
                     println!("Sruktur tipi {target:?}");
                     let struct_name = match struct_type {
-                        Some(Type::User(name)) => name,
+                        Type::User(name) => name,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
 

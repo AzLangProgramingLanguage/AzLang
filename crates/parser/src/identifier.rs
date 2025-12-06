@@ -69,7 +69,7 @@ where
                 target: None,
                 name: s,
                 args,
-                returned_type: None,
+                returned_type: Some(Type::Void),
             })
         }
 
