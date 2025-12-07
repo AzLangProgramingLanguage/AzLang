@@ -1,5 +1,9 @@
-sabit a = "Salam"
-Çap(a)
+dəyişən ədəd b = 5
+b = "sLAA"
+dəyişən as = 5
+Çap(`as: ${as} `)
+Çap(`b: ${b} `)
+Çap(`a: ${a}`)
 
 /*
 tip Yazı

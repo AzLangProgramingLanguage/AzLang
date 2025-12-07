@@ -1,0 +1,84 @@
+dəyişən ədəd b = 5
+b = "sLAA"
+
+
+Çap(`as: ${as} `)
+Çap(`b: ${b} `)
+Çap(`a: ${a}`)
+
+
+
+
+
+
+
+
+/*
+tip Yazı
+  Const: zigsabityazı
+  Mut: zigyazı
+  metod Yeni(): yazı
+    // Burasını Sistem Qərar Versin
+  metod böyüt(): yazı
+    // Burasını Sistem Qərar Versin
+  metod kiçilt(): yazı
+    // Burasını Sistem Qərar Versin
+  metod tərs(): yazı
+    // Burasını Sistem Qərar Versin
+  metod qırx(): yazı
+    // Burasını Sistem Qərar Versin
+  metod tipi(): zigsabityazı
+    // Burasını Sistem Qərar Versin
+  metod uzunluq(): ədəd
+    // Burasını Sistem Qərar Versin
+  metod boşdur(): qərar
+    əgər öz.uzunluq() == 0
+      qaytar doğru
+    əks
+      qaytar yanlış
+  metod ədədə_çevir(): ədəd
+    qaytar ƏdədəÇevir(öz)
+  metod böl(arg: yazı): siyahı<yazı>
+    // Burasını Sistem Qərar Versin
+  metod əvəzlə(et: yazı,yeni: yazı): yazı
+    // Burasını Sistem Qərar Versin
+  metod başlayırmı(prefix: yazı): qərar
+    // Burasını Sistem Qərar Versin
+  metod bitirirmi(suffix: yazı): qərar
+    // Burasını Sistem Qərar Versin
+
+*/
+
+/*
+
+tip Ədəd
+  natural: zignatural
+  integer: ziginteger
+  float: zigfloat
+  metod Yeni(): ədəd
+    qaytar öz
+  metod yazıya_çevir(): yazı
+    // Burasını Sistem Qərar Versin
+  metod tipi(): zigsabityazı
+    // Burasını Sistem Qərar Versin
+
+
+
+tip Siyahı
+  Const: zigsabitsiyahı
+  Mut: zigsiyahı
+  metod uzunluq(): ədəd
+    // Burasını Sistem Qərar Versin
+  metod tipi(): zigsabityazı
+    // Burasını Sistem Qərar Versin
+  metod sil(index: ədəd): heçnə
+    // Burasını Sistem Qərar Versin
+  metod sondansil(): heçnə
+    // Burasını Sistem Qərar Versin
+
+
+dəyişən kəsr a  = 0.0
+gəz [1,2,3,4] içində i
+    a = a + 0.1
+    Çap(a)
+*/
