@@ -121,7 +121,7 @@ where
 
             Ok(Expr::Index {
                 target: Box::new(expr),
-                index: Box::new(Expr::String(field, false)),
+                index: Box::new(Expr::String(field)),
                 target_type: Type::Any,
             })
         }

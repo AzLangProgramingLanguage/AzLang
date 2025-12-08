@@ -1,9 +1,5 @@
-dəyişən ədəd b = 5
-b = "sLAA"
-dəyişən as = 5
-Çap(`as: ${as} `)
-Çap(`b: ${b} `)
-Çap(`a: ${a}`)
+sabit yazı b = "5"
+Çap(b)
 
 /*
 tip Yazı

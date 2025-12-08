@@ -14,7 +14,7 @@ where
     I: Iterator<Item = &'a Token>,
 {
     let mut expr = match token {
-        Token::StringLiteral(s) => Expr::String(s, false),
+        Token::StringLiteral(s) => Expr::String(s),
         Token::Number(num) => Expr::Number(*num),
         Token::Float(num) => Expr::Float(*num),
         Token::ListStart => parse_list(tokens),
@@ -66,7 +66,7 @@ where
             _ => {
                 expr = Expr::Index {
                     target: Box::new(expr),
-                    index: Box::new(Expr::String(field_or_method, false)),
+                    index: Box::new(Expr::String(field_or_method)),
                     target_type: Type::Any,
                 };
             }

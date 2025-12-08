@@ -35,7 +35,7 @@ pub fn handle_number_call<'a>(
             }
             Expr::Comment(c) if c.trim() == "Burasını Sistem Qərar Versin" => match name {
                 "tipi" => {
-                    return Some(Expr::String("Ədəd".into(), false));
+                    return Some(Expr::String("Ədəd".into()));
                 }
                 "yazıya_çevir" => {
                     return Some(Expr::DynamicString(s.to_string().into()));

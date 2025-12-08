@@ -23,7 +23,7 @@ pub enum Expr<'a> {
     Void,
     Return(Box<Expr<'a>>),
     Time(std::time::Instant),
-    String(&'a str, bool),
+    String(&'a str),
     Bool(bool),
     Number(i64),
     Char(char),

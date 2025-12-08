@@ -43,3 +43,14 @@ where
         is_mutable,
     })
 }
+
+pub fn is_primite_value_to_type<'a>(expr: &Expr<'a>) -> Type<'a> {
+    match expr {
+        Expr::Number(_) => Type::Integer,
+        Expr::Float(_) => Type::Float,
+        Expr::Bool(_) => Type::Bool,
+        Expr::Char(_) => Type::Char,
+        Expr::String(_) => Type::LiteralString,
+        _ => Type::Any,
+    }
+}

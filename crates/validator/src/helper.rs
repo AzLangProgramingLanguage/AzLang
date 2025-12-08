@@ -22,7 +22,7 @@ pub fn get_type<'a>(
         Expr::Bool(_) => Type::Bool,
 
         Expr::Float(_) => Type::Float,
-        Expr::String(_, _) => Type::String,
+        Expr::String(_) => Type::LiteralString,
         Expr::List(items) => {
             if items.len() > 0 {
                 let item_type = get_type(&items[0], ctx, typ);

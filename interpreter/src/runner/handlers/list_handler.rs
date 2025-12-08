@@ -40,7 +40,7 @@ pub fn handle_list_call<'a>(
                     return Some(Expr::Number(strr.try_into().unwrap()));
                 }
                 "tipi" => {
-                    return Some(Expr::String("Siyahı".into(), false));
+                    return Some(Expr::String("Siyahı".into()));
                 }
                 "sil" => match args.get(0) {
                     Some(arg) => {

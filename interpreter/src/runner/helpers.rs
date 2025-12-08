@@ -1,4 +1,4 @@
-use crate::runner::{eval::eval, runner::runner_interpretator, Runner};
+use crate::runner::{Runner, eval::eval, runner::runner_interpretator};
 use parser::{ast::Expr, shared_ast::Type};
 
 pub fn get_run_type<'a>(value: &Expr<'_>) -> Type<'a> {
@@ -7,7 +7,7 @@ pub fn get_run_type<'a>(value: &Expr<'_>) -> Type<'a> {
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
-        Expr::String(_, _) => Type::String,
+        Expr::String(_) => Type::String,
         Expr::DynamicString(_) => Type::String,
         Expr::VariableRef { .. } => Type::Any,
         Expr::BinaryOp { .. } => Type::Any,

@@ -1,8 +1,8 @@
 use std::io::Write;
 use std::rc::Rc;
 
-use crate::runner::builtin::print::print_interpreter;
 use crate::runner::Runner;
+use crate::runner::builtin::print::print_interpreter;
 use parser::ast::Expr;
 use parser::shared_ast::BuiltInFunction;
 
@@ -12,7 +12,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
         Expr::Float(f) => Expr::Float(*f),
         Expr::Bool(b) => Expr::Bool(*b),
         Expr::Char(c) => Expr::Char(*c),
-        Expr::String(s, t) => Expr::String(s, *t),
+        Expr::String(s) => Expr::String(s),
         Expr::DynamicString(s) => Expr::DynamicString(s.clone()),
         Expr::List(list) => {
             let elems: Vec<Expr> = list.iter().map(|e| eval(e, ctx)).collect();
@@ -29,26 +29,26 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
             match target {
                 Expr::List(list) => match index {
                     Expr::Number(n) => list[n as usize].clone(),
-                    _ => Expr::String("", false),
+                    _ => Expr::String(""),
                 },
-                Expr::String(s, _) => match index {
+                Expr::String(s) => match index {
                     Expr::Number(n) => Expr::Char(s.chars().nth(n as usize).unwrap_or(' ')),
-                    _ => Expr::String("", false),
+                    _ => Expr::String(""),
                 },
                 Expr::StructInit { name, args } => {
                     /*TODO: Hashmapa keçid etmek lazımdı */
-                    if let Expr::String(field_name, _) = &index {
+                    if let Expr::String(field_name) = &index {
                         if let Some((_, value)) = args.iter().find(|(k, _)| k == field_name) {
                             value.clone()
                         } else {
-                            Expr::String("Field not found", false)
+                            Expr::String("Field not found")
                         }
                     } else {
-                        Expr::String("Invalid field name", false)
+                        Expr::String("Invalid field name")
                     }
                 }
 
-                _ => Expr::String("", false),
+                _ => Expr::String(""),
             }
         }
         Expr::VariableRef { name, .. } => {
@@ -111,7 +111,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                 let arg = eval(&args[0], ctx);
                 match arg {
                     Expr::DynamicString(s) => Expr::Number(s.parse().unwrap_or(0)),
-                    Expr::String(s, _) => Expr::Number(s.parse().unwrap_or(0)),
+                    Expr::String(s) => Expr::Number(s.parse().unwrap_or(0)),
                     _ => Expr::Number(0),
                 }
             }
@@ -157,7 +157,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                 let arg = eval(&args[0], ctx);
                 match arg {
                     Expr::DynamicString(s) => Expr::DynamicString(Rc::new(s.to_lowercase())),
-                    Expr::String(s, _) => Expr::DynamicString(Rc::new(s.to_lowercase())),
+                    Expr::String(s) => Expr::DynamicString(Rc::new(s.to_lowercase())),
                     _ => Expr::DynamicString(Rc::new("".to_string())),
                 }
             }
@@ -165,7 +165,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                 let arg = eval(&args[0], ctx);
                 match arg {
                     Expr::DynamicString(s) => Expr::DynamicString(Rc::new(s.to_uppercase())),
-                    Expr::String(s, _) => Expr::DynamicString(Rc::new(s.to_uppercase())),
+                    Expr::String(s) => Expr::DynamicString(Rc::new(s.to_uppercase())),
                     _ => Expr::DynamicString(Rc::new("".to_string())),
                 }
             }
@@ -173,7 +173,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                 let arg: Expr<'_> = eval(&args[0], ctx);
                 match arg {
                     Expr::DynamicString(s) => Expr::DynamicString(Rc::new(s.trim().to_string())),
-                    Expr::String(s, _) => Expr::DynamicString(Rc::new(s.trim().to_string())),
+                    Expr::String(s) => Expr::DynamicString(Rc::new(s.trim().to_string())),
                     _ => Expr::DynamicString(Rc::new("".to_string())),
                 }
             }
@@ -181,7 +181,7 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
                 let arg = eval(&args[0], ctx);
                 match arg {
                     Expr::List(list) => Expr::Number(list.len() as i64),
-                    Expr::String(s, _) => Expr::Number(s.len() as i64),
+                    Expr::String(s) => Expr::Number(s.len() as i64),
                     _ => Expr::Number(0),
                 }
             }

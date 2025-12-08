@@ -13,7 +13,7 @@ where
     for token in tokens.by_ref() {
         match token {
             Token::ListEnd => break,
-            Token::StringLiteral(s) => elements.push(Expr::String(s, false)),
+            Token::StringLiteral(s) => elements.push(Expr::String(s)),
             Token::True => elements.push(Expr::Bool(true)),
             Token::False => elements.push(Expr::Bool(false)),
             Token::Float(num) => elements.push(Expr::Float(*num)),

@@ -7,22 +7,19 @@ use crate::transpiler::{
         print::transpile_print,
         sum::transpile_sum,
     },
+    declaration::variable_decl::transpile_decl,
 };
 
 pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     match expr {
-        Expr::String(s, b) => {
-            if *b {
-                format!("try allocator.dupe(u8, \"{}\")", s.escape_default())
-            } else {
-                format!("\"{}\"", s.escape_default())
-            }
-        }
+        Expr::String(s) => format!("\"{}\"", s.escape_default()),
+        Expr::DynamicString(s) => format!("try allocator.dupe(u8, \"{}\")", s.escape_default()),
         Expr::Number(n) => n.to_string(),
         Expr::Float(n) => n.to_string(),
         Expr::Bool(n) => n.to_string(),
         Expr::Break => "break".to_string(),
         Expr::Continue => "continue".to_string(),
+        Expr::VariableRef { name, symbol: _ } => name.to_string(),
         /*    Expr::Return(expr)=> {
             /* BUG:  Hell et burayı */
             let code = match &**expr {
@@ -50,6 +47,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 Expr::String(s, _) => format!("\"{}\"", s.escape_default()),
 
         } */
+        Expr::Decl {
+            name,
+            typ,
+            is_mutable,
+            value,
+        } => transpile_decl(&name.to_string(), typ, *is_mutable, value, ctx),
         Expr::BuiltInCall { function, args, .. } => match function {
             BuiltInFunction::Print => transpile_print(&args[0], ctx),
             BuiltInFunction::Sum => transpile_sum(&args, ctx),

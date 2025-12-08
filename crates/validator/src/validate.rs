@@ -30,29 +30,25 @@ pub fn validate_expr<'a>(
 
             validate_expr(value, ctx)?;
             let inferred = get_type(value, ctx, Some(typ));
-
-            if let s = inferred {
-                if let typ_ref = typ {
-                    if **typ_ref != s && **typ_ref != Type::Any {
-                        return Err(ValidatorError::DeclTypeMismatch {
-                            name: name.to_string(),
-                            expected: s.to_string(),
-                            found: typ_ref.to_string(),
-                        });
-                    }
-                }
-                ctx.declare_variable(
-                    name.to_string(),
-                    Symbol {
-                        typ: s,
-                        is_mutable: *is_mutable,
-                        is_used: false,
-                        is_pointer: false,
-                    },
-                );
-            } else {
-                return Err(ValidatorError::DeclTypeUnknown(name.to_string()));
+            /* BUG: Burası hell olmalıdır */
+            if (inferred != **typ && inferred != Type::LiteralString) && inferred != Type::Any {
+                return Err(ValidatorError::DeclTypeMismatch {
+                    name: name.to_string(),
+                    expected: inferred.to_string(),
+                    found: typ.to_string(),
+                });
             }
+            *typ = Rc::new(inferred.clone());
+            ctx.declare_variable(
+                name.to_string(),
+                Symbol {
+                    /* TODO: burada cloneye eytiyac yoxdur */
+                    typ: inferred,
+                    is_mutable: *is_mutable,
+                    is_used: false,
+                    is_pointer: false,
+                },
+            );
         }
 
         Expr::Assignment {
@@ -145,7 +141,7 @@ pub fn validate_expr<'a>(
                 }
             }
         }
-        Expr::String(_, _)
+        Expr::String(_)
         | Expr::Float(_)
         | Expr::Bool(_)
         | Expr::Number(_)
@@ -588,7 +584,7 @@ pub fn validate_expr<'a>(
                 Type::String => {
                     validator_log("indeksləmə2  əməliyyatını yoxlayır...");
                     let index_name = match &**index {
-                        Expr::String(s, _) => s,
+                        Expr::String(s) => s,
                         _ => return Err(ValidatorError::IndexTargetTypeNotFound),
                     };
                     let struct_type = get_type(target, ctx, None);
@@ -608,7 +604,7 @@ pub fn validate_expr<'a>(
                         .clone();
 
                     match &**index {
-                        Expr::String(index_name, _) => {
+                        Expr::String(index_name) => {
                             validator_log(&format!("sindeksləmə əməliyyatını yoxlayır..."));
                             for (fname, ftype) in struct_def {
                                 if fname == *index_name {

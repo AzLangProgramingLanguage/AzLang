@@ -1,4 +1,4 @@
-use crate::runner::{eval::eval, runner::runner_interpretator, Runner, Variable};
+use crate::runner::{Runner, Variable, eval::eval, runner::runner_interpretator};
 use parser::{ast::Expr, shared_ast::Type};
 pub fn handle_string_call<'a>(
     name: &str,
@@ -15,7 +15,7 @@ pub fn handle_string_call<'a>(
     ctx.variables.insert(
         "self".to_string(),
         Variable {
-            value: Expr::String(s, false),
+            value: Expr::String(s),
             typ: Type::User("Yazı".into()),
             is_mutable: false,
         },
@@ -43,14 +43,14 @@ pub fn handle_string_call<'a>(
                 }
                 "qırx" => {
                     let strr = s.trim();
-                    return Some(Expr::String(strr.into(), false));
+                    return Some(Expr::String(strr.into()));
                 }
                 "uzunluq" => {
                     let strr = s.len();
                     return Some(Expr::Number(strr.try_into().unwrap()));
                 }
                 "tipi" => {
-                    return Some(Expr::String("Yazı".into(), false));
+                    return Some(Expr::String("Yazı".into()));
                 }
                 "boşdur" => {
                     let strr = s.is_empty();
@@ -58,32 +58,32 @@ pub fn handle_string_call<'a>(
                 }
                 "böl" => {
                     let arg = args.get(0).unwrap();
-                    if let Expr::String(arg, _) = arg {
+                    if let Expr::String(arg) = arg {
                         let strr = s
                             .split(arg)
                             .filter(|s| !s.is_empty())
-                            .map(|s| Expr::String(s.into(), false))
+                            .map(|s| Expr::String(s.into()))
                             .collect::<Vec<Expr<'a>>>();
                         return Some(Expr::List(strr));
                     }
                 }
                 "əvəzlə" => {
                     let arg = args.get(0).unwrap();
-                    if let Expr::String(arg, _) = arg {
+                    if let Expr::String(arg) = arg {
                         let strr = s.replace(arg, "");
                         return Some(Expr::DynamicString(strr.into()));
                     }
                 }
                 "başlayırmı" => {
                     let arg = args.get(0).unwrap();
-                    if let Expr::String(arg, _) = arg {
+                    if let Expr::String(arg) = arg {
                         let strr = s.starts_with(arg);
                         return Some(Expr::Bool(strr));
                     }
                 }
                 "bitirirmi" => {
                     let arg = args.get(0).unwrap();
-                    if let Expr::String(arg, _) = arg {
+                    if let Expr::String(arg) = arg {
                         let strr = s.ends_with(arg);
                         return Some(Expr::Bool(strr));
                     }

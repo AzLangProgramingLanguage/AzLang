@@ -316,7 +316,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                 };
 
                 match target_val {
-                    Expr::String(s, _) => handle_string_call(&name, &s, args, ctx),
+                    Expr::String(s) => handle_string_call(&name, &s, args, ctx),
                     Expr::Number(n) => handle_number_call(&name, n, args, ctx),
                     Expr::List(list) => handle_list_call(&name, list, variable_name, args, ctx),
                     Expr::StructInit {

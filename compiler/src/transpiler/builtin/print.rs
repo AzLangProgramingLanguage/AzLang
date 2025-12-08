@@ -13,7 +13,7 @@ fn arg_code_for_expr<'a>(
     typ: Type<'_>,
 ) -> String {
     match expr {
-        Expr::String(_, _)
+        Expr::String(_)
         | Expr::TemplateString(_)
         | Expr::Number(_)
         | Expr::List(_)

@@ -7,7 +7,7 @@ use crate::transpiler::TranspileContext;
 
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     match expr {
-        Expr::String(_, _) => Type::String,
+        Expr::String(_) => Type::String,
         Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
@@ -175,51 +175,49 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
     }
 }
 
-use std::borrow::Cow;
-
-pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> Cow<'a, str> {
+pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> &'static str {
     match typ {
-        Type::Integer => Cow::Borrowed("azlangEded"),
-        Type::Natural => Cow::Borrowed("azlangEded"),
-        Type::Any => Cow::Borrowed("any"),
-        Type::Void => Cow::Borrowed("void"),
-        Type::ZigFloat => Cow::Borrowed("f64"),
-        Type::Float => Cow::Borrowed("azlangEded"),
+        Type::Integer => "azlangEded",
+        Type::Natural => "azlangEded",
+        Type::Any => "any",
+        Type::Void => "void",
+        Type::ZigFloat => "f64",
+        Type::Float => "azlangEded",
         Type::BigInteger => {
             if is_const {
-                Cow::Borrowed("const i128")
+                "const i128"
             } else {
-                Cow::Borrowed("i128")
+                "i128"
             }
         }
-        Type::Char => Cow::Borrowed("u8"),
+        Type::Char => "u8",
         Type::LowInteger => {
             if is_const {
-                Cow::Borrowed("const u8")
+                "const u8"
             } else {
-                Cow::Borrowed("u8")
+                "u8"
             }
         }
         Type::String => {
             if is_const {
-                Cow::Borrowed("azlangYazi")
+                "azlangYazi"
             } else {
-                Cow::Borrowed("azlangYazi")
+                "azlangYazi"
             }
         }
-        Type::LiteralString => Cow::Borrowed("[]u8"),
-        Type::ZigNatural => Cow::Borrowed("usize"),
-        Type::ZigInteger => Cow::Borrowed("isize"),
-        Type::LiteralConstString => Cow::Borrowed("[]const u8"),
-        Type::ZigArray => Cow::Borrowed("[]usize"),
-        Type::ZigConstArray => Cow::Borrowed("[]const usize"),
-        Type::Bool => Cow::Borrowed("bool"),
+        Type::LiteralString => "[]const u8", /* TODO: burada Literal Stringin tipi ferqli olması lazımdır. */
+        Type::ZigNatural => "usize",
+        Type::ZigInteger => "isize",
+        Type::LiteralConstString => "[]const u8",
+        Type::ZigArray => "[]usize",
+        Type::ZigConstArray => "[]const usize",
+        Type::Bool => "bool",
         Type::Array(inner) => {
             let inner_str = map_type(inner, is_const);
             inner_str
         }
-        Type::User(_) => Cow::Borrowed("any"),
-        Type::Allocator => Cow::Borrowed("std.mem.Allocator"),
+        Type::User(_) => "any",
+        Type::Allocator => "std.mem.Allocator",
     }
 }
 
@@ -236,5 +234,17 @@ pub fn is_semicolon_needed(expr: &Expr) -> bool {
             | Expr::VariableRef { .. }
             | Expr::Index { .. }
             | Expr::BinaryOp { .. }
+    )
+}
+
+pub fn is_primite_value(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::Number(_)
+            | Expr::Float(_)
+            | Expr::Bool(_)
+            | Expr::Char(_)
+            | Expr::String(_)
+            | Expr::UnaryOp { .. }
     )
 }
