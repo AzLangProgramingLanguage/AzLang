@@ -121,6 +121,7 @@ version = "0.1.0"
 dependencies = [
  "file_system",
  "parser",
+ "transpiler",
  "validator",
 ]
 
@@ -216,6 +217,13 @@ version = "0.1.0"
 dependencies = [
  "logging",
  "peekmore",
+]
+
+[[package]]
+name = "transpiler"
+version = "0.1.0"
+dependencies = [
+ "parser",
 ]
 
 [[package]]

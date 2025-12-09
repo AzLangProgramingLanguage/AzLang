@@ -7,3 +7,4 @@ edition = "2024"
 file_system = { path = "../crates/file_system" }
 parser = { path = "../crates/parser" }
 validator = { path = "../crates/validator" }
+transpiler = { path = "../crates/transpiler" }

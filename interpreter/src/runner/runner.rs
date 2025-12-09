@@ -108,6 +108,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                             },
                         )
                         .unwrap(),
+                        /* BUG: Burası runner_interpretator olmalıdır   */
                         _ => eval(&args[0], ctx),
                     }
                 };

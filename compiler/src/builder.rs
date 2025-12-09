@@ -49,7 +49,6 @@ pub fn build(rust_file: &str, output_file: &str) -> Result<(), CompilerError> {
                 println!("\n{BLUE}=============================== {RESET}");
                 println!("{GREEN}{BOLD}🚀 Azlang Build Complete! ✔{RESET}");
                 println!("{BLUE}=============================== {RESET}");
-
                 println!("{WHITE}Program uğurla yığıldı və hazırdır:{RESET}");
 
                 match output_path.canonicalize() {

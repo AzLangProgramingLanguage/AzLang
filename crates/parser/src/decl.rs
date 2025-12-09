@@ -2,7 +2,7 @@ use std::{borrow::Cow, rc::Rc};
 
 use crate::{errors::ParserError, shared_ast::Type};
 use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
+use tokenizer::tokens::{self, Token};
 
 use crate::{ast::Expr, expressions::parse_expression, types::parse_type};
 
@@ -34,7 +34,11 @@ where
 
     tokens.next();
     let value_expr = parse_expression(tokens)?;
-
+    match tokens.peek() {
+        Some(Token::Newline) => {}
+        Some(other) => return Err(ParserError::UnexpectedToken((*other).clone())),
+        None => return Err(ParserError::UnexpectedEOF),
+    }
     let value = Box::new(value_expr);
     Ok(Expr::Decl {
         name,

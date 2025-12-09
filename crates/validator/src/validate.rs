@@ -30,13 +30,16 @@ pub fn validate_expr<'a>(
 
             validate_expr(value, ctx)?;
             let inferred = get_type(value, ctx, Some(typ));
-            /* BUG: Burası hell olmalıdır */
-            if (inferred != **typ && inferred != Type::LiteralString) && inferred != Type::Any {
-                return Err(ValidatorError::DeclTypeMismatch {
-                    name: name.to_string(),
-                    expected: inferred.to_string(),
-                    found: typ.to_string(),
-                });
+            /* TODO: Burası daha inkişaf etdirilə bilər */
+            if inferred != **typ && inferred != Type::Any {
+                if inferred == Type::LiteralString && **typ == Type::String {
+                } else {
+                    return Err(ValidatorError::DeclTypeMismatch {
+                        name: name.to_string(),
+                        expected: inferred.to_string(),
+                        found: typ.to_string(),
+                    });
+                }
             }
             *typ = Rc::new(inferred.clone());
             ctx.declare_variable(
