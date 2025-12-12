@@ -1,4 +1,4 @@
-use crate::errors::ParserError;
+use crate::{errors::ParserError, expressions::parse_expression};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
@@ -11,57 +11,38 @@ pub fn parse_binary_op_expr<'a, I>(
 where
     I: Iterator<Item = &'a Token>,
 {
-    let mut left = parse_single_expr(tokens)?;
+    match tokens.peek_nth(1) {
+        Some(Token::Operator(s)) => {}
+        Some(other) => return parse_single_expr(tokens),
+        None => return Err(ParserError::UnexpectedEOF),
+    }
 
+    let mut variables: Vec<Expr<'a>> = Vec::new();
+    let mut ops: Vec<&'a str> = Vec::new();
     loop {
-        let op_token = match tokens.peek() {
-            Some(Token::Operator(op)) if op.as_str() != "." => {
-                tokens.next();
-                op.as_str()
+        println!("Token {:?}", tokens.peek());
+        match tokens.next() {
+            Some(Token::Operator(s)) => {
+                ops.push(s);
             }
-            _ => {
+            Some(Token::Newline) | Some(Token::Eof) => {
                 break;
             }
-        };
 
-        let prec = get_precedence(op_token);
-        if prec < min_prec {
-            break;
-        }
-
-        let mut right = parse_single_expr(tokens)?;
-
-        loop {
-            let next_prec = match tokens.peek_nth(1) {
-                Some(Token::Operator(next_op)) => get_precedence(next_op),
-                _ => 0,
-            };
-            if next_prec > prec {
-                right = parse_binary_op_expr(tokens, prec + 1)?;
-            } else {
-                break;
+            Some(other) => {
+                println!("Error  {:?}", other);
+                matches!(Token::MutableDecl, Token::MutableDecl);
+                let token = parse_single_expr(tokens)?;
+                variables.push(token);
             }
-        }
 
-        if op_token == "=" {
-            if let Expr::VariableRef { name, .. } = left {
-                left = Expr::Assignment {
-                    name,
-                    value: Box::new(right),
-                    symbol: None,
-                };
-            } else {
-                return Err(ParserError::BinaryOpLeftNotExpected(op_token.to_string()));
-            }
-        } else {
-            left = Expr::BinaryOp {
-                left: Box::new(left),
-                op: op_token,
-                right: Box::new(right),
-            };
+            None => return Err(ParserError::UnexpectedEOF),
         }
     }
-    Ok(left)
+    println!("{:?}", variables);
+
+    std::process::exit(1);
+    Ok(Expr::BinaryOp { variables, op: ops })
 }
 
 pub fn get_precedence(op: &str) -> u8 {

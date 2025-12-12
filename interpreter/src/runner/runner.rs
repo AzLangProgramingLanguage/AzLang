@@ -15,6 +15,7 @@ use parser::{
     ast::Expr,
     shared_ast::{BuiltInFunction, Type},
 };
+
 pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<Expr<'a>> {
     match expr {
         Expr::Decl {
@@ -109,7 +110,8 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                         )
                         .unwrap(),
                         /* BUG: Burası runner_interpretator olmalıdır   */
-                        _ => eval(&args[0], ctx),
+                        _ => runner_interpretator(ctx, args.get(0).unwrap().clone()).unwrap(), // TODO:
+                                                                                               // Buraya baxarsan
                     }
                 };
                 let output = print_interpreter(&arg, ctx);
@@ -125,12 +127,21 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
 
             _ => None,
         },
+        Expr::VariableRef { name, .. } => {
+            if let Some(var) = ctx.variables.get(&name.to_string()) {
+                runner_interpretator(ctx, var.value.clone()) //TODO: Burada yersiz clone var
+            } else {
+                /* TODO: Burası Enum initilization olmalıdır amma başqa kod yazılmış Diqqet et. */
+                Some(Expr::DynamicString(Rc::new(name.to_string())))
+            }
+        }
+
         Expr::Loop {
             var_name,
             iterable,
             body,
         } => {
-            /* FIXME   Burası buglu variable any tipinde olmamalı işleyir. Onu düzelt.*/
+            /* FIXME:   Burası buglu variable any tipinde olmamalı işleyir. Onu düzelt.*/
             let iterable = eval(&*iterable, ctx);
             match iterable {
                 Expr::List(list) => {
@@ -243,64 +254,65 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             None
         }
 
-        Expr::BinaryOp { left, op, right } => {
-            /*TODO:  Burada kod çox uzun və təkrarlanandır.  */
-            let left_val = match *left {
-                Expr::Call { .. } => runner_interpretator(ctx, *left).unwrap_or(Expr::Void),
-                _ => eval(&left, ctx),
-            };
-            let right_val = match *right {
-                Expr::Call { .. } => runner_interpretator(ctx, *right).unwrap_or(Expr::Void),
-                _ => eval(&right, ctx),
-            };
-            match (&left_val, &right_val) {
-                (Expr::Number(l), Expr::Number(r)) => match op {
-                    "+" => Some(Expr::Number(l + r)),
-                    "-" => Some(Expr::Number(l - r)),
-                    "*" => Some(Expr::Number(l * r)),
-                    "/" => Some(Expr::Number(l / r)),
-                    "==" => Some(Expr::Bool(l == r)),
-                    _ => Some(Expr::Bool(false)),
-                },
-                (Expr::Float(l), Expr::Number(r)) => match op {
-                    "+" => Some(Expr::Float(l + *r as f64)),
-                    "-" => Some(Expr::Float(l - *r as f64)),
-                    "/" => Some(Expr::Float(l / *r as f64)),
-                    "*" => Some(Expr::Float(l * *r as f64)),
-                    "==" => Some(Expr::Bool(*l == *r as f64)),
-                    _ => Some(Expr::Bool(false)),
-                },
-                (Expr::Float(l), Expr::Float(r)) => match op {
-                    "+" => Some(Expr::Float(l + r)),
-                    "-" => Some(Expr::Float(l - r)),
-                    "/" => Some(Expr::Float(l / r)),
-                    "*" => Some(Expr::Float(l * r)),
-                    "==" => Some(Expr::Bool(l == r)),
-                    _ => Some(Expr::Bool(false)),
-                },
-                (Expr::Number(l), Expr::Float(r)) => match op {
-                    "+" => Some(Expr::Float(*l as f64 + r)),
-                    "-" => Some(Expr::Float(*l as f64 - r)),
-                    "/" => Some(Expr::Float(*l as f64 / r)),
-                    "*" => Some(Expr::Float(*l as f64 * r)),
-                    "==" => Some(Expr::Bool(*l as f64 == *r)),
-                    _ => Some(Expr::Bool(false)),
-                },
+        Expr::BinaryOp { variables, op } => {
+            //BUG: Burası tamamlanmayıb tamamlanmalıdır.
 
-                (Expr::Time(l), Expr::Time(r)) => match op {
-                    "-" => Some(Expr::Number(l.duration_since(*r).as_millis() as i64)),
-                    _ => Some(Expr::Bool(false)),
-                },
-
-                (Expr::Bool(l), Expr::Bool(r)) => match op {
-                    "&&" => Some(Expr::Bool(*l && *r)),
-                    "||" => Some(Expr::Bool(*l || *r)),
-                    "==" => Some(Expr::Bool(l == r)),
-                    _ => Some(Expr::Bool(false)),
-                },
-
-                _ => Some(Expr::Bool(false)),
-            }
+            // let left_val = match *left {
+            //     Expr::Call { .. } => runner_interpretator(ctx, *left).unwrap_or(Expr::Void),
+            //     _ => eval(&left, ctx),
+            // };
+            // let right_val = match *right {
+            //     Expr::Call { .. } => runner_interpretator(ctx, *right).unwrap_or(Expr::Void),
+            //     _ => eval(&right, ctx),
+            // };
+            // match (&left_val, &right_val) {
+            //     (Expr::Number(l), Expr::Number(r)) => match op {
+            //         "+" => Some(Expr::Number(l + r)),
+            //         "-" => Some(Expr::Number(l - r)),
+            //         "*" => Some(Expr::Number(l * r)),
+            //         "/" => Some(Expr::Number(l / r)),
+            //         "==" => Some(Expr::Bool(l == r)),
+            //         _ => Some(Expr::Bool(false)),
+            //     },
+            //     (Expr::Float(l), Expr::Number(r)) => match op {
+            //         "+" => Some(Expr::Float(l + *r as f64)),
+            //         "-" => Some(Expr::Float(l - *r as f64)),
+            //         "/" => Some(Expr::Float(l / *r as f64)),
+            //         "*" => Some(Expr::Float(l * *r as f64)),
+            //         "==" => Some(Expr::Bool(*l == *r as f64)),
+            //         _ => Some(Expr::Bool(false)),
+            //     },
+            //     (Expr::Float(l), Expr::Float(r)) => match op {
+            //         "+" => Some(Expr::Float(l + r)),
+            //         "-" => Some(Expr::Float(l - r)),
+            //         "/" => Some(Expr::Float(l / r)),
+            //         "*" => Some(Expr::Float(l * r)),
+            //         "==" => Some(Expr::Bool(l == r)),
+            //         _ => Some(Expr::Bool(false)),
+            //     },
+            //     (Expr::Number(l), Expr::Float(r)) => match op {
+            //         "+" => Some(Expr::Float(*l as f64 + r)),
+            //         "-" => Some(Expr::Float(*l as f64 - r)),
+            //         "/" => Some(Expr::Float(*l as f64 / r)),
+            //         "*" => Some(Expr::Float(*l as f64 * r)),
+            //         "==" => Some(Expr::Bool(*l as f64 == *r)),
+            //         _ => Some(Expr::Bool(false)),
+            //     },
+            //
+            //     (Expr::Time(l), Expr::Time(r)) => match op {
+            //         "-" => Some(Expr::Number(l.duration_since(*r).as_millis() as i64)),
+            //         _ => Some(Expr::Bool(false)),
+            //     },
+            //
+            //     (Expr::Bool(l), Expr::Bool(r)) => match op {
+            //         "&&" => Some(Expr::Bool(*l && *r)),
+            //         "||" => Some(Expr::Bool(*l || *r)),
+            //         "==" => Some(Expr::Bool(l == r)),
+            //         _ => Some(Expr::Bool(false)),
+            //     },
+            //
+            //     _ => Some(Expr::Bool(false)),}
+            Some(Expr::Bool(false))
         }
         Expr::Call {
             target, name, args, ..

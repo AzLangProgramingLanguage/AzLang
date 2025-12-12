@@ -5,12 +5,10 @@
 mod tests {
 
     use crate::ast::Expr;
-    use crate::errors::ParserError;
     use crate::r#enum::parse_enum_decl;
+    use crate::errors::ParserError;
 
-    use super::*;
     use peekmore::PeekMore;
-    use peekmore::PeekMoreIterator;
     use std::borrow::Cow;
     use tokenizer::tokens::Token;
 
@@ -32,10 +30,10 @@ mod tests {
         let result = parse_enum_decl(&mut iter);
 
         assert!(result.is_ok());
-        if let Ok(Expr::EnumDecl(enum_decl)) = result {
-            assert_eq!(enum_decl.name, Cow::Borrowed("Color"));
+        if let Ok(Expr::EnumDecl { name, variants }) = result {
+            assert_eq!(name, Cow::Borrowed("Color"));
             assert_eq!(
-                enum_decl.variants,
+                variants,
                 vec![
                     Cow::Borrowed("Red"),
                     Cow::Borrowed("Green"),

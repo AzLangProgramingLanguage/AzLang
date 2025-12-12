@@ -622,9 +622,10 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
         }
-        Expr::BinaryOp { left, op, right } => {
-            validate_expr(left, ctx)?;
-            validate_expr(right, ctx)?;
+        Expr::BinaryOp { variables, .. } => {
+            for variable in variables {
+                validate_expr(variable, ctx);
+            }
         }
         Expr::FunctionDef {
             name,

@@ -1,6 +1,4 @@
-sabit ədəd a5 = 1
-sabit yazı b = "5" + 5 + "1"
-Çap(b)
+Çap(1)
 
 /*
 tip Yazı

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use parser::{ast::Expr, shared_ast::Type};
 
-use crate::ValidatorContext;
+use crate::{ValidatorContext, validate::validate_expr};
 
 pub fn get_type<'a>(
     value: &Expr<'a>,
@@ -71,27 +71,22 @@ pub fn get_type<'a>(
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
         Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
-        Expr::BinaryOp { left, op, right } => {
-            let left_type = get_type(left, ctx, typ);
-            let right_type = get_type(right, ctx, typ);
-
-            if left_type != right_type {
-                return Type::Any;
+        Expr::BinaryOp { variables, op } => {
+            //BUG::  Burada Ciddi bug var tamamlanmayıb
+            let mut last_type = Type::Any;
+            for variable in variables {
+                let variable_type = get_type(variable, ctx, typ);
+                last_type = match (last_type, &variable_type) {
+                    (Type::Any, _) => variable_type,
+                    (Type::Integer, Type::Integer) => Type::Any,
+                    (_, _) => Type::Any,
+                }
             }
-
             let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
             let logic_ops = ["&&", "||"];
             let arithmetic_ops = ["+", "-", "*", "/", "%"];
 
-            if comparison_ops.contains(&op) || logic_ops.contains(&op) {
-                return Type::Bool;
-            }
-
-            if arithmetic_ops.contains(&op) {
-                return left_type;
-            }
-
-            Type::Any
+            last_type
         }
         _ => Type::Any,
     }

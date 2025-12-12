@@ -19,7 +19,7 @@ struct Variable<'a> {
 #[derive(Debug)]
 struct Method<'a> {
     name: &'a str,
-    params: Vec<(String, Type<'a>)>, // bunları da istəsən arena-dan ala bilərsən
+    params: Vec<(String, Type<'a>)>,
     body: Vec<Expr<'a>>,
     return_type: Option<Type<'a>>,
 }
