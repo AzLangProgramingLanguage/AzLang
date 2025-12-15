@@ -30,9 +30,11 @@ pub fn validate_expr<'a>(
 
             validate_expr(value, ctx)?;
             let inferred = get_type(value, ctx, Some(typ));
-            /* TODO: Burası daha inkişaf etdirilə bilər */
-            if inferred != **typ && inferred != Type::Any {
+            if *typ == Type::Any.into() {
+                *typ = Rc::new(inferred);
+            } else if inferred != **typ {
                 if inferred == Type::LiteralString && **typ == Type::String {
+                    *typ = Rc::new(Type::String);
                 } else {
                     return Err(ValidatorError::DeclTypeMismatch {
                         name: name.to_string(),
@@ -41,12 +43,10 @@ pub fn validate_expr<'a>(
                     });
                 }
             }
-            *typ = Rc::new(inferred.clone());
             ctx.declare_variable(
                 name.to_string(),
                 Symbol {
-                    /* TODO: burada cloneye eytiyac yoxdur */
-                    typ: inferred,
+                    typ: (**typ).clone(), /* Bəs bu necədir compiler düzgün işləyir amma necə inkişaf etdirilə bilər. */
                     is_mutable: *is_mutable,
                     is_used: false,
                     is_pointer: false,

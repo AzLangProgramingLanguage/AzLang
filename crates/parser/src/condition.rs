@@ -38,7 +38,7 @@ pub fn parse_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>
 where
     I: Iterator<Item = &'a Token>,
 {
-    let condition = parse_binary_op_expr(tokens, 0)?;
+    let condition = parse_binary_op_expr(tokens)?;
     let then_branch = parse_block(tokens)?;
 
     let mut else_branch = Vec::new();
@@ -47,7 +47,7 @@ where
         match tokens.peek() {
             Some(Token::ElseIf) => {
                 tokens.next();
-                let cond = parse_binary_op_expr(tokens, 0)?;
+                let cond = parse_binary_op_expr(tokens)?;
                 let then_b = parse_block(tokens)?;
                 else_branch.push(Expr::ElseIf {
                     condition: Box::new(cond),
@@ -76,7 +76,7 @@ pub fn parse_else_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Exp
 where
     I: Iterator<Item = &'a Token>,
 {
-    let condition = parse_binary_op_expr(tokens, 0)?;
+    let condition = parse_binary_op_expr(tokens)?;
     let then_branch = parse_block(tokens)?;
     Ok(Expr::ElseIf {
         condition: Box::new(condition),

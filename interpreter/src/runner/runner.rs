@@ -257,6 +257,18 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
         Expr::BinaryOp { variables, op } => {
             //BUG: Burası tamamlanmayıb tamamlanmalıdır.
 
+            let mut number: i64 = 0;
+            for (index, variables) in variables.iter().enumerate() {
+                match variables {
+                    Expr::Number(num) => match *op.get(0).unwrap() {
+                        "+" => number += num,
+                        _ => {}
+                    },
+                    _ => {}
+                }
+            }
+            return Some(Expr::Number(number));
+
             // let left_val = match *left {
             //     Expr::Call { .. } => runner_interpretator(ctx, *left).unwrap_or(Expr::Void),
             //     _ => eval(&left, ctx),
@@ -312,7 +324,6 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             //     },
             //
             //     _ => Some(Expr::Bool(false)),}
-            Some(Expr::Bool(false))
         }
         Expr::Call {
             target, name, args, ..

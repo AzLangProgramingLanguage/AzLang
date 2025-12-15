@@ -8,7 +8,6 @@ use crate::{
     method::parse_method,
     types::parse_type,
 };
-/* TODO: burası qısaldılmalıdır. */
 
 pub fn parse_union_type<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where

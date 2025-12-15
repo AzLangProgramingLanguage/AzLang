@@ -56,7 +56,7 @@ pub fn parse_expression<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<
 where
     I: Iterator<Item = &'a Token>,
 {
-    parse_binary_op_expr(tokens, 0)
+    parse_binary_op_expr(tokens)
 }
 
 pub fn parse_single_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>

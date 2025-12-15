@@ -53,7 +53,7 @@ pub enum Token {
     Dedent,
     ElseIf,
     StringLiteral(String),
-    Operator(String), /* TODO: Burası char olmalı */
+    Operator(String),
     LParen,
     Dot,
     RParen,
