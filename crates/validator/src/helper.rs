@@ -71,17 +71,17 @@ pub fn get_type<'a>(
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
         Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
-        Expr::BinaryOp { variables, op } => {
+        Expr::BinaryOp { left, right, op } => {
             //BUG::  Burada Ciddi bug var tamamlanmayıb
             let mut last_type = Type::Any;
-            for variable in variables {
+            /*  for variable in variables {
                 let variable_type = get_type(variable, ctx, typ);
                 last_type = match (last_type, &variable_type) {
                     (Type::Any, _) => variable_type,
                     (Type::Integer, Type::Integer) => Type::Any,
                     (_, _) => Type::Any,
                 }
-            }
+            } */
             let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
             let logic_ops = ["&&", "||"];
             let arithmetic_ops = ["+", "-", "*", "/", "%"];

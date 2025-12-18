@@ -114,8 +114,9 @@ pub enum Expr<'a> {
         symbol: Option<Symbol<'a>>,
     },
     BinaryOp {
-        variables: Vec<Expr<'a>>,
-        op: Vec<&'a str>,
+        left: Box<Expr<'a>>,
+        right: Box<Expr<'a>>,
+        op: &'a str,
     },
     Break,
     Continue,

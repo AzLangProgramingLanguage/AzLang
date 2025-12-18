@@ -127,6 +127,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
 
             _ => None,
         },
+
         Expr::VariableRef { name, .. } => {
             if let Some(var) = ctx.variables.get(&name.to_string()) {
                 runner_interpretator(ctx, var.value.clone()) //TODO: Burada yersiz clone var
@@ -254,76 +255,73 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             None
         }
 
-        Expr::BinaryOp { variables, op } => {
-            //BUG: Burası tamamlanmayıb tamamlanmalıdır.
+        Expr::BinaryOp { left, right, op } => {
+            let left_val = match *left {
+                Expr::Call { .. } => runner_interpretator(ctx, *left).unwrap_or(Expr::Void),
+                _ => eval(&left, ctx),
+            };
+            let right_val = match *right {
+                Expr::Call { .. } => runner_interpretator(ctx, *right).unwrap_or(Expr::Void),
+                _ => eval(&right, ctx),
+            };
+            match (&left_val, &right_val) {
+                (Expr::Number(l), Expr::Number(r)) => match op {
+                    "+" => Some(Expr::Number(l + r)),
+                    "-" => Some(Expr::Number(l - r)),
+                    "*" => Some(Expr::Number(l * r)),
+                    "/" => Some(Expr::Number(l / r)),
+                    "==" => Some(Expr::Bool(l == r)),
+                    _ => Some(Expr::Bool(false)),
+                },
+                (s, r) => {
+                    let left = runner_interpretator(ctx, s.clone()).expect("msg");
 
-            let mut number: i64 = 0;
-            for (index, variables) in variables.iter().enumerate() {
-                match variables {
-                    Expr::Number(num) => match *op.get(0).unwrap() {
-                        "+" => number += num,
-                        _ => {}
-                    },
-                    _ => {}
+                    runner_interpretator(
+                        ctx,
+                        Expr::BinaryOp {
+                            left: Box::new(left),
+                            right: Box::new(r.clone()),
+                            op,
+                        },
+                    )
                 }
-            }
-            return Some(Expr::Number(number));
+                (Expr::Float(l), Expr::Number(r)) => match op {
+                    "+" => Some(Expr::Float(l + *r as f64)),
+                    "-" => Some(Expr::Float(l - *r as f64)),
+                    "/" => Some(Expr::Float(l / *r as f64)),
+                    "*" => Some(Expr::Float(l * *r as f64)),
+                    "==" => Some(Expr::Bool(*l == *r as f64)),
+                    _ => Some(Expr::Bool(false)),
+                },
+                (Expr::Float(l), Expr::Float(r)) => match op {
+                    "+" => Some(Expr::Float(l + r)),
+                    "-" => Some(Expr::Float(l - r)),
+                    "/" => Some(Expr::Float(l / r)),
+                    "*" => Some(Expr::Float(l * r)),
+                    "==" => Some(Expr::Bool(l == r)),
+                    _ => Some(Expr::Bool(false)),
+                },
+                (Expr::Number(l), Expr::Float(r)) => match op {
+                    "+" => Some(Expr::Float(*l as f64 + r)),
+                    "-" => Some(Expr::Float(*l as f64 - r)),
+                    "/" => Some(Expr::Float(*l as f64 / r)),
+                    "*" => Some(Expr::Float(*l as f64 * r)),
+                    "==" => Some(Expr::Bool(*l as f64 == *r)),
+                    _ => Some(Expr::Bool(false)),
+                },
 
-            // let left_val = match *left {
-            //     Expr::Call { .. } => runner_interpretator(ctx, *left).unwrap_or(Expr::Void),
-            //     _ => eval(&left, ctx),
-            // };
-            // let right_val = match *right {
-            //     Expr::Call { .. } => runner_interpretator(ctx, *right).unwrap_or(Expr::Void),
-            //     _ => eval(&right, ctx),
-            // };
-            // match (&left_val, &right_val) {
-            //     (Expr::Number(l), Expr::Number(r)) => match op {
-            //         "+" => Some(Expr::Number(l + r)),
-            //         "-" => Some(Expr::Number(l - r)),
-            //         "*" => Some(Expr::Number(l * r)),
-            //         "/" => Some(Expr::Number(l / r)),
-            //         "==" => Some(Expr::Bool(l == r)),
-            //         _ => Some(Expr::Bool(false)),
-            //     },
-            //     (Expr::Float(l), Expr::Number(r)) => match op {
-            //         "+" => Some(Expr::Float(l + *r as f64)),
-            //         "-" => Some(Expr::Float(l - *r as f64)),
-            //         "/" => Some(Expr::Float(l / *r as f64)),
-            //         "*" => Some(Expr::Float(l * *r as f64)),
-            //         "==" => Some(Expr::Bool(*l == *r as f64)),
-            //         _ => Some(Expr::Bool(false)),
-            //     },
-            //     (Expr::Float(l), Expr::Float(r)) => match op {
-            //         "+" => Some(Expr::Float(l + r)),
-            //         "-" => Some(Expr::Float(l - r)),
-            //         "/" => Some(Expr::Float(l / r)),
-            //         "*" => Some(Expr::Float(l * r)),
-            //         "==" => Some(Expr::Bool(l == r)),
-            //         _ => Some(Expr::Bool(false)),
-            //     },
-            //     (Expr::Number(l), Expr::Float(r)) => match op {
-            //         "+" => Some(Expr::Float(*l as f64 + r)),
-            //         "-" => Some(Expr::Float(*l as f64 - r)),
-            //         "/" => Some(Expr::Float(*l as f64 / r)),
-            //         "*" => Some(Expr::Float(*l as f64 * r)),
-            //         "==" => Some(Expr::Bool(*l as f64 == *r)),
-            //         _ => Some(Expr::Bool(false)),
-            //     },
-            //
-            //     (Expr::Time(l), Expr::Time(r)) => match op {
-            //         "-" => Some(Expr::Number(l.duration_since(*r).as_millis() as i64)),
-            //         _ => Some(Expr::Bool(false)),
-            //     },
-            //
-            //     (Expr::Bool(l), Expr::Bool(r)) => match op {
-            //         "&&" => Some(Expr::Bool(*l && *r)),
-            //         "||" => Some(Expr::Bool(*l || *r)),
-            //         "==" => Some(Expr::Bool(l == r)),
-            //         _ => Some(Expr::Bool(false)),
-            //     },
-            //
-            //     _ => Some(Expr::Bool(false)),}
+                (Expr::Time(l), Expr::Time(r)) => match op {
+                    "-" => Some(Expr::Number(l.duration_since(*r).as_millis() as i64)),
+                    _ => Some(Expr::Bool(false)),
+                },
+
+                (Expr::Bool(l), Expr::Bool(r)) => match op {
+                    "&&" => Some(Expr::Bool(*l && *r)),
+                    "||" => Some(Expr::Bool(*l || *r)),
+                    "==" => Some(Expr::Bool(l == r)),
+                    _ => Some(Expr::Bool(false)),
+                },
+            }
         }
         Expr::Call {
             target, name, args, ..

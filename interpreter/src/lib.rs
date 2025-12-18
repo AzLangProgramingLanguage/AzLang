@@ -5,7 +5,7 @@ use crate::{errors::InterPreterError, runner::Runner};
 use parser::Parser;
 pub use validator::validate::validate_expr;
 
-pub fn interpreter(path: &str) -> Result<(), InterPreterError> {
+pub fn interpreter(_path: &str) -> Result<(), InterPreterError> {
     let sdk = file_system::read_file("sdk/data_structures.az")?;
     let mut parser = Parser::new(sdk);
     let mut parsed_program = parser

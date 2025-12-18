@@ -1,8 +1,7 @@
-use crate::{errors::ParserError, expressions::parse_expression};
+use crate::errors::ParserError;
+use crate::{ast::Expr, expressions::parse_single_expr};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
-
-use crate::{ast::Expr, expressions::parse_single_expr};
 
 pub fn parse_binary_op_expr<'a, I>(
     tokens: &mut PeekMoreIterator<I>,
@@ -16,25 +15,52 @@ where
         None => return Err(ParserError::UnexpectedEOF),
     }
 
-    let mut variables: Vec<Expr<'a>> = Vec::new();
-    let mut ops: Vec<&'a str> = Vec::new();
+    parse_binary_op_with_precedence(tokens, 0)
+}
+
+fn parse_binary_op_with_precedence<'a, I>(
+    tokens: &mut PeekMoreIterator<I>,
+    min_precedence: u8,
+) -> Result<Expr<'a>, ParserError>
+where
+    I: Iterator<Item = &'a Token>,
+{
+    let mut left = parse_single_expr(tokens)?;
+
     loop {
-        match tokens.peek() {
-            Some(Token::Operator(s)) => {
-                tokens.next();
-                ops.push(s);
-            }
-            Some(Token::Newline) | Some(Token::Eof) | Some(Token::RParen) => {
+        let op = match tokens.peek() {
+            Some(Token::Operator(s)) => s,
+            Some(Token::Newline) | Some(Token::Eof) | Some(Token::RParen) | None => {
                 break;
             }
+            Some(_) => break,
+        };
 
-            Some(_) => {
-                let expr = parse_single_expr(tokens)?;
-                variables.push(expr);
-            }
-            None => return Err(ParserError::UnexpectedEOF),
+        let precedence = operator_precedence(op);
+
+        if precedence < min_precedence {
+            break;
         }
+
+        tokens.next();
+
+        let right = parse_binary_op_with_precedence(tokens, precedence + 1)?;
+
+        left = Expr::BinaryOp {
+            left: Box::new(left),
+            right: Box::new(right),
+            op,
+        };
     }
 
-    Ok(Expr::BinaryOp { variables, op: ops })
+    Ok(left)
+}
+
+fn operator_precedence(op: &str) -> u8 {
+    match op {
+        "*" | "/" | "%" => 3,
+        "+" | "-" => 2,
+        "==" | "!=" | "<" | ">" | "<=" | ">=" => 1,
+        _ => 0,
+    }
 }

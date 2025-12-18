@@ -46,7 +46,7 @@ pub fn validate_expr<'a>(
             ctx.declare_variable(
                 name.to_string(),
                 Symbol {
-                    typ: (**typ).clone(), /* Bəs bu necədir compiler düzgün işləyir amma necə inkişaf etdirilə bilər. */
+                    typ: typ.as_ref().clone(), /* Bəs bu necədir compiler düzgün işləyir amma necə inkişaf etdirilə bilər. */
                     is_mutable: *is_mutable,
                     is_used: false,
                     is_pointer: false,
@@ -622,10 +622,9 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
         }
-        Expr::BinaryOp { variables, .. } => {
-            for variable in variables {
-                validate_expr(variable, ctx);
-            }
+        Expr::BinaryOp { left, right, .. } => {
+            validate_expr(left, ctx)?;
+            validate_expr(right, ctx)?;
         }
         Expr::FunctionDef {
             name,
