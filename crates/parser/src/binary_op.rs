@@ -36,6 +36,8 @@ where
             Some(_) => break,
         };
 
+        
+
         let precedence = operator_precedence(op);
 
         if precedence < min_precedence {

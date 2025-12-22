@@ -4,6 +4,10 @@ use interpreter::interpreter;
 use logging::{error, parser_log};
 
 fn main() {
+    let mut sabuhi: &'static str = "Salam"; //5
+    sabuhi = "Aleykume"; //8
+    let asdas = "Salam".to_string().push('c');
+
     let command = cli().command;
 
     parser_log("İşə Başlayıram");
