@@ -71,21 +71,36 @@ pub fn get_type<'a>(
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
         Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
-        Expr::BinaryOp { left, right, op } => {
-            //BUG::  Burada Ciddi bug var tamamlanmayıb
-            let mut last_type = Type::Any;
-            /*  for variable in variables {
-                let variable_type = get_type(variable, ctx, typ);
-                last_type = match (last_type, &variable_type) {
-                    (Type::Any, _) => variable_type,
-                    (Type::Integer, Type::Integer) => Type::Any,
-                    (_, _) => Type::Any,
+        Expr::BinaryOp {
+            left,
+            right,
+            op,
+            return_type,
+        } => {
+            let left_type = get_type(left, ctx, typ);
+            let right_type = get_type(right, ctx, typ);
+            let last_type: Type<'_> = match *op {
+                "==" | "!=" | "<" | "<=" | ">" | ">=" => {
+                    if left_type != right_type {
+                        return Type::Bool;
+                    }
+                    Type::Bool
                 }
-            } */
-            let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
-            let logic_ops = ["&&", "||"];
-            let arithmetic_ops = ["+", "-", "*", "/", "%"];
-
+                "&&" | "||" => {
+                    if left_type != Type::Bool || right_type != Type::Bool {
+                        return Type::Bool;
+                    }
+                    Type::Bool
+                }
+                "*" | "/" | "%" | "+" | "-" => match (left_type, right_type) {
+                    (Type::Integer, Type::Integer) => Type::Integer,
+                    (Type::Float, Type::Float) => Type::Float,
+                    (Type::Integer, Type::Float) => Type::Float,
+                    (Type::Float, Type::Integer) => Type::Float,
+                    _ => Type::Any,
+                },
+                _ => Type::Any,
+            };
             last_type
         }
         _ => Type::Any,

@@ -6,7 +6,7 @@ use crate::runner::builtin::print::print_interpreter;
 use parser::ast::Expr;
 use parser::shared_ast::BuiltInFunction;
 
-pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
+/* pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
     match expr {
         Expr::Number(n) => Expr::Number(*n),
         Expr::Float(f) => Expr::Float(*f),
@@ -305,3 +305,4 @@ pub fn eval<'a>(expr: &Expr<'a>, ctx: &Runner<'a>) -> Expr<'a> {
         other => other.clone(),
     }
 }
+ */

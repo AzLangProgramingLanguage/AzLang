@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 mod builtin;
-mod helpers;
+// mod helpers;
 mod runner;
 use parser::{
     ast::{Expr, MethodType, Program},
@@ -65,7 +65,7 @@ impl<'a> Runner<'a> {
 
     pub fn run(&mut self, program: Program<'a>) {
         for expr in program.expressions.into_iter() {
-            runner::runner_interpretator(self, expr);
+            runner::runner_interpretator(self, &expr);
         }
     }
 }

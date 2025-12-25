@@ -17,6 +17,7 @@ pub struct MethodType<'a> {
     pub body: Vec<Expr<'a>>,
     pub return_type: Option<Type<'a>>,
 }
+
 #[derive(Debug, Clone)]
 pub enum Expr<'a> {
     DynamicString(Rc<String>),
@@ -117,6 +118,7 @@ pub enum Expr<'a> {
         left: Box<Expr<'a>>,
         right: Box<Expr<'a>>,
         op: &'a str,
+        return_type: Type<'a>,
     },
     Break,
     Continue,
@@ -124,6 +126,20 @@ pub enum Expr<'a> {
         target: Box<Expr<'a>>,
         arms: Vec<(Expr<'a>, Vec<Expr<'a>>)>,
     },
+}
+impl<'a> Expr<'a> {
+    pub fn as_number(&self) -> Option<i64> {
+        match self {
+            Expr::Number(n) => Some(*n),
+            _ => Some(0),
+        }
+    }
+    pub fn as_float(&self) -> Option<f64> {
+        match self {
+            Expr::Float(f) => Some(*f),
+            _ => Some(0.0),
+        }
+    }
 }
 
 #[derive(Debug)]

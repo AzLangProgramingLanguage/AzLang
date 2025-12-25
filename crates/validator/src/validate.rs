@@ -622,9 +622,15 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
         }
-        Expr::BinaryOp { left, right, .. } => {
+        Expr::BinaryOp {
+            left,
+            right,
+            op: _,
+            return_type,
+        } => {
             validate_expr(left, ctx)?;
             validate_expr(right, ctx)?;
+            *return_type = get_type(left, ctx, None);
         }
         Expr::FunctionDef {
             name,

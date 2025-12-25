@@ -1,10 +1,10 @@
 use crate::runner::builtin::print;
-use crate::runner::eval::eval;
+use crate::runner::runner::runner_interpretator;
 use crate::runner::{Runner, eval};
 use parser::ast::{Expr, TemplateChunk};
 use std::fmt::Write;
 
-pub fn print_interpreter(expr: &Expr, ctx: &Runner) -> String {
+pub fn print_interpreter<'a>(expr: &Expr<'a>, ctx: &mut Runner<'a>) -> String {
     let mut output = String::new();
 
     match expr {
@@ -13,14 +13,14 @@ pub fn print_interpreter(expr: &Expr, ctx: &Runner) -> String {
                 match chunk {
                     TemplateChunk::Literal(s) => output.push_str(s),
                     TemplateChunk::Expr(inner_expr) => {
-                        let evaluated = eval(inner_expr, ctx);
+                        let evaluated = runner_interpretator(ctx, inner_expr);
                         exporter_to_string(&evaluated, ctx, &mut output);
                     }
                 }
             }
         }
         _ => {
-            let evaluated = eval(expr, ctx);
+            let evaluated = runner_interpretator(ctx, expr);
             exporter_to_string(&evaluated, ctx, &mut output);
         }
     }
@@ -68,7 +68,9 @@ fn exporter_to_string(expr: &Expr, ctx: &Runner, out: &mut String) {
             }
         }
 
-        Expr::BinaryOp { left, right, op } => {
+        Expr::BinaryOp {
+            left, right, op, ..
+        } => {
             out.push('(');
             exporter_to_string(left, ctx, out);
             let _ = write!(out, " {} ", op);
@@ -102,6 +104,9 @@ fn exporter_to_string(expr: &Expr, ctx: &Runner, out: &mut String) {
             out.push(']');
         }
 
-        _ => out.push_str("<unknown>"),
+        _ => {
+            println!("Unknown type: {:?}", expr);
+            out.push_str("<unknown>")
+        }
     }
 }

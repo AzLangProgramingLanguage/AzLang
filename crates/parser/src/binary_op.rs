@@ -1,4 +1,5 @@
 use crate::errors::ParserError;
+use crate::shared_ast::Type;
 use crate::{ast::Expr, expressions::parse_single_expr};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
@@ -36,8 +37,6 @@ where
             Some(_) => break,
         };
 
-        
-
         let precedence = operator_precedence(op);
 
         if precedence < min_precedence {
@@ -52,6 +51,7 @@ where
             left: Box::new(left),
             right: Box::new(right),
             op,
+            return_type: Type::Any,
         };
     }
 

@@ -32,7 +32,9 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
             return_type,
         } => return_type.clone(),
 
-        Expr::BinaryOp { left, op, right } => {
+        Expr::BinaryOp {
+            left, op, right, ..
+        } => {
             /*TODO:: Bu nə pis koddu belə */
             let left_type = get_expr_type(left);
             let right_type = get_expr_type(right);

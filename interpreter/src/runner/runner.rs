@@ -1,22 +1,13 @@
-use std::rc::Rc;
+use crate::runner::{Variable, builtin::print::print_interpreter};
 
 use super::Runner;
-use crate::runner::{
-    FunctionDef, Method, StructDef, UnionType, Variable,
-    builtin::print::print_interpreter,
-    eval::eval,
-    handlers::{
-        list_handler::handle_list_call, number_handler::handle_number_call,
-        string_handler::handle_string_call,
-    },
-    helpers::exec_block,
-};
+
 use parser::{
     ast::Expr,
     shared_ast::{BuiltInFunction, Type},
 };
 
-pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a> {
+pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: &Expr<'a>) -> Expr<'a> {
     match expr {
         Expr::Decl {
             name,
@@ -24,15 +15,103 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             is_mutable,
             value,
         } => {
+            let new_value = runner_interpretator(ctx, value);
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
-                    value: eval(&value, ctx),
-                    typ: (*typ).clone(), /* TODO: Burada cloneye eytiyac yoxdur/ */
-                    is_mutable,
+                    value: new_value,
+                    typ: (**typ).clone(),
+                    is_mutable: *is_mutable,
                 },
             );
             Expr::Void
+        }
+
+        Expr::BinaryOp {
+            left,
+            right,
+            op,
+            return_type,
+        } => {
+            let left = runner_interpretator(ctx, left);
+            let right = runner_interpretator(ctx, right);
+            let result = match *op {
+                "+" => {
+                    if let Type::Natural = *return_type {
+                        let left = left.as_number().unwrap();
+                        let right = right.as_number().unwrap();
+                        Expr::Number(left + right)
+                    } else {
+                        println!("other type: {:?}", *return_type);
+                        let left = left.as_float().unwrap();
+                        let right = right.as_float().unwrap();
+                        Expr::Float(left + right)
+                    }
+                }
+                "-" => {
+                    if let Type::Natural = *return_type {
+                        let left = left.as_number().unwrap();
+                        let right = right.as_number().unwrap();
+                        Expr::Number(left - right)
+                    } else {
+                        println!("other type: {:?}", *return_type);
+
+                        let left = left.as_float().unwrap();
+                        let right = right.as_float().unwrap();
+                        Expr::Float(left - right)
+                    }
+                }
+                "*" => {
+                    if let Type::Natural = *return_type {
+                        let left = left.as_number().unwrap();
+                        let right = right.as_number().unwrap();
+                        Expr::Number(left * right)
+                    } else {
+                        let left = left.as_float().unwrap();
+                        let right = right.as_float().unwrap();
+                        Expr::Float(left * right)
+                    }
+                }
+                "/" => {
+                    if let Type::Natural = *return_type {
+                        let left = left.as_number().unwrap();
+                        let right = right.as_number().unwrap();
+                        Expr::Number(left / right)
+                    } else {
+                        let left = left.as_float().unwrap();
+                        let right = right.as_float().unwrap();
+                        Expr::Float(left / right)
+                    }
+                }
+                "%" => {
+                    if let Type::Natural = *return_type {
+                        let left = left.as_number().unwrap();
+                        let right = right.as_number().unwrap();
+                        Expr::Number(left % right)
+                    } else {
+                        let left = left.as_float().unwrap();
+                        let right = right.as_float().unwrap();
+                        Expr::Float(left % right)
+                    }
+                }
+                /*  "==" => {
+                    if left == right {
+                        Expr::Bool(true)
+                    } else {
+                        Expr::Bool(false)
+                    }
+                }
+                "!=" => {
+                    if left != right {
+                        Expr::Bool(true)
+                    } else {
+                        Expr::Bool(false)
+                    }
+                } */
+                _ => Expr::Bool(false),
+            };
+
+            result
         }
         Expr::BuiltInCall {
             function,
@@ -40,18 +119,24 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             return_type,
         } => match function {
             BuiltInFunction::Print => {
-                let arg = runner_interpretator(ctx, args[0].clone());
+                let arg = runner_interpretator(ctx, &args[0]);
                 let output = print_interpreter(&arg, ctx);
                 println!("{}", output);
                 Expr::Void
             }
             _ => Expr::Void,
         },
+        Expr::VariableRef { name, symbol } => {
+            if let Some(var) = ctx.variables.get(&name.to_string()) {
+                return var.value.clone();
+            }
+            Expr::Void
+        }
         Expr::String(s) => Expr::String(s),
-        Expr::Number(n) => Expr::Number(n),
-        Expr::List(l) => Expr::List(l),
-        Expr::Bool(b) => Expr::Bool(b),
-        Expr::DynamicString(s) => Expr::DynamicString(s),
+        Expr::Number(n) => Expr::Number(*n),
+        Expr::List(l) => Expr::List(l.clone()),
+        Expr::Bool(b) => Expr::Bool(*b),
+        Expr::DynamicString(s) => Expr::DynamicString(s.clone()),
         Expr::Void => Expr::Void,
         _ => Expr::Void,
     }
