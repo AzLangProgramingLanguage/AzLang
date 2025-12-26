@@ -35,7 +35,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                 name.to_string(),
                 Variable {
                     value: eval_value,
-                    typ: (*typ).clone(), /* TODO: Yersiz Clone */
+                    typ: (*typ).clone(),
                     is_mutable,
                 },
             );
@@ -91,9 +91,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                             },
                         )
                         .unwrap(),
-                        /* BUG: Burası runner_interpretator olmalıdır   */
-                        _ => runner_interpretator(ctx, args.get(0).unwrap().clone()).unwrap(), // TODO:
-                                                                                               // Buraya baxarsan
+                        _ => runner_interpretator(ctx, args.get(0).unwrap(
                     }
                 };
                 let output = print_interpreter(&arg, ctx);
@@ -112,9 +110,8 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
 
         Expr::VariableRef { name, .. } => {
             if let Some(var) = ctx.variables.get(&name.to_string()) {
-                runner_interpretator(ctx, var.value.clone()) //TODO: Burada yersiz clone var
+                runner_interpretator(ctx, var.value.clone())
             } else {
-                /* TODO: Burası Enum initilization olmalıdır amma başqa kod yazılmış Diqqet et. */
                 Some(Expr::DynamicString(Rc::new(name.to_string())))
             }
         }
@@ -124,7 +121,6 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
             iterable,
             body,
         } => {
-            /* FIXME:   Burası buglu variable any tipinde olmamalı işleyir. Onu düzelt.*/
             let iterable = eval(&*iterable, ctx);
             match iterable {
                 Expr::List(list) => {
@@ -363,7 +359,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Option<
                 }
                 exec_block(ctx, func.body.to_vec()).or(Some(Expr::Void))
             }
-            /* TODO:  Burada deyerler silinmelidir */
+           
         }
 
         Expr::StructDef {

@@ -3,10 +3,10 @@ mod builtin;
 // mod helpers;
 mod runner;
 use parser::{
-    ast::{Expr, MethodType, Program},
+    ast::{Expr, MethodType, Parameter, Program},
     shared_ast::Type,
 };
-mod eval;
+mod binary_op;
 mod handlers;
 
 #[derive(Debug)]
@@ -33,7 +33,7 @@ pub struct StructDef<'a> {
 
 #[derive(Debug)]
 pub struct FunctionDef<'a> {
-    params: Vec<(String, Type<'a>)>,
+    params: Rc<Vec<Parameter<'a>>>,
     body: Rc<Vec<Expr<'a>>>,
     return_type: Type<'a>,
 }
@@ -65,7 +65,7 @@ impl<'a> Runner<'a> {
 
     pub fn run(&mut self, program: Program<'a>) {
         for expr in program.expressions.into_iter() {
-            runner::runner_interpretator(self, &expr);
+            runner::runner_interpretator(self, expr);
         }
     }
 }
