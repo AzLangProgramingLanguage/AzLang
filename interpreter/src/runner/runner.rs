@@ -1,14 +1,11 @@
-use std::{mem, rc::Rc};
+use std::rc::Rc;
 
 use super::Runner;
 use crate::runner::{
     FunctionDef, Variable, binary_op::binary_op_runner, builtin::builthin_call_runner,
 };
 
-use parser::{
-    ast::Expr,
-    shared_ast::{BuiltInFunction, Type},
-};
+use parser::{ast::Expr, shared_ast::Type};
 
 pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a> {
     match expr {
@@ -23,7 +20,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
                 name.to_string(),
                 Variable {
                     value: Rc::new(new_value),
-                    typ: (*typ).clone(),
+                    typ: typ,
                     is_mutable: is_mutable,
                 },
             );
@@ -81,6 +78,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
         }
         Expr::String(s) => Expr::String(s),
         Expr::Number(n) => Expr::Number(n),
+        Expr::Float(c) => Expr::Float(c),
         Expr::List(l) => Expr::List(l.clone()),
         Expr::Bool(b) => Expr::Bool(b),
         Expr::DynamicString(s) => Expr::DynamicString(s.clone()),

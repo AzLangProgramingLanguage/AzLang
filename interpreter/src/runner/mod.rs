@@ -12,7 +12,7 @@ mod handlers;
 #[derive(Debug)]
 struct Variable<'a> {
     value: Rc<Expr<'a>>,
-    typ: Type<'a>,
+    typ: Rc<Type<'a>>,
     is_mutable: bool,
 }
 

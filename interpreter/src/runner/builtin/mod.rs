@@ -4,7 +4,11 @@ use parser::{
     shared_ast::{BuiltInFunction, Type},
 };
 
-use crate::runner::{Runner, builtin::print::print_interpreter, runner::runner_interpretator};
+use crate::runner::{
+    Runner,
+    builtin::{print::print_interpreter, sum::sum},
+    runner::runner_interpretator,
+};
 
 mod print;
 mod sum;
@@ -29,10 +33,10 @@ pub fn builthin_call_runner<'a>(
                 print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx)
             );
             std::process::exit(1);
-            Expr::Void
         }
-        BuiltInFunction::Sum => Expr::Void,
-        BuiltInFunction::Input => Expr::Void,
+
+        BuiltInFunction::Sum => sum(args, ctx),
+
         _ => Expr::Void,
     }
 }
