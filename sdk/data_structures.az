@@ -1,4 +1,7 @@
-sabit a = 5
+funksiya salam(): heçnə
+    Çap("Salam Dünya")
+dəyişən a = 5
+a=2
 Çap(a+1*2)
 
 /*

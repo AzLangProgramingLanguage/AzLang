@@ -11,7 +11,7 @@ mod handlers;
 
 #[derive(Debug)]
 struct Variable<'a> {
-    value: Expr<'a>,
+    value: Rc<Expr<'a>>,
     typ: Type<'a>,
     is_mutable: bool,
 }

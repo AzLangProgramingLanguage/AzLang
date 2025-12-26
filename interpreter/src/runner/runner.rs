@@ -1,4 +1,6 @@
-use crate::runner::{Variable, builtin::print::print_interpreter};
+use std::rc::Rc;
+
+use crate::runner::{FunctionDef, Variable, builtin::print::print_interpreter};
 
 use super::Runner;
 
@@ -15,15 +17,46 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: &Expr<'a>) -> Expr<'
             is_mutable,
             value,
         } => {
-            let new_value = runner_interpretator(ctx, value);
+            let new_value: Expr<'a> = runner_interpretator(ctx, value);
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
-                    value: new_value,
+                    value: Rc::new(new_value),
                     typ: (**typ).clone(),
                     is_mutable: *is_mutable,
                 },
             );
+            Expr::Void
+        }
+
+        Expr::FunctionDef {
+            name,
+            params,
+            body,
+            return_type,
+        } => {
+            let body_rc = Rc::new(*body);
+            ctx.functions.insert(
+                name.to_string(),
+                FunctionDef {
+                    params: params.into_iter().map(|e| e.name).collect(),
+                    body: body_rc,
+                    return_type: return_type.unwrap_or(Type::Any),
+                },
+            );
+            Expr::Void
+        }
+
+        Expr::Assignment {
+            name,
+            value,
+            symbol,
+        } => {
+            let new_value: Expr<'a> = runner_interpretator(ctx, value);
+            if let Some(var) = ctx.variables.get_mut(&name.to_string()) {
+                var.value = Rc::new(new_value);
+            }
+
             Expr::Void
         }
 
@@ -128,7 +161,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: &Expr<'a>) -> Expr<'
         },
         Expr::VariableRef { name, symbol } => {
             if let Some(var) = ctx.variables.get(&name.to_string()) {
-                return var.value.clone();
+                return var.value.as_ref().clone();
             }
             Expr::Void
         }
