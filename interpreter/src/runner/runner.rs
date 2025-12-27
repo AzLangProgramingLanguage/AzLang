@@ -76,6 +76,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             }
             Expr::Void
         }
+        Expr::TemplateString(s) => Expr::TemplateString(s),
         Expr::String(s) => Expr::String(s),
         Expr::Number(n) => Expr::Number(n),
         Expr::Float(c) => Expr::Float(c),

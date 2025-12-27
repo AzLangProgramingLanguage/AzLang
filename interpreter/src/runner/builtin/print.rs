@@ -3,18 +3,17 @@ use crate::runner::builtin::print;
 use crate::runner::runner::runner_interpretator;
 use parser::ast::{Expr, TemplateChunk};
 use std::fmt::Write;
-use std::mem;
 
 pub fn print_interpreter<'a>(expr: Expr<'a>, ctx: &mut Runner<'a>) -> String {
     let mut output = String::new();
-
     match expr {
-        Expr::TemplateString(mut chunks) => {
+        Expr::TemplateString(chunks) => {
             for chunk in chunks {
                 match chunk {
                     TemplateChunk::Literal(s) => output.push_str(s),
                     TemplateChunk::Expr(inner_expr) => {
                         let new_expr = *inner_expr;
+
                         let evaluated = runner_interpretator(ctx, new_expr);
                         exporter_to_string(&evaluated, ctx, &mut output);
                     }

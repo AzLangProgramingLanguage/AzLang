@@ -36,7 +36,6 @@ pub fn builthin_call_runner<'a>(
         }
 
         BuiltInFunction::Sum => sum(args, ctx),
-
         _ => Expr::Void,
     }
 }

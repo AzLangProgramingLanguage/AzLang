@@ -12,7 +12,7 @@ use crate::{
 
 pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     match expr {
-        Expr::String(s) => format!("\"{}\"", s.escape_default()),
+        Expr::String(s) => format!("{}", s.escape_default()),
         Expr::DynamicString(s) => format!("try allocator.dupe(u8, \"{}\")", s.escape_default()),
         Expr::Number(n) => n.to_string(),
         Expr::Float(n) => n.to_string(),
@@ -47,6 +47,12 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
                 Expr::String(s, _) => format!("\"{}\"", s.escape_default()),
 
         } */
+        Expr::BinaryOp {
+            left,
+            right,
+            op,
+            return_type,
+        } => String::from("1+1"),
         Expr::Decl {
             name,
             typ,

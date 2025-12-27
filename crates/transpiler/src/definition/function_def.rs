@@ -3,7 +3,11 @@ use parser::{
     shared_ast::Type,
 };
 
-use crate::{TranspileContext, helper::map_type};
+use crate::{
+    TranspileContext,
+    helper::{is_semicolon_needed, map_type},
+    transpile::transpile_expr,
+};
 /* BUG: Burasında boşluq var */
 
 pub fn transpile_function_def<'a>(
@@ -15,25 +19,27 @@ pub fn transpile_function_def<'a>(
     ctx: &mut TranspileContext<'a>,
     is_allocator: &bool,
 ) -> String {
-    /*  let params_str: Vec<String> = params.iter().map(transpile_param).collect();
-
+    let mut new_str = String::new();
+    let params_str: String = {
+        for param in params {
+            new_str.push_str(transpile_param(param).as_ref());
+        }
+        new_str
+    };
+    println!("{params_str:?}");
     let ret_type = return_type.as_ref().unwrap_or(&Type::Void);
     let ret_type_str = map_type(ret_type, true);
 
-    let mut body_lines = Vec::new();
+    let mut body_lines = String::new();
     for expr in body {
         let mut line = transpile_expr(expr, ctx);
         if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
             line.push(';');
         }
-        body_lines.push(format!("    {}", line));
-    } */
-    let name = "asda";
-    let params_str = "";
-    let ret_type_str = "";
-    let body_lines = "";
+        body_lines.push_str(&format!("    {}", line));
+    }
     format!(
-        "fn {}({}) {} {{\n{}\n}}",
+        "fn {}({}) {} {{ {} }}",
         name, params_str, ret_type_str, body_lines
     )
 }

@@ -1,9 +1,4 @@
-funksiya salam(): heçnə
-    Çap("Salam Dünya")
-dəyişən a = 5
-a=2
-Çap(Cəm(1,2.1))
-
+Çap(1)
 /*
 tip Yazı
   Const: zigsabityazı

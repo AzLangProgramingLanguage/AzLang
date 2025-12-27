@@ -21,11 +21,11 @@ fn transpile_min_max<'a>(
     let inner_type = get_expr_type(list_expr);
     let type_code = inner_typer(inner_type);
 
-    /*   match fn_name {
+    match fn_name {
         "min" => ctx.used_min_fn = true,
         "max" => ctx.used_max_fn = true,
         _ => {}
-    } */
+    }
 
     let final_list_code = match list_expr {
         Expr::VariableRef {
