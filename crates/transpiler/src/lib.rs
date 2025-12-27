@@ -96,13 +96,13 @@ impl<'a> TranspileContext<'a> {
                 Expr::FunctionDef {
                     name,
                     params,
-                    mut body,
+                    body,
                     return_type,
                 } => {
                     defs.push_str(&transpile_function_def(
                         name,
                         params,
-                        &mut body,
+                        body,
                         &return_type,
                         None,
                         self,

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use parser::{
     ast::{Expr, Parameter},
     shared_ast::Type,
@@ -10,12 +8,11 @@ use crate::{
     helper::{is_semicolon_needed, map_type},
     transpile::transpile_expr,
 };
-/* BUG: Burasında boşluq var */
 
 pub fn transpile_function_def<'a>(
     name: &'a str,
     params: Vec<Parameter<'a>>,
-    body: &mut Vec<Expr<'a>>,
+    body: Vec<Expr<'a>>,
     return_type: &Option<Type<'_>>,
     _parent: Option<&'a str>,
     ctx: &mut TranspileContext<'a>,
@@ -28,18 +25,16 @@ pub fn transpile_function_def<'a>(
         }
         new_str
     };
-    println!("{params_str:?}");
     let ret_type = return_type.as_ref().unwrap_or(&Type::Void);
     let ret_type_str = map_type(ret_type, true);
 
     let mut body_lines = String::new();
     for expr in body.into_iter() {
-        let mut line = transpile_expr(expr.clone(), ctx); /*TODO: CLone */
-
-        if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
-            line.push(';');
+        if is_semicolon_needed(&expr) {
+            body_lines.push_str(&format!("    {};", transpile_expr(expr, ctx)));
+        } else {
+            body_lines.push_str(&format!("    {}", transpile_expr(expr, ctx)));
         }
-        body_lines.push_str(&format!("    {}", line));
     }
     format!(
         "fn {}({}) {} {{ {} }}",
@@ -54,27 +49,4 @@ fn transpile_param(param: &Parameter) -> String {
     } else {
         format!("{}: {}", param.name, zig_type)
     }
-}
-
-pub fn is_muttable<'a>(expr: &'a Expr<'a>) -> bool {
-    match expr {
-        Expr::VariableRef { name: _, symbol } => {
-            if let Some(sym) = symbol {
-                return sym.is_mutable;
-            }
-        }
-        Expr::Call { target, .. } => match target {
-            Some(boxed_expr) => match &**boxed_expr {
-                Expr::VariableRef { name: _, symbol } => {
-                    if let Some(sym) = symbol {
-                        return sym.is_mutable;
-                    }
-                }
-                _ => {}
-            },
-            _ => {}
-        },
-        _ => {}
-    }
-    false
 }
