@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+mod binary_op;
 pub mod builtin;
 mod codegen;
 pub mod declaration;
@@ -86,10 +87,6 @@ impl<'a> TranspileContext<'a> {
         return format!(
             r#"{imports}
 
-
-
-
-
 {defs}
 {utils}
 
@@ -97,32 +94,5 @@ pub fn main() !void {{
 {main_body}}}
 "#,
         );
-        /*
-        let allocator = if self.needs_allocator {
-            "    var gpa = std.heap.GeneralPurposeAllocator(.{}){};\n    const allocator = gpa.allocator();\n"
-        } else {
-            ""
-        };
-
-        let cleanup: String = self
-            .cleanup_statements
-            .iter()
-            .map(|s| format!("    {s}\n"))
-            .collect();
-
-        format!(
-            r#"{imports}
-
-
-
-      {BUILTIN_FUNCTIONS}
-
-{defs}
-{utils}
-
-pub fn main() !void {{
-{allocator}{main_body}{cleanup}}}
-"#,
-        ) */
     }
 }

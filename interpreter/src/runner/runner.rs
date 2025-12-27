@@ -20,8 +20,8 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
                 name.to_string(),
                 Variable {
                     value: Rc::new(new_value),
-                    typ: typ,
-                    is_mutable: is_mutable,
+                    typ,
+                    is_mutable,
                 },
             );
             Expr::Void
@@ -56,6 +56,28 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
                 var.value = Rc::new(new_value);
             }
 
+            Expr::Void
+        }
+        Expr::If {
+            condition,
+            then_branch,
+            else_branch,
+        } => {
+            let runned_condition = runner_interpretator(ctx, *condition);
+            match runned_condition {
+                Expr::Bool(b) => {
+                    if b {
+                        for expr in then_branch {
+                            runner_interpretator(ctx, expr);
+                        }
+                    } else {
+                        for expr in else_branch {
+                            runner_interpretator(ctx, expr);
+                        }
+                    }
+                }
+                _ => {}
+            }
             Expr::Void
         }
         Expr::BinaryOp {

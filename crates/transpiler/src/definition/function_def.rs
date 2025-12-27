@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use parser::{
     ast::{Expr, Parameter},
     shared_ast::Type,
@@ -12,8 +14,8 @@ use crate::{
 
 pub fn transpile_function_def<'a>(
     name: &'a str,
-    params: &'_ [Parameter<'a>],
-    body: &'a [Expr<'a>],
+    params: Vec<Parameter<'a>>,
+    body: &mut Vec<Expr<'a>>,
     return_type: &Option<Type<'_>>,
     _parent: Option<&'a str>,
     ctx: &mut TranspileContext<'a>,
@@ -22,7 +24,7 @@ pub fn transpile_function_def<'a>(
     let mut new_str = String::new();
     let params_str: String = {
         for param in params {
-            new_str.push_str(transpile_param(param).as_ref());
+            new_str.push_str(transpile_param(&param).as_ref());
         }
         new_str
     };
@@ -31,8 +33,9 @@ pub fn transpile_function_def<'a>(
     let ret_type_str = map_type(ret_type, true);
 
     let mut body_lines = String::new();
-    for expr in body {
-        let mut line = transpile_expr(expr, ctx);
+    for expr in body.into_iter() {
+        let mut line = transpile_expr(expr.clone(), ctx); /*TODO: CLone */
+
         if is_semicolon_needed(expr) && !line.trim_start().starts_with("//") {
             line.push(';');
         }

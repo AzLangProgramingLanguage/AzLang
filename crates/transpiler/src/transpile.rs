@@ -2,6 +2,7 @@ use parser::{ast::Expr, shared_ast::BuiltInFunction};
 
 use crate::{
     TranspileContext,
+    binary_op::{self, transpile_binary_op},
     builtin::{
         min_max::{transpile_max, transpile_min},
         print::transpile_print,
@@ -10,7 +11,7 @@ use crate::{
     declaration::variable_decl::transpile_decl,
 };
 
-pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     match expr {
         Expr::String(s) => format!("{}", s.escape_default()),
         Expr::DynamicString(s) => format!("try allocator.dupe(u8, \"{}\")", s.escape_default()),
@@ -52,19 +53,41 @@ pub fn transpile_expr<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) ->
             right,
             op,
             return_type,
-        } => String::from("1+1"),
+        } => transpile_binary_op(ctx, left, right, op, return_type),
         Expr::Decl {
             name,
             typ,
             is_mutable,
             value,
-        } => transpile_decl(&name.to_string(), typ, *is_mutable, value, ctx),
-        Expr::BuiltInCall { function, args, .. } => match function {
-            BuiltInFunction::Print => transpile_print(&args[0], ctx),
-            BuiltInFunction::Sum => transpile_sum(&args, ctx),
+        } => transpile_decl(&name.to_string(), typ, is_mutable, *value, ctx),
+        Expr::If {
+            condition,
+            then_branch,
+            else_branch,
+        } => {
+            let str_condition = transpile_expr(*condition, ctx);
+            let mut str_body = String::new();
+            for expr in then_branch {
+                str_body.push_str(&transpile_expr(expr, ctx));
+            }
+            if else_branch.is_empty() {
+                format!("if({str_condition}) {{ {str_body} }}")
+            } else {
+                let mut str_else_body = String::new();
+                for expr in else_branch {
+                    str_else_body.push_str(&transpile_expr(expr, ctx));
+                }
+                format!("if({str_condition}) {{ {str_body} }}  else {{ {str_else_body} }}")
+            }
+        }
+        Expr::BuiltInCall {
+            function, mut args, ..
+        } => match function {
+            BuiltInFunction::Print => transpile_print(args.remove(0), ctx),
+            BuiltInFunction::Sum => transpile_sum(&mut args, ctx),
 
-            BuiltInFunction::Min => transpile_min(&args, ctx),
-            BuiltInFunction::Max => transpile_max(&args, ctx),
+            BuiltInFunction::Min => transpile_min(&mut args, ctx),
+            BuiltInFunction::Max => transpile_max(&mut args, ctx),
 
             _ => "None".to_string(),
         },

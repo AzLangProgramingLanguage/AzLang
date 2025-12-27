@@ -6,7 +6,7 @@ use crate::{
     transpile::transpile_expr,
 };
 
-pub fn transpile_print<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_print<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
     let mut format_parts = String::new();
     let mut args: Vec<String> = Vec::new();
 
@@ -18,9 +18,9 @@ pub fn transpile_print<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -
                         format_parts.push_str(&s);
                     }
                     TemplateChunk::Expr(inner_expr) => {
-                        let typ = get_expr_type(inner_expr);
+                        let typ = get_expr_type(&inner_expr);
                         format_parts.push_str(get_format_str_from_type(&typ, false));
-                        args.push(transpile_expr(inner_expr, ctx));
+                        args.push(transpile_expr(*inner_expr, ctx));
                     }
                 }
             }
@@ -31,7 +31,7 @@ pub fn transpile_print<'a>(expr: &'a Expr<'a>, ctx: &mut TranspileContext<'a>) -
         }
 
         _ => {
-            if is_primite_value(expr) {
+            if is_primite_value(&expr) {
                 format!(
                     "try std.fs.File.stdout().writeAll(\"{}\\n\");",
                     transpile_expr(expr, ctx)

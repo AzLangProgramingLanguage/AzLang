@@ -64,7 +64,7 @@ impl<'a> Runner<'a> {
     }
 
     pub fn run(&mut self, program: Program<'a>) {
-        for expr in program.expressions.into_iter() {
+        for expr in program.expressions {
             runner::runner_interpretator(self, expr);
         }
     }

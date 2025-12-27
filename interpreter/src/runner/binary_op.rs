@@ -67,13 +67,18 @@ pub fn binary_op_runner<'a>(
                 Expr::Float(left % right)
             }
         }
-        /*  "==" => {
-            if left == right {
+        "==" => {
+            match (left, right) {
+                (Expr::Number(b), Expr::Number(c)) => Expr::Bool(b == c),
+                (_, _) => Expr::Bool(false),
+            }
+            /*if left == right {
                 Expr::Bool(true)
             } else {
                 Expr::Bool(false)
-            }
+            } */
         }
+        /*
         "!=" => {
             if left != right {
                 Expr::Bool(true)

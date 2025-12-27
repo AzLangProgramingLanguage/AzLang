@@ -13,7 +13,7 @@ pub fn generate_main_body<'a>(program: &'a Program<'a>, ctx: &mut TranspileConte
             _ => {}
         }
 
-        let mut line = transpile_expr(expr, ctx);
+        let mut line = transpile_expr(expr.clone(), ctx); /* TODO: Yersiz Clone */
 
         let needs_semicolon = matches!(
             expr,

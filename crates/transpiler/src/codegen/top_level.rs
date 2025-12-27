@@ -14,7 +14,7 @@ pub fn generate_top_level_defs<'a>(
 ) -> String {
     let mut code = String::new();
 
-    for expr in &program.expressions {
+    for expr in program.expressions.iter() {
         match expr {
             Expr::FunctionDef {
                 name,
@@ -22,12 +22,20 @@ pub fn generate_top_level_defs<'a>(
                 body,
                 return_type,
             } => {
-                let def =
-                    transpile_function_def(name, params, body, return_type, None, ctx, &false);
+                /*       let def = transpile_function_def(
+                    name,
+                    params.clone(),
+                    body,
+                    &return_type,
+                    None,
+                    ctx,
+                    &false,
+                );
                 code.push_str(&def);
                 code.push_str("\n\n");
+                 */
             }
-            Expr::UnionType {
+            /*   Expr::UnionType {
                 name,
                 fields,
                 methods,
@@ -45,6 +53,7 @@ pub fn generate_top_level_defs<'a>(
                 code.push_str(&struct_def);
                 code.push_str("\n\n");
             }
+             */
             _ => {}
         }
     }
