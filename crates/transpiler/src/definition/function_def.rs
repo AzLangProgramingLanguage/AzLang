@@ -19,7 +19,7 @@ pub fn transpile_function_def<'a>(
     return_type: &Option<Type<'_>>,
     _parent: Option<&'a str>,
     ctx: &mut TranspileContext<'a>,
-    is_allocator: &bool,
+    _is_allocator: &bool,
 ) -> String {
     let mut new_str = String::new();
     let params_str: String = {

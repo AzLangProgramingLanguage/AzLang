@@ -8,7 +8,15 @@ mod definition;
 mod helper;
 pub mod transpile;
 mod zigbuiltin_functions;
-use parser::ast::Program;
+use parser::ast::{Expr, Program};
+
+use crate::{
+    definition::{
+        function_def::transpile_function_def, struct_def::transpile_struct_def,
+        union_def::transpile_union_def,
+    },
+    transpile::transpile_expr,
+};
 
 type Variable<'a> = HashMap<String, (bool, String)>;
 
@@ -78,12 +86,54 @@ impl<'a> TranspileContext<'a> {
             Some(import.to_string())
         }
     }
-    pub fn transpile(&mut self, program: &'a Program<'a>) -> String {
+    pub fn transpile(&mut self, program: Program<'a>) -> String {
         let imports = codegen::prelude::generate_imports(self);
-        let main_body = codegen::main_body::generate_main_body(program, self);
+        let mut main_body = String::new();
+        let mut defs = String::new();
+
+        for expr in program.expressions {
+            match expr {
+                Expr::FunctionDef {
+                    name,
+                    params,
+                    mut body,
+                    return_type,
+                } => {
+                    defs.push_str(&transpile_function_def(
+                        name,
+                        params,
+                        &mut body,
+                        &return_type,
+                        None,
+                        self,
+                        &false,
+                    ));
+                }
+
+                Expr::StructDef {
+                    name,
+                    fields,
+                    methods,
+                } => {
+                    let union = transpile_struct_def(name, fields, methods, self);
+                    defs.push_str(&union);
+                }
+                Expr::UnionType {
+                    name,
+                    fields,
+                    methods,
+                } => {
+                    let union = transpile_union_def(name, fields, methods, self);
+                    defs.push_str(&union);
+                }
+                _ => {
+                    main_body.push_str(&transpile_expr(expr, self));
+                }
+            }
+        }
+
         let utils = codegen::utils_fn::generate_util_functions(self);
 
-        let defs = codegen::top_level::generate_top_level_defs(program, self);
         return format!(
             r#"{imports}
 

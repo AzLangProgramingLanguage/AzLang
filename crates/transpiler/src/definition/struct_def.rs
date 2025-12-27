@@ -9,8 +9,8 @@ use crate::{TranspileContext, helper::map_type};
 
 pub fn transpile_struct_def<'a>(
     name: &'a str,
-    fields: &'a Vec<(&str, Type<'a>, Option<Expr<'a>>)>,
-    methods: &'a Vec<MethodType<'a>>,
+    fields: Vec<(&str, Type<'a>, Option<Expr<'a>>)>,
+    methods: Vec<MethodType<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     /* let old_struct = ctx.current_struct.clone();

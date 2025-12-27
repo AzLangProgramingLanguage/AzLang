@@ -6,8 +6,8 @@ use crate::TranspileContext;
 
 pub fn transpile_union_def<'a>(
     name: &'a str,
-    fields: &'a Vec<(&str, Type<'_>)>,
-    methods: &'a Vec<MethodType<'a>>,
+    fields: Vec<(&str, Type<'_>)>,
+    methods: Vec<MethodType<'a>>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     /* let old_union = ctx.current_union.clone();
