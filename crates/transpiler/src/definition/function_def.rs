@@ -4,7 +4,7 @@ use parser::{
 };
 
 use crate::{
-    TranspileContext,
+    FunctionDef, TranspileContext,
     helper::{is_semicolon_needed, map_type},
     transpile::transpile_expr,
 };
@@ -35,6 +35,15 @@ pub fn transpile_function_def<'a>(
         } else {
             body_lines.push_str(&format!("    {}", transpile_expr(expr, ctx)));
         }
+    }
+    if ctx.used_try {
+        ctx.functions
+            .insert(name.to_string(), FunctionDef { is_used_try: true });
+        ctx.used_try = false;
+        return format!(
+            "fn {}({}) !{} {{ {} }}",
+            name, params_str, ret_type_str, body_lines
+        );
     }
     format!(
         "fn {}({}) {} {{ {} }}",

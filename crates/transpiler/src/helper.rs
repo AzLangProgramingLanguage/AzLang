@@ -1,7 +1,4 @@
-use parser::{
-    ast::{Expr, Parameter},
-    shared_ast::Type,
-};
+use parser::{ast::Expr, shared_ast::Type};
 
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     match expr {

@@ -5,8 +5,10 @@ pub mod builtin;
 mod codegen;
 pub mod declaration;
 mod definition;
+mod function_call;
 mod helper;
 pub mod transpile;
+
 mod zigbuiltin_functions;
 use parser::ast::{Expr, Program};
 
@@ -15,18 +17,25 @@ use crate::{
         function_def::transpile_function_def, struct_def::transpile_struct_def,
         union_def::transpile_union_def,
     },
+    helper::is_semicolon_needed,
     transpile::transpile_expr,
 };
 
 type Variable<'a> = HashMap<String, (bool, String)>;
+#[derive(Debug, Clone)]
+struct FunctionDef {
+    is_used_try: bool,
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext<'a> {
     pub imports: HashSet<String>,
+    pub used_try: bool,
     pub uses_stdout: bool,
     pub used_min_fn: bool,
     pub used_max_fn: bool,
     pub variables: Variable<'a>,
+    pub functions: HashMap<String, FunctionDef>,
     pub allocator: Option<&'a str>,
     pub used_input_fn: bool,
     pub is_find_method: bool,
@@ -54,11 +63,14 @@ impl<'a> TranspileContext<'a> {
     pub fn new() -> Self {
         Self {
             imports: HashSet::new(),
+
             allocator: None,
             variables: HashMap::new(),
+            functions: HashMap::new(),
             uses_stdout: false,
             used_min_fn: false,
             used_max_fn: false,
+            used_try: false,
             used_input_fn: false,
             is_find_method: false,
             used_sum_fn: false,
@@ -126,8 +138,13 @@ impl<'a> TranspileContext<'a> {
                     let union = transpile_union_def(name, fields, methods, self);
                     defs.push_str(&union);
                 }
-                _ => {
-                    main_body.push_str(&transpile_expr(expr, self));
+                other => {
+                    let needs_semicolon = is_semicolon_needed(&other);
+                    let transpiled = transpile_expr(other, self);
+                    main_body.push_str(&transpiled);
+                    if needs_semicolon {
+                        main_body.push(';');
+                    }
                 }
             }
         }

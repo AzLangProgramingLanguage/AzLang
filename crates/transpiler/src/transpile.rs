@@ -2,13 +2,14 @@ use parser::{ast::Expr, shared_ast::BuiltInFunction};
 
 use crate::{
     TranspileContext,
-    binary_op::{self, transpile_binary_op},
+    binary_op::transpile_binary_op,
     builtin::{
         min_max::{transpile_max, transpile_min},
         print::transpile_print,
         sum::transpile_sum,
     },
     declaration::variable_decl::transpile_decl,
+    function_call::transpile_function_call,
 };
 
 pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
@@ -21,6 +22,13 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
         Expr::Break => "break".to_string(),
         Expr::Continue => "continue".to_string(),
         Expr::VariableRef { name, symbol: _ } => name.to_string(),
+        Expr::Call {
+            target,
+            name,
+            args,
+            returned_type,
+        } => transpile_function_call(ctx, target, name, args, returned_type),
+
         /*    Expr::Return(expr)=> {
             /* BUG:  Hell et burayı */
             let code = match &**expr {

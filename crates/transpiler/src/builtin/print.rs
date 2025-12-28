@@ -32,8 +32,9 @@ pub fn transpile_print<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
 
         _ => {
             if is_primite_value(&expr) {
+                ctx.used_try = true;
                 format!(
-                    "try std.fs.File.stdout().writeAll(\"{}\\n\");",
+                    "try std.fs.File.stdout().writeAll(\"{}\\n\")",
                     transpile_expr(expr, ctx)
                 )
             } else {

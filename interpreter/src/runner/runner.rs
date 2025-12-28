@@ -1,9 +1,9 @@
-use std::rc::Rc;
-
 use super::Runner;
 use crate::runner::{
     FunctionDef, Variable, binary_op::binary_op_runner, builtin::builthin_call_runner,
+    function_call::function_call,
 };
+use std::rc::Rc;
 
 use parser::{ast::Expr, shared_ast::Type};
 
@@ -26,7 +26,6 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             );
             Expr::Void
         }
-
         Expr::FunctionDef {
             name,
             params,
@@ -45,12 +44,13 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             );
             Expr::Void
         }
-
-        Expr::Assignment {
+        Expr::Call {
+            target,
             name,
-            value,
-            symbol,
-        } => {
+            args,
+            returned_type,
+        } => function_call(ctx, target, name, args, returned_type),
+        Expr::Assignment { name, value, .. } => {
             let new_value: Expr<'a> = runner_interpretator(ctx, *value);
             if let Some(var) = ctx.variables.get_mut(&name.to_string()) {
                 var.value = Rc::new(new_value);
@@ -89,23 +89,15 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
 
         Expr::BuiltInCall {
             function,
-            mut args,
+            args,
             return_type,
         } => builthin_call_runner(ctx, function, args, return_type),
-        Expr::VariableRef { name, symbol } => {
+        Expr::VariableRef { name, .. } => {
             if let Some(var) = ctx.variables.get(&name.to_string()) {
                 return var.value.as_ref().clone();
             }
             Expr::Void
         }
-        Expr::TemplateString(s) => Expr::TemplateString(s),
-        Expr::String(s) => Expr::String(s),
-        Expr::Number(n) => Expr::Number(n),
-        Expr::Float(c) => Expr::Float(c),
-        Expr::List(l) => Expr::List(l.clone()),
-        Expr::Bool(b) => Expr::Bool(b),
-        Expr::DynamicString(s) => Expr::DynamicString(s.clone()),
-        Expr::Void => Expr::Void,
-        _ => Expr::Void,
+        other => other,
     }
 }

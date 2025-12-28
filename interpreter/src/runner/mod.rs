@@ -1,6 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 mod builtin;
 // mod helpers;
+mod function_call;
 mod runner;
 use parser::{
     ast::{Expr, MethodType, Parameter, Program},

@@ -1,5 +1,8 @@
-əgər 1==1
-    Çap(1)
+Çap(1)
+funksiya salam(): heçnə
+    Çap("Salam")
+
+salam()
 
 /*
 tip Yazı
