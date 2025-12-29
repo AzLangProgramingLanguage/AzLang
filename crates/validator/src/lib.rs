@@ -4,17 +4,18 @@ pub mod errors;
 mod helper;
 pub mod validate;
 use parser::{
-    ast::{Expr, Parameter, Symbol},
+    ast::{Expr, Parameter, Program, Symbol},
     shared_ast::Type,
 };
 
-use crate::errors::ValidatorError;
+use crate::{errors::ValidatorError, validate::validate_expr};
 
 #[derive(Debug)]
 pub struct FunctionInfo<'a> {
     pub name: Cow<'a, str>,
     pub return_type: Option<Type<'a>>,
     pub parameters: Vec<Parameter<'a>>,
+    pub variables: HashMap<String, Symbol<'a>>,
 }
 
 #[derive(Debug)]
@@ -26,7 +27,7 @@ pub struct MethodInfo<'a> {
 }
 #[derive(Debug)]
 pub struct ValidatorContext<'a> {
-    pub scopes: Vec<HashMap<String, Symbol<'a>>>,
+    pub global_variables: HashMap<String, Symbol<'a>>,
     pub functions: HashMap<Cow<'a, str>, FunctionInfo<'a>>,
     pub struct_defs: HashMap<String, (Vec<(&'a str, Type<'a>)>, Vec<MethodInfo<'a>>)>,
     pub union_defs: HashMap<String, (Vec<(&'a str, Type<'a>)>, Vec<MethodInfo<'a>>)>,
@@ -46,7 +47,7 @@ impl<'a> Default for ValidatorContext<'a> {
 impl<'a> ValidatorContext<'a> {
     pub fn new() -> Self {
         Self {
-            scopes: vec![HashMap::new()],
+            global_variables: HashMap::new(),
             functions: HashMap::new(),
             struct_defs: HashMap::new(),
             enum_defs: HashMap::new(),
@@ -58,13 +59,6 @@ impl<'a> ValidatorContext<'a> {
         }
     }
 
-    pub fn push_scope(&mut self) {
-        self.scopes.push(HashMap::new());
-    }
-
-    pub fn pop_scope(&mut self) {
-        self.scopes.pop();
-    }
     pub fn validate_user_type(&self, name: &str) -> Result<(), ValidatorError> {
         if let Some(_) = self.enum_defs.get(name) {
             return Ok(());
@@ -77,31 +71,42 @@ impl<'a> ValidatorContext<'a> {
         }
         Err(ValidatorError::UnknownType(name.to_string()))
     }
-    pub fn declare_variable(&mut self, name: String, symbol: Symbol<'a>) {
-        if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name, symbol);
-        }
-    }
 
     pub fn lookup_variable(&self, name: &str) -> Option<Symbol<'a>> {
-        for scope in self.scopes.iter().rev() {
-            if let Some(symbol) = scope.get(name) {
-                return Some(symbol.clone());
-            }
+        if let Some(variable) = self.global_variables.get(name) {
+            Some(variable.clone()) //TODO: Lazımsız clone 
+        } else {
+            None
         }
-        None
-    }
-
-    pub fn lookup_variable_mut(&mut self, name: &str) -> Option<&mut Symbol<'a>> {
-        for scope in self.scopes.iter_mut().rev() {
-            if let Some(sym) = scope.get_mut(name) {
-                return Some(sym);
-            }
-        }
-        None
     }
 
     pub fn declare_function(&mut self, func: FunctionInfo<'a>) {
         self.functions.insert(func.name.clone(), func);
+    }
+    pub fn declare_variable(&mut self, name: String, variable: Symbol<'a>) {
+        if let Some(function) = &self.current_function {
+            println!("{function}");
+            // self.functions
+            //
+            //     .get(&Cow::Owned(function.to_string()))
+            //     .unwrap()
+            //     .variables
+            //     .insert(name, variable);
+        } else {
+            self.global_variables.insert(name, variable);
+        }
+    }
+    pub fn validate(&mut self, parsed_program: &mut Program<'a>) -> Result<(), ValidatorError> {
+        for expr in parsed_program.expressions.iter_mut() {
+            validate_expr(expr, self)?;
+        }
+        for variable in &self.global_variables {
+            if variable.1.is_mutable && !variable.1.is_changed {
+                return Err(ValidatorError::NeverChangedMuttableVariable(
+                    variable.0.to_string(),
+                ));
+            }
+        }
+        Ok(())
     }
 }

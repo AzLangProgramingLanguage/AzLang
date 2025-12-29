@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use parser::{ast::Expr, shared_ast::Type};
 
-use crate::runner::{Runner, runner::runner_interpretator};
+use crate::runner::{Runner, Variable, runner::runner_interpretator};
 
 pub fn function_call<'a>(
     ctx: &mut Runner<'a>,
@@ -19,6 +19,17 @@ pub fn function_call<'a>(
         None => {
             if let Some(function) = ctx.functions.get(name) {
                 let body_rc = Rc::clone(&function.body);
+                let params = Rc::clone(&function.params);
+                for i in 0..params.len() {
+                    ctx.variables.insert(
+                        params[i].name.clone(),
+                        Variable {
+                            value: Rc::new(args[i].clone()),
+                            typ: Rc::new(params[i].typ.clone()),
+                            is_mutable: params[i].is_mutable,
+                        },
+                    );
+                }
                 for i in 0..body_rc.len() {
                     let expr = body_rc[i].clone();
                     match expr {
@@ -29,7 +40,7 @@ pub fn function_call<'a>(
                             runner_interpretator(ctx, expr);
                         }
                     }
-                }
+                } //TODO: Burada Mütleq deyerleri temizlemek lazımdır. 
             }
         }
     }

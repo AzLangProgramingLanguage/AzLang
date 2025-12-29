@@ -44,6 +44,7 @@ pub enum ValidatorError {
     },
     IndexTargetTypeNotFound,
     NestedFunctionDefinition,
+    NeverChangedMuttableVariable(String),
 }
 
 impl Display for ValidatorError {
@@ -65,6 +66,13 @@ impl Display for ValidatorError {
             ValidatorError::AssignmentToImmutableVariable(string) => {
                 write!(f, "'{string}' Dəyəri dəyişən olmalıdır.")
             }
+            ValidatorError::NeverChangedMuttableVariable(string) => {
+                write!(
+                    f,
+                    "'{string}' Dəyəri dəyişən olaraq qeyd edilib amma dəyişdirilməyib."
+                )
+            }
+
             ValidatorError::AssignmentTypeMismatch {
                 name,
                 expected,

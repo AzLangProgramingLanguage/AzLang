@@ -1,8 +1,5 @@
-Çap(1)
-funksiya salam(): heçnə
-    Çap("Salam")
+sabit a = 5
 
-salam()
 
 /*
 tip Yazı

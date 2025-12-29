@@ -1,4 +1,4 @@
-use std::{borrow::Cow, rc::Rc};
+use std::{borrow::Cow, collections::HashMap, rc::Rc};
 
 use logging::validator_log;
 use parser::{
@@ -50,6 +50,7 @@ pub fn validate_expr<'a>(
                     is_mutable: *is_mutable,
                     is_used: false,
                     is_pointer: false,
+                    is_changed:false,
                 },
             );
         }
@@ -64,6 +65,7 @@ pub fn validate_expr<'a>(
             let inferred = get_type(value, ctx, None);
             if let Some(mut var) = ctx.lookup_variable(name) {
                 var.is_used = true;
+                var.is_changed = true;
                 if !var.is_mutable {
                     return Err(ValidatorError::AssignmentToImmutableVariable(
                         name.to_string(),
@@ -302,7 +304,7 @@ pub fn validate_expr<'a>(
         Expr::VariableRef { name, symbol } => {
             validator_log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
-            if let Some(sym) = ctx.lookup_variable_mut(name) {
+            if let Some(mut sym) = ctx.lookup_variable(name) {
                 sym.is_used = true;
 
                 *symbol = Some(sym.clone());
@@ -316,6 +318,7 @@ pub fn validate_expr<'a>(
                     is_mutable: false,
                     is_used: true,
                     is_pointer: false,
+                    is_changed: false,
                 });
                 return Ok(());
             }
@@ -403,6 +406,7 @@ pub fn validate_expr<'a>(
                     is_mutable: false,
                     is_used: false,
                     is_pointer: false,
+                    is_changed: false,
                 };
                 ctx.declare_variable(var_name.to_string(), symbol);
             } else {
@@ -651,8 +655,6 @@ pub fn validate_expr<'a>(
             }
             ctx.current_function = Some(name.to_string());
 
-            ctx.push_scope();
-
             for param in params.iter_mut() {
                 validator_log(&format!("Parametri yoxlanılır: {}", param.name));
                 param.is_pointer = param.is_mutable;
@@ -661,7 +663,9 @@ pub fn validate_expr<'a>(
                     is_mutable: param.is_mutable,
                     is_used: false,
                     is_pointer: param.is_pointer,
+                    is_changed: false,
                 };
+
                 ctx.declare_variable(param.name.clone(), symbol);
             }
 
@@ -672,6 +676,7 @@ pub fn validate_expr<'a>(
                 FunctionInfo {
                     name: Cow::Borrowed(*name),
                     parameters: params.clone(),
+                    variables: HashMap::new(),
                     return_type: return_type.clone(),
                 },
             );
@@ -684,11 +689,11 @@ pub fn validate_expr<'a>(
                 FunctionInfo {
                     name: Cow::Borrowed(*name),
                     parameters: params.clone(),
+                    variables: HashMap::new(),
                     return_type: return_type.clone(),
                 },
             );
 
-            ctx.pop_scope();
             ctx.current_function = None;
             ctx.current_return = None;
             *body = owned_body;
