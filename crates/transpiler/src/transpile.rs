@@ -29,33 +29,6 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
             returned_type,
         } => transpile_function_call(ctx, target, name, args, returned_type),
 
-        /*    Expr::Return(expr)=> {
-            /* BUG:  Hell et burayı */
-            let code = match &**expr {
-                Expr::Number(n) => match get_expr_type(expr) {
-                    Type::Natural => format!("azlangEded{{.natural={}}}", n),
-                    Type::Integer => format!("azlangEded{{.integer={}}}", n),
-                    Type::Float => format!("azlangEded{{.float={}}}", n),
-                    _ => transpile_expr(expr, ctx),
-                },
-
-                Expr::VariableRef {
-                    symbol,
-                    ..
-                } => {
-                    let name = transpiled_name.as_deref().unwrap_or("<undefined>");
-                    match symbol.as_ref().map(|s| &s.typ) {
-                        Some(Type::Natural) => format!("{}", name),
-                        Some(Type::Integer) => format!("{}", name),
-                        Some(Type::Float) => format!("{}", name),
-                        _ => transpile_expr(expr, ctx),
-                    }
-                }
-
-                Expr::Float(n) => n.to_string(),
-                Expr::String(s, _) => format!("\"{}\"", s.escape_default()),
-
-        } */
         Expr::BinaryOp {
             left,
             right,
@@ -99,6 +72,17 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
 
             _ => "None".to_string(),
         },
-        _ => "None".to_string(),
+        Expr::Assignment {
+            name,
+            value,
+            symbol,
+        } => {
+            let transpiled = transpile_expr(*value, ctx);
+            format!("{name} = {transpiled} ")
+        }
+        other => {
+            println!("{:?}", other);
+            panic!("Error")
+        }
     }
 }

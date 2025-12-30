@@ -48,11 +48,6 @@ pub enum Expr<'a> {
         iterable: Box<Expr<'a>>,
         body: Vec<Expr<'a>>,
     },
-    Assingment {
-        name: &'a str,
-        value: Box<Expr<'a>>,
-        is_pointer: bool,
-    },
     Float(f64),
     Decl {
         name: Cow<'a, str>,

@@ -6,7 +6,7 @@ use crate::{ValidatorContext, validate::validate_expr};
 
 pub fn get_type<'a>(
     value: &Expr<'a>,
-    ctx: &ValidatorContext<'a>,
+    ctx: &mut ValidatorContext<'a>,
     typ: Option<&Type<'a>>,
 ) -> Type<'a> {
     match value {

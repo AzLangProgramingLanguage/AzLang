@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, rc::Rc};
+use std::{borrow::Cow, collections::HashMap, ops::Deref, rc::Rc};
 
 use logging::validator_log;
 use parser::{
@@ -46,11 +46,11 @@ pub fn validate_expr<'a>(
             ctx.declare_variable(
                 name.to_string(),
                 Symbol {
-                    typ: typ.as_ref().clone(), /* Bəs bu necədir compiler düzgün işləyir amma necə inkişaf etdirilə bilər. */
+                    typ: (**typ).clone(),
                     is_mutable: *is_mutable,
                     is_used: false,
                     is_pointer: false,
-                    is_changed:false,
+                    is_changed: false,
                 },
             );
         }
@@ -63,9 +63,10 @@ pub fn validate_expr<'a>(
             validator_log(&format!("✅ Assignment yoxlanılır: '{name}'"));
             validate_expr(value, ctx)?;
             let inferred = get_type(value, ctx, None);
-            if let Some(mut var) = ctx.lookup_variable(name) {
+            if let Some(var) = ctx.lookup_variable(name) {
                 var.is_used = true;
                 var.is_changed = true;
+
                 if !var.is_mutable {
                     return Err(ValidatorError::AssignmentToImmutableVariable(
                         name.to_string(),

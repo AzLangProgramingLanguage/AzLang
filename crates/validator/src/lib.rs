@@ -72,12 +72,8 @@ impl<'a> ValidatorContext<'a> {
         Err(ValidatorError::UnknownType(name.to_string()))
     }
 
-    pub fn lookup_variable(&self, name: &str) -> Option<Symbol<'a>> {
-        if let Some(variable) = self.global_variables.get(name) {
-            Some(variable.clone()) //TODO: Lazımsız clone 
-        } else {
-            None
-        }
+    pub fn lookup_variable(&mut self, name: &str) -> Option<&mut Symbol<'a>> {
+        self.global_variables.get_mut(name)
     }
 
     pub fn declare_function(&mut self, func: FunctionInfo<'a>) {
@@ -102,6 +98,7 @@ impl<'a> ValidatorContext<'a> {
         }
         for variable in &self.global_variables {
             if variable.1.is_mutable && !variable.1.is_changed {
+                println!("{variable:?}");
                 return Err(ValidatorError::NeverChangedMuttableVariable(
                     variable.0.to_string(),
                 ));

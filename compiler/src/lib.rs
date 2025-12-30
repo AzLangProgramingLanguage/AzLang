@@ -13,9 +13,7 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let mut parsed_program = parser.parse().map_err(|err| CompilerError::Parser(err))?;
 
     let mut validator = validator::ValidatorContext::new();
-    for expr in parsed_program.expressions.iter_mut() {
-        validate_expr(expr, &mut validator)?;
-    }
+    validator.validate(&mut parsed_program)?;
     clean_ast(&mut parsed_program, &validator);
     let mut ctx = transpiler::TranspileContext::new();
     let code = ctx.transpile(parsed_program);
