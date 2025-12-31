@@ -9,7 +9,7 @@ use crate::{
         sum::transpile_sum,
     },
     declaration::variable_decl::transpile_decl,
-    function_call::transpile_function_call,
+    function_call::transpile_function_call, helper::{get_expr_type, map_type},
 };
 
 pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
@@ -72,10 +72,20 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
 
             _ => "None".to_string(),
         },
+        Expr::List(list) => {
+            let mut str_list = String::new();
+            let str_type = map_type(&get_expr_type(&list[0]), true);
+            for expr in list {
+                str_list.push_str(&transpile_expr(expr, ctx));
+                str_list.push(',');
+            }
+            str_list.pop();
+            format!("[_]{str_type}{{{str_list}}}")
+        }
         Expr::Assignment {
             name,
             value,
-            symbol,
+            symbol: _,
         } => {
             let transpiled = transpile_expr(*value, ctx);
             format!("{name} = {transpiled} ")

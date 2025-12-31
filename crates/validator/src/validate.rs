@@ -1,8 +1,8 @@
-use std::{borrow::Cow, collections::HashMap, ops::Deref, rc::Rc};
+use std::{borrow::Cow, collections::{HashMap, hash_map::Entry}, ops::Deref, rc::Rc};
 
 use logging::validator_log;
 use parser::{
-    ast::{Expr, Symbol, TemplateChunk},
+    ast::{Expr, Parameter, Symbol, TemplateChunk},
     shared_ast::{BuiltInFunction, Type},
 };
 
@@ -643,61 +643,42 @@ pub fn validate_expr<'a>(
             body,
             return_type,
         } => {
-            /*TODO: Burada value+ tip yoxlanılması et */
             validator_log(&format!("Funksiya tərifi yoxlanılır: {}", name));
             if ctx.current_function.is_some() {
                 return Err(ValidatorError::NestedFunctionDefinition);
             }
-            if let Some(Type::User(name)) = return_type {
-                match ctx.validate_user_type(name) {
-                    Ok(_) => {}
-                    Err(e) => return Err(e),
-                }
-            }
             ctx.current_function = Some(name.to_string());
+          
+            let function = match ctx.functions.entry(Cow::Borrowed(name)) {
+                Entry::Occupied(_) => {
+                    return Err(ValidatorError::FunctionAlreadyDefined(name.to_string()));
+                }
+                Entry::Vacant(entry) => entry.insert(FunctionInfo {
+                    variables: HashMap::new(),
+                    return_type: return_type.clone(),
+                    parameters: vec![],
+                }),
+            };
 
             for param in params.iter_mut() {
                 validator_log(&format!("Parametri yoxlanılır: {}", param.name));
-                param.is_pointer = param.is_mutable;
                 let symbol = Symbol {
                     typ: param.typ.clone(),
                     is_mutable: param.is_mutable,
                     is_used: false,
-                    is_pointer: param.is_pointer,
+                    is_pointer: param.is_mutable,
                     is_changed: false,
                 };
 
-                ctx.declare_variable(param.name.clone(), symbol);
+                function.variables.insert(param.name.clone(), symbol);
             }
-
-            let mut owned_body = std::mem::take(body);
-
-            ctx.functions.insert(
-                Cow::Borrowed(*name),
-                FunctionInfo {
-                    name: Cow::Borrowed(*name),
-                    parameters: params.clone(),
-                    variables: HashMap::new(),
-                    return_type: return_type.clone(),
-                },
-            );
-
-            for expr in owned_body.iter_mut() {
+             function.parameters = params.clone();
+ 
+            for expr in body.iter_mut() {
                 validate_expr(expr, ctx)?;
             }
-            ctx.functions.insert(
-                Cow::Borrowed(*name),
-                FunctionInfo {
-                    name: Cow::Borrowed(*name),
-                    parameters: params.clone(),
-                    variables: HashMap::new(),
-                    return_type: return_type.clone(),
-                },
-            );
-
             ctx.current_function = None;
             ctx.current_return = None;
-            *body = owned_body;
         }
 
         _ => {}

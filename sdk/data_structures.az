@@ -1,8 +1,6 @@
-dəyişən a = 5
-a = 1
-funksiya salam(c: ədəd): heçnə
-   Çap(c)
-salam(a)
+dəyişən a = [1,2,-4]
+a = [1,2,-3]
+Çap(a)
 /*
 tip Yazı
   Const: zigsabityazı

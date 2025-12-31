@@ -3,7 +3,6 @@ use std::rc::Rc;
 use parser::{ast::Expr, shared_ast::Type};
 
 use crate::{TranspileContext, helper::map_type, transpile::transpile_expr};
-/* BUG: Burasına baxılmalı. Və mütləq contextə variable əlavə edilməlidir. */
 pub fn transpile_decl<'a>(
     name: &String,
     typ: Rc<Type<'a>>,
@@ -15,7 +14,7 @@ pub fn transpile_decl<'a>(
     let value_code: String = transpile_expr(value, ctx);
 
     let decl_code = if is_mutable {
-        format!("var {}: {} = {}", name, type_str, value_code)
+        format!("var {} = {}", name, value_code)
     } else {
         format!("const {}: {} = {}", name, type_str, value_code)
     };

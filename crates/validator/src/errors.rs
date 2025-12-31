@@ -45,6 +45,7 @@ pub enum ValidatorError {
     IndexTargetTypeNotFound,
     NestedFunctionDefinition,
     NeverChangedMuttableVariable(String),
+    FunctionAlreadyDefined(String),
 }
 
 impl Display for ValidatorError {
@@ -144,7 +145,10 @@ impl Display for ValidatorError {
                 write!(f, "Indeks tipi müəyyən edilə bilmədi.")
             }
             ValidatorError::NestedFunctionDefinition => {
-                write!(f, "Funksiya tərifi onsuzda var.")
+                write!(f, "Funksiya içərisində funksiya yaradıla bilməz.")
+            }
+            ValidatorError::FunctionAlreadyDefined(string) => {
+                write!(f, "Funksiya '{string}' onsuzda var.")
             }
         }
     }

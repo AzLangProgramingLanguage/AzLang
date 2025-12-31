@@ -3,7 +3,7 @@ use parser::{ast::Expr, shared_ast::Type};
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     match expr {
         Expr::String(_) => Type::String,
-        Expr::Number(_) => Type::Integer,
+        Expr::Number(_) => Type::Natural,
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
@@ -209,8 +209,9 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> &'static str {
         Type::ZigConstArray => "[]const usize",
         Type::Bool => "bool",
         Type::Array(inner) => {
-            let inner_str = map_type(inner, is_const);
-            inner_str
+           /*  let inner_str = map_type(inner, is_const);
+            inner_str */
+            ""
         }
         Type::User(_) => "any",
         Type::Allocator => "std.mem.Allocator",

@@ -12,7 +12,6 @@ use crate::{errors::ValidatorError, validate::validate_expr};
 
 #[derive(Debug)]
 pub struct FunctionInfo<'a> {
-    pub name: Cow<'a, str>,
     pub return_type: Option<Type<'a>>,
     pub parameters: Vec<Parameter<'a>>,
     pub variables: HashMap<String, Symbol<'a>>,
@@ -73,21 +72,32 @@ impl<'a> ValidatorContext<'a> {
     }
 
     pub fn lookup_variable(&mut self, name: &str) -> Option<&mut Symbol<'a>> {
-        self.global_variables.get_mut(name)
+        if let Some(function) = &self.current_function {
+            self.functions
+                .get_mut(&Cow::Owned(function.to_string()))
+                .unwrap()
+                .variables
+                .get_mut(name)
+        } else {
+            self.global_variables.get_mut(name)
+        }
     }
 
-    pub fn declare_function(&mut self, func: FunctionInfo<'a>) {
-        self.functions.insert(func.name.clone(), func);
+    pub fn declare_function(
+        &mut self,
+        name: Cow<'a, str>,
+        func: FunctionInfo<'a>,
+    ) -> Option<FunctionInfo<'a>> {
+        self.functions.insert(name, func)
+        
     }
     pub fn declare_variable(&mut self, name: String, variable: Symbol<'a>) {
         if let Some(function) = &self.current_function {
-            println!("{function}");
-            // self.functions
-            //
-            //     .get(&Cow::Owned(function.to_string()))
-            //     .unwrap()
-            //     .variables
-            //     .insert(name, variable);
+            self.functions
+                .get_mut(&Cow::Owned(function.to_string()))
+                .unwrap()
+                .variables
+                .insert(name, variable);
         } else {
             self.global_variables.insert(name, variable);
         }
