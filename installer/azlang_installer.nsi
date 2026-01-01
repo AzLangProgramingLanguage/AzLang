@@ -11,7 +11,6 @@ RequestExecutionLevel admin
 !include "MUI2.nsh"
 !include "WinMessages.nsh"
 
-; --- İnterfeys Ayarları (Azərbaycan dilində) ---
 !define MUI_WELCOMEPAGE_TITLE "AzLang-a Xoş Gəlmisiniz!"
 !define MUI_WELCOMEPAGE_TEXT "Davam edin və birlikdə AzLang proqramlaşdırma dilini quraşdıraq.$\r$\n$\r$\nDavam etmək üçün 'İrəli' düyməsini sıxın."
 
