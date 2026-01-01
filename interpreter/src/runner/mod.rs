@@ -52,6 +52,7 @@ pub struct Runner<'a> {
     structdefs: HashMap<String, StructDef<'a>>,
     functions: HashMap<String, FunctionDef<'a>>,
     uniontypes: HashMap<String, UnionType<'a>>,
+    current_return: Expr<'a>,
 }
 
 impl<'a> Runner<'a> {
@@ -61,6 +62,7 @@ impl<'a> Runner<'a> {
             structdefs: HashMap::new(),
             functions: HashMap::new(),
             uniontypes: HashMap::new(),
+            current_return: Expr::Void,
         }
     }
 

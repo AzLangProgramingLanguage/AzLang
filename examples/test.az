@@ -1,13 +1,19 @@
-funksiya salam(): ədəd
+/*funksiya salam(): ədəd
     əgər doğru
-        qaytar 1
+        qaytar 2
     əks
         qaytar 1
 
+sabit a = salam() */
+funksiya salam(): ədəd
+    əgər yanlış
+        qaytar 1
+    əks
+        qaytar 2
+
 sabit a = salam()
-dəyişən ədəd b = 5
-b = 2
 Çap(a)
 
-
-
+dəyişən ədəd b = 5
+b = 2
+Çap(b)

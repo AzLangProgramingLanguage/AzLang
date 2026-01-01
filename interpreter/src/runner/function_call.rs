@@ -32,17 +32,11 @@ pub fn function_call<'a>(
                 }
                 for i in 0..body_rc.len() {
                     let expr = body_rc[i].clone();
-                    match expr {
-                        Expr::Return(return_expr) => {
-                            return runner_interpretator(ctx, *return_expr);
-                        }
-                        _ => {
-                            runner_interpretator(ctx, expr);
-                        }
-                    }
-                } //TODO: Burada Mütleq deyerleri temizlemek lazımdır. 
+
+                    runner_interpretator(ctx, expr);
+                } //TODO: Burada Mütleq deyerleri temizlemek lazımdır.
             }
         }
     }
-    Expr::Void
+    ctx.current_return.clone()
 }

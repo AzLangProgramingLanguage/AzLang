@@ -44,6 +44,10 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             );
             Expr::Void
         }
+        Expr::Return(value) => {
+            ctx.current_return = runner_interpretator(ctx, *value);
+            Expr::Void
+        }
         Expr::Call {
             target,
             name,
@@ -77,6 +81,12 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
                     }
                 }
                 _ => {}
+            }
+            Expr::Void
+        }
+        Expr::Else { then_branch } => {
+            for expr in then_branch {
+                runner_interpretator(ctx, expr);
             }
             Expr::Void
         }
