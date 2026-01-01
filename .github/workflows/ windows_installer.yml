@@ -21,7 +21,7 @@ jobs:
           cargo build --release --target x86_64-pc-windows-msvc
       - name: Copy binary to installer folder
         run: |
-          copy target\x86_64-pc-windows-msvc\release\azlang.exe installer\azlang.exe
+          copy target\x86_64-pc-windows-msvc\release\AzLang.exe installer\azlang.exe
 
       - name: Setup NSIS
         uses: repolevedavaj/install-nsis@v1.1.0
