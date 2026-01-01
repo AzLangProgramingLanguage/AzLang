@@ -28,13 +28,6 @@ RequestExecutionLevel admin
 
 !insertmacro MUI_LANGUAGE "Turkish"
 
-Section "Visual Studio Kitabxanaları"
-    SetOutPath "$TEMP"
-    File "vc_redist.x64.exe"
-    DetailPrint "Visual C++ Runtime (VCRUNTIME140.dll) quraşdırılır..."
-    ExecWait '"$TEMP\vc_redist.x64.exe" /quiet /norestart'
-    Delete "$TEMP\vc_redist.x64.exe"
-SectionEnd
 
 Section "Quraşdır"
     SetOutPath "$INSTDIR"
