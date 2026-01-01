@@ -75,50 +75,15 @@ Bu layihə açıq mənbəlidir. Hər bir yardım və fikir dəyərlidir:
 ## 🔤 Sintaksisə Baxış
 
 ```azlang
-funksiya salam()
-    Çap("Salam")
-    qaytar 1
 
-sabit a = salam()
-dəyişən b = 5
-Çap(a)
+dəyişən a = 5
+a = 2
 
-gəz aralıq(1, 1000) içində i
-    Çap(i)
+sabit yazı b = "Salam"
+Çap(`b dəyəri: ${b}`)
 
-funksiya artir(dəyişən c: ədəd): ədəd
-    c = c + 1
-    əgər c == 6
-        qaytar c
-    yoxsa c == 7
-        qaytar c
-    əks
-        qaytar c
 
-sabit c = artir(b)
-Çap(c)
+funksiya add(a: ədəd, b: ədəd): ədəd
+    qaytar a + b
 
-Obyekt Adam
-    ad: yazı
-    soyad: yazı
-    yas: ədəd
-    metod qeydi()
-        Çap(`Mən ${öz.ad} `)
-
-sabit adam = Adam{"Səbuhi", "Sarıyev", 20}
-adam.qeydi()
-
-növ Rengler
-    Qirmizi
-    Yasil
-    Qara
-
-sabit reng: Rengler = Qirmizi
-
-uyğun reng
-    Qirmizi -> Çap("Qirmizi")
-    Yasil -> Çap("Yasil")
-    Qara -> Çap("Qara")
-
-sabit ad = Giriş("Adınızı girin.")
-sabit yas = Ədəd(Giriş("Yaşınızı girin."))
+Çap(add(1, 2))

@@ -9,7 +9,8 @@ use crate::{
         sum::transpile_sum,
     },
     declaration::variable_decl::transpile_decl,
-    function_call::transpile_function_call, helper::{get_expr_type, map_type},
+    function_call::transpile_function_call,
+    helper::{get_expr_type, is_semicolon_needed, map_type},
 };
 
 pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
@@ -49,7 +50,12 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
             let str_condition = transpile_expr(*condition, ctx);
             let mut str_body = String::new();
             for expr in then_branch {
-                str_body.push_str(&transpile_expr(expr, ctx));
+                if is_semicolon_needed(&expr) {
+                    str_body.push_str(&transpile_expr(expr, ctx));
+                    str_body.push(';');
+                } else {
+                    str_body.push_str(&transpile_expr(expr, ctx));
+                }
             }
             if else_branch.is_empty() {
                 format!("if({str_condition}) {{ {str_body} }}")
@@ -61,6 +67,19 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
                 format!("if({str_condition}) {{ {str_body} }}  else {{ {str_else_body} }}")
             }
         }
+        Expr::Else { then_branch } => {
+            let mut str_body = String::new();
+            for expr in then_branch {
+                if is_semicolon_needed(&expr) {
+                    str_body.push_str(&transpile_expr(expr, ctx));
+                    str_body.push(';');
+                } else {
+                    str_body.push_str(&transpile_expr(expr, ctx));
+                }
+            }
+            format!("{str_body} ")
+        }
+
         Expr::BuiltInCall {
             function, mut args, ..
         } => match function {
@@ -90,6 +109,12 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
             let transpiled = transpile_expr(*value, ctx);
             format!("{name} = {transpiled} ")
         }
+        Expr::Return(value) => {
+            let transpiled_value = transpile_expr(*value, ctx);
+
+            format!("return {transpiled_value}")
+        }
+
         other => {
             println!("{:?}", other);
             panic!("Error")
