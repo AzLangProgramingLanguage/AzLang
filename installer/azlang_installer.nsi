@@ -33,15 +33,18 @@ Section "Install"
     CreateShortcut "$SMPROGRAMS\AzLang.lnk" "$INSTDIR\${APP_EXE}"
 
     DetailPrint "Adding $INSTDIR to system PATH..."
+    # Mevcut PATH'i oku
     ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
 
     Push "$INSTDIR"
     Push $0
     Call StrStr
     Pop $1
+    # Eğer dizin zaten PATH'te yoksa ekle
     StrCmp $1 "" 0 +3
         WriteRegExpandStr HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path" "$0;$INSTDIR"
-        SendMessage ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+        # DÜZELTİLEN SATIR: HWND_BROADCAST eklendi
+        SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
@@ -52,10 +55,11 @@ Section "Uninstall"
     RMDir "$INSTDIR"
 SectionEnd
 
+# Yardımcı Fonksiyon: StrStr
 Function StrStr
-  Exch $R1
+  Exch $R1 ; aranacak
   Exch
-  Exch $R2
+  Exch $R2 ; kaynak
   Push $R3
   Push $R4
   Push $R5
