@@ -1,6 +1,5 @@
 use parser::{
     ast::Expr,
-    function,
     shared_ast::{BuiltInFunction, Type},
 };
 

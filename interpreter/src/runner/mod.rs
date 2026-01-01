@@ -4,7 +4,7 @@ mod builtin;
 mod function_call;
 mod runner;
 use parser::{
-    ast::{Expr, MethodType, Parameter, Program},
+    ast::{Expr, Parameter, Program},
     shared_ast::Type,
 };
 mod binary_op;

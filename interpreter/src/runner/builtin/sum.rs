@@ -1,9 +1,6 @@
 use crate::runner::Runner;
-use crate::runner::builtin::print;
 use crate::runner::runner::runner_interpretator;
-use parser::ast::{Expr, TemplateChunk};
-use std::fmt::Write;
-use std::mem;
+use parser::ast::Expr;
 
 pub fn sum<'a>(args: Vec<Expr<'a>>, ctx: &mut Runner<'a>) -> Expr<'a> {
     let mut result = Expr::Number(0);
