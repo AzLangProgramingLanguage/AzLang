@@ -21,6 +21,11 @@ jobs:
         run: |
           copy target\release\azlang.exe installer\azlang.exe
 
+      - name: Setup NSIS
+        uses: repolevedavaj/install-nsis@v1.1.0
+        with:
+          nsis-version: "3.11"
+
       - name: Build Windows Installer (NSIS)
         uses: joncloud/makensis-action@v4
         with:
