@@ -1,0 +1,35 @@
+name: Windows Installer (NSIS)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Build AzLang
+        run: cargo build --release
+
+      - name: Copy binary to installer folder
+        run: |
+          copy target\release\AzLang.exe installer\azlang.exe
+
+      - name: Build Windows Installer
+        run: |
+          makensis installer\azlang_installer.nsi
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AzLang-Windows-Installer
+          path: installer/AzLang_Setup.exe

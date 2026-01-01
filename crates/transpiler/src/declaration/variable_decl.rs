@@ -11,7 +11,7 @@ pub fn transpile_decl<'a>(
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let type_str = map_type(&typ, !is_mutable);
-    let value_code: String = transpile_expr(value, ctx);
+let value_code: String = transpile_expr(value, ctx);
 
     let decl_code = if is_mutable {
         format!("var {}: {} = {}", name, type_str, value_code)
