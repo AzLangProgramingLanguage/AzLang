@@ -14,25 +14,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build AzLang (static MSVC)
-        env:
-          RUSTFLAGS: "-C target-feature=+crt-static"
-        run: |
-          rustup target add x86_64-pc-windows-msvc
-          cargo build --release --target x86_64-pc-windows-msvc
-      - name: Copy binary to installer folder
-        run: |
-          copy target\x86_64-pc-windows-msvc\release\AzLang.exe installer\azcli.exe
-
-      - name: Download VC Redist
-        run: |
-          Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile "installer/vc_redist.x64.exe"
-
       - name: Setup NSIS
         uses: repolevedavaj/install-nsis@v1.1.0
         with:
           nsis-version: "3.11"
-
       - name: Build Windows Installer (NSIS)
         uses: joncloud/makensis-action@v4
         with:
