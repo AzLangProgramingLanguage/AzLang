@@ -14,14 +14,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build AzLang
+      - name: Build AzLang (static MSVC)
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
         run: |
           rustup target add x86_64-pc-windows-msvc
-          set RUSTFLAGS=-C target-feature=+crt-static
           cargo build --release --target x86_64-pc-windows-msvc
       - name: Copy binary to installer folder
         run: |
           copy target\x86_64-pc-windows-msvc\release\AzLang.exe installer\azlang.exe
+
+      - name: Check MSVC runtime dependency
+        shell: pwsh
+        run: |
+          dumpbin /dependents installer\azlang.exe
 
       - name: Setup NSIS
         uses: repolevedavaj/install-nsis@v1.1.0
