@@ -11,55 +11,64 @@ RequestExecutionLevel admin
 !include "MUI2.nsh"
 !include "WinMessages.nsh"
 
+; --- İnterfeys Ayarları (Azərbaycan dilində) ---
+!define MUI_WELCOMEPAGE_TITLE "AzLang-a Xoş Gəlmisiniz!"
+!define MUI_WELCOMEPAGE_TEXT "Davam edin və birlikdə AzLang proqramlaşdırma dilini quraşdıraq.$\r$\n$\r$\nDavam etmək üçün 'İrəli' düyməsini sıxın."
+
+!define MUI_DIRECTORYPAGE_TEXT_TOP "Quraşdırma qovluğunu seçin:"
+
+!define MUI_FINISHPAGE_TITLE "Quraşdırma Tamamlandı"
+!define MUI_FINISHPAGE_TEXT "AzLang uğurla quraşdırıldı. Artıq terminalda 'azcli' komandasını istifadə edə bilərsiniz."
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_EXE}"
+!define MUI_FINISHPAGE_RUN_TEXT "AzLang CLI-nı işə sal"
+
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
-!insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "Turkish"
 
-Section "Visual Studio Runtime"
+Section "Visual Studio Kitabxanaları"
     SetOutPath "$TEMP"
     File "vc_redist.x64.exe"
-    DetailPrint "Installing Visual C++ Redistributable..."
+    DetailPrint "Visual C++ Runtime (VCRUNTIME140.dll) quraşdırılır..."
     ExecWait '"$TEMP\vc_redist.x64.exe" /quiet /norestart'
     Delete "$TEMP\vc_redist.x64.exe"
 SectionEnd
 
-Section "Install"
+Section "Quraşdır"
     SetOutPath "$INSTDIR"
     File "${APP_EXE}"
 
     CreateShortcut "$SMPROGRAMS\AzLang.lnk" "$INSTDIR\${APP_EXE}"
 
-    DetailPrint "Adding $INSTDIR to system PATH..."
-    # Mevcut PATH'i oku
+    DetailPrint "$INSTDIR yolu sistem PATH-ə əlavə edilir..."
     ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
 
     Push "$INSTDIR"
     Push $0
     Call StrStr
     Pop $1
-    # Eğer dizin zaten PATH'te yoksa ekle
     StrCmp $1 "" 0 +3
         WriteRegExpandStr HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path" "$0;$INSTDIR"
-        # DÜZELTİLEN SATIR: HWND_BROADCAST eklendi
         SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
-Section "Uninstall"
+Section "Sil"
     Delete "$INSTDIR\${APP_EXE}"
     Delete "$INSTDIR\Uninstall.exe"
     RMDir "$INSTDIR"
+
+    DetailPrint "AzLang sistemdən silindi."
 SectionEnd
 
-# Yardımcı Fonksiyon: StrStr
 Function StrStr
-  Exch $R1 ; aranacak
+  Exch $R1
   Exch
-  Exch $R2 ; kaynak
+  Exch $R2
   Push $R3
   Push $R4
   Push $R5
