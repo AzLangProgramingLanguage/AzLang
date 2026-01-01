@@ -15,17 +15,25 @@ Name "${APP_NAME} ${APP_VERSION}"
 
 !insertmacro MUI_LANGUAGE "English"
 
+Section "Visual Studio Runtime"
+    SetOutPath "$TEMP"
+    File "vc_redist.x64.exe"
+    DetailPrint "Installing Visual C++ Redistributable..."
+    ExecWait '"$TEMP\vc_redist.x64.exe" /quiet /norestart'
+    Delete "$TEMP\vc_redist.x64.exe"
+SectionEnd
+
 Section "Install"
-  SetOutPath "$INSTDIR"
-  File "azlang.exe"
+    SetOutPath "$INSTDIR"
+    File "azlang.exe"
 
-  CreateShortcut "$SMPROGRAMS\AzLang.lnk" "$INSTDIR\azlang.exe"
+    CreateShortcut "$SMPROGRAMS\AzLang.lnk" "$INSTDIR\azlang.exe"
 
-  WriteUninstaller "$INSTDIR\Uninstall.exe"
+    WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
 Section "Uninstall"
-  Delete "$INSTDIR\azlang.exe"
-  Delete "$INSTDIR\Uninstall.exe"
-  RMDir "$INSTDIR"
+    Delete "$INSTDIR\azlang.exe"
+    Delete "$INSTDIR\Uninstall.exe"
+    RMDir "$INSTDIR"
 SectionEnd

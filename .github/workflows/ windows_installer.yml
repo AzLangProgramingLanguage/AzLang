@@ -24,10 +24,9 @@ jobs:
         run: |
           copy target\x86_64-pc-windows-msvc\release\AzLang.exe installer\azlang.exe
 
-      - name: Check MSVC runtime dependency
-        shell: pwsh
+      - name: Download VC Redist
         run: |
-          dumpbin /dependents installer\azlang.exe
+          Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile "installer/vc_redist.x64.exe"
 
       - name: Setup NSIS
         uses: repolevedavaj/install-nsis@v1.1.0
