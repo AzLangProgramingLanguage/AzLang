@@ -26,8 +26,10 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
-!insertmacro MUI_LANGUAGE "Turkish"
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
 
+!insertmacro MUI_LANGUAGE "Turkish"
 
 Section "Quraşdır"
     SetOutPath "$INSTDIR"
@@ -49,9 +51,10 @@ Section "Quraşdır"
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
-Section "Sil"
+Section "un.Sil"
     Delete "$INSTDIR\${APP_EXE}"
     Delete "$INSTDIR\Uninstall.exe"
+    Delete "$SMPROGRAMS\AzLang.lnk"
     RMDir "$INSTDIR"
 
     DetailPrint "AzLang sistemdən silindi."
