@@ -14,7 +14,7 @@ pub fn transpile_decl<'a>(
     let value_code: String = transpile_expr(value, ctx);
 
     let decl_code = if is_mutable {
-        format!("var {} = {}", name, value_code)
+        format!("var {}: {} = {}", name, type_str, value_code)
     } else {
         format!("const {}: {} = {}", name, type_str, value_code)
     };

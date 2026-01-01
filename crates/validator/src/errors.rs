@@ -1,5 +1,5 @@
 use core::fmt;
-use std::fmt::Display;
+use std::fmt::{Display, write};
 
 #[derive(Debug)]
 pub enum ValidatorError {
@@ -46,6 +46,7 @@ pub enum ValidatorError {
     NestedFunctionDefinition,
     NeverChangedMuttableVariable(String),
     FunctionAlreadyDefined(String),
+    FunctionReturnTypeErr(String),
 }
 
 impl Display for ValidatorError {
@@ -149,6 +150,12 @@ impl Display for ValidatorError {
             }
             ValidatorError::FunctionAlreadyDefined(string) => {
                 write!(f, "Funksiya '{string}' onsuzda var.")
+            }
+            ValidatorError::FunctionReturnTypeErr(string) => {
+                write!(
+                    f,
+                    "Funskiyada səhv dəyər qaytarır '{string}' tipində olmalıydı  "
+                )
             }
         }
     }

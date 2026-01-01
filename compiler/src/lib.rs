@@ -8,7 +8,7 @@ use validator::validate::validate_expr;
 mod builder;
 mod errors;
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
-    let sdk = file_system::read_file("sdk/data_structures.az")?;
+    let sdk = file_system::read_file(path)?;
     let mut parser = Parser::new(sdk);
     let mut parsed_program = parser.parse().map_err(|err| CompilerError::Parser(err))?;
 

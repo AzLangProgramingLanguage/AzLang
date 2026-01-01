@@ -1,0 +1,5 @@
+sabit natural a =  "Salam"
+
+funksiya add(a: ədəd, b: ədəd): yazı
+    qaytar a + b
+Çap(add(1,2))

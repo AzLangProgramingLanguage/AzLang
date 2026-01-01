@@ -94,6 +94,7 @@ pub fn get_type<'a>(
                 }
                 "*" | "/" | "%" | "+" | "-" => match (left_type, right_type) {
                     (Type::Integer, Type::Integer) => Type::Integer,
+                    (Type::Natural, Type::Natural) => Type::Natural,
                     (Type::Float, Type::Float) => Type::Float,
                     (Type::Integer, Type::Float) => Type::Float,
                     (Type::Float, Type::Integer) => Type::Float,

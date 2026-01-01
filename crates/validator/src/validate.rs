@@ -1,4 +1,9 @@
-use std::{borrow::Cow, collections::{HashMap, hash_map::Entry}, ops::Deref, rc::Rc};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, hash_map::Entry},
+    ops::Deref,
+    rc::Rc,
+};
 
 use logging::validator_log;
 use parser::{
@@ -630,12 +635,22 @@ pub fn validate_expr<'a>(
         Expr::BinaryOp {
             left,
             right,
-            op: _,
+            op,
             return_type,
         } => {
             validate_expr(left, ctx)?;
             validate_expr(right, ctx)?;
-            *return_type = get_type(left, ctx, None);
+            let typ = get_type(
+                &Expr::BinaryOp {
+                    left: Box::new(*left.clone()),
+                    right: Box::new(*right.clone()),
+                    op,
+                    return_type: Type::Any,
+                },
+                ctx,
+                None,
+            );
+            *return_type = typ;
         }
         Expr::FunctionDef {
             name,
@@ -648,7 +663,7 @@ pub fn validate_expr<'a>(
                 return Err(ValidatorError::NestedFunctionDefinition);
             }
             ctx.current_function = Some(name.to_string());
-          
+
             let function = match ctx.functions.entry(Cow::Borrowed(name)) {
                 Entry::Occupied(_) => {
                     return Err(ValidatorError::FunctionAlreadyDefined(name.to_string()));
@@ -672,10 +687,22 @@ pub fn validate_expr<'a>(
 
                 function.variables.insert(param.name.clone(), symbol);
             }
-             function.parameters = params.clone();
- 
+            function.parameters = params.clone();
+
             for expr in body.iter_mut() {
-                validate_expr(expr, ctx)?;
+                match expr {
+                    Expr::Return(value) => {
+                        validate_expr(value, ctx)?;
+                        if let Some(typ) = return_type {
+                            if typ.clone() != get_type(value, ctx, None) {
+                                return Err(ValidatorError::FunctionReturnTypeErr(typ.to_string()));
+                            }
+                        }
+                    }
+                    _ => {
+                        validate_expr(expr, ctx)?;
+                    }
+                }
             }
             ctx.current_function = None;
             ctx.current_return = None;

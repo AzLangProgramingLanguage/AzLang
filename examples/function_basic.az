@@ -1,0 +1,3 @@
+funksiya add(a: ədəd, b: ədəd): ədəd
+    qaytar a + b
+Çap(add(1,2))
