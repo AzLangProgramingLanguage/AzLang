@@ -11,16 +11,7 @@ RequestExecutionLevel admin
 !include "MUI2.nsh"
 !include "WinMessages.nsh"
 
-!define MUI_WELCOMEPAGE_TITLE "AzLang-a Xoş Gəlmisiniz!"
-!define MUI_WELCOMEPAGE_TEXT "Davam edin və birlikdə AzLang proqramlaşdırma dilini quraşdıraq.$\r$\n$\r$\nDavam etmək üçün 'İrəli' düyməsini sıxın."
-
-!define MUI_DIRECTORYPAGE_TEXT_TOP "Quraşdırma qovluğunu seçin:"
-
-!define MUI_FINISHPAGE_TITLE "Quraşdırma Tamamlandı"
-!define MUI_FINISHPAGE_TEXT "AzLang uğurla quraşdırıldı. Artıq terminalda 'azcli' komandasını istifadə edə bilərsiniz."
-!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_EXE}"
-!define MUI_FINISHPAGE_RUN_TEXT "AzLang CLI-nı işə sal"
-
+; --- Default MUI pages (English) ---
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -29,15 +20,15 @@ RequestExecutionLevel admin
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
-!insertmacro MUI_LANGUAGE "Turkish"
+!insertmacro MUI_LANGUAGE "English"
 
-Section "Quraşdır"
+Section "Install"
     SetOutPath "$INSTDIR"
     File "${APP_EXE}"
 
     CreateShortcut "$SMPROGRAMS\AzLang.lnk" "$INSTDIR\${APP_EXE}"
 
-    DetailPrint "$INSTDIR yolu sistem PATH-ə əlavə edilir..."
+    ; Add to PATH if not exists
     ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
 
     Push "$INSTDIR"
@@ -51,13 +42,11 @@ Section "Quraşdır"
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
-Section "un.Sil"
+Section "Uninstall"
     Delete "$INSTDIR\${APP_EXE}"
     Delete "$INSTDIR\Uninstall.exe"
     Delete "$SMPROGRAMS\AzLang.lnk"
     RMDir "$INSTDIR"
-
-    DetailPrint "AzLang sistemdən silindi."
 SectionEnd
 
 Function StrStr
