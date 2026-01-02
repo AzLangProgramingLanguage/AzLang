@@ -338,16 +338,13 @@ pub fn validate_expr<'a>(
             }
             return Ok(());
         }
-        Expr::If {
-            condition,
-            then_branch,
-            else_branch,
-        } => {
+        Expr::Condition { main, elif, other } => {
             validator_log("Şərt yoxlanılır");
+            //TODO: TOoo Bad Code
 
-            validate_expr(condition, ctx)?;
+            validate_expr(&mut *main.condition, ctx)?;
 
-            let cond_type = match get_type(condition, ctx, None) {
+            let cond_type = match get_type(&mut *main.condition, ctx, None) {
                 Type::Any => return Err(ValidatorError::IfConditionTypeUnknown),
                 other => other,
             };
@@ -357,41 +354,27 @@ pub fn validate_expr<'a>(
                 ));
             }
 
-            for expr in then_branch {
+            for expr in main.body.iter_mut() {
                 validate_expr(expr, ctx)?;
             }
-
-            for expr in else_branch {
-                validate_expr(expr, ctx)?;
+            for condition in elif {
+                let cond_type = match get_type(&mut *main.condition, ctx, None) {
+                    Type::Any => return Err(ValidatorError::IfConditionTypeUnknown),
+                    other => other,
+                };
+                if cond_type != Type::Bool {
+                    return Err(ValidatorError::IfConditionTypeMismatch(
+                        cond_type.to_string(),
+                    ));
+                }
+                for expr in condition.body.iter_mut() {
+                    validate_expr(expr, ctx)?;
+                }
             }
-        }
-        Expr::ElseIf {
-            condition,
-            then_branch,
-        } => {
-            validator_log("Şərt yoxlanılır");
-
-            validate_expr(condition, ctx)?;
-
-            let cond_type = match get_type(condition, ctx, None) {
-                Type::Any => return Err(ValidatorError::IfConditionTypeUnknown),
-                other => other,
-            };
-            if cond_type != Type::Bool {
-                return Err(ValidatorError::IfConditionTypeMismatch(
-                    cond_type.to_string(),
-                ));
-            }
-
-            for expr in then_branch {
-                validate_expr(expr, ctx)?;
-            }
-        }
-        Expr::Else { then_branch } => {
-            validator_log("Şərt yoxlanılır");
-
-            for expr in then_branch {
-                validate_expr(expr, ctx)?;
+            if let Some(condition) = other {
+                for expr in condition.body.iter_mut() {
+                    validate_expr(expr, ctx)?;
+                }
             }
         }
 

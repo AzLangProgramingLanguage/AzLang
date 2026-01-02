@@ -17,6 +17,16 @@ pub struct MethodType<'a> {
     pub body: Vec<Expr<'a>>,
     pub return_type: Option<Type<'a>>,
 }
+#[derive(Debug, Clone)]
+pub struct IF<'a> {
+    pub condition: Box<Expr<'a>>,
+    pub body: Vec<Expr<'a>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Else<'a> {
+    pub body: Vec<Expr<'a>>,
+}
 
 #[derive(Debug, Clone)]
 pub enum Expr<'a> {
@@ -60,17 +70,10 @@ pub enum Expr<'a> {
         symbol: Option<Symbol<'a>>,
     },
     TemplateString(Vec<TemplateChunk<'a>>),
-    If {
-        condition: Box<Expr<'a>>,
-        then_branch: Vec<Expr<'a>>,
-        else_branch: Vec<Expr<'a>>,
-    },
-    ElseIf {
-        condition: Box<Expr<'a>>,
-        then_branch: Vec<Expr<'a>>,
-    },
-    Else {
-        then_branch: Vec<Expr<'a>>,
+    Condition {
+        main: IF<'a>,
+        elif: Vec<IF<'a>>,
+        other: Option<Else<'a>>,
     },
     BuiltInCall {
         function: BuiltInFunction,

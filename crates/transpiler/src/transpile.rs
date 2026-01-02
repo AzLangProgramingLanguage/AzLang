@@ -1,4 +1,4 @@
-use parser::{ast::Expr, shared_ast::BuiltInFunction};
+use parser::{ast::Expr, condition, shared_ast::BuiltInFunction};
 
 use crate::{
     TranspileContext,
@@ -10,7 +10,7 @@ use crate::{
     },
     declaration::variable_decl::transpile_decl,
     function_call::transpile_function_call,
-    helper::{get_expr_type, is_semicolon_needed, map_type},
+    helper::{get_expr_type, is_semicolon_needed, map_type, transpile_body},
 };
 
 pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
@@ -42,42 +42,26 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
             is_mutable,
             value,
         } => transpile_decl(&name.to_string(), typ, is_mutable, *value, ctx),
-        Expr::If {
-            condition,
-            then_branch,
-            else_branch,
-        } => {
-            let str_condition = transpile_expr(*condition, ctx);
-            let mut str_body = String::new();
-            for expr in then_branch {
-                if is_semicolon_needed(&expr) {
-                    str_body.push_str(&transpile_expr(expr, ctx));
-                    str_body.push(';');
-                } else {
-                    str_body.push_str(&transpile_expr(expr, ctx));
-                }
+        Expr::Condition { main, elif, other } => {
+            let mut condition_str = format!(
+                "if ({}) {{ {} }}",
+                transpile_expr(*main.condition, ctx),
+                transpile_body(main.body, ctx)
+            );
+
+            for branch in elif {
+                condition_str.push_str(&format!(
+                    " else if ({}) {{ {} }}",
+                    transpile_expr(*branch.condition, ctx),
+                    transpile_body(branch.body, ctx)
+                ));
             }
-            if else_branch.is_empty() {
-                format!("if({str_condition}) {{ {str_body} }}")
-            } else {
-                let mut str_else_body = String::new();
-                for expr in else_branch {
-                    str_else_body.push_str(&transpile_expr(expr, ctx));
-                }
-                format!("if({str_condition}) {{ {str_body} }}  else {{ {str_else_body} }}")
+
+            if let Some(other) = other {
+                condition_str.push_str(&format!(" else {{ {} }}", transpile_body(other.body, ctx)));
             }
-        }
-        Expr::Else { then_branch } => {
-            let mut str_body = String::new();
-            for expr in then_branch {
-                if is_semicolon_needed(&expr) {
-                    str_body.push_str(&transpile_expr(expr, ctx));
-                    str_body.push(';');
-                } else {
-                    str_body.push_str(&transpile_expr(expr, ctx));
-                }
-            }
-            format!("{str_body} ")
+
+            condition_str
         }
 
         Expr::BuiltInCall {

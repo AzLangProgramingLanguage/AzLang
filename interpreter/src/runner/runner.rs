@@ -1,7 +1,7 @@
 use super::Runner;
 use crate::runner::{
     FunctionDef, Variable, binary_op::binary_op_runner, builtin::builthin_call_runner,
-    function_call::function_call,
+    function_call::function_call, helpers::run_body,
 };
 use std::rc::Rc;
 
@@ -62,34 +62,26 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
 
             Expr::Void
         }
-        Expr::If {
-            condition,
-            then_branch,
-            else_branch,
-        } => {
-            let runned_condition = runner_interpretator(ctx, *condition);
-            match runned_condition {
-                Expr::Bool(b) => {
-                    if b {
-                        for expr in then_branch {
-                            runner_interpretator(ctx, expr);
-                        }
-                    } else {
-                        for expr in else_branch {
-                            runner_interpretator(ctx, expr);
-                        }
-                    }
+        Expr::Condition { main, elif, other } => {
+            if matches!(runner_interpretator(ctx, *main.condition), Expr::Bool(true)) {
+                run_body(ctx, main.body);
+                return Expr::Void;
+            }
+            for branch in elif {
+                if matches!(
+                    runner_interpretator(ctx, *branch.condition),
+                    Expr::Bool(true)
+                ) {
+                    run_body(ctx, branch.body);
+                    return Expr::Void;
                 }
-                _ => {}
+            }
+            if let Some(other) = other {
+                run_body(ctx, other.body);
             }
             Expr::Void
         }
-        Expr::Else { then_branch } => {
-            for expr in then_branch {
-                runner_interpretator(ctx, expr);
-            }
-            Expr::Void
-        }
+
         Expr::BinaryOp {
             left,
             right,

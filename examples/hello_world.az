@@ -1,1 +1,1 @@
-Çap("Salam dünya")
+Çap(`Salam ${1312} `)

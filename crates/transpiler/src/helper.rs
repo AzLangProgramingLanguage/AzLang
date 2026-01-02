@@ -1,5 +1,7 @@
 use parser::{ast::Expr, shared_ast::Type};
 
+use crate::{TranspileContext, transpile::transpile_expr};
+
 pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     match expr {
         Expr::String(_) => Type::String,
@@ -209,7 +211,7 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> &'static str {
         Type::ZigConstArray => "[]const usize",
         Type::Bool => "bool",
         Type::Array(inner) => {
-           /*  let inner_str = map_type(inner, is_const);
+            /*  let inner_str = map_type(inner, is_const);
             inner_str */
             ""
         }
@@ -244,4 +246,17 @@ pub fn is_primite_value(expr: &Expr) -> bool {
             | Expr::String(_)
             | Expr::UnaryOp { .. }
     )
+}
+
+pub fn transpile_body<'a>(body: Vec<Expr<'a>>, ctx: &mut TranspileContext<'a>) -> String {
+    body.into_iter()
+        .map(|expr| {
+            let mut s = String::new();
+            if is_semicolon_needed(&expr) {
+                s.push_str(&transpile_expr(expr, ctx));
+                s.push(';');
+            }
+            s
+        })
+        .collect()
 }

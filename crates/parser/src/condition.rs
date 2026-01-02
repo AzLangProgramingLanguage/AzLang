@@ -1,4 +1,4 @@
-use crate::ast::Expr;
+use crate::ast::{Else, Expr, IF};
 use crate::{binary_op::parse_binary_op_expr, errors::ParserError, expressions::parse_expression};
 use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
@@ -41,7 +41,8 @@ where
     let condition = parse_binary_op_expr(tokens)?;
     let then_branch = parse_block(tokens)?;
 
-    let mut else_branch = Vec::new();
+    let mut else_if_branch = Vec::new();
+    let mut else_branch = None;
 
     loop {
         match tokens.peek() {
@@ -49,46 +50,26 @@ where
                 tokens.next();
                 let cond = parse_binary_op_expr(tokens)?;
                 let then_b = parse_block(tokens)?;
-                else_branch.push(Expr::ElseIf {
+                else_if_branch.push(IF {
                     condition: Box::new(cond),
-                    then_branch: then_b,
+                    body: then_b,
                 });
             }
             Some(Token::Else) => {
                 tokens.next();
                 let then_b = parse_block(tokens)?;
-                else_branch.push(Expr::Else {
-                    then_branch: then_b,
-                });
+                else_branch = Some(Else { body: then_b });
             }
             _ => break,
         }
     }
 
-    Ok(Expr::If {
-        condition: Box::new(condition),
-        then_branch,
-        else_branch,
+    Ok(Expr::Condition {
+        main: IF {
+            condition: Box::new(condition),
+            body: then_branch,
+        },
+        elif: else_if_branch,
+        other: else_branch,
     })
-}
-
-pub fn parse_else_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    let condition = parse_binary_op_expr(tokens)?;
-    let then_branch = parse_block(tokens)?;
-    Ok(Expr::ElseIf {
-        condition: Box::new(condition),
-        then_branch,
-    })
-}
-
-pub fn parse_else_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    tokens.next();
-    let then_branch = parse_block(tokens)?;
-    Ok(Expr::Else { then_branch })
 }

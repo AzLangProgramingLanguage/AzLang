@@ -3,18 +3,10 @@ use peekmore::PeekMoreIterator;
 use tokenizer::tokens::Token;
 
 use crate::{
-    ast::Expr,
-    binary_op::parse_binary_op_expr,
-    builtin::parse_builtin,
-    condition::{parse_else_expr, parse_else_if_expr, parse_if_expr},
-    r#enum::parse_enum_decl,
-    function::parse_function_def,
-    identifier::parse_identifier,
-    r#loop::parse_loop,
-    r#match::parse_match,
-    structs::parse_struct_def,
-    template::parse_template_string_expr,
-    union::parse_union_type,
+    ast::Expr, binary_op::parse_binary_op_expr, builtin::parse_builtin, condition::parse_if_expr,
+    r#enum::parse_enum_decl, function::parse_function_def, identifier::parse_identifier,
+    r#loop::parse_loop, r#match::parse_match, structs::parse_struct_def,
+    template::parse_template_string_expr, union::parse_union_type,
 };
 
 pub fn parse_expression_block<'a, I>(
@@ -98,8 +90,6 @@ where
         Token::Identifier(s) => parse_identifier(tokens, s),
         Token::Type => parse_union_type(tokens),
         Token::Conditional => parse_if_expr(tokens),
-        Token::ElseIf => parse_else_if_expr(tokens),
-        Token::Else => parse_else_expr(tokens),
 
         Token::Print
         | Token::Input

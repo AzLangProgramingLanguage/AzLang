@@ -1,7 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 mod builtin;
-// mod helpers;
 mod function_call;
+mod helpers;
 mod runner;
 use parser::{
     ast::{Expr, Parameter, Program},

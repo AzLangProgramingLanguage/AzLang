@@ -22,7 +22,9 @@ pub fn transpile_function_def<'a>(
     let params_str: String = {
         for param in params {
             new_str.push_str(transpile_param(&param).as_ref());
+            new_str.push(',');
         }
+        new_str.pop(); 
         new_str
     };
     let ret_type = return_type.as_ref().unwrap_or(&Type::Void);
