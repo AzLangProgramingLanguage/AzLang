@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use parser::{ast::Expr, shared_ast::Type};
 
-use crate::{ValidatorContext, validate::validate_expr};
+use crate::{ValidatorContext, errors::ValidatorError, validate::validate_expr};
 
 pub fn get_type<'a>(
     value: &Expr<'a>,
@@ -105,5 +105,28 @@ pub fn get_type<'a>(
             last_type
         }
         _ => Type::Any,
+    }
+}
+
+pub fn validate_body<'a>(
+    body: &mut Vec<Expr<'a>>,
+    ctx: &mut ValidatorContext<'a>,
+) -> Result<(), ValidatorError> {
+    for expr in body {
+        validate_expr(expr, ctx)?;
+    }
+    Ok(())
+}
+
+pub fn validate_bool_condition<'a>(
+    condition: &mut Expr<'a>,
+    ctx: &mut ValidatorContext<'a>,
+) -> Result<(), ValidatorError> {
+    validate_expr(condition, ctx)?;
+
+    match get_type(condition, ctx, None) {
+        Type::Any => Err(ValidatorError::IfConditionTypeUnknown),
+        Type::Bool => Ok(()),
+        other => Err(ValidatorError::IfConditionTypeMismatch(other.to_string())),
     }
 }

@@ -89,7 +89,6 @@ impl<'a> ValidatorContext<'a> {
         func: FunctionInfo<'a>,
     ) -> Option<FunctionInfo<'a>> {
         self.functions.insert(name, func)
-        
     }
     pub fn declare_variable(&mut self, name: String, variable: Symbol<'a>) {
         if let Some(function) = &self.current_function {
@@ -108,7 +107,6 @@ impl<'a> ValidatorContext<'a> {
         }
         for variable in &self.global_variables {
             if variable.1.is_mutable && !variable.1.is_changed {
-                println!("{variable:?}");
                 return Err(ValidatorError::NeverChangedMuttableVariable(
                     variable.0.to_string(),
                 ));

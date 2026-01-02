@@ -5,10 +5,11 @@ use parser::{
 
 use crate::runner::{
     Runner,
-    builtin::{print::print_interpreter, sum::sum},
+    builtin::{input::input, print::print_interpreter, sum::sum},
     runner::runner_interpretator,
 };
 
+mod input;
 mod print;
 mod sum;
 
@@ -32,6 +33,13 @@ pub fn builthin_call_runner<'a>(
                 print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx)
             );
             std::process::exit(1);
+        }
+        BuiltInFunction::Input => {
+            println!(
+                "{}",
+                print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx)
+            );
+            input()
         }
 
         BuiltInFunction::Sum => sum(args, ctx),

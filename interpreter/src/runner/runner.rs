@@ -26,6 +26,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             );
             Expr::Void
         }
+        
         Expr::FunctionDef {
             name,
             params,

@@ -11,7 +11,11 @@ use parser::{
     shared_ast::{BuiltInFunction, Type},
 };
 
-use crate::{FunctionInfo, MethodInfo, ValidatorContext, errors::ValidatorError, helper::get_type};
+use crate::{
+    FunctionInfo, MethodInfo, ValidatorContext,
+    errors::ValidatorError,
+    helper::{get_type, validate_body, validate_bool_condition},
+};
 pub fn validate_expr<'a>(
     expr: &mut Expr<'a>,
     ctx: &mut ValidatorContext<'a>,
@@ -338,44 +342,23 @@ pub fn validate_expr<'a>(
             }
             return Ok(());
         }
+
         Expr::Condition { main, elif, other } => {
             validator_log("Şərt yoxlanılır");
-            //TODO: TOoo Bad Code
 
-            validate_expr(&mut *main.condition, ctx)?;
+            validate_bool_condition(&mut *main.condition, ctx)?;
+            validate_body(&mut main.body, ctx)?;
 
-            let cond_type = match get_type(&mut *main.condition, ctx, None) {
-                Type::Any => return Err(ValidatorError::IfConditionTypeUnknown),
-                other => other,
-            };
-            if cond_type != Type::Bool {
-                return Err(ValidatorError::IfConditionTypeMismatch(
-                    cond_type.to_string(),
-                ));
+            for branch in elif {
+                validate_bool_condition(&mut *branch.condition, ctx)?;
+                validate_body(&mut branch.body, ctx)?;
             }
 
-            for expr in main.body.iter_mut() {
-                validate_expr(expr, ctx)?;
+            if let Some(branch) = other {
+                validate_body(&mut branch.body, ctx)?;
             }
-            for condition in elif {
-                let cond_type = match get_type(&mut *main.condition, ctx, None) {
-                    Type::Any => return Err(ValidatorError::IfConditionTypeUnknown),
-                    other => other,
-                };
-                if cond_type != Type::Bool {
-                    return Err(ValidatorError::IfConditionTypeMismatch(
-                        cond_type.to_string(),
-                    ));
-                }
-                for expr in condition.body.iter_mut() {
-                    validate_expr(expr, ctx)?;
-                }
-            }
-            if let Some(condition) = other {
-                for expr in condition.body.iter_mut() {
-                    validate_expr(expr, ctx)?;
-                }
-            }
+
+            return Ok(());
         }
 
         Expr::Loop {
