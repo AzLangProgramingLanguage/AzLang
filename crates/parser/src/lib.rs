@@ -35,7 +35,7 @@ impl Parser {
         let tokens = tokenizer::Lexer::new(&string).tokenize();
         Self { tokens }
     }
-    pub fn parse(&mut self) -> Result<Program, errors::ParserError> {
+    pub fn parse(&mut self) -> Result<Program<'_>, errors::ParserError> {
         let ast = parse_expression_block(&mut self.tokens.iter().peekmore())?;
         Ok(Program {
             function_defs: Vec::new(),

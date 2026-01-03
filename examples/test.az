@@ -1,13 +1,1 @@
-
-funksiya salam(): ədəd
-    əgər yanlış
-        qaytar 1
-    yoxsa yanlış
-        qaytar 3
-    yoxsa doğru
-        qaytar 34
-    əks
-        qaytar 2
-
-sabit a = salam()
-Çap(a)
+Çap(12.4)

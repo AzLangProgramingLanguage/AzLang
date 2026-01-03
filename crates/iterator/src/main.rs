@@ -1,56 +1,63 @@
+use std::collections::VecDeque;
+
+use file_system;
+use tokenizer;
+#[derive(Debug)]
 struct SourceSpan {
     start: u32,
     end: u32,
     line: u32,
 }
+#[derive(Debug)]
 struct SpannedToken {
     token: String,
     span: SourceSpan,
 }
 struct Tokens {
-    state: usize,
-    source: Vec<SpannedToken>,
+    source: VecDeque<SpannedToken>,
 }
 
 impl Iterator for Tokens {
     type Item = SpannedToken;
-    fn next(&mut self) -> Option<SpannedToken> {
-        if self.state < self.source.len() {
-            return Some(self.source.pop()?);
-        } else {
-            return None;
-        }
+    fn next(&mut self) -> Option<Self::Item> {
+        self.source.pop_front()
+    }
+}
+impl Tokens {
+    fn peek(&self) -> Option<&SpannedToken> {
+        self.source.front()
+    }
+    fn peek_nth(&self, index: usize) -> Option<&SpannedToken> {
+        self.source.get(index)
     }
 }
 
 fn main() {
-    println!("Hello, world! , {}", 1);
-}
-#[warn(unused_doc_comments)]
-fn test() {
-    /*
-     *
-     *   Necə varsa elədə runtimeye gedir.  Emeliyyat sayı çox
-     *   Runtimeda necə yazılıbsa eləcədə görünür.
-     * */
-    let a = "Salam";
-    if a == "Salam" {
-        println!("Ok")
-    } else if a == "Aleykume" {
-        println!("No")
-    } else if a == "Super" {
-        println!("No")
-    }
+    let tokens = VecDeque::from([
+        SpannedToken {
+            token: "Salam".to_string(),
+            span: SourceSpan {
+                start: 0,
+                end: 0,
+                line: 0,
+            },
+        },
+        SpannedToken {
+            token: "Salam1".to_string(),
+            span: SourceSpan {
+                start: 0,
+                end: 0,
+                line: 0,
+            },
+        },
+    ]);
+    let mut tokens = Tokens { source: tokens };
+    println!("{:?}", tokens.peek());
+    tokens.next();
+    println!("{:?}", tokens.peek());
+    let sdk = file_system::read_file("test.az").expect("Error var");
+    let mut tokeniz = tokenizer::new_lexer::NewLexer::new(&sdk);
+    let real_tokens = tokeniz.tokenize();
 
-    /*
-     *
-     *  Runtimeda görünəm. a="Salam"; println("Ok");
-     *
-     * */
-    match a {
-        "Salam" => println!("Ok"),
-        "Aleykume" => println!("No"),
-        "Super" => println!("No"),
-        _ => println!("No"),
-    }
+    println!("{real_tokens:?}");
 }

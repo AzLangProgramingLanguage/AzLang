@@ -1,5 +1,6 @@
 use logging::error;
 use peekmore::{PeekMore, PeekMoreIterator};
+pub mod new_lexer;
 pub mod token_display;
 pub mod tokens;
 mod words;
@@ -44,9 +45,7 @@ impl<'a> Lexer<'a> {
             }
             tokens.push(token);
         }
-        if !tokens.contains(&Token::Eof) {
-            tokens.push(Token::Eof);
-        }
+
         tokens
     }
 
@@ -251,7 +250,7 @@ impl<'a> Lexer<'a> {
                 }
                 '$' => {
                     if let Some(&'{') = self.chars.peek() {
-                        self.chars.next(); // skip {
+                        self.chars.next();
                         if !current.is_empty() {
                             let takes = mem::take(&mut current);
                             tokens.push(Token::StringLiteral(takes));
@@ -290,17 +289,9 @@ impl<'a> Lexer<'a> {
                     self.chars.next();
                 }
                 '.' if !has_dot => {
-                    if let Some(&next_ch) = self.chars.peek_nth(1) {
-                        if next_ch.is_ascii_digit() {
-                            has_dot = true;
-                            num_str.push(ch);
-                            self.chars.next();
-                        } else {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
+                    has_dot = true;
+                    num_str.push(ch);
+                    self.chars.next();
                 }
                 _ => break,
             }
@@ -373,12 +364,7 @@ impl<'a> Lexer<'a> {
 
         let mut tokens = Vec::new();
         let mut inner_lexer = Lexer::new(&expr);
-        tokens.extend(
-            inner_lexer
-                .tokenize()
-                .into_iter()
-                .filter(|t| *t != Token::Eof),
-        );
+        tokens.extend(inner_lexer.tokenize());
 
         tokens
     }

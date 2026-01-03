@@ -4,3 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+file_system = { path = "../file_system" }
+tokenizer = { path = "../tokenizer" }
