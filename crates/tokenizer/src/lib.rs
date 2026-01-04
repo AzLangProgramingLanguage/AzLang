@@ -1,5 +1,6 @@
 use logging::error;
 use peekmore::{PeekMore, PeekMoreIterator};
+pub mod errors;
 pub mod new_lexer;
 pub mod token_display;
 pub mod tokens;

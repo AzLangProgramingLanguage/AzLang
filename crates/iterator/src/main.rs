@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use file_system;
+use logging::error;
 use tokenizer;
 #[derive(Debug)]
 struct SourceSpan {
@@ -58,6 +59,8 @@ fn main() {
     let sdk = file_system::read_file("test.az").expect("Error var");
     let mut tokeniz = tokenizer::new_lexer::NewLexer::new(&sdk);
     let real_tokens = tokeniz.tokenize();
-
-    println!("{real_tokens:?}");
+    match real_tokens {
+        Ok(tokens) => println!("{:?}", tokens),
+        Err(e) => error(&e.to_string()),
+    }
 }
