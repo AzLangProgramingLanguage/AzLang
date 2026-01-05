@@ -54,6 +54,7 @@ pub enum Token {
     ElseIf,
     StringLiteral(String),
     Operator(String),
+    Op(char),
     LParen,
     Dot,
     RParen,

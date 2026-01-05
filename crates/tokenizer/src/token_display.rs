@@ -9,6 +9,7 @@ impl fmt::Display for Token {
             Token::Float(num) => write!(f, "{}", num),
             Token::StringLiteral(string) => write!(f, "{}", string),
             Token::Operator(op) => write!(f, "{}", op),
+            Token::Op(op) => write!(f, "{}", op),
             Token::LParen => write!(f, "("),
             Token::RParen => write!(f, ")"),
             Token::LBrace => write!(f, "{{"),
