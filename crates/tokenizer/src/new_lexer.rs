@@ -7,11 +7,11 @@ pub struct NewSourceSpan {
     line: u32,
     start: u32,
 }
+
 pub struct NewLexer<'a> {
     chars: Peekable<Chars<'a>>,
     is_line_start: bool,
     indent_stack: Vec<usize>,
-    pending_dedents: usize,
     pending_intend: usize,
     current_indent: usize,
 }
@@ -21,13 +21,11 @@ impl<'a> NewLexer<'a> {
             chars: input.chars().peekable(),
             is_line_start: false,
             indent_stack: vec![],
-            pending_dedents: 0,
             pending_intend: 0,
             current_indent: 0,
         }
     }
     fn skip_whitespace(&mut self) {
-        println!("is white space isLineStart: {} peek: {:?}", self.is_line_start, self.chars.peek());
         while let Some(ch) = self.chars.peek() {
             if *ch == ' ' && self.is_line_start {
                 self.current_indent += 1;
@@ -36,7 +34,7 @@ impl<'a> NewLexer<'a> {
                 self.chars.next();
             } else {
                 break;
-            } 
+            }
         }
     }
     pub fn tokenize(&mut self) -> Result<Vec<Token>, LexerError> {
@@ -86,7 +84,7 @@ impl<'a> NewLexer<'a> {
                 '0'..='9' => {
                     buf.push(*ch);
                     self.chars.next();
-                },
+                }
 
                 'A'..='Z' | 'a'..='z' => {
                     return Err(LexerError::NumberAndAlpha);
@@ -101,14 +99,13 @@ impl<'a> NewLexer<'a> {
                 _ => break,
             }
         }
-        
 
         if has_dot {
             Ok(Token::Float(
                 buf.parse::<f64>().map_err(LexerError::FloatUnKnow)?,
             ))
         } else {
-            if buf.starts_with('0') {
+            if buf.starts_with('0') && buf.len()>1 {
                 return Err(LexerError::CannotStartZeroNumber);
             }
             Ok(Token::Number(
@@ -116,62 +113,69 @@ impl<'a> NewLexer<'a> {
             ))
         }
     }
-
+    fn consumer(&mut self,token: Token) -> Result<Token,LexerError> {
+        self.chars.next();
+       Ok(token)
+    }
+   
     fn next_token(&mut self) -> Result<Token, LexerError> {
         let char = self.chars.peek();
         if let Some('\n') = char {
             self.is_line_start = true;
+            self.current_indent = 0;
             self.chars.next();
             return Ok(Token::Newline);
         }
 
         self.skip_whitespace();
-        if self.current_indent > 0 && self.current_indent % 4 ==0 && self.is_line_start {
+        if let Some('\n') = self.chars.peek() {
+            self.is_line_start = true;
+            self.current_indent = 0;
+            self.chars.next();
+            return Ok(Token::Newline);
+        }
+        if self.current_indent > *self.indent_stack.last().unwrap_or(&0)
+            && self.current_indent.is_multiple_of(4)
+            && self.is_line_start
+        {
             self.pending_intend += 1;
             self.indent_stack.push(self.current_indent);
             self.current_indent = 0;
             self.is_line_start = false;
             return Ok(Token::Indent);
         }
-     //   println!("Pending {} is empty? : {} {} {:?}",self.pending_intend, self.indent_stack.is_empty(), self.is_line_start, self.indent_stack.last());
-        if self.pending_dedents>0 && !self.indent_stack.is_empty() && self.is_line_start && self.current_indent < *self.indent_stack.last().unwrap() {
+        if self.pending_intend > 0
+            && self.is_line_start
+            && self.current_indent < self.indent_stack.last().unwrap_or(&1).clone()
+        {
             self.indent_stack.pop();
-            self.pending_dedents -= 1;
-            return Ok(Token::Dedent)
+            self.pending_intend -= 1;
+            return Ok(Token::Dedent);
         }
-        
-     let char = self.chars.peek();
-     let token = match char {
-            Some('(') => {
-                self.chars.next();
-                Ok(Token::LParen)
-            },
-            Some(')') => {
-                self.chars.next();
-                Ok(Token::RParen)
-            },
-            Some(':') => Ok(Token::Colon),
-            Some(',') => Ok(Token::Comma),
-            Some('{') => Ok(Token::LBrace),
-            Some('.') => Ok(Token::Dot),
-            Some('}') => Ok(Token::RBrace),
-            Some('_') => Ok(Token::Underscore),
-            Some('[') => Ok(Token::ListStart),
-            Some(']') => Ok(Token::ListEnd),
-            Some('=') => {
-                self.chars.next();
-                Ok(Token::Op('='))
-            },
-            Some('/') => Ok(Token::Op('/')),
-            Some('+') => Ok(Token::Op('+')),
-            Some('-') => Ok(Token::Op('-')),
-            Some('*') => Ok(Token::Op('*')),
+
+        let char = self.chars.peek();
+        let token = match char {
+            Some('(') => self.consumer(Token::LParen),
+            Some(')') => self.consumer(Token::RParen),
+            Some(':') => self.consumer(Token::Colon),
+            Some(',') => self.consumer(Token::Comma),
+            Some('{') => self.consumer(Token::LBrace),
+            Some('.') => self.consumer(Token::Dot),
+            Some('}') => self.consumer(Token::RBrace),
+            Some('_') => self.consumer(Token::Underscore),
+            Some('[') => self.consumer(Token::ListStart),
+            Some(']') => self.consumer(Token::ListEnd),
+            Some('=') => self.consumer(Token::Op('=')),
+            Some('/') => self.consumer(Token::Op('/')),
+            Some('+') => self.consumer(Token::Op('+')),
+            Some('-') => self.consumer(Token::Op('-')),
+            Some('*') => self.consumer(Token::Op('*')),
             Some('0'..='9') => self.read_number(),
             Some('\'') | Some('"') => self.read_string(),
             Some(_) => self.read_word(),
             None => Ok(Token::Eof),
         };
-        self.is_line_start =false;
+        self.is_line_start = false;
         token
     }
 }
