@@ -2,19 +2,16 @@ use crate::{
     errors::ParserError,
     shared_ast::{BuiltInFunction, Type},
 };
-use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
+use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
 use crate::{ast::Expr, expressions::parse_expression};
 
-pub fn parse_builtin<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
-    token: &Token,
+pub fn parse_builtin<'a>(
+    tokens: &mut Tokens,
+    token: &SpannedToken,
 ) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
 {
-    let (function, return_type) = match token {
+    let (function, return_type) = match &token.token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
         Token::Input => (BuiltInFunction::Input, Type::String),
         Token::Len => (BuiltInFunction::Len, Type::Integer),
@@ -37,10 +34,10 @@ where
     };
     let mut args = Vec::new();
 
-    if let Some(Token::LParen) = tokens.peek() {
+    if let Some(SpannedToken { token: Token::LParen,.. }) = tokens.peek() {
         tokens.next();
         while let Some(token) = tokens.peek() {
-            match token {
+            match token.token {
                 Token::RParen => {
                     tokens.next();
                     break;

@@ -121,6 +121,7 @@ version = "0.1.0"
 dependencies = [
  "file_system",
  "parser",
+ "tokenizer",
  "transpiler",
  "validator",
 ]
@@ -143,6 +144,7 @@ dependencies = [
  "logging",
  "parser",
  "peekmore",
+ "tokenizer",
  "validator",
 ]
 

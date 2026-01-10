@@ -1,28 +1,28 @@
 use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
+use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
 use crate::{
-    ast::Expr, errors::ParserError, expressions::parse_single_expr, list::parse_list,
+    ast::Expr, errors::ParserError, expressions::parse_single_expr, /* list::parse_list */
     shared_ast::Type,
 };
 
-pub fn literals_parse<'a, I>(
-    token: &'a Token,
-    tokens: &mut PeekMoreIterator<I>,
+pub fn literals_parse<'a>(
+    token: SpannedToken,
+    tokens: &mut Tokens,
 ) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
 {
-    let mut expr = match token {
-        Token::StringLiteral(s) => Expr::String(s),
-        Token::Number(num) => Expr::Number(*num),
-        Token::Float(num) => Expr::Float(*num),
-        Token::ListStart => parse_list(tokens),
-        /* TODO: Buraya baxarsan çünki literal parse etmesi lazım  */
-        _ => return Err(ParserError::UnexpectedToken(token.clone())),
+    match token.token {
+         Token::StringLiteral(s) => return Ok(Expr::String(s)),
+        Token::Number(num) => return Ok(Expr::Number(num)),
+        Token::Float(num) => return Ok(Expr::Float(num)),
+/*         Token::ListStart => parse_list(tokens),
+ */        /* TODO: Buraya baxarsan çünki literal parse etmesi lazım  */
+        _ => return Err(ParserError::UnexpectedToken(token.span,token.token)),
     };
 
-    while let Some(Token::Dot) = tokens.peek() {
+
+
+/*     while let Some(Token::Dot) = tokens.peek() {
         tokens.next();
 
         let field_or_method = match tokens.next() {
@@ -72,6 +72,5 @@ where
             }
         }
     }
-
-    Ok(expr)
+ */
 }

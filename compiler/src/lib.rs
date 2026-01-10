@@ -9,7 +9,8 @@ mod builder;
 mod errors;
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let sdk = file_system::read_file(path)?;
-    let mut parser = Parser::new(sdk);
+    let tokens = tokenizer::Lexer::new(&sdk).tokenize().map_err(|err| CompilerError::Lexer(err))?;
+    let mut parser = Parser::new(tokens);
     let mut parsed_program = parser.parse().map_err(|err| CompilerError::Parser(err))?;
 
     let mut validator = validator::ValidatorContext::new();

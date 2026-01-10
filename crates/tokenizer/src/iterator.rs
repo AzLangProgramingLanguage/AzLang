@@ -1,14 +1,21 @@
 use std::collections::VecDeque;
+use std::fmt;
+use std::fmt::Display;
 
 use crate::tokens::Token;
 
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 pub struct SourceSpan {
     pub start: u32,
     pub end: u32,
     pub line: u32,
 }
-#[derive(Debug,Clone)]
+impl Display for SourceSpan {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Sətir {}, sütun {}", self.line, self.start)
+    }
+}
+#[derive(Debug)]
 pub struct SpannedToken {
     pub token: Token,
     pub span: SourceSpan,

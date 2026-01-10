@@ -1,4 +1,4 @@
-use parser::{ast::Expr, condition, shared_ast::BuiltInFunction};
+use parser::{ast::Expr, shared_ast::BuiltInFunction};
 
 use crate::{
     TranspileContext,

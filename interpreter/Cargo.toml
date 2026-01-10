@@ -8,4 +8,5 @@ file_system = { path = "../crates/file_system/" }
 logging = { path = "../crates/logging/" }
 peekmore = "1.3.0"
 parser = { path = "../crates/parser/" }
+tokenizer = { path = "../crates/tokenizer/" }
 validator = { path = "../crates/validator/" }

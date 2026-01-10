@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, iter::Peekable, str::Chars};
+use std::{iter::Peekable, str::Chars};
 
 use crate::{errors::LexerError, iterator::{SourceSpan, Tokens}, tokens::Token, words::tokenize_word};
 pub struct NewLexer<'a> {
@@ -8,6 +8,7 @@ pub struct NewLexer<'a> {
     space: usize,
     line: u32,
     start: u32,
+    end: u32,
 }
 impl<'a> NewLexer<'a> {
     pub fn new(input: &'a str) -> Self {
@@ -18,6 +19,7 @@ impl<'a> NewLexer<'a> {
             space: 0,
             line: 0,
             start: 0,
+            end: 0,
         }
     }
     fn skip_whitespace(&mut self) {
@@ -25,9 +27,11 @@ impl<'a> NewLexer<'a> {
             if *ch == ' ' && self.is_line_start {
                 self.space += 1;
                 self.start += 1;
+                self.end += 1;
                 self.chars.next();
             } else if *ch == ' ' && !self.is_line_start {
                 self.start += 1;
+                self.end += 1;
                 self.chars.next();
             } else {
                 break;
@@ -44,12 +48,14 @@ impl<'a> NewLexer<'a> {
                 _ => tokens.push(
                     token,
                     SourceSpan {
-                        start: 0,
-                        end: 0,
-                        line: 0,
+                        start: self.start,
+                        end: self.end,
+                        line: self.line,
                     },
                 ),
+
             }
+            self.start = self.end;
         }
         Ok(tokens)
     }
@@ -58,11 +64,19 @@ impl<'a> NewLexer<'a> {
         for ch in &mut self.chars {
             match ch {
                 '"' => break,
-                '\n' => return Err(LexerError::UnClosedString),
+                '\n' => return Err(LexerError::UnClosedString(
+                    SourceSpan {
+                        start: self.start,
+                        end: self.end, /* TODO: Test edilməli */
+                        line: self.line,
+                    },
+                    str,
+                )),
                 _ => {
                     str.push(ch);
                 }
             }
+            self.end += 1;
         }
 
         Ok(Token::StringLiteral(str))
@@ -77,6 +91,7 @@ impl<'a> NewLexer<'a> {
                 break;
             }
         }
+        self.end = self.start + str.len() as u32;
         Ok(tokenize_word(str.as_str()))
     }
 
@@ -84,7 +99,6 @@ impl<'a> NewLexer<'a> {
         let mut buf = String::new();
         let mut has_dot = false;
         while let Some(ch) = self.chars.peek() {
-            self.start += 1;
             match ch {
                 '0'..='9' => {
                     buf.push(*ch);
@@ -105,13 +119,19 @@ impl<'a> NewLexer<'a> {
             }
         }
 
+        self.end = self.start + buf.len() as u32;
+       
         if has_dot {
             Ok(Token::Float(
                 buf.parse::<f64>().map_err(LexerError::FloatUnKnow)?,
             ))
         } else {
             if buf.starts_with('0') && buf.len() > 1 {
-                return Err(LexerError::CannotStartZeroNumber);
+                return Err(LexerError::CannotStartZeroNumber(SourceSpan {
+                    start: self.start,
+                    end: self.end,
+                    line: self.line,
+                }, buf));
             }
             Ok(Token::Number(
                 buf.parse::<i64>().map_err(LexerError::NumberUnKnow)?,
@@ -120,7 +140,7 @@ impl<'a> NewLexer<'a> {
     }
     fn consume(&mut self, token: Token) -> Result<Token, LexerError> {
         self.chars.next();
-        self.start += 1;
+        self.end += 1;
         Ok(token)
     }
 
@@ -130,6 +150,8 @@ impl<'a> NewLexer<'a> {
             self.space = 0;
             self.chars.next();
             self.line += 1;
+            self.start = 0;
+            self.end = 0;
             return Ok(Some(Token::Newline));
         };
         if self.space == self.indent_level * 4 {

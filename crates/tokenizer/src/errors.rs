@@ -4,23 +4,25 @@ use std::{
     num::{ParseFloatError, ParseIntError},
 };
 
+use crate::iterator::SourceSpan;
+
 #[derive(Debug)]
 pub enum LexerError {
-    UnClosedString,
+    UnClosedString(SourceSpan, String),
     VariableCannotBeNumber,
     NumberAndAlpha,
     DoubleDotNumber,
     FloatUnKnow(ParseFloatError),
     NumberUnKnow(ParseIntError),
-    CannotStartZeroNumber,
+    CannotStartZeroNumber(SourceSpan, String),
     InCorrectSpaceSize,
 }
 
 impl Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LexerError::UnClosedString => {
-                write!(f, "String düzgün bağlanmayıb")
+            LexerError::UnClosedString(span, str) => {
+                write!(f, "{}, String düzgün bağlanmayıb \"{}\"", span, str)
             }
             LexerError::VariableCannotBeNumber => {
                 write!(f, "Başlangıc ədədlə adlandırıla bilməz!")
@@ -37,9 +39,15 @@ impl Display for LexerError {
             LexerError::FloatUnKnow(s) => {
                 write!(f, "Kəsr tokenizerdə bilinməyən problem oldu problem: {s}")
             }
-            LexerError::CannotStartZeroNumber => {
-                write!(f, "0 ilə ədəd başlaya bilməz")
+            LexerError::CannotStartZeroNumber(span, str) => {
+                write!(
+                    f,
+                    "{} Yanlış ədəd formatı \"{}\" . Onluq ədədlərin başlangıcı sıfırla başlaya bilməz.",
+                    span,
+                    str
+                )
             }
+            
             LexerError::InCorrectSpaceSize => {
                 write!(f, "Uyğunsuz boşluq var.")
             }

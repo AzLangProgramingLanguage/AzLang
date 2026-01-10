@@ -1,17 +1,14 @@
 use crate::errors::ParserError;
-use crate::shared_ast::Type;
 use crate::{ast::Expr, expressions::parse_single_expr};
-use peekmore::PeekMoreIterator;
+use tokenizer::iterator::{SpannedToken, Tokens};
 use tokenizer::tokens::Token;
 
-pub fn parse_binary_op_expr<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
+pub fn parse_binary_op_expr<'a>(
+    tokens: &mut Tokens,
 ) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
 {
     match tokens.peek_nth(1) {
-        Some(Token::Operator(_)) => {}
+        Some(SpannedToken { token: Token::Op(_),.. }) => {}
         Some(_) => return parse_single_expr(tokens),
         None => return Err(ParserError::UnexpectedEOF),
     }
@@ -19,16 +16,14 @@ where
     parse_binary_op_with_precedence(tokens, 0)
 }
 
-fn parse_binary_op_with_precedence<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
+fn parse_binary_op_with_precedence<'a>(
+    tokens: &mut Tokens,
     min_precedence: u8,
 ) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
 {
     let mut left = parse_single_expr(tokens)?;
 
-    loop {
+  /*   loop {
         let op = match tokens.peek() {
             Some(Token::Operator(s)) => s,
             Some(Token::Newline) | Some(Token::Eof) | Some(Token::RParen) | None => {
@@ -54,7 +49,7 @@ where
             return_type: Type::Any,
         };
     }
-
+ */
     Ok(left)
 }
 

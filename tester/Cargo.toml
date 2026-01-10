@@ -1,11 +1,10 @@
 [package]
-name = "compiler"
+name = "tester"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 file_system = { path = "../crates/file_system" }
-parser = { path = "../crates/parser" }
 tokenizer = { path = "../crates/tokenizer" }
-validator = { path = "../crates/validator" }
-transpiler = { path = "../crates/transpiler" }
+logging = { path = "../crates/logging" }
+parser = { path = "../crates/parser/" }

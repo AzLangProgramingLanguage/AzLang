@@ -34,7 +34,7 @@ pub enum Expr<'a> {
     Void,
     Return(Box<Expr<'a>>),
     Time(std::time::Instant),
-    String(&'a str),
+    String(String),
     Bool(bool),
     Number(i64),
     Char(char),
@@ -142,7 +142,6 @@ impl<'a> Expr<'a> {
 
 #[derive(Debug)]
 pub struct Program<'a> {
-    pub function_defs: Vec<FunctionDef<'a>>,
     pub expressions: Vec<Expr<'a>>,
 }
 

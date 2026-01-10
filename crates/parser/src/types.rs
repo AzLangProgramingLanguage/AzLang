@@ -47,7 +47,7 @@ where
 
             Type::Array(Box::new(inner_type))
         }
-        other => return Err(ParserError::UnexpectedToken(other.clone())),
+        other => return Err(ParserError::UnexpectedToken(other.span,other.token)),
     };
 
     Ok(typ)
