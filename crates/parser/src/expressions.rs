@@ -75,7 +75,7 @@ pub fn parse_single_expr<'a>(tokens: Tokens) -> Result<Expr<'a>, ParserError> {
         SpannedToken {
             token: Token::Comment(s),
             ..
-        } => Ok(Expr::Comment(&s)),
+        } => Ok(Expr::Comment(s.clone())),
         // SpannedToken {
         //     token: Token::Return,
         //     ..

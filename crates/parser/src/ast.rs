@@ -42,7 +42,7 @@ pub enum Expr<'a> {
         name: Cow<'a, str>,
         variants: Vec<Cow<'a, str>>,
     },
-    Comment(&'a str),
+    Comment(String),
     List(Vec<Expr<'a>>),
     UnaryOp {
         op: &'a str,
