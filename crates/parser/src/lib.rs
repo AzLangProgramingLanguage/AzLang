@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod literal_parse;
 pub mod builtin;
+pub mod template;
 pub mod binary_op;
 /* 
 pub mod builtin;
@@ -20,7 +21,7 @@ pub mod method; */
 pub mod shared_ast;
 /* pub mod struct_init;
 pub mod structs; */
-/* pub mod template;
+/* 
  */mod tests;
 /* pub mod types;
  *//* pub mod union; */

@@ -1,3 +1,1 @@
-Çap(12.4)
-SonSöz("Burada dayandir")
-Çap(2.4)
+Çap(`${1} `)

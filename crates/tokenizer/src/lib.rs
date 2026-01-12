@@ -1,11 +1,16 @@
 use std::{iter::Peekable, str::Chars};
 
-use crate::{errors::LexerError, iterator::{SourceSpan, Tokens}, tokens::Token, words::tokenize_word};
-pub mod tokens;
-pub mod iterator;
+use crate::{
+    errors::LexerError,
+    iterator::{SourceSpan, Tokens},
+    tokens::Token,
+    words::tokenize_word,
+};
 pub mod errors;
-pub mod words;
+pub mod iterator;
 pub mod token_display;
+pub mod tokens;
+pub mod words;
 
 pub struct Lexer<'a> {
     chars: Peekable<Chars<'a>>,
@@ -15,6 +20,7 @@ pub struct Lexer<'a> {
     line: u32,
     start: u32,
     end: u32,
+    in_template: bool,
 }
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
@@ -23,9 +29,10 @@ impl<'a> Lexer<'a> {
             is_line_start: false,
             indent_level: 0,
             space: 0,
-            line: 0,
-            start: 0,
-            end: 0,
+            line: 1,
+            start: 1,
+            end: 1,
+            in_template: false,
         }
     }
     fn skip_whitespace(&mut self) {
@@ -59,45 +66,129 @@ impl<'a> Lexer<'a> {
                         line: self.line,
                     },
                 ),
-
             }
             self.start = self.end;
         }
         Ok(tokens)
     }
-    fn read_string(&mut self) -> Result<Token, LexerError> {
+
+    fn read_template_string(&mut self) -> Result<Token, LexerError> {
+        if let Some('`') = self.chars.peek() {
+            self.chars.next();
+        }
+        self.in_template = true;
+        
         let mut str = String::new();
-        for ch in &mut self.chars {
-            match ch {
-                '"' => break,
-                '\n' => return Err(LexerError::UnClosedString(
-                    SourceSpan {
-                        start: self.start,
-                        end: self.end, /* TODO: Test edilməli */
-                        line: self.line,
-                    },
-                    str,
-                )),
-                _ => {
-                    str.push(ch);
+        
+        loop {
+            println!("{:?}", self.chars.peek());
+            match self.chars.peek() {
+                Some('`') => {
+                    self.end += str.len() as u32 + 1;
+                    self.in_template = false;
+                    return Ok(Token::StringLiteral(str));
+                }
+                Some('$') => {
+                    self.chars.next();
+                    if let Some('{') = self.chars.peek() {
+                        if !str.is_empty() {
+                            self.end += str.len() as u32;
+                            return Ok(Token::StringLiteral(str));
+                        }
+                        self.end += 2;
+                        return Ok(Token::InterpolationStart);
+                    } else {
+                        str.push('$');
+                    }
+                }
+                Some('}') if self.in_template => {
+                    self.end += 1;
+                    self.chars.next();
+                    return Ok(Token::InterpolationEnd);
+                }
+                Some('\n') => {
+                    return Err(LexerError::UnClosedString(
+                        SourceSpan {
+                            start: self.start,
+                            end: self.end,
+                            line: self.line,
+                        },
+                        str,
+                    ));
+                }
+                Some(ch) => {
+                    str.push(*ch);
+                    self.chars.next();
+                }
+                None => {
+                    return Err(LexerError::UnClosedString(
+                        SourceSpan {
+                            start: self.start,
+                            end: self.end,
+                            line: self.line,
+                        },
+                        str,
+                    ));
                 }
             }
+        }
+    }
+
+    fn read_string(&mut self) -> Result<Token, LexerError> {
+        self.chars.next();
+     
+        let mut str = String::new();
+        let mut is_closed = false;
+
+        for ch in &mut self.chars {
+            match ch {
+                '"' => {
+                    is_closed = true;
+                    break;
+                },
+                '\n' => {
+                    return Err(LexerError::UnClosedString(
+                        SourceSpan {
+                            start: self.start,
+                            end: self.end, 
+                            line: self.line,
+                        },
+                        str,
+                    ));
+                }
+                other => {
+                    str.push(other);
+                }
+            }
+
             self.end += 1;
+        }
+        if !is_closed {
+            return Err(LexerError::UnClosedString(
+                SourceSpan {
+                    start: self.start,
+                    end: self.end, 
+                    line: self.line,
+                },
+            str,
+        ));
         }
 
         Ok(Token::StringLiteral(str))
     }
     fn read_word(&mut self) -> Result<Token, LexerError> {
+
         let mut str = String::new();
         while let Some(ch) = self.chars.peek() {
             if ch.is_alphanumeric() {
+                self.end += 1;
                 str.push(*ch);
                 self.chars.next();
             } else {
                 break;
             }
         }
-        self.end = self.start + str.len() as u32;
+        self.end += 1;
         Ok(tokenize_word(str.as_str()))
     }
 
@@ -126,18 +217,21 @@ impl<'a> Lexer<'a> {
         }
 
         self.end = self.start + buf.len() as u32;
-       
+
         if has_dot {
             Ok(Token::Float(
                 buf.parse::<f64>().map_err(LexerError::FloatUnKnow)?,
             ))
         } else {
             if buf.starts_with('0') && buf.len() > 1 {
-                return Err(LexerError::CannotStartZeroNumber(SourceSpan {
-                    start: self.start,
-                    end: self.end,
-                    line: self.line,
-                }, buf));
+                return Err(LexerError::CannotStartZeroNumber(
+                    SourceSpan {
+                        start: self.start,
+                        end: self.end,
+                        line: self.line,
+                    },
+                    buf,
+                ));
             }
             Ok(Token::Number(
                 buf.parse::<i64>().map_err(LexerError::NumberUnKnow)?,
@@ -173,21 +267,31 @@ impl<'a> Lexer<'a> {
         }
     }
     fn next_token(&mut self) -> Result<Token, LexerError> {
-        self.skip_whitespace();
-        match self.handle_indentation() {
-            Ok(Some(token)) => return Ok(token),
-            Ok(None) => {}
-            Err(e) => return Err(e),
+        if !self.in_template {
+            self.skip_whitespace();
+            match self.handle_indentation() {
+                Ok(Some(token)) => return Ok(token),
+                Ok(None) => {}
+                Err(e) => return Err(e),
+            }
         }
+        println!("{:?}", self.chars.peek()); /* BUG: INFINITY LOOP */
+        
 
         let char = self.chars.peek();
         let token = match char {
             Some('(') => self.consume(Token::LParen),
             Some(')') => self.consume(Token::RParen),
             Some(':') => self.consume(Token::Colon),
+            Some('`') => self.read_template_string(),
             Some(',') => self.consume(Token::Comma),
             Some('{') => self.consume(Token::LBrace),
             Some('.') => self.consume(Token::Dot),
+            Some('}') if self.in_template => {
+                self.end += 1;
+
+                self.read_template_string()
+            },
             Some('}') => self.consume(Token::RBrace),
             Some('_') => self.consume(Token::Underscore),
             Some('[') => self.consume(Token::ListStart),
@@ -197,6 +301,10 @@ impl<'a> Lexer<'a> {
             Some('+') => self.consume(Token::Op('+')),
             Some('-') => self.consume(Token::Op('-')),
             Some('*') => self.consume(Token::Op('*')),
+            Some('%') => self.consume(Token::Op('%')),
+            Some('^') => self.consume(Token::Op('^')),
+            Some('>') => self.consume(Token::Op('>')),
+            Some('<') => self.consume(Token::Op('<')),
             Some('0'..='9') => self.read_number(),
             Some('\'') | Some('"') => self.read_string(),
             Some(_) => self.read_word(),

@@ -14,6 +14,7 @@ pub fn interpreter(_path: &str) -> Result<(), InterPreterError> {
         .parse()
         .map_err(|err| InterPreterError::Parser(err))?;
 
+  
     let mut validator = validator::ValidatorContext::new();
     validator.validate(&mut parsed_program)?;
     let mut runner = Runner::new();

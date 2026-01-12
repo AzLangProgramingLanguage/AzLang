@@ -16,11 +16,15 @@ pub enum LexerError {
     NumberUnKnow(ParseIntError),
     CannotStartZeroNumber(SourceSpan, String),
     InCorrectSpaceSize,
+    UnexpectedToken(SourceSpan, char),
 }
 
 impl Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            LexerError::UnexpectedToken(span, token) => {
+                write!(f, "{}, Uyğunluq olmayan token \"{}\"", span, token)
+            }
             LexerError::UnClosedString(span, str) => {
                 write!(f, "{}, String düzgün bağlanmayıb \"{}\"", span, str)
             }

@@ -1,34 +1,31 @@
 use crate::errors::ParserError;
-use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
+use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
 use crate::{
     ast::{Expr, TemplateChunk},
     expressions::parse_expression,
 };
 
-fn parse_template_core<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
-) -> Result<Vec<TemplateChunk<'a>>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
+pub fn parse_template_string_expr<'a>(
+    tokens: &mut Tokens,
+) -> Result<Expr<'a>, ParserError>
 {
     let mut chunks = Vec::new();
 
     loop {
-        let Some(token) = tokens.peek() else { break };
+        let Some(token) = tokens.next() else { break };
 
         match token {
-            Token::StringLiteral(s) => {
+            SpannedToken { token: Token::StringLiteral(s), .. } => {
                 chunks.push(TemplateChunk::Literal(s));
                 tokens.next();
             }
 
-            Token::InterpolationStart => {
+            SpannedToken { token: Token::InterpolationStart, .. } => {
                 tokens.next();
                 loop {
                     match tokens.peek() {
-                        Some(Token::InterpolationEnd) => {
+                        Some(SpannedToken { token: Token::InterpolationEnd, .. }) => {
                             tokens.next();
                             break;
                         }
@@ -41,22 +38,11 @@ where
                 }
             }
 
-            Token::Backtick => break,
+            SpannedToken { token: Token::Backtick, .. } => break,
 
-            other => return Err(ParserError::UnexpectedToken((*other).clone())),
+            other => return Err(ParserError::UnexpectedToken(other.span, other.token)),
         }
     }
 
-    tokens.next();
-    Ok(chunks)
-}
-
-pub fn parse_template_string_expr<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
-) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    let chunks = parse_template_core(tokens)?;
     Ok(Expr::TemplateString(chunks))
 }

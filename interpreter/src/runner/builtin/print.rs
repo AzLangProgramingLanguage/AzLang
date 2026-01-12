@@ -9,7 +9,7 @@ pub fn print_interpreter<'a>(expr: Expr<'a>, ctx: &mut Runner<'a>) -> String {
         Expr::TemplateString(chunks) => {
             for chunk in chunks {
                 match chunk {
-                    TemplateChunk::Literal(s) => output.push_str(s),
+                    TemplateChunk::Literal(s) => output.push_str(&s),
                     TemplateChunk::Expr(inner_expr) => {
                         let new_expr = *inner_expr;
 

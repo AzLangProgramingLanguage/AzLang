@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use crate::tokens::Token;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct SourceSpan {
     pub start: u32,
     pub end: u32,
@@ -15,12 +15,12 @@ impl Display for SourceSpan {
         write!(f, "Sətir {}, sütun {}", self.line, self.start)
     }
 }
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct SpannedToken {
     pub token: Token,
     pub span: SourceSpan,
 }
-#[derive(Default,Debug)]
+#[derive(Default,Debug,Clone)]
 pub struct Tokens {
     source: VecDeque<SpannedToken>,
 }

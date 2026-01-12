@@ -157,7 +157,7 @@ pub struct Symbol<'a> {
 
 #[derive(Debug, Clone)]
 pub enum TemplateChunk<'a> {
-    Literal(&'a str),
+    Literal(String),
     Expr(Box<Expr<'a>>),
 }
 
