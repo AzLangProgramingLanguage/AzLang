@@ -9,6 +9,8 @@ pub fn interpreter(_path: &str) -> Result<(), InterPreterError> {
     let sdk = file_system::read_file(_path)?;
     let mut lexer = tokenizer::Lexer::new(&sdk);
     let tokens = lexer.tokenize().map_err(|err| InterPreterError::Lexer(err))?;
+    println!("{:?}", tokens);
+    std::process::exit(1);
     let mut parser = Parser::new(tokens);
     let mut parsed_program = parser
         .parse()

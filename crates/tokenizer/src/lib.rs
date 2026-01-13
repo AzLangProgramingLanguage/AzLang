@@ -20,7 +20,7 @@ pub struct Lexer<'a> {
     line: u32,
     start: u32,
     end: u32,
-    in_template: bool,
+    token_buffer: Vec<(Token,SourceSpan)>,
 }
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
@@ -32,7 +32,7 @@ impl<'a> Lexer<'a> {
             line: 1,
             start: 1,
             end: 1,
-            in_template: false,
+            token_buffer: Vec::new(),
         }
     }
     fn skip_whitespace(&mut self) {
@@ -68,70 +68,96 @@ impl<'a> Lexer<'a> {
                 ),
             }
             self.start = self.end;
+            while let Some((token,span)) = self.token_buffer.pop() {
+                tokens.push(token,span);
+            }
         }
+
         Ok(tokens)
     }
 
     fn read_template_string(&mut self) -> Result<Token, LexerError> {
-        if let Some('`') = self.chars.peek() {
-            self.chars.next();
-        }
-        self.in_template = true;
-        
+        self.chars.next();
         let mut str = String::new();
-        
+
         loop {
-            println!("{:?}", self.chars.peek());
-            match self.chars.peek() {
+            let ch = self.chars.peek();
+            println!("Char {:?}", ch);
+            match ch {
                 Some('`') => {
-                    self.end += str.len() as u32 + 1;
-                    self.in_template = false;
-                    return Ok(Token::StringLiteral(str));
+                    self.token_buffer.push((Token::Backtick, SourceSpan {
+                        start: self.start,
+                        end: self.end,
+                        line: self.line,
+                    }));
+                    self.chars.next();
+                    break;
                 }
                 Some('$') => {
                     self.chars.next();
                     if let Some('{') = self.chars.peek() {
-                        if !str.is_empty() {
-                            self.end += str.len() as u32;
-                            return Ok(Token::StringLiteral(str));
-                        }
+                        self.chars.next();
                         self.end += 2;
-                        return Ok(Token::InterpolationStart);
-                    } else {
+                        self.token_buffer.push((Token::StringLiteral(std::mem::take(&mut str)), SourceSpan {
+                            start: self.start,
+                            end: self.end,
+                            line: self.line,
+                        }));
+                        self.token_buffer.push((Token::InterpolationStart, SourceSpan {
+                            start: self.start,
+                            end: self.end,
+                            line: self.line,
+                        }));
+                        str.clear();
+
+                        while let Some(token) = self.chars.peek() {
+                            match *token {
+                                '}' => {
+                                    self.chars.next();
+                                    self.token_buffer.push((Token::InterpolationEnd, SourceSpan {
+                                        start: self.start,
+                                        end: self.end,
+                                        line: self.line,
+                                    }));
+                                    break;
+                                }
+                                _ => {
+                                    let token = self.next_token()?;
+                                   
+                                    self.end += 1;
+                                    self.token_buffer.push((token, SourceSpan {
+                                        start: self.start,
+                                        end: self.end,
+                                        line: self.line,
+                                    }));
+                                }
+                            }                        
+                        }
+                    }
+                    else {
+                        self.chars.next();
+                        self.end += 1;
                         str.push('$');
                     }
                 }
-                Some('}') if self.in_template => {
-                    self.end += 1;
-                    self.chars.next();
-                    return Ok(Token::InterpolationEnd);
-                }
-                Some('\n') => {
-                    return Err(LexerError::UnClosedString(
-                        SourceSpan {
-                            start: self.start,
-                            end: self.end,
-                            line: self.line,
-                        },
-                        str,
-                    ));
-                }
+             
                 Some(ch) => {
+                    self.end += 1;
                     str.push(*ch);
                     self.chars.next();
                 }
-                None => {
-                    return Err(LexerError::UnClosedString(
-                        SourceSpan {
-                            start: self.start,
-                            end: self.end,
-                            line: self.line,
-                        },
-                        str,
-                    ));
-                }
+                None => return Err(LexerError::UnClosedString(
+                    SourceSpan {
+                        start: self.start,
+                        end: self.end, 
+                        line: self.line,
+                    },
+                    str,
+                )),
             }
         }
+        
+       Ok(Token::Backtick)
     }
 
     fn read_string(&mut self) -> Result<Token, LexerError> {
@@ -267,15 +293,12 @@ impl<'a> Lexer<'a> {
         }
     }
     fn next_token(&mut self) -> Result<Token, LexerError> {
-        if !self.in_template {
-            self.skip_whitespace();
-            match self.handle_indentation() {
-                Ok(Some(token)) => return Ok(token),
-                Ok(None) => {}
-                Err(e) => return Err(e),
-            }
+        self.skip_whitespace();
+        match self.handle_indentation() {
+            Ok(Some(token)) => return Ok(token),
+            Ok(None) => {}
+            Err(e) => return Err(e),
         }
-        println!("{:?}", self.chars.peek()); /* BUG: INFINITY LOOP */
         
 
         let char = self.chars.peek();
@@ -283,15 +306,9 @@ impl<'a> Lexer<'a> {
             Some('(') => self.consume(Token::LParen),
             Some(')') => self.consume(Token::RParen),
             Some(':') => self.consume(Token::Colon),
-            Some('`') => self.read_template_string(),
             Some(',') => self.consume(Token::Comma),
             Some('{') => self.consume(Token::LBrace),
             Some('.') => self.consume(Token::Dot),
-            Some('}') if self.in_template => {
-                self.end += 1;
-
-                self.read_template_string()
-            },
             Some('}') => self.consume(Token::RBrace),
             Some('_') => self.consume(Token::Underscore),
             Some('[') => self.consume(Token::ListStart),
@@ -305,6 +322,7 @@ impl<'a> Lexer<'a> {
             Some('^') => self.consume(Token::Op('^')),
             Some('>') => self.consume(Token::Op('>')),
             Some('<') => self.consume(Token::Op('<')),
+            Some('`') => self.read_template_string(),
             Some('0'..='9') => self.read_number(),
             Some('\'') | Some('"') => self.read_string(),
             Some(_) => self.read_word(),
