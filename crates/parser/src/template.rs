@@ -1,31 +1,38 @@
 use crate::errors::ParserError;
-use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
+use tokenizer::{
+    iterator::{SpannedToken, Tokens},
+    tokens::Token,
+};
 
 use crate::{
     ast::{Expr, TemplateChunk},
     expressions::parse_expression,
 };
 
-pub fn parse_template_string_expr<'a>(
-    tokens: &mut Tokens,
-) -> Result<Expr<'a>, ParserError>
-{
+pub fn parse_template_string_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
     let mut chunks = Vec::new();
-
     loop {
         let Some(token) = tokens.next() else { break };
 
         match token {
-            SpannedToken { token: Token::StringLiteral(s), .. } => {
+            SpannedToken {
+                token: Token::StringLiteral(s),
+                ..
+            } => {
                 chunks.push(TemplateChunk::Literal(s));
-                tokens.next();
             }
 
-            SpannedToken { token: Token::InterpolationStart, .. } => {
+            SpannedToken {
+                token: Token::InterpolationStart,
+                ..
+            } => {
                 tokens.next();
                 loop {
                     match tokens.peek() {
-                        Some(SpannedToken { token: Token::InterpolationEnd, .. }) => {
+                        Some(SpannedToken {
+                            token: Token::InterpolationEnd,
+                            ..
+                        }) => {
                             tokens.next();
                             break;
                         }
@@ -38,7 +45,10 @@ pub fn parse_template_string_expr<'a>(
                 }
             }
 
-            SpannedToken { token: Token::Backtick, .. } => break,
+            SpannedToken {
+                token: Token::Backtick,
+                ..
+            } => break,
 
             other => return Err(ParserError::UnexpectedToken(other.span, other.token)),
         }
