@@ -11,6 +11,7 @@ pub mod iterator;
 pub mod token_display;
 pub mod tokens;
 pub mod words;
+#[derive(Debug)]
 pub enum LexerMode {
     Normal,
     Template,
@@ -220,13 +221,14 @@ impl<'a> Lexer<'a> {
                     return Ok(Token::Backtick);
                 }
                 '$' => {
+                    println!("Hii {}", ch);
+
                     self.chars.next();
                     if let Some('{') = self.chars.peek() {
-                        self.chars.next();
+                        self.mode_stack.push(LexerMode::Normal);
                         if !content.is_empty() {
                             return Ok(Token::StringLiteral(content));
                         }
-                        self.mode_stack.push(LexerMode::Normal);
                         return Ok(Token::InterpolationStart);
                     }
                     content.push('$');
@@ -238,6 +240,7 @@ impl<'a> Lexer<'a> {
                 }
             }
         }
+
         Err(LexerError::UnClosedString(
             SourceSpan {
                 line: self.line,
@@ -248,6 +251,7 @@ impl<'a> Lexer<'a> {
         ))
     }
     fn next_token(&mut self) -> Result<Token, LexerError> {
+        println!("{:?}", self.mode_stack.last());
         if let Some(LexerMode::Template) = self.mode_stack.last() {
             return self.read_template_part();
         }
@@ -259,7 +263,9 @@ impl<'a> Lexer<'a> {
         }
 
         // ` adas ${2} `
+
         let char = self.chars.peek();
+        
         let token = match char {
             Some('`') => {
                 self.chars.next();
@@ -271,10 +277,16 @@ impl<'a> Lexer<'a> {
                 self.mode_stack.pop();
                 Ok(Token::InterpolationEnd)
             }
+            Some('{') if self.mode_stack.len() > 1 => {
+                self.chars.next();
+                self.mode_stack.push(LexerMode::Normal);
+                Ok(Token::InterpolationStart)
+            }
             Some('(') => self.consume(Token::LParen),
             Some(')') => self.consume(Token::RParen),
             Some(':') => self.consume(Token::Colon),
             Some(',') => self.consume(Token::Comma),
+            
             Some('{') => self.consume(Token::LBrace),
             Some('.') => self.consume(Token::Dot),
             Some('}') => self.consume(Token::RBrace),
@@ -291,7 +303,9 @@ impl<'a> Lexer<'a> {
             Some('>') => self.consume(Token::Op('>')),
             Some('<') => self.consume(Token::Op('<')),
             Some('0'..='9') => self.read_number(),
-            Some('\'') | Some('"') => self.read_string(),
+            Some('\'') | Some('"') => {
+                self.read_string()
+            },
             Some(_) => self.read_word(),
             None => Ok(Token::Eof),
         };
