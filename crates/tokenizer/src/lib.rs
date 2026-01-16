@@ -218,18 +218,16 @@ impl<'a> Lexer<'a> {
                     }
                     self.chars.next();
                     self.mode_stack.pop();
+                    println!("Hii 2 {}", ch);
                     return Ok(Token::Backtick);
                 }
                 '$' => {
-                    println!("Hii {}", ch);
-
                     self.chars.next();
                     if let Some('{') = self.chars.peek() {
                         self.mode_stack.push(LexerMode::Normal);
                         if !content.is_empty() {
                             return Ok(Token::StringLiteral(content));
                         }
-                        return Ok(Token::InterpolationStart);
                     }
                     content.push('$');
                 }
@@ -240,7 +238,6 @@ impl<'a> Lexer<'a> {
                 }
             }
         }
-
         Err(LexerError::UnClosedString(
             SourceSpan {
                 line: self.line,
@@ -261,9 +258,6 @@ impl<'a> Lexer<'a> {
             Ok(None) => {}
             Err(e) => return Err(e),
         }
-
-        // ` adas ${2} `
-
         let char = self.chars.peek();
         
         let token = match char {
@@ -279,7 +273,6 @@ impl<'a> Lexer<'a> {
             }
             Some('{') if self.mode_stack.len() > 1 => {
                 self.chars.next();
-                self.mode_stack.push(LexerMode::Normal);
                 Ok(Token::InterpolationStart)
             }
             Some('(') => self.consume(Token::LParen),
@@ -313,3 +306,7 @@ impl<'a> Lexer<'a> {
         token
     }
 }
+
+
+#[cfg(test)]
+mod tests;
