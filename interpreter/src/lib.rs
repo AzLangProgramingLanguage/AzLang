@@ -11,9 +11,6 @@ pub fn interpreter(_path: &str) -> Result<(), InterPreterError> {
     let tokens = lexer
         .tokenize()
         .map_err(|err| InterPreterError::Lexer(err))?;
-    println!("Tokens: {tokens:?}");
-
-    std::process::exit(1);
     let mut parser = Parser::new(tokens);
     let mut parsed_program = parser
         .parse()

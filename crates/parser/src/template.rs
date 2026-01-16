@@ -13,7 +13,7 @@ pub fn parse_template_string_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, P
     let mut chunks = Vec::new();
     loop {
         let Some(token) = tokens.next() else { break };
-
+        println!("token: {:?}", token);
         match token {
             SpannedToken {
                 token: Token::StringLiteral(s),
@@ -25,25 +25,22 @@ pub fn parse_template_string_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, P
             SpannedToken {
                 token: Token::InterpolationStart,
                 ..
-            } => {
-                tokens.next();
-                loop {
-                    match tokens.peek() {
-                        Some(SpannedToken {
-                            token: Token::InterpolationEnd,
-                            ..
-                        }) => {
-                            tokens.next();
-                            break;
-                        }
-                        Some(_) => {
-                            let expr = parse_expression(tokens)?;
-                            chunks.push(TemplateChunk::Expr(Box::new(expr)));
-                        }
-                        None => return Err(ParserError::UnexpectedEOF),
+            } => loop {
+                match tokens.peek() {
+                    Some(SpannedToken {
+                        token: Token::InterpolationEnd,
+                        ..
+                    }) => {
+                        tokens.next();
+                        break;
                     }
+                    Some(_) => {
+                        let expr = parse_expression(tokens)?;
+                        chunks.push(TemplateChunk::Expr(Box::new(expr)));
+                    }
+                    None => return Err(ParserError::UnexpectedEOF),
                 }
-            }
+            },
 
             SpannedToken {
                 token: Token::Backtick,
