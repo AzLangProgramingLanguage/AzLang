@@ -17,6 +17,24 @@ pub struct MethodType<'a> {
     pub body: Vec<Expr<'a>>,
     pub return_type: Option<Type<'a>>,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Operation {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Modulo,
+    Equal,
+    NotEqual,
+    Greater,
+    GreaterEqual,
+    Less,
+    LessEqual,
+    And,
+    Or,
+}
+
 #[derive(Debug, Clone)]
 pub struct IF<'a> {
     pub condition: Box<Expr<'a>>,
@@ -115,7 +133,7 @@ pub enum Expr<'a> {
     BinaryOp {
         left: Box<Expr<'a>>,
         right: Box<Expr<'a>>,
-        op: &'a str,
+        op: Operation,
         return_type: Type<'a>,
     },
     Break,

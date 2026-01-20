@@ -5,7 +5,7 @@ use logging::{error, parser_log};
 
 fn main() {
     let command = cli().command;
-
+    
 
     parser_log("İşə Başlayıram");
     match command {
