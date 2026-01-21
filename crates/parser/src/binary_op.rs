@@ -22,6 +22,16 @@ fn parse_binary_op_with_precedence<'a>(
 ) -> Result<Expr<'a>, ParserError>
 {
     let mut left = parse_single_expr(tokens)?;
+    loop {
+        let op = match tokens.peek() {
+            Some(Token::Operator(s)) => s,
+            Some(Token::Newline) | Some(Token::Eof) | Some(Token::RParen) | None => {
+                break;
+            }
+            Some(_) => break,
+        };
+
+    }
 
   /*   loop {
         let op = match tokens.peek() {

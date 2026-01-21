@@ -248,7 +248,6 @@ impl<'a> Lexer<'a> {
         ))
     }
     fn next_token(&mut self) -> Result<Token, LexerError> {
-        println!("{:?}", self.mode_stack.last());
         if let Some(LexerMode::Template) = self.mode_stack.last() {
             return self.read_template_part();
         }
