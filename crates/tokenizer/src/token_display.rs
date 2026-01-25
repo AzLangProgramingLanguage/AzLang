@@ -95,6 +95,17 @@ impl fmt::Display for Token {
             Token::LastWord => write!(f, "last word"),
             Token::Sum => write!(f, "sum"),
             Token::Dot => write!(f, "."),
+            Token::Add => write!(f, "+"),
+            Token::Multiply => write!(f, "*"),
+            Token::Subtract => write!(f, "%"),
+            Token::Divide => write!(f, "/"),
+            Token::Modulo => write!(f, "%"),
+            Token::Equal => write!(f, "=="),
+            Token::NotEqual => write!(f, "!="),
+            Token::Greater => write!(f, ">"),
+            Token::GreaterEqual => write!(f, ">="),
+            Token::Less => write!(f, "<"),
+            Token::LessEqual => write!(f, "<="),
         }
     }
 }
