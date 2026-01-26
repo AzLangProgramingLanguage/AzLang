@@ -598,7 +598,7 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
         }
-        Expr::BinaryOp {
+      /*   Expr::BinaryOp {
             left,
             right,
             op,
@@ -617,7 +617,7 @@ pub fn validate_expr<'a>(
                 None,
             );
             *return_type = typ;
-        }
+        } */
         Expr::FunctionDef {
             name,
             params,

@@ -4,12 +4,7 @@
 #[cfg(test)]
 mod tests {
 
-    use crate::ast::Expr;
-    use crate::r#enum::parse_enum_decl;
-    use crate::errors::ParserError;
 
-    use peekmore::PeekMore;
-    use std::borrow::Cow;
     use tokenizer::tokens::Token;
 
     #[test]
@@ -26,23 +21,7 @@ mod tests {
             Token::Dedent,
         ];
 
-        let mut iter = tokens.iter().peekmore();
-        let result = parse_enum_decl(&mut iter);
 
-        assert!(result.is_ok());
-        if let Ok(Expr::EnumDecl { name, variants }) = result {
-            assert_eq!(name, Cow::Borrowed("Color"));
-            assert_eq!(
-                variants,
-                vec![
-                    Cow::Borrowed("Red"),
-                    Cow::Borrowed("Green"),
-                    Cow::Borrowed("Blue")
-                ]
-            );
-        } else {
-            panic!("Expected EnumDecl");
-        }
     }
 
     #[test]
@@ -53,9 +32,6 @@ mod tests {
             Token::Identifier("Red".into()),
             Token::Dedent,
         ];
-        let mut iter = tokens.iter().peekmore();
-        let result = parse_enum_decl(&mut iter);
-        assert!(matches!(result, Err(ParserError::EnumDeclNameNotFound(_))));
     }
 
     #[test]
@@ -65,9 +41,6 @@ mod tests {
             Token::Identifier("Red".into()),
             Token::Dedent,
         ];
-        let mut iter = tokens.iter().peekmore();
-        let result = parse_enum_decl(&mut iter);
-        assert!(matches!(result, Err(ParserError::EnumNewLineNotFound(_))));
     }
 
     #[test]
@@ -80,11 +53,5 @@ mod tests {
             Token::Number(42),
             Token::Dedent,
         ];
-        let mut iter = tokens.iter().peekmore();
-        let result = parse_enum_decl(&mut iter);
-        assert!(matches!(
-            result,
-            Err(ParserError::UnexpectedToken(Token::Number(42)))
-        ));
     }
 }

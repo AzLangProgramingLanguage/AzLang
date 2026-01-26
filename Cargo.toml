@@ -1,3 +1,11 @@
+[workspace]
+members = [
+    "crates/logging",
+    "crates/cli",
+    "interpreter",
+    "compiler",
+]
+
 [package]
 name = "AzLang"
 version = "0.1.0"

@@ -25,6 +25,7 @@ pub enum Operation {
     Multiply,
     Divide,
     Modulo,
+    Not,
     Equal,
     NotEqual,
     Greater,

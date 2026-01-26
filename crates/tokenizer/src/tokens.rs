@@ -91,8 +91,10 @@ pub enum Token {
     ZigFloat,
     BigIntegerType,
     LowIntegerType,
+    Assign,
     /* Operations */
     Add,
+    Not,
     Subtract,
     Multiply,
     Divide,

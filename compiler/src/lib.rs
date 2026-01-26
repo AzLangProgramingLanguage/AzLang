@@ -4,7 +4,6 @@ use std::env;
 use crate::{builder::build, cleaner::clean_ast, errors::CompilerError};
 use parser::Parser;
 
-use validator::validate::validate_expr;
 mod builder;
 mod errors;
 pub fn compiler(path: &str) -> Result<(), CompilerError> {

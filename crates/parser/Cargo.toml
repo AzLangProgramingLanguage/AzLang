@@ -5,4 +5,3 @@ edition = "2024"
 
 [dependencies]
 tokenizer = { path = "../tokenizer/" }
-peekmore = "1.3.0"

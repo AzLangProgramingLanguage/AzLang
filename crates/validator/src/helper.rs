@@ -71,7 +71,7 @@ pub fn get_type<'a>(
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
         Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
-        Expr::BinaryOp {
+/*         Expr::BinaryOp {
             left,
             right,
             op,
@@ -103,7 +103,7 @@ pub fn get_type<'a>(
                 _ => Type::Any,
             };
             last_type
-        }
+        } */
         _ => Type::Any,
     }
 }

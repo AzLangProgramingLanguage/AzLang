@@ -68,7 +68,7 @@ fn exporter_to_string(expr: &Expr, ctx: &Runner, out: &mut String) {
             }
         }
 
-        Expr::BinaryOp {
+       /*  Expr::BinaryOp {
             left, right, op, ..
         } => {
             out.push('(');
@@ -77,7 +77,7 @@ fn exporter_to_string(expr: &Expr, ctx: &Runner, out: &mut String) {
             exporter_to_string(right, ctx, out);
             out.push(')');
         }
-
+ */
         Expr::BuiltInCall { function, args, .. } => {
             let _ = write!(out, "{}(", function);
             let mut first = true;

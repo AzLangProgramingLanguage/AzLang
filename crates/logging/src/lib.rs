@@ -10,3 +10,11 @@ pub fn validator_log(msg: &str) {
 pub fn translator_log(msg: &str) {
     println!("\x1b[34m[Kiçik bacı Tərcüməci]:\x1b[0m {}", msg);
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
+}

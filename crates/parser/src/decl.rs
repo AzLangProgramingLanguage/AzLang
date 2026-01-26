@@ -1,51 +1,37 @@
 use std::{borrow::Cow, rc::Rc};
 
-use crate::{errors::ParserError, shared_ast::Type};
-use peekmore::PeekMoreIterator;
-use tokenizer::tokens::{self, Token};
+use crate::{errors::ParserError, helpers::expect_token, shared_ast::Type, types::parse_type};
+use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
-use crate::{ast::Expr, expressions::parse_expression, types::parse_type};
+use crate::{ast::Expr, expressions::parse_expression};
 
-pub fn parse_decl<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
+pub fn parse_decl<'a>(
+    tokens: &mut Tokens,
     is_mutable: bool,
 ) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
 {
-    let mut typ = Type::Any;
-    let name: Cow<'a, str>;
-    match tokens.peek_nth(1) {
-        Some(Token::Operator(op)) if op == "=" => {
-            name = match tokens.next() {
-                Some(Token::Identifier(name)) => Cow::Borrowed(name.as_str()),
-                Some(other) => return Err(ParserError::DeclNameNotFound(other.clone())),
-                None => return Err(ParserError::DeclNameNotFound(Token::Eof)),
-            };
-        }
-        Some(Token::Identifier(s)) => {
-            typ = parse_type(tokens)?;
-            name = Cow::Borrowed(s.as_str());
-            tokens.next();
-        }
-        Some(other) => return Err(ParserError::DeclNameNotFound((*other).clone())),
-        None => return Err(ParserError::DeclAssignNotFound(Token::Eof)),
-    }
 
-    tokens.next();
-    let value_expr = parse_expression(tokens)?;
-    match tokens.peek() {
-        Some(Token::Newline) => {}
-        Some(other) => return Err(ParserError::UnexpectedToken((*other).clone())),
-        None => return Err(ParserError::UnexpectedEOF),
-    }
-    let value = Box::new(value_expr);
-    Ok(Expr::Decl {
-        name,
-        typ: Rc::new(typ),
-        value,
-        is_mutable,
-    })
+   let data_typ = parse_type(tokens)?;
+   let name = match tokens.next() {
+       Some(SpannedToken{ 
+           token: Token::Identifier(name),
+           span:_,
+           ..
+       }) => name,
+       Some(other) => return Err(ParserError::DeclNameNotFound(other.token)),
+       None => return Err(ParserError::DeclNameNotFound(Token::Eof)),
+   };
+   expect_token(tokens, Token::Assign)?;
+
+   let value = parse_expression(tokens)?;
+
+   Ok(Expr::Decl {
+    name: name.into(),
+    typ: Rc::new(data_typ),
+    value: Box::new(value),
+    is_mutable,
+})
+
 }
 
 pub fn is_primite_value_to_type<'a>(expr: &Expr<'a>) -> Type<'a> {

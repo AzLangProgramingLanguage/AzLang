@@ -42,7 +42,7 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
             let logic_ops = ["&&", "||"];
             let arithmetic_ops = ["+", "-", "*", "/", "%"];
 
-            if comparison_ops.contains(&op) || logic_ops.contains(&op) {
+          /*   if comparison_ops.contains(&op) || logic_ops.contains(&op) {
                 return Type::Bool;
             }
 
@@ -60,7 +60,7 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
                 } else {
                     return Type::Float;
                 }
-            }
+            } */
             Type::Any
         }
         Expr::Index {

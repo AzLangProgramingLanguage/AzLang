@@ -17,6 +17,7 @@ pub enum LexerError {
     CannotStartZeroNumber(SourceSpan, String),
     InCorrectSpaceSize,
     UnexpectedToken(SourceSpan, char),
+    UnknownOperator(SourceSpan,String),
 }
 
 impl Display for LexerError {
@@ -50,6 +51,9 @@ impl Display for LexerError {
                     span,
                     str
                 )
+            }
+            LexerError::UnknownOperator(span, str) => {
+                write!(f, "{} Uyğunluq olmayan operator \"{}\"", span, str)
             }
             
             LexerError::InCorrectSpaceSize => {

@@ -1,29 +1,22 @@
-use crate::{errors::ParserError, shared_ast::Type};
-use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
+use crate::{errors::ParserError};
+use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
-use crate::{ast::Expr, expressions::parse_single_expr, list::parse_list};
-
-pub fn skip_newlines<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<(), ParserError>
-where
-    I: Iterator<Item = &'a Token>,
+pub fn skip_newlines<'a>(tokens: &mut Tokens) -> Result<(), ParserError>
 {
-    while matches!(tokens.peek(), Some(Token::Newline)) {
+    while matches!(tokens.peek(), Some(SpannedToken{ token: Token::Newline, .. })) {
         tokens.next();
     }
     Ok(())
 }
 
-pub fn expect_token<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
+pub fn expect_token<'a>(
+    tokens: &mut Tokens,
     expected: Token,
 ) -> Result<(), ParserError>
-where
-    I: Iterator<Item = &'a Token>,
 {
     match tokens.next() {
-        Some(t) if *t == expected => Ok(()),
+        Some(SpannedToken{ token: t, .. }) if t == expected => Ok(()),
         None => Err(ParserError::UnexpectedEOF),
-        Some(other) => Err(ParserError::ExpectedToken(expected, other.clone())),
+        Some(other) => Err(ParserError::ExpectedToken(expected, other.token)),
     }
 }

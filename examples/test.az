@@ -1,1 +1,2 @@
-Çap(`  adas ${ 2 }  `)
+sabit ədəd a  = 3
+Çap(a)

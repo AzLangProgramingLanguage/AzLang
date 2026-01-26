@@ -3,17 +3,19 @@ pub mod literal_parse;
 pub mod builtin;
 pub mod template;
 pub mod binary_op;
+pub mod types;
+pub mod decl;
+pub mod list;
+
+pub mod helpers;
 /* 
 pub mod builtin;
 pub mod condition;
-pub mod decl;
 pub mod r#enum; */
 pub mod errors;
 mod expressions;
 /* pub mod function;
-pub mod helpers;
 pub mod identifier;
-pub mod list;
 
 pub mod r#loop;
 pub mod r#match;
@@ -23,7 +25,7 @@ pub mod shared_ast;
 pub mod structs; */
 /* 
  */mod tests;
-/* pub mod types;
+/* 
  *//* pub mod union; */
 use crate::expressions::parse_expression_block;
 use ast::Program;

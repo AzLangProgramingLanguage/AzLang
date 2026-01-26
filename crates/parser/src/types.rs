@@ -1,19 +1,16 @@
 use crate::{errors::ParserError, shared_ast::Type};
-use peekmore::PeekMoreIterator;
 use std::borrow::Cow;
-use tokenizer::tokens::Token;
+use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
-pub fn parse_type<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Type<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
+pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type<'a>, ParserError>
 {
     let token = match tokens.next() {
         Some(token) => token,
         None => return Err(ParserError::UnexpectedEOF),
     };
 
-    let typ = match token {
-        Token::Identifier(name) => Type::User(Cow::Borrowed(name)),
+    let typ = match token.token {
+        Token::Identifier(name) => Type::User(Cow::Owned(name)),
         Token::IntegerType => Type::Integer,
         Token::BigIntegerType => Type::BigInteger,
         Token::LowIntegerType => Type::LowInteger,
@@ -32,22 +29,22 @@ where
         Token::FloatType => Type::Float,
         Token::Array => {
             match tokens.next() {
-                Some(Token::Operator(op)) if op == "<" => {}
+                Some(SpannedToken{ token: Token::Less, ..})=> {}
                 None => return Err(ParserError::UnexpectedEOF),
-                Some(other) => return Err(ParserError::ArrayExpected('<', other.clone())),
+                Some(other) => return Err(ParserError::ArrayExpected('<', other.token)),
             }
 
             let inner_type = parse_type(tokens)?;
 
             match tokens.next() {
-                Some(Token::Operator(op)) if op == ">" => {}
+                Some(SpannedToken{ token: Token::Greater, ..})=> {}
                 None => return Err(ParserError::UnexpectedEOF),
-                Some(other) => return Err(ParserError::ArrayExpected('>', other.clone())),
+                Some(other) => return Err(ParserError::ArrayExpected('>', other.token)),
             }
 
             Type::Array(Box::new(inner_type))
         }
-        other => return Err(ParserError::UnexpectedToken(other.span,other.token)),
+        ref _other => return Err(ParserError::UnexpectedToken(token.span, token.token)),
     };
 
     Ok(typ)

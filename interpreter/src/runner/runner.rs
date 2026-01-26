@@ -83,13 +83,13 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             Expr::Void
         }
 
-        Expr::BinaryOp {
+     /*    Expr::BinaryOp {
             left,
             right,
             op,
             return_type,
         } => binary_op_runner(ctx, left, right, op, return_type),
-
+ */
         Expr::BuiltInCall {
             function,
             args,

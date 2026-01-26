@@ -106,6 +106,8 @@ impl fmt::Display for Token {
             Token::GreaterEqual => write!(f, ">="),
             Token::Less => write!(f, "<"),
             Token::LessEqual => write!(f, "<="),
+            Token::Assign => write!(f, "="),
+            Token::Not => write!(f, "!"),
         }
     }
 }

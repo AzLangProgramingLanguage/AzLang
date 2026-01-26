@@ -247,6 +247,34 @@ impl<'a> Lexer<'a> {
             content,
         ))
     }
+    fn read_operator(&mut self) -> Result<Token, LexerError> {
+        let ch = self.chars.next().unwrap();
+        match ch {
+            '+' => Ok(Token::Add),
+            '-' => Ok(Token::Subtract),
+            '*' => Ok(Token::Multiply),
+            '/' => Ok(Token::Divide),
+            '%' => Ok(Token::Modulo),
+            '>' => Ok(Token::Greater),
+            '<' => Ok(Token::Less),
+            '=' if self.chars.peek() == Some(&'=') => Ok(Token::Equal),
+            '=' => Ok(Token::Assign),
+            '!' if self.chars.peek() == Some(&'=') => Ok(Token::NotEqual),
+            '!' => Ok(Token::Not),
+            '&' if self.chars.peek() == Some(&'=') => Ok(Token::DoubleAnd),
+            '&' => Ok(Token::And),
+            '|' => Ok(Token::Or),
+            _ => return Err(LexerError::UnexpectedToken(
+                SourceSpan {
+                    line: self.line,
+                    end: self.end,
+                    start: self.start,
+                },
+                ch,
+            )),
+        }
+
+    }
     fn next_token(&mut self) -> Result<Token, LexerError> {
         if let Some(LexerMode::Template) = self.mode_stack.last() {
             return self.read_template_part();
@@ -285,15 +313,7 @@ impl<'a> Lexer<'a> {
             Some('_') => self.consume(Token::Underscore),
             Some('[') => self.consume(Token::ListStart),
             Some(']') => self.consume(Token::ListEnd),
-            Some('=') => self.consume(Token::Op('=')),
-            Some('/') => self.consume(Token::Op('/')),
-            Some('+') => self.consume(Token::Op('+')),
-            Some('-') => self.consume(Token::Op('-')),
-            Some('*') => self.consume(Token::Op('*')),
-            Some('%') => self.consume(Token::Op('%')),
-            Some('^') => self.consume(Token::Op('^')),
-            Some('>') => self.consume(Token::Op('>')),
-            Some('<') => self.consume(Token::Op('<')),
+            Some('=') | Some('/') | Some('*') | Some('%') | Some('^') | Some('>') | Some('<') | Some('+') | Some('-') => self.read_operator(),
             Some('0'..='9') => self.read_number(),
             Some('\'') | Some('"') => {
                 self.read_string()

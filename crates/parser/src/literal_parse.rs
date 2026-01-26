@@ -1,4 +1,3 @@
-use peekmore::PeekMoreIterator;
 use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
 use crate::{

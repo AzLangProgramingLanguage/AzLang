@@ -1,6 +1,5 @@
 use crate::{
-    ast::Expr, binary_op::parse_binary_op_expr, builtin::parse_builtin, errors::ParserError,
-    literal_parse::literals_parse, template::parse_template_string_expr,
+    ast::Expr, binary_op::parse_binary_op_expr, builtin::parse_builtin, decl::parse_decl, errors::ParserError, literal_parse::literals_parse, template::parse_template_string_expr
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -36,6 +35,7 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr<'a>>, 
 }
 
 pub fn parse_expression<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
+
     parse_binary_op_expr(tokens)
 }
 
@@ -43,6 +43,21 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
 
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
     match token {
+
+
+        SpannedToken {
+            token: Token::ConstantDecl,
+            ..
+        } => {
+           return parse_decl(tokens, false);   
+        }
+        SpannedToken {
+            token: Token::MutableDecl,
+            ..
+        } => {
+            return parse_decl(tokens, true);
+        }
+
         SpannedToken {
              token: Token::StringLiteral(_),
              ..
