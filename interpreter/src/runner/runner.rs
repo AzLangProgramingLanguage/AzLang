@@ -8,6 +8,7 @@ use std::rc::Rc;
 use parser::{ast::Expr, shared_ast::Type};
 
 pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a> {
+
     match expr {
         Expr::Decl {
             name,
@@ -36,13 +37,14 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             let body_rc = Rc::new(body);
             let params_rc = Rc::new(params);
             ctx.functions.insert(
-                name.to_string(),
+                name,
                 FunctionDef {
                     params: params_rc,
                     body: body_rc,
                     return_type: return_type.unwrap_or(Type::Any),
                 },
             );
+    
             Expr::Void
         }
         Expr::Return(value) => {
@@ -83,13 +85,13 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             Expr::Void
         }
 
-     /*    Expr::BinaryOp {
+         Expr::BinaryOp {
             left,
             right,
             op,
             return_type,
         } => binary_op_runner(ctx, left, right, op, return_type),
- */
+ 
         Expr::BuiltInCall {
             function,
             args,

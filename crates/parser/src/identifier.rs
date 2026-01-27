@@ -5,27 +5,60 @@ use crate::{
     errors::ParserError,
     expressions::{parse_expression, parse_single_expr},
     shared_ast::Type,
-    struct_init::parse_structs_init,
 };
-use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
+use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
-pub fn parse_identifier<'a, I>(
-    tokens: &mut PeekMoreIterator<I>,
-    s: &'a str,
+pub fn parse_identifier<'a>(
+    tokens: &mut Tokens,
+    s: String,
 ) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
 {
-    let expr = Expr::VariableRef {
-        name: Cow::Borrowed(s),
-        symbol: None,
-    };
-    let Some(peek) = tokens.peek() else {
-        return Ok(expr);
-    };
-    match peek {
-        Token::ListStart => {
+ 
+    match tokens.peek(){ 
+        Some(SpannedToken { token: Token::Assign, .. }) => {
+            tokens.next();
+            let value = parse_expression(tokens)?;
+
+            Ok(Expr::Assignment {
+                name: s.into(),
+                value: Box::new(value),
+                symbol: None,
+            })
+        }
+        Some(SpannedToken { token: Token::LParen, .. }) => {
+            tokens.next();
+            let mut args = Vec::new();
+            loop {
+                match tokens.peek() {
+                    Some(SpannedToken { token: Token::RParen, .. }) => {
+                        tokens.next();
+                        break;
+                    }
+                    Some(SpannedToken { token: Token::Comma, .. }) => {
+                        tokens.next();
+                    }
+                    None => return Err(ParserError::RParenNotFound(Token::Eof)),
+                    _ => {
+                        args.push(parse_single_expr(tokens)?);
+                    }
+                }
+            }
+
+            Ok(Expr::Call {
+                target: None,
+                name: s,
+                args,
+                returned_type: Some(Type::Void),
+            })
+        }
+        _ => return Ok(Expr::VariableRef {
+            name: Cow::Owned(s),
+            symbol: None,
+        })
+    }
+ 
+   /*  match peek {
+        SpannedToken { token: Token::ListStart, .. } => {
             tokens.next();
 
             let index_expr = parse_single_expr(tokens)?;
@@ -34,8 +67,8 @@ where
                 return Err(ParserError::ArrayNotClosed(Token::ListEnd));
             };
 
-            if *token != Token::ListEnd {
-                return Err(ParserError::ArrayNotClosed(token.clone()));
+            if token.token != Token::ListEnd {
+                return Err(ParserError::ArrayNotClosed(token.token));
             }
 
             Ok(Expr::Index {
@@ -45,7 +78,7 @@ where
             })
         }
 
-        Token::LParen => {
+        SpannedToken { token: Token::LParen, .. } => {
             tokens.next();
 
             let mut args = Vec::new();
@@ -132,5 +165,5 @@ where
         }
 
         _ => Ok(expr),
-    }
+    } */
 }

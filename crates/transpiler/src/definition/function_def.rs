@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub fn transpile_function_def<'a>(
-    name: &'a str,
+    name: String,
     params: Vec<Parameter<'a>>,
     body: Vec<Expr<'a>>,
     return_type: &Option<Type<'_>>,

@@ -598,26 +598,26 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
         }
-      /*   Expr::BinaryOp {
-            left,
-            right,
-            op,
-            return_type,
-        } => {
-            validate_expr(left, ctx)?;
-            validate_expr(right, ctx)?;
-            let typ = get_type(
-                &Expr::BinaryOp {
-                    left: Box::new(*left.clone()),
-                    right: Box::new(*right.clone()),
-                    op,
-                    return_type: Type::Any,
-                },
-                ctx,
-                None,
-            );
-            *return_type = typ;
-        } */
+      Expr::BinaryOp {
+        left,
+        right,
+        op,
+        return_type,
+    } => {
+        validate_expr(left, ctx)?;
+        validate_expr(right, ctx)?;
+        let typ = get_type(
+            &Expr::BinaryOp {
+                left: Box::new(*left.clone()),
+                right: Box::new(*right.clone()),
+                op: *op,
+                return_type: Type::Any,
+            },
+            ctx,
+            None,
+        );
+        *return_type = typ;
+    } 
         Expr::FunctionDef {
             name,
             params,
@@ -630,7 +630,7 @@ pub fn validate_expr<'a>(
             }
             ctx.current_function = Some(name.to_string());
 
-            let function = match ctx.functions.entry(Cow::Borrowed(name)) {
+            let function = match ctx.functions.entry(Cow::Owned(name.clone())) {
                 Entry::Occupied(_) => {
                     return Err(ValidatorError::FunctionAlreadyDefined(name.to_string()));
                 }

@@ -101,7 +101,7 @@ pub enum Expr<'a> {
     },
     Call {
         target: Option<Box<Expr<'a>>>,
-        name: &'a str,
+        name: String,
         args: Vec<Expr<'a>>,
         returned_type: Option<Type<'a>>,
     },
@@ -111,7 +111,7 @@ pub enum Expr<'a> {
         methods: Vec<MethodType<'a>>,
     },
     FunctionDef {
-        name: &'a str,
+        name: String,
         params: Vec<Parameter<'a>>,
         body: Vec<Expr<'a>>,
         return_type: Option<Type<'a>>,

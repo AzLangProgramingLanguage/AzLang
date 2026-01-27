@@ -44,9 +44,6 @@ pub fn parse_binary_op_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserE
             token: Token::Or,
             ..
         }) | Some(SpannedToken {
-            token: Token::Assign,
-            ..
-        }) | Some(SpannedToken {
             token: Token::GreaterEqual,
             ..
         }) | Some(SpannedToken {
@@ -149,7 +146,9 @@ fn parse_binary_op_with_precedence<'a>(
                 ..
             }) => Operation::LessEqual,
          
-            None | Some(_) => todo!()
+            None | Some(_) => {
+                break;
+            }
         };
         let precedence = operator_precedence(&op);
         if precedence < min_precedence {

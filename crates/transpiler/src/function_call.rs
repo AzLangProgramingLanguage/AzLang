@@ -5,7 +5,7 @@ use crate::{TranspileContext, transpile::transpile_expr};
 pub fn transpile_function_call<'a>(
     ctx: &mut TranspileContext<'a>,
     target: Option<Box<Expr<'a>>>,
-    name: &'a str,
+    name: String,
     args: Vec<Expr<'a>>,
     returned_type: Option<Type<'a>>,
 ) -> String {
@@ -16,7 +16,7 @@ pub fn transpile_function_call<'a>(
     }
     args_code.pop();
 
-    if let Some(function) = ctx.functions.get(name) {
+    if let Some(function) = ctx.functions.get(&name) {
         if function.is_used_try {
             return format!("try {name}({args_code})");
         } else {

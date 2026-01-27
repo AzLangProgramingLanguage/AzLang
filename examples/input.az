@@ -1,2 +1,2 @@
-sabit a = Giriş("A deyeri: ")
+sabit yazı a = Giriş("A deyeri: ")
 Çap(a)

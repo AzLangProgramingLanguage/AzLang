@@ -6,17 +6,14 @@ use crate::{
     shared_ast::Type,
     types::parse_type,
 };
-use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
+use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
-pub fn parse_function_def<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
+pub fn parse_function_def<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError>
 {
     let name = match tokens.next() {
-        Some(Token::Identifier(n)) => (*n).as_str(),
+        Some(SpannedToken { token: Token::Identifier(n), .. }) => n,
         None => return Err(ParserError::UnexpectedEOF),
-        Some(other) => return Err(ParserError::FunctionNameNotFound(other.clone())),
+        Some(SpannedToken { token: other, .. }) => return Err(ParserError::FunctionNameNotFound(other.clone())),
     };
 
     expect_token(tokens, Token::LParen)?;
@@ -24,34 +21,34 @@ where
     let mut params = Vec::new();
 
     while let Some(tok) = tokens.peek() {
-        match tok {
+        match &tok.token {
             Token::ConstantDecl | Token::MutableDecl | Token::Identifier(_) => {
-                let is_mutable = matches!(tok, Token::MutableDecl);
-                if matches!(tok, Token::MutableDecl | Token::ConstantDecl) {
+                let is_mutable = matches!(tok.token, Token::MutableDecl);
+                if matches!(tok.token, Token::MutableDecl | Token::ConstantDecl) {
                     tokens.next();
                 }
 
                 let param_name = match tokens.next() {
-                    Some(Token::Identifier(s)) => (*s).as_str().to_string(),
+                    Some(SpannedToken { token: Token::Identifier(s), .. }) => s,
                     other => {
-                        return Err(ParserError::ParameterNameNotFound(other.unwrap().clone()));
+                        return Err(ParserError::ParameterNameNotFound(other.unwrap().token));
                     }
                 };
 
                 let mut param_type = Type::Any;
 
                 match tokens.peek() {
-                    Some(Token::Comma) => {
+                    Some(SpannedToken { token: Token::Comma, .. }) => {
                         tokens.next();
                     }
-                    Some(Token::Colon) => {
+                    Some(SpannedToken { token: Token::Colon, .. }) => {
                         tokens.next();
                         param_type = parse_type(tokens)?;
                     }
-                    Some(Token::RParen) => break,
+                    Some(SpannedToken { token: Token::RParen, .. }) => break,
                     None => return Err(ParserError::UnexpectedEOF),
-                    Some(other) => {
-                        return Err(ParserError::ParameterNotExpected((*other).clone()));
+                    Some(SpannedToken { token: other, .. }) => {
+                        return Err(ParserError::ParameterNotExpected(other.clone()));
                     }
                 }
 
@@ -69,10 +66,9 @@ where
 
             Token::RParen => break,
 
-            other => return Err(ParserError::RParenNotFound((*other).clone())),
+            other => return Err(ParserError::RParenNotFound(other.clone())),
         }
     }
-
     expect_token(tokens, Token::RParen)?;
     expect_token(tokens, Token::Colon)?;
 
@@ -84,7 +80,7 @@ where
     let mut body = Vec::new();
 
     while let Some(tok) = tokens.peek() {
-        match tok {
+        match tok.token {
             Token::Dedent => {
                 tokens.next();
                 break;

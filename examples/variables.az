@@ -1,4 +1,4 @@
-dəyişən a = 5
+dəyişən ədəd a = 5
 Çap(a)
 a = 2
 Çap(`yeni a dəyəri: ${a} `)

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use parser::{ast::Expr, shared_ast::Type};
+use parser::{ast::{Expr, Operation}, shared_ast::Type};
 
 use crate::{ValidatorContext, errors::ValidatorError, validate::validate_expr};
 
@@ -71,7 +71,7 @@ pub fn get_type<'a>(
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
         Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
-/*         Expr::BinaryOp {
+        Expr::BinaryOp {
             left,
             right,
             op,
@@ -80,19 +80,19 @@ pub fn get_type<'a>(
             let left_type = get_type(left, ctx, typ);
             let right_type = get_type(right, ctx, typ);
             let last_type: Type<'_> = match *op {
-                "==" | "!=" | "<" | "<=" | ">" | ">=" => {
+                Operation::Equal | Operation::NotEqual | Operation::Less | Operation::LessEqual | Operation::Greater | Operation::GreaterEqual => {
                     if left_type != right_type {
                         return Type::Bool;
                     }
                     Type::Bool
                 }
-                "&&" | "||" => {
+                Operation::And | Operation::Or => {
                     if left_type != Type::Bool || right_type != Type::Bool {
                         return Type::Bool;
                     }
                     Type::Bool
                 }
-                "*" | "/" | "%" | "+" | "-" => match (left_type, right_type) {
+                Operation::Add | Operation::Subtract | Operation::Multiply | Operation::Divide | Operation::Modulo => match (left_type, right_type) {
                     (Type::Integer, Type::Integer) => Type::Integer,
                     (Type::Natural, Type::Natural) => Type::Natural,
                     (Type::Float, Type::Float) => Type::Float,
@@ -103,7 +103,7 @@ pub fn get_type<'a>(
                 _ => Type::Any,
             };
             last_type
-        } */
+        } 
         _ => Type::Any,
     }
 }
