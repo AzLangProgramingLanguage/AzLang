@@ -1,4 +1,6 @@
 dəyişən ədəd a = 3
 a = 2
 Çap(a)
+sabit siyahı<ədəd> s = [1,2,3,4,5]
+Çap(s)
 

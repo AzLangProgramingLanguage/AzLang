@@ -184,12 +184,15 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
             token: Token::FunctionDef,
             ..
         } => parse_function_def(tokens),
+        SpannedToken {
+            token: Token::ListStart,
+            span,
+        } => literals_parse(SpannedToken { token: Token::ListStart, span }, tokens),
 
         /*
         Token::This => parse_identifier(tokens, "self"),
         Token::Object => parse_struct_def(tokens),
         Token::Enum => parse_enum_decl(tokens),
-        Token::ListStart => literals_parse(token, tokens),
         Token::Match => parse_match(tokens),
         Token::Operator(op) if op == "-" => Ok(Expr::UnaryOp {
             op,

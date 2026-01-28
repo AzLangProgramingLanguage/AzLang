@@ -211,9 +211,8 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> &'static str {
         Type::ZigConstArray => "[]const usize",
         Type::Bool => "bool",
         Type::Array(inner) => {
-            /*  let inner_str = map_type(inner, is_const);
-            inner_str */
-            ""
+            let inner_str = map_type(inner, is_const);
+            inner_str
         }
         Type::User(_) => "any",
         Type::Allocator => "std.mem.Allocator",

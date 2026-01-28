@@ -30,12 +30,12 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
             returned_type,
         } => transpile_function_call(ctx, target, name, args, returned_type),
 
-      /*   Expr::BinaryOp {
+        Expr::BinaryOp {
             left,
             right,
             op,
             return_type,
-        } => transpile_binary_op(ctx, left, right, op, return_type), */
+        } => transpile_binary_op(ctx, left, right, op, return_type), 
         Expr::Decl {
             name,
             typ,

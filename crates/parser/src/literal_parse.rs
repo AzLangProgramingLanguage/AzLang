@@ -1,8 +1,7 @@
 use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
 use crate::{
-    ast::Expr, errors::ParserError, expressions::parse_single_expr, /* list::parse_list */
-    shared_ast::Type,
+    ast::Expr, errors::ParserError, expressions::parse_single_expr, list::parse_list, shared_ast::Type
 };
 
 pub fn literals_parse<'a>(
@@ -14,8 +13,7 @@ pub fn literals_parse<'a>(
          Token::StringLiteral(s) => return Ok(Expr::String(s)),
         Token::Number(num) => return Ok(Expr::Number(num)),
         Token::Float(num) => return Ok(Expr::Float(num)),
-/*         Token::ListStart => parse_list(tokens),
- */        /* TODO: Buraya baxarsan çünki literal parse etmesi lazım  */
+        Token::ListStart => return Ok(parse_list(tokens)),
         _ => return Err(ParserError::UnexpectedToken(token.span,token.token)),
     };
 
