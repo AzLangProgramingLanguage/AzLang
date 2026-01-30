@@ -1,62 +1,67 @@
 const std = @import("std");
 
-fn isString(comptime T: type) bool {
-    const info = @typeInfo(T);
-    if (T == []u8 or T == []const u8) return true;
-    if (info == .pointer) {
-        const child = info.pointer.child;
-        const child_info = @typeInfo(child);
-        if (child_info == .array and child_info.array.child == u8) return true;
-    }
-    return false;
+pub fn to_string(
+    comptime T: type,
+    allocator: std.mem.Allocator,
+    value: T,
+) ![]u8 {
+    return switch (@typeInfo(T)) {
+        .int, .float => std.fmt.allocPrint(allocator, "{d}", .{value}),
+        .bool => std.fmt.allocPrint(allocator, "{s}", .{if (value) "true" else "false"}),
+        .array => |a| if (a.child == u8)
+            std.fmt.allocPrint(allocator, "{s}", .{value})
+        else
+            arrayVisit(T, allocator, value),
+        .pointer => |p| switch (@typeInfo(p.child)) {
+            .array => |a| if (a.child == u8)
+                std.fmt.allocPrint(allocator, "{s}", .{value})
+            else
+                arrayVisit(T, allocator, value),
+            else => arrayVisit(T, allocator, value),
+        },
+        else => std.fmt.allocPrint(allocator, "<unsupported>", .{}),
+    };
 }
 
-pub fn to_string(allocator: std.mem.Allocator, value: anytype) ![]u8 {
-    const T = @TypeOf(value);
-    const info = @typeInfo(T);
-    
-    if (comptime isString(T)) {
-        return std.fmt.allocPrint(allocator, "{s}", .{value});
+fn arrayVisit(
+    comptime T: type,
+    allocator: std.mem.Allocator,
+    value: T,
+) ![]u8 {
+    var list = std.array_list.Aligned(u8, null).empty;
+    defer list.deinit(allocator);
+
+    try list.append(allocator, '[');
+    for (value, 0..) |val, i| {
+        if (i != 0)
+            try list.appendSlice(allocator, ",");
+        const s = try to_string(@TypeOf(val), allocator, val);
+        defer allocator.free(s);
+        try list.appendSlice(allocator, s);
     }
-    
-    if (info == .array or info == .pointer) {
-        const List = std.ArrayList(u8);
-        var list = List.init(allocator);
-        defer list.deinit();
-        
-        try list.append('[');
-        for (value, 0..) |item, i| {
-            const item_str = try to_string(allocator, item);
-            defer allocator.free(item_str);
-            try list.appendSlice(item_str);
-            if (i < value.len - 1) {
-                try list.appendSlice(", ");
-            }
-        }
-        try list.append(']');
-        return try list.toOwnedSlice();
-    }
-    
-    return std.fmt.allocPrint(allocator, "{any}", .{value});
+    try list.append(allocator, ']');
+
+    return list.toOwnedSlice(allocator);
 }
 
 test "to_string: tam ədədlər" {
     const allocator = std.testing.allocator;
-    const result = try to_string(allocator, 42);
+    const result = try to_string(u8, allocator, 42);
     defer allocator.free(result);
     try std.testing.expectEqualStrings("42", result);
 }
 
 test "to_string: stringlər olduğu kimi" {
     const allocator = std.testing.allocator;
-    const result = try to_string(allocator, "Salam");
+    const result = try to_string(@TypeOf("Salam"), allocator, "Salam");
     defer allocator.free(result);
     try std.testing.expectEqualStrings("Salam", result);
 }
 
 test "to_string: array testi" {
     const allocator = std.testing.allocator;
-    const result = try to_string(allocator, [_]i32{ 1, 2, 3 });
+    const result = try to_string([3]i32, allocator, [_]i32{ 1, 2, 3 });
     defer allocator.free(result);
-    try std.testing.expectEqualStrings("[1, 2, 3]", result);
+    try std.testing.expectEqualStrings("[1,2,3]", result);
 }
+
