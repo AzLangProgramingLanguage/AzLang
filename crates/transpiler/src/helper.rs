@@ -42,7 +42,7 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
             let logic_ops = ["&&", "||"];
             let arithmetic_ops = ["+", "-", "*", "/", "%"];
 
-          /*   if comparison_ops.contains(&op) || logic_ops.contains(&op) {
+            /*   if comparison_ops.contains(&op) || logic_ops.contains(&op) {
                 return Type::Bool;
             }
 
@@ -146,7 +146,7 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
         }
         Type::Allocator => "",
         Type::Any => "{any}",
-        Type::Array(_) => "{any}",
+        Type::Array(_) => "{s}",
         Type::User(_) => {
             if is_allocator {
                 "{!any}"
@@ -244,6 +244,7 @@ pub fn is_primite_value(expr: &Expr) -> bool {
             | Expr::Char(_)
             | Expr::String(_)
             | Expr::UnaryOp { .. }
+            | Expr::List(..)
     )
 }
 

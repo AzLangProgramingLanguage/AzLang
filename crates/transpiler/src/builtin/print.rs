@@ -1,4 +1,7 @@
-use parser::{ast::Expr, ast::TemplateChunk};
+use parser::{
+    ast::{Expr, TemplateChunk},
+    shared_ast::Type,
+};
 
 use crate::{
     TranspileContext,
@@ -38,10 +41,22 @@ pub fn transpile_print<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
                     transpile_expr(expr, ctx)
                 )
             } else {
-                format!(
-                    "std.debug.print(\"{{}}\\n\",.{{{}}})",
-                    transpile_expr(expr, ctx)
-                )
+                let typ = get_expr_type(&expr);
+                let transpiled = transpile_expr(expr, ctx);
+                ctx.add_import("  const to_string = @import(\"to_string.zig\").to_string; ");
+                if matches!(typ, Type::Array(_)) {
+                    ctx.needs_allocator = true;
+                    format!(
+                        "std.debug.print(\"{{s}}\\n\",.{{ (try to_string(@TypeOf({}),allocator,{})) }})",
+                        transpiled, transpiled
+                    )
+                } else {
+                    format!(
+                        "std.debug.print(\"{}\\n\",.{{{}}})",
+                        get_format_str_from_type(&typ, false),
+                        transpiled
+                    )
+                }
             }
         }
     }

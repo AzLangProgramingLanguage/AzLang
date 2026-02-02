@@ -1,13 +1,12 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, hash_map::Entry},
-    ops::Deref,
     rc::Rc,
 };
 
 use logging::validator_log;
 use parser::{
-    ast::{Expr, Parameter, Symbol, TemplateChunk},
+    ast::{Expr, Symbol, TemplateChunk},
     shared_ast::{BuiltInFunction, Type},
 };
 
@@ -43,7 +42,7 @@ pub fn validate_expr<'a>(
                 *typ = Rc::new(inferred);
             } else if inferred != **typ {
                 if inferred == Type::LiteralString && **typ == Type::String {
-                    *typ = Rc::new(Type::String);
+                    *typ = Rc::new(Type::LiteralString);
                 } else {
                     return Err(ValidatorError::DeclTypeMismatch {
                         name: name.to_string(),
@@ -598,26 +597,26 @@ pub fn validate_expr<'a>(
                 _ => {}
             }
         }
-      Expr::BinaryOp {
-        left,
-        right,
-        op,
-        return_type,
-    } => {
-        validate_expr(left, ctx)?;
-        validate_expr(right, ctx)?;
-        let typ = get_type(
-            &Expr::BinaryOp {
-                left: Box::new(*left.clone()),
-                right: Box::new(*right.clone()),
-                op: *op,
-                return_type: Type::Any,
-            },
-            ctx,
-            None,
-        );
-        *return_type = typ;
-    } 
+        Expr::BinaryOp {
+            left,
+            right,
+            op,
+            return_type,
+        } => {
+            validate_expr(left, ctx)?;
+            validate_expr(right, ctx)?;
+            let typ = get_type(
+                &Expr::BinaryOp {
+                    left: Box::new(*left.clone()),
+                    right: Box::new(*right.clone()),
+                    op: *op,
+                    return_type: Type::Any,
+                },
+                ctx,
+                None,
+            );
+            *return_type = typ;
+        }
         Expr::FunctionDef {
             name,
             params,

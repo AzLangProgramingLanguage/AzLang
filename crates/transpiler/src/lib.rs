@@ -41,12 +41,13 @@ pub struct TranspileContext<'a> {
     pub is_find_method: bool,
     pub used_sum_fn: bool,
     pub used_split_n_fn: bool,
+
+    pub needs_allocator: bool,
     pub used_split_auto_fn: bool,
     pub used_split_alloc_fn: bool,
     /*     pub is_used_allocator: bool,
     pub current_struct: Option<&'a str>,
     pub current_union: Option<&'a str>,
-    pub needs_allocator: bool,
     pub uses_stdout: bool,
     pub used_min_fn: bool,
     pub used_max_fn: bool,
@@ -77,10 +78,10 @@ impl<'a> TranspileContext<'a> {
             used_split_n_fn: false,
             used_split_auto_fn: false,
             used_split_alloc_fn: false,
+            needs_allocator: false,
             /*  is_used_allocator: false,
             current_struct: None,
             current_union: None,
-            needs_allocator: false,
 
             used_split_alloc_fn: false,
             enum_defs: HashMap::new(),
@@ -99,9 +100,9 @@ impl<'a> TranspileContext<'a> {
         }
     }
     pub fn transpile(&mut self, program: Program<'a>) -> String {
-        let imports = codegen::prelude::generate_imports(self);
         let mut main_body = String::new();
         let mut defs = String::new();
+        let mut top_levels = String::new();
 
         for expr in program.expressions {
             match expr {
@@ -150,7 +151,16 @@ impl<'a> TranspileContext<'a> {
         }
 
         let utils = codegen::utils_fn::generate_util_functions(self);
+        if self.needs_allocator {
+            top_levels.push_str(
+                "     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
 
+    const allocator = arena.allocator(); ",
+            );
+        }
+
+        let imports = codegen::prelude::generate_imports(self);
         return format!(
             r#"{imports}
 
@@ -158,6 +168,7 @@ impl<'a> TranspileContext<'a> {
 {utils}
 
 pub fn main() !void {{
+{top_levels}
 {main_body}}}
 "#,
         );
