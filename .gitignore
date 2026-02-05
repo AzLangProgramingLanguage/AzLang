@@ -3,3 +3,5 @@ target/*
 target
 program.
 diff.txt
+zig-cache/
+.zig-cache/

@@ -10,7 +10,7 @@ use crate::{
     },
     declaration::variable_decl::transpile_decl,
     function_call::transpile_function_call,
-    helper::{get_expr_type, is_semicolon_needed, map_type, transpile_body},
+    helper::{get_expr_type, map_type, transpile_body},
 };
 
 pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
@@ -69,6 +69,7 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
         } => match function {
             BuiltInFunction::Print => transpile_print(args.remove(0), ctx),
             BuiltInFunction::Sum => transpile_sum(&mut args, ctx),
+            BuiltInFunction::Input => transpile_input(args.remove(0), ctx),
 
             BuiltInFunction::Min => transpile_min(&mut args, ctx),
             BuiltInFunction::Max => transpile_max(&mut args, ctx),

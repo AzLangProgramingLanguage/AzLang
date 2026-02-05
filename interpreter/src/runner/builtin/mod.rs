@@ -21,17 +21,17 @@ pub fn builthin_call_runner<'a>(
 ) -> Expr<'a> {
     match function {
         BuiltInFunction::Print => {
-            println!(
-                "{}",
-                print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx)
-            );
+            let output = print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx);
+            ctx.output.push_str(&output);
+
+            println!("{}", output);
             Expr::Void
         }
         BuiltInFunction::LastWord => {
-            println!(
-                "{}",
-                print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx)
-            );
+            let output = print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx);
+            ctx.output.push_str(&output);
+
+            println!("{}", output);
             std::process::exit(1);
         }
         BuiltInFunction::Input => {

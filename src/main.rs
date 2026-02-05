@@ -8,7 +8,8 @@ fn main() {
     parser_log("İşə Başlayıram");
     match command {
         Commands::Run { binary } => {
-            if let Err(e) = interpreter(&binary) {
+            let mut output = String::new();
+            if let Err(e) = interpreter(&binary, &mut output) {
                 error(e.to_string().as_str());
             }
         }

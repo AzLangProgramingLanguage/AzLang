@@ -53,16 +53,18 @@ pub struct Runner<'a> {
     functions: HashMap<String, FunctionDef<'a>>,
     uniontypes: HashMap<String, UnionType<'a>>,
     current_return: Expr<'a>,
+    output: &'a mut String,
 }
 
 impl<'a> Runner<'a> {
-    pub fn new() -> Self {
+    pub fn new(output: &'a mut String) -> Self {
         Self {
             variables: HashMap::new(),
             structdefs: HashMap::new(),
             functions: HashMap::new(),
             uniontypes: HashMap::new(),
             current_return: Expr::Void,
+            output,
         }
     }
 
