@@ -218,7 +218,6 @@ impl<'a> Lexer<'a> {
                     }
                     self.chars.next();
                     self.mode_stack.pop();
-                    println!("Hii 2 {}", ch);
                     return Ok(Token::Backtick);
                 }
                 '$' => {
@@ -264,16 +263,17 @@ impl<'a> Lexer<'a> {
             '&' if self.chars.peek() == Some(&'=') => Ok(Token::DoubleAnd),
             '&' => Ok(Token::And),
             '|' => Ok(Token::Or),
-            _ => return Err(LexerError::UnexpectedToken(
-                SourceSpan {
-                    line: self.line,
-                    end: self.end,
-                    start: self.start,
-                },
-                ch,
-            )),
+            _ => {
+                return Err(LexerError::UnexpectedToken(
+                    SourceSpan {
+                        line: self.line,
+                        end: self.end,
+                        start: self.start,
+                    },
+                    ch,
+                ));
+            }
         }
-
     }
     fn next_token(&mut self) -> Result<Token, LexerError> {
         if let Some(LexerMode::Template) = self.mode_stack.last() {
@@ -286,7 +286,7 @@ impl<'a> Lexer<'a> {
             Err(e) => return Err(e),
         }
         let char = self.chars.peek();
-        
+
         let token = match char {
             Some('`') => {
                 self.chars.next();
@@ -306,18 +306,17 @@ impl<'a> Lexer<'a> {
             Some(')') => self.consume(Token::RParen),
             Some(':') => self.consume(Token::Colon),
             Some(',') => self.consume(Token::Comma),
-            
+
             Some('{') => self.consume(Token::LBrace),
             Some('.') => self.consume(Token::Dot),
             Some('}') => self.consume(Token::RBrace),
             Some('_') => self.consume(Token::Underscore),
             Some('[') => self.consume(Token::ListStart),
             Some(']') => self.consume(Token::ListEnd),
-            Some('=') | Some('/') | Some('*') | Some('%') | Some('^') | Some('>') | Some('<') | Some('+') | Some('-') => self.read_operator(),
+            Some('=') | Some('/') | Some('*') | Some('%') | Some('^') | Some('>') | Some('<')
+            | Some('+') | Some('-') => self.read_operator(),
             Some('0'..='9') => self.read_number(),
-            Some('\'') | Some('"') => {
-                self.read_string()
-            },
+            Some('\'') | Some('"') => self.read_string(),
             Some(_) => self.read_word(),
             None => Ok(Token::Eof),
         };
@@ -325,7 +324,6 @@ impl<'a> Lexer<'a> {
         token
     }
 }
-
 
 #[cfg(test)]
 mod tests;

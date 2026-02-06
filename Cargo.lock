@@ -213,6 +213,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tests"
+version = "0.1.0"
+
+[[package]]
 name = "tokenizer"
 version = "0.1.0"
 dependencies = [

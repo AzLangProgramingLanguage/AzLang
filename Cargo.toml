@@ -3,7 +3,7 @@ members = [
     "crates/logging",
     "crates/cli",
     "interpreter",
-    "compiler",
+    "compiler", "crates/tests",
 ]
 
 [package]

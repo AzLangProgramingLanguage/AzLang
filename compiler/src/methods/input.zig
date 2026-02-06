@@ -14,7 +14,7 @@ var output_buf: [1024]u8 = undefined;
 var stdout_writer = std.fs.File.stdout().writer(&output_buf);
 const stdout = &stdout_writer.interface;
 
-fn ask_user(reader: *std.Io.Reader, writer: *std.Io.Writer) !i64 {
+fn input(reader: *std.Io.Reader, writer: *std.Io.Writer) !i64 {
     try writer.print("A number please: ", .{});
     try writer.flush();
 
@@ -25,10 +25,9 @@ fn ask_user(reader: *std.Io.Reader, writer: *std.Io.Writer) !i64 {
 }
 
 pub fn main() !void {
-    const value = try ask_user(stdin, stdout);
+    const value = try input(stdin, stdout);
 
     try stdout.print("You wrote: {d}\n", .{value});
     // don't forget to flush
     try stdout.flush();
 }
-

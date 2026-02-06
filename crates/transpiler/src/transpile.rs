@@ -4,6 +4,7 @@ use crate::{
     TranspileContext,
     binary_op::transpile_binary_op,
     builtin::{
+        input::transpile_input,
         min_max::{transpile_max, transpile_min},
         print::transpile_print,
         sum::transpile_sum,

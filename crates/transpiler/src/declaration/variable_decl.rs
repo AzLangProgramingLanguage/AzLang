@@ -12,30 +12,42 @@ pub fn transpile_decl<'a>(
 ) -> String {
     let type_str = map_type(&typ, !is_mutable);
 
-    match &value { 
+    match &value {
         Expr::List(items) => {
-         let value_code: String = transpile_expr(value.clone(), ctx);
+            let value_code: String = transpile_expr(value.clone(), ctx);
 
             let decl_code = if is_mutable {
-                format!("var {}: [{}]{} = {}", name,items.len(), type_str, value_code)
+                format!(
+                    "var {}: [{}]{} = {}",
+                    name,
+                    items.len(),
+                    type_str,
+                    value_code
+                )
             } else {
-                format!("const {}: [{}]{} = {}", name, items.len(), type_str, value_code)
+                format!(
+                    "const {}: [{}]{} = {}",
+                    name,
+                    items.len(),
+                    type_str,
+                    value_code
+                )
             };
-        
-            decl_code 
+
+            decl_code
         }
+
         _ => {
             let value_code: String = transpile_expr(value, ctx);
-                let decl_code = if is_mutable {
-                    format!("var {}: {} = {}", name, type_str, value_code)
-                } else {
-                    format!("const {}: {} = {}", name, type_str, value_code)
-                };
-            
-                decl_code
+            let decl_code = if is_mutable {
+                format!("var {}: {} = {}", name, type_str, value_code)
+            } else {
+                format!("const {}: {} = {}", name, type_str, value_code)
+            };
+
+            decl_code
         }
     }
-  
 }
 
 /*   let decl_code = match typ {
