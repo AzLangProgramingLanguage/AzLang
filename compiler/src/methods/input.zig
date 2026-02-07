@@ -1,33 +1,49 @@
-// Source - https://stackoverflow.com/a/79817054
-// Posted by spicy.dll, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-02-05, License - CC BY-SA 4.0
-
 const std = @import("std");
 
-var input_buf: [1024]u8 = undefined;
-var stdin_reader = std.fs.File.stdin().reader(&input_buf);
-
-const stdin = &stdin_reader.interface;
-
-// Same goes for stdout
-var output_buf: [1024]u8 = undefined;
-var stdout_writer = std.fs.File.stdout().writer(&output_buf);
-const stdout = &stdout_writer.interface;
-
-fn input(reader: *std.Io.Reader, writer: *std.Io.Writer) !i64 {
-    try writer.print("A number please: ", .{});
-    try writer.flush();
-
-    // Reads data into input_buf and returns a slice to it
-    // This slice is only valid until the next "peek" operation (take does a peek)
-    const line = try reader.takeDelimiterExclusive('\n');
-    return std.fmt.parseInt(i64, line, 10);
-}
-
 pub fn main() !void {
-    const value = try input(stdin, stdout);
+    // 1. allocate a buffer for stdin reads
+    var stdin_buffer: [512]u8 = undefined;
 
-    try stdout.print("You wrote: {d}\n", .{value});
-    // don't forget to flush
-    try stdout.flush();
+    // 2. get a reader for stdin, backed by our stdin buffer
+    var stdin_reader_wrapper = std.fs.File.stdin().reader(&stdin_buffer);
+    const reader: *std.Io.Reader = &stdin_reader_wrapper.interface;
+
+    // 3. allocate a buffer for stdout writes
+    var stdout_buffer: [512]u8 = undefined;
+
+    // 4. get a writer for stdout operations, backed by our stdout buffer
+    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
+    const stdout: *std.Io.Writer = &stdout_writer.interface;
+
+    // 5. prompt the user
+    try stdout.writeAll("Type something: ");
+    try stdout.flush(); // try commenting this out, notice the "Type something:" prompt won't appear, but you'll still be able to type something and hit enter, upon which it will appear
+
+    // 6. read lines (delimiter = '\n')
+    while (reader.takeDelimiterExclusive('\n')) |line| {
+        // need to toss the delimiter explicitly since we're not reading it
+        reader.toss(1);
+        // `line` is a slice of bytes (excluding the delimiter)
+        // do whatever you want with it
+
+        try stdout.writeAll("You typed: ");
+        try stdout.print("{s}", .{line});
+        try stdout.writeAll("\n...\n");
+        try stdout.writeAll("Type something: ");
+
+        try stdout.flush();
+    } else |err| switch (err) {
+        error.EndOfStream => {
+            // reached end
+            // the normal case
+        },
+        error.StreamTooLong => {
+            // the line was longer than the internal buffer
+            return err;
+        },
+        error.ReadFailed => {
+            // the read failed
+            return err;
+        },
+    }
 }

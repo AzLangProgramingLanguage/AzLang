@@ -1,4 +1,5 @@
 use std::fs;
+mod asda;
 
 pub fn methods_string() -> String {
     // Bu makro, dosya yolunu bu .rs dosyasının konumuna göre hesaplar
