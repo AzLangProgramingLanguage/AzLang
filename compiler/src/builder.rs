@@ -22,7 +22,7 @@ const WHITE: &str = "\x1b[97m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
 
-pub fn build(rust_file: &str, output_file: &str) -> Result<(), CompilerError> {
+pub fn build(zig_file: &str, output_file: &str) -> Result<(), CompilerError> {
     let parent_dir = Path::new(output_file)
         .parent()
         .unwrap_or_else(|| Path::new("."));
@@ -39,7 +39,7 @@ pub fn build(rust_file: &str, output_file: &str) -> Result<(), CompilerError> {
     let zig_path = get_zig_path();
     let compile_status = Command::new(zig_path)
         .arg("build-exe")
-        .arg(rust_file)
+        .arg(zig_file)
         .arg(format!("-femit-bin={}", output_path.to_str().unwrap()))
         .status();
     match compile_status {

@@ -7,6 +7,7 @@ use validator::errors::ValidatorError;
 #[derive(Debug)]
 pub enum CompilerError {
     Io(FileSystem),
+    FileError(String),
     BuildError,
     Parser(ParserError),
     Lexer(LexerError),
@@ -16,6 +17,7 @@ pub enum CompilerError {
 impl fmt::Display for CompilerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            CompilerError::FileError(e) => write!(f, "{}", e),
             CompilerError::Io(e) => write!(f, "{}", e),
             CompilerError::BuildError => write!(f, "❌ Kompilyasiya xətası"),
             CompilerError::Lexer(e) => write!(f, "Böyük Qardaş: {}", e),

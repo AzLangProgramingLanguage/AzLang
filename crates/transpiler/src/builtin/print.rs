@@ -43,7 +43,9 @@ pub fn transpile_print<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             } else {
                 let typ = get_expr_type(&expr);
                 let transpiled = transpile_expr(expr, ctx);
-                ctx.add_import("  const to_string = @import(\"to_string.zig\").to_string; ");
+                ctx.add_import(
+                    "  const to_string = @import(\"./dependencies/to_string.zig\").to_string; ",
+                );
                 if matches!(typ, Type::Array(_)) {
                     ctx.needs_allocator = true;
                     format!(

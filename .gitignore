@@ -2,6 +2,8 @@ Cargo.lock
 target/*
 target
 program.
+bin
+bin/*
 diff.txt
 zig-cache/
 .zig-cache/
