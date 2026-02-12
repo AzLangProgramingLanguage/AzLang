@@ -3,13 +3,13 @@ const c = @cImport({
     @cInclude("stdio.h");
 });
 
-pub fn main() void {
-    var isim: [100]u8 = undefined;
-
-    _ = c.printf("Adınızı yazın: ");
-    _ = c.scanf("%s", &isim);
-
-    const temiz_isim = std.mem.span(@as([*c]u8, &isim));
-    
-    std.debug.print("Merhaba: {s}\n", .{temiz_isim});
+pub fn input(allocator: std.mem.Allocator) ![]u8 {
+    var c_ptr: [*c]u8 = null; 
+    const result = c.scanf("%s",&c_ptr);
+    if(result==-1) return error.InputFailed;
+    if(c_ptr==null) return error.OutOfMemory;
+    const span = std.mem.span(c_ptr);
+    const zig_slice = try allocator.dupe(u8,span);
+    c.free(c_ptr);
+    return zig_slice;
 }
