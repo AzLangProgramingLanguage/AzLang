@@ -2,22 +2,23 @@ pub mod ast;
 pub mod binary_op;
 pub mod builtin;
 pub mod decl;
+pub mod function;
 pub mod helpers;
 pub mod identifier;
 pub mod list;
 pub mod literal_parse;
+pub mod r#loop;
 pub mod template;
 pub mod types;
-pub mod function;
 /*
 pub mod builtin;
 pub mod condition;
 pub mod r#enum; */
 pub mod errors;
 mod expressions;
-/* 
+/*
 
-pub mod r#loop;
+
 pub mod r#match;
 pub mod method; */
 pub mod shared_ast;

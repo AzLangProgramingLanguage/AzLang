@@ -1,6 +1,3 @@
-dəyişən yazı a = "Salam"
-a = "Sa"
-Çap(a)
-sabit siyahı<ədəd> s = [1,2,3,4,5]
-Çap(s)
+sabit yazı a = "Salam"
+
 

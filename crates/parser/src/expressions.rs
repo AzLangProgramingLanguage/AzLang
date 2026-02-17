@@ -1,5 +1,5 @@
 use crate::{
-    ast::Expr, binary_op::parse_binary_op_expr, builtin::parse_builtin, decl::parse_decl, errors::ParserError, function::parse_function_def, identifier::parse_identifier, literal_parse::literals_parse, template::parse_template_string_expr
+    ast::Expr, binary_op::parse_binary_op_expr, builtin::parse_builtin, decl::parse_decl, errors::ParserError, function::parse_function_def, identifier::parse_identifier, literal_parse::literals_parse, r#loop::parse_loop, template::parse_template_string_expr
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -188,8 +188,13 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
             token: Token::ListStart,
             span,
         } => literals_parse(SpannedToken { token: Token::ListStart, span }, tokens),
-
+SpannedToken {
+            token: Token::Loop,
+            ..
+        } => parse_loop(tokens),
+               
         /*
+        Token::Type => parse_union_type(tokens),
         Token::This => parse_identifier(tokens, "self"),
         Token::Object => parse_struct_def(tokens),
         Token::Enum => parse_enum_decl(tokens),
@@ -198,8 +203,7 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
             op,
             expr: Box::new(parse_single_expr(tokens)?),
         }),
-        Token::Loop => parse_loop(tokens),
-               Token::Type => parse_union_type(tokens),
+        ,
         Token::Conditional => parse_if_expr(tokens),
 
         Token::Print

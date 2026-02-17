@@ -198,12 +198,12 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> &'static str {
         }
         Type::String => {
             if is_const {
-                "azlangYazi"
+                "[]u8"
             } else {
-                "azlangYazi"
+                "[]u8"
             }
         }
-        Type::LiteralString => "[]const u8", /* TODO: burada Literal Stringin tipi ferqli olması lazımdır. */
+        Type::LiteralString => "[]const u8",
         Type::ZigNatural => "usize",
         Type::ZigInteger => "isize",
         Type::LiteralConstString => "[]const u8",

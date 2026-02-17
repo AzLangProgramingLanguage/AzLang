@@ -73,7 +73,7 @@ pub enum Expr<'a> {
         target_type: Type<'a>,
     },
     Loop {
-        var_name: &'a str,
+        var_name: String,
         iterable: Box<Expr<'a>>,
         body: Vec<Expr<'a>>,
     },

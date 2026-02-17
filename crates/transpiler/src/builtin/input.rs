@@ -11,8 +11,11 @@ use crate::{
 };
 
 pub fn transpile_input<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
-    let mut print_value = String::from("{");
-    print_value.push_str(&transpile_print(expr, ctx));
-    print_value.push('}');
-    print_value
+    let transpiled_expr = transpile_expr(expr, ctx);
+    ctx.needs_allocator = true;
+    if !ctx.imports.contains("const std = @import(\"std\");") {
+        ctx.imports
+            .insert("const input = @import(\"./dependencies/input.zig\").input;\n".to_string());
+    }
+    format!("try input(allocator,{transpiled_expr})")
 }

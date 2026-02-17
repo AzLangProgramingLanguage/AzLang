@@ -47,6 +47,23 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
     
             Expr::Void
         }
+        Expr::Loop { var_name, iterable, body } => {
+            let iterable_value = runner_interpretator(ctx, *iterable);
+            if let Expr::List(list) = iterable_value {
+                for item in list {
+                    ctx.variables.insert(
+                        var_name.to_string(),
+                        Variable {
+                            value: Rc::new(item),
+                            typ: Rc::new(Type::Any),
+                            is_mutable: false,
+                        },
+                    );
+                    run_body(ctx, body.clone());
+                }
+            }
+            Expr::Void
+        }
         Expr::Return(value) => {
             ctx.current_return = runner_interpretator(ctx, *value);
             Expr::Void

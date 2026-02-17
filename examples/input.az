@@ -1,2 +1,3 @@
 sabit yazı a = Giriş("A deyeri: ")
-Çap(a)
+sabit yazı c  = a
+Çap(c)

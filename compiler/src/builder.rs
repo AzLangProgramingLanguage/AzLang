@@ -41,6 +41,7 @@ pub fn build(zig_file: &str, output_file: &str) -> Result<(), CompilerError> {
         .arg("build-exe")
         .arg(zig_file)
         .arg(format!("-femit-bin={}", output_path.to_str().unwrap()))
+        .arg("-lc")
         .status();
     match compile_status {
         Ok(status) => {

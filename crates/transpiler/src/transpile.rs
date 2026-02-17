@@ -30,7 +30,11 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
             args,
             returned_type,
         } => transpile_function_call(ctx, target, name, args, returned_type),
-
+        Expr::Loop { var_name, iterable, body } => {
+            let iterable_str = transpile_expr(*iterable, ctx);
+            let body_str = transpile_body(body, ctx);
+            format!("for ({iterable_str})  |{var_name}| {{ {body_str} }}")
+        }
         Expr::BinaryOp {
             left,
             right,
