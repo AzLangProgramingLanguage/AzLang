@@ -80,14 +80,12 @@ pub fn validate_expr<'a>(
                         name.to_string(),
                     ));
                 }
-                if let s = inferred {
-                    if var.typ != s {
-                        return Err(ValidatorError::AssignmentTypeMismatch {
-                            name: name.to_string(),
-                            expected: s.to_string(),
-                            found: var.typ.to_string(),
-                        });
-                    }
+                if var.typ != inferred {
+                    return Err(ValidatorError::AssignmentTypeMismatch {
+                        name: name.to_string(),
+                        expected: inferred.to_string(),
+                        found: var.typ.to_string(),
+                    });
                 }
             } else {
                 return Err(ValidatorError::UndefinedVariable(name.to_string()));

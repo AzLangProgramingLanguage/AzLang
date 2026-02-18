@@ -68,16 +68,16 @@ fn exporter_to_string(expr: &Expr, ctx: &Runner, out: &mut String) {
             }
         }
 
-       /*  Expr::BinaryOp {
-            left, right, op, ..
-        } => {
-            out.push('(');
-            exporter_to_string(left, ctx, out);
-            let _ = write!(out, " {} ", op);
-            exporter_to_string(right, ctx, out);
-            out.push(')');
-        }
- */
+        /*  Expr::BinaryOp {
+                   left, right, op, ..
+               } => {
+                   out.push('(');
+                   exporter_to_string(left, ctx, out);
+                   let _ = write!(out, " {} ", op);
+                   exporter_to_string(right, ctx, out);
+                   out.push(')');
+               }
+        */
         Expr::BuiltInCall { function, args, .. } => {
             let _ = write!(out, "{}(", function);
             let mut first = true;

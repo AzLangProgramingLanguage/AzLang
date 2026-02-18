@@ -1,10 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    ast::Expr,
-    errors::ParserError,
-    expressions::{parse_expression, parse_single_expr},
-    shared_ast::Type,
+    ast::Expr, binary_op::parse_expression, errors::ParserError, expressions::parse_single_expr, shared_ast::Type
 };
 use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 

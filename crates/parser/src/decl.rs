@@ -1,9 +1,9 @@
 use std::{borrow::Cow, rc::Rc};
 
-use crate::{errors::ParserError, helpers::expect_token, shared_ast::Type, types::parse_type};
+use crate::{binary_op::parse_expression, errors::ParserError, helpers::expect_token, shared_ast::Type, types::parse_type};
 use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
-use crate::{ast::Expr, expressions::parse_expression};
+use crate::{ast::Expr};
 
 pub fn parse_decl<'a>(
     tokens: &mut Tokens,

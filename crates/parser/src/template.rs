@@ -1,4 +1,4 @@
-use crate::errors::ParserError;
+use crate::{binary_op::parse_expression, errors::ParserError};
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
     tokens::Token,
@@ -6,14 +6,12 @@ use tokenizer::{
 
 use crate::{
     ast::{Expr, TemplateChunk},
-    expressions::parse_expression,
 };
 
 pub fn parse_template_string_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
     let mut chunks = Vec::new();
     loop {
         let Some(token) = tokens.next() else { break };
-        println!("token: {:?}", token);
         match token {
             SpannedToken {
                 token: Token::StringLiteral(s),

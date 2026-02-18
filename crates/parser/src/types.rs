@@ -1,9 +1,11 @@
 use crate::{errors::ParserError, shared_ast::Type};
 use std::borrow::Cow;
-use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
+use tokenizer::{
+    iterator::{SpannedToken, Tokens},
+    tokens::Token,
+};
 
-pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type<'a>, ParserError>
-{
+pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type<'a>, ParserError> {
     let token = match tokens.next() {
         Some(token) => token,
         None => return Err(ParserError::UnexpectedEOF),
@@ -29,7 +31,9 @@ pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type<'a>, ParserError>
         Token::FloatType => Type::Float,
         Token::Array => {
             match tokens.next() {
-                Some(SpannedToken{ token: Token::Less, ..})=> {}
+                Some(SpannedToken {
+                    token: Token::Less, ..
+                }) => {}
                 None => return Err(ParserError::UnexpectedEOF),
                 Some(other) => return Err(ParserError::ArrayExpected('<', other.token)),
             }
@@ -37,7 +41,10 @@ pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type<'a>, ParserError>
             let inner_type = parse_type(tokens)?;
 
             match tokens.next() {
-                Some(SpannedToken{ token: Token::Greater, ..})=> {}
+                Some(SpannedToken {
+                    token: Token::Greater,
+                    ..
+                }) => {}
                 None => return Err(ParserError::UnexpectedEOF),
                 Some(other) => return Err(ParserError::ArrayExpected('>', other.token)),
             }

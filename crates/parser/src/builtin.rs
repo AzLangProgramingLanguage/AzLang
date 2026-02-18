@@ -1,10 +1,9 @@
 use crate::{
-    errors::ParserError,
-    shared_ast::{BuiltInFunction, Type},
+    binary_op::parse_expression, errors::ParserError, shared_ast::{BuiltInFunction, Type}
 };
 use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 
-use crate::{ast::Expr, expressions::parse_expression};
+use crate::{ast::Expr};
 
 pub fn parse_builtin<'a>(
     tokens: &mut Tokens,

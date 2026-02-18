@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
-use parser::{ast::{Expr, Operation}, shared_ast::Type};
+use parser::{
+    ast::{Expr, Operation},
+    shared_ast::Type,
+};
 
 use crate::{ValidatorContext, errors::ValidatorError, validate::validate_expr};
 
@@ -10,7 +13,7 @@ pub fn get_type<'a>(
     typ: Option<&Type<'a>>,
 ) -> Type<'a> {
     match value {
-        Expr::Number(_) => Type::Natural,
+        Expr::Number(_) => Type::Integer,
         Expr::UnaryOp { op, expr } => {
             get_type(expr, ctx, typ);
             match &**op {
@@ -80,7 +83,12 @@ pub fn get_type<'a>(
             let left_type = get_type(left, ctx, typ);
             let right_type = get_type(right, ctx, typ);
             let last_type: Type<'_> = match *op {
-                Operation::Equal | Operation::NotEqual | Operation::Less | Operation::LessEqual | Operation::Greater | Operation::GreaterEqual => {
+                Operation::Equal
+                | Operation::NotEqual
+                | Operation::Less
+                | Operation::LessEqual
+                | Operation::Greater
+                | Operation::GreaterEqual => {
                     if left_type != right_type {
                         return Type::Bool;
                     }
@@ -92,7 +100,11 @@ pub fn get_type<'a>(
                     }
                     Type::Bool
                 }
-                Operation::Add | Operation::Subtract | Operation::Multiply | Operation::Divide | Operation::Modulo => match (left_type, right_type) {
+                Operation::Add
+                | Operation::Subtract
+                | Operation::Multiply
+                | Operation::Divide
+                | Operation::Modulo => match (left_type, right_type) {
                     (Type::Integer, Type::Integer) => Type::Integer,
                     (Type::Natural, Type::Natural) => Type::Natural,
                     (Type::Float, Type::Float) => Type::Float,
@@ -103,7 +115,7 @@ pub fn get_type<'a>(
                 _ => Type::Any,
             };
             last_type
-        } 
+        }
         _ => Type::Any,
     }
 }

@@ -1,10 +1,5 @@
 use crate::{
-    ast::{Expr, Parameter},
-    errors::ParserError,
-    expressions::parse_expression,
-    helpers::expect_token,
-    shared_ast::Type,
-    types::parse_type,
+    ast::{Expr, Parameter}, binary_op::parse_expression, errors::ParserError, helpers::expect_token, shared_ast::Type, types::parse_type
 };
 use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
 

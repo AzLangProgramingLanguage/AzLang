@@ -1,5 +1,8 @@
 use crate::{
-    ast::Expr, binary_op::parse_binary_op_expr, builtin::parse_builtin, decl::parse_decl, errors::ParserError, function::parse_function_def, identifier::parse_identifier, literal_parse::literals_parse, r#loop::parse_loop, template::parse_template_string_expr
+    ast::Expr, binary_op::{ parse_expression}, builtin::parse_builtin, decl::parse_decl,
+    errors::ParserError, function::parse_function_def, identifier::parse_identifier,
+    literal_parse::literals_parse, r#loop::parse_loop, shared_ast::Type,
+    template::parse_template_string_expr,
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -34,9 +37,7 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr<'a>>, 
     Ok(ast)
 }
 
-pub fn parse_expression<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
-    parse_binary_op_expr(tokens)
-}
+
 
 pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
@@ -187,12 +188,33 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
         SpannedToken {
             token: Token::ListStart,
             span,
-        } => literals_parse(SpannedToken { token: Token::ListStart, span }, tokens),
-SpannedToken {
-            token: Token::Loop,
-            ..
+        } => literals_parse(
+            SpannedToken {
+                token: Token::ListStart,
+                span,
+            },
+            tokens,
+        ),
+        SpannedToken {
+            token: Token::Loop, ..
         } => parse_loop(tokens),
-               
+        SpannedToken {
+            token: Token::Subtract,
+            ..
+        } => {
+            let expr = parse_single_expr(tokens)?;
+            match expr {
+                Expr::Number(i) => Ok(Expr::Number(-1 * i)),
+                Expr::Float(f) => Ok(Expr::Float(-1.0 * f)),
+                Expr::VariableRef { name, symbol } => Ok(Expr::BinaryOp {
+                    left: Box::new(Expr::Number(-1)),
+                    right: Box::new(Expr::VariableRef { name, symbol }),
+                    op: crate::ast::Operation::Multiply,
+                    return_type: Type::Integer,
+                }),
+                _ => return Err(ParserError::UnexpectedEOF),
+            }
+        }
         /*
         Token::Type => parse_union_type(tokens),
         Token::This => parse_identifier(tokens, "self"),

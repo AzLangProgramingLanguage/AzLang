@@ -26,7 +26,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "içində" => Token::In,
             "və" => Token::And,
             "və_ya" => Token::Or,
-            "ədəd" => Token::NaturalType,
+            "ədəd" => Token::IntegerType,
             "tam" => Token::IntegerType,
             "yazı" => Token::StringType,
             "zigsabityazı" => Token::ZigConstString,
