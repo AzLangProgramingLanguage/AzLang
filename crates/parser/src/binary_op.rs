@@ -70,7 +70,7 @@ fn parse_binary_op_with_precedence<'a>(
     tokens: &mut Tokens,
     min_precedence: u8,
 ) -> Result<Expr<'a>, ParserError> {
-    let mut result;
+    let mut result = Expr::Void;
     loop {
         let op = match tokens.peek() {
             Some(SpannedToken {

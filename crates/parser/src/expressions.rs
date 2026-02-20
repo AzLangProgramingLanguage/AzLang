@@ -1,5 +1,5 @@
 use crate::{
-    ast::Expr, binary_op::{ parse_expression}, builtin::parse_builtin, decl::parse_decl,
+    ast::Expr, binary_op::parse_expression, builtin::parse_builtin, decl::parse_decl,
     errors::ParserError, function::parse_function_def, identifier::parse_identifier,
     literal_parse::literals_parse, r#loop::parse_loop, shared_ast::Type,
     template::parse_template_string_expr,
@@ -36,8 +36,6 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr<'a>>, 
     }
     Ok(ast)
 }
-
-
 
 pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
