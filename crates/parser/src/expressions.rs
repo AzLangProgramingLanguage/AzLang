@@ -213,7 +213,15 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
                 _ => return Err(ParserError::UnexpectedEOF),
             }
         }
-        /*
+   
+        other => Err(ParserError::UnexpectedToken(
+            other.span.clone(),
+            other.token.clone(),
+        )),
+    }
+}
+
+     /*
         Token::Type => parse_union_type(tokens),
         Token::This => parse_identifier(tokens, "self"),
         Token::Object => parse_struct_def(tokens),
@@ -251,13 +259,6 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
             Ok(result)
         }
         Token::Eof | Token::Semicolon | Token::Newline => Err(ParserError::UnexpectedEOF), */
-        other => Err(ParserError::UnexpectedToken(
-            other.span.clone(),
-            other.token.clone(),
-        )),
-    }
-}
-
 /* pub fn parse_single_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
 where
     I: Iterator<Item = &'a Token>,

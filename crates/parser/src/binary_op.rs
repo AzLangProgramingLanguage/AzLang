@@ -17,19 +17,54 @@ fn parse_binary_op_with_precedence<'a>(
 ) -> Result<Expr<'a>, ParserError> {
     loop {
         let op = match tokens.peek() {
-            Some(SpannedToken { token: Token::Add, .. })         => Operation::Add,
-            Some(SpannedToken { token: Token::Subtract, .. })    => Operation::Subtract,
-            Some(SpannedToken { token: Token::Multiply, .. })    => Operation::Multiply,
-            Some(SpannedToken { token: Token::Divide, .. })      => Operation::Divide,
-            Some(SpannedToken { token: Token::Modulo, .. })      => Operation::Modulo,
-            Some(SpannedToken { token: Token::Greater, .. })     => Operation::Greater,
-            Some(SpannedToken { token: Token::Less, .. })        => Operation::Less,
-            Some(SpannedToken { token: Token::Equal, .. })       => Operation::Equal,
-            Some(SpannedToken { token: Token::NotEqual, .. })    => Operation::NotEqual,
-            Some(SpannedToken { token: Token::And, .. })         => Operation::And,
-            Some(SpannedToken { token: Token::Or, .. })          => Operation::Or,
-            Some(SpannedToken { token: Token::GreaterEqual, .. })=> Operation::GreaterEqual,
-            Some(SpannedToken { token: Token::LessEqual, .. })   => Operation::LessEqual,
+            Some(SpannedToken {
+                token: Token::Add, ..
+            }) => Operation::Add,
+            Some(SpannedToken {
+                token: Token::Subtract,
+                ..
+            }) => Operation::Subtract,
+            Some(SpannedToken {
+                token: Token::Multiply,
+                ..
+            }) => Operation::Multiply,
+            Some(SpannedToken {
+                token: Token::Divide,
+                ..
+            }) => Operation::Divide,
+            Some(SpannedToken {
+                token: Token::Modulo,
+                ..
+            }) => Operation::Modulo,
+            Some(SpannedToken {
+                token: Token::Greater,
+                ..
+            }) => Operation::Greater,
+            Some(SpannedToken {
+                token: Token::Less, ..
+            }) => Operation::Less,
+            Some(SpannedToken {
+                token: Token::Equal,
+                ..
+            }) => Operation::Equal,
+            Some(SpannedToken {
+                token: Token::NotEqual,
+                ..
+            }) => Operation::NotEqual,
+            Some(SpannedToken {
+                token: Token::And, ..
+            }) => Operation::And,
+            Some(SpannedToken {
+                token: Token::Or, ..
+            }) => Operation::Or,
+            Some(SpannedToken {
+                token: Token::GreaterEqual,
+                ..
+            }) => Operation::GreaterEqual,
+            Some(SpannedToken {
+                token: Token::LessEqual,
+                ..
+            }) => Operation::LessEqual,
             _ => break,
         };
 

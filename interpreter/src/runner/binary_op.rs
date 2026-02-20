@@ -11,59 +11,62 @@ pub fn binary_op_runner<'a>(
 ) -> Expr<'a> {
     let left = runner_interpretator(ctx, *left);
     let right = runner_interpretator(ctx, *right);
+
     let result = match op {
         Operation::Add => {
-            if let Type::Natural = return_type {
-                let left = left.as_number().unwrap();
-                let right = right.as_number().unwrap();
+            if let Type::Integer = return_type {
+                let left = left.as_number();
+                let right = right.as_number();
                 Expr::Number(left + right)
             } else {
-                let left = left.as_float().unwrap();
-                let right = right.as_float().unwrap();
+                let left = left.as_float();
+                let right = right.as_float();
                 Expr::Float(left + right)
             }
         }
         Operation::Subtract => {
-            if let Type::Natural = return_type {
-                let left = left.as_number().unwrap();
-                let right = right.as_number().unwrap();
+            if let Type::Integer = return_type {
+                let left = left.as_number();
+                let right = right.as_number();
                 Expr::Number(left - right)
             } else {
-                let left = left.as_float().unwrap();
-                let right = right.as_float().unwrap();
+                let left = left.as_float();
+                let right = right.as_float();
                 Expr::Float(left - right)
             }
         }
         Operation::Multiply => {
-            if let Type::Natural = return_type {
-                let left = left.as_number().unwrap();
-                let right = right.as_number().unwrap();
+            if let Type::Integer = return_type {
+                let left = left.as_number();
+                let right = right.as_number();
                 Expr::Number(left * right)
             } else {
-                let left = left.as_float().unwrap();
-                let right = right.as_float().unwrap();
+                let left = left.as_float();
+                let right = right.as_float();
                 Expr::Float(left * right)
             }
         }
         Operation::Divide => {
-            if let Type::Natural = return_type {
-                let left = left.as_number().unwrap();
-                let right = right.as_number().unwrap();
+            if let Type::Integer = return_type {
+
+                let left = left.as_number();
+                let right = right.as_number();
                 Expr::Number(left / right)
             } else {
-                let left = left.as_float().unwrap();
-                let right = right.as_float().unwrap();
+                let left = left.as_float();
+                let right = right.as_float();
+
                 Expr::Float(left / right)
             }
         }
         Operation::Modulo => {
             if let Type::Natural = return_type {
-                let left = left.as_number().unwrap();
-                let right = right.as_number().unwrap();
+                let left = left.as_number();
+                let right = right.as_number();
                 Expr::Number(left % right)
             } else {
-                let left = left.as_float().unwrap();
-                let right = right.as_float().unwrap();
+                let left = left.as_float();
+                let right = right.as_float();
                 Expr::Float(left % right)
             }
         }
@@ -72,18 +75,10 @@ pub fn binary_op_runner<'a>(
                 (Expr::Number(b), Expr::Number(c)) => Expr::Bool(b == c),
                 (_, _) => Expr::Bool(false),
             }
-            /*if left == right {
-                Expr::Bool(true)
-            } else {
-                Expr::Bool(false)
-            } */
+           
         }
         Operation::NotEqual => {
-           /*  if left != right {
-                Expr::Bool(true)
-            } else { */
-                Expr::Bool(false)  //BUG: Burası her zaman false
-         /*    } */
+                Expr::Bool(false)  
         }
         _ => Expr::Bool(false),
     };

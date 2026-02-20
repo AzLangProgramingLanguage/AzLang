@@ -145,16 +145,16 @@ pub enum Expr<'a> {
     },
 }
 impl<'a> Expr<'a> {
-    pub fn as_number(&self) -> Option<i64> {
+    pub fn as_number(&self) -> i64 {
         match self {
-            Expr::Number(n) => Some(*n),
-            _ => Some(0),
+            Expr::Number(n) => *n,
+            _ => 0,
         }
     }
-    pub fn as_float(&self) -> Option<f64> {
+    pub fn as_float(&self) -> f64 {
         match self {
-            Expr::Float(f) => Some(*f),
-            _ => Some(0.0),
+            Expr::Float(f) => *f,
+            _ => 0.0,
         }
     }
 }
