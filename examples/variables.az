@@ -4,4 +4,4 @@ a = 2
 a = -1 + 1
 Çap(`yeni a dəyəri: ${a} `)
 sabit yazı b = "Salam"
-Çap(`b dəyəri ${b}`)
+Çap((b))

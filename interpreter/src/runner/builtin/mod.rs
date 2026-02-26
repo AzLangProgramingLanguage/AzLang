@@ -34,6 +34,18 @@ pub fn builthin_call_runner<'a>(
             println!("{}", output);
             std::process::exit(1);
         }
+        BuiltInFunction::Len => {
+            let arg = runner_interpretator(ctx, args.remove(0));
+
+            match arg {
+                Expr::List(s) => {
+                    return Expr::Number(s.len() as i64);
+                }
+                _ => {
+                    return Expr::Number(0);
+                }
+            }
+        }
         BuiltInFunction::Input => {
             println!(
                 "{}",

@@ -3,13 +3,6 @@ use std::rc::Rc;
 
 use crate::shared_ast::{BuiltInFunction, Type};
 
-#[derive(Debug)]
-pub struct FunctionDef<'a> {
-    params: Vec<(String, Type<'a>)>,
-    body: Rc<Vec<Expr<'a>>>,
-    return_type: Type<'a>,
-}
-
 #[derive(Debug, Clone)]
 pub struct MethodType<'a> {
     pub name: &'a str,

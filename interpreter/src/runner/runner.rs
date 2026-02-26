@@ -8,7 +8,6 @@ use std::rc::Rc;
 use parser::{ast::Expr, shared_ast::Type};
 
 pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a> {
-
     match expr {
         Expr::Decl {
             name,
@@ -27,7 +26,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             );
             Expr::Void
         }
-        
+
         Expr::FunctionDef {
             name,
             params,
@@ -44,10 +43,14 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
                     return_type: return_type.unwrap_or(Type::Any),
                 },
             );
-    
+
             Expr::Void
         }
-        Expr::Loop { var_name, iterable, body } => {
+        Expr::Loop {
+            var_name,
+            iterable,
+            body,
+        } => {
             let iterable_value = runner_interpretator(ctx, *iterable);
             if let Expr::List(list) = iterable_value {
                 for item in list {
@@ -101,14 +104,34 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             }
             Expr::Void
         }
-
-         Expr::BinaryOp {
+        Expr::Index {
+            target,
+            index,
+            target_type,
+        } => {
+            let new_target = runner_interpretator(ctx, *target);
+            let new_index = runner_interpretator(ctx, *index);
+            match (new_target, new_index) {
+                (Expr::List(s), Expr::Number(n)) => {
+                    return s.get(n as usize).unwrap().clone(); //TODO: Uncessessary CLone
+                }
+                (Expr::String(s), Expr::Number(n)) => {
+                    return Expr::Char(s.chars().nth(n as usize).unwrap()); /* TODO: Used unwrap
+                    remove it, it's too
+                    dangerious
+                     */
+                }
+                _ => {}
+            }
+            Expr::Void
+        }
+        Expr::BinaryOp {
             left,
             right,
             op,
             return_type,
         } => binary_op_runner(ctx, left, right, op, return_type),
- 
+
         Expr::BuiltInCall {
             function,
             args,
