@@ -1,2 +1,6 @@
 sabit siyahı<ədəd> a = [1,2,3,4]
 Çap(Uzunluq(a))
+Çap(a[0])
+sabit yazı b = "asd"
+Çap(b[0])
+Çap(b[1])

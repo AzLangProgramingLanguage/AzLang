@@ -1,18 +1,20 @@
 use std::borrow::Cow;
 
 use crate::{
-    ast::Expr, binary_op::parse_expression, errors::ParserError, expressions::parse_single_expr, shared_ast::Type
+    ast::Expr, binary_op::parse_expression, errors::ParserError, expressions::parse_single_expr,
+    helpers::expect_token, shared_ast::Type,
 };
-use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
+use tokenizer::{
+    iterator::{SpannedToken, Tokens},
+    tokens::Token,
+};
 
-pub fn parse_identifier<'a>(
-    tokens: &mut Tokens,
-    s: String,
-) -> Result<Expr<'a>, ParserError>
-{
- 
-    match tokens.peek(){ 
-        Some(SpannedToken { token: Token::Assign, .. }) => {
+pub fn parse_identifier<'a>(tokens: &mut Tokens, s: String) -> Result<Expr<'a>, ParserError> {
+    match tokens.peek() {
+        Some(SpannedToken {
+            token: Token::Assign,
+            ..
+        }) => {
             tokens.next();
             let value = parse_expression(tokens)?;
 
@@ -22,16 +24,41 @@ pub fn parse_identifier<'a>(
                 symbol: None,
             })
         }
-        Some(SpannedToken { token: Token::LParen, .. }) => {
+        Some(SpannedToken {
+            token: Token::ListStart,
+            ..
+        }) => {
+            tokens.next();
+            let index = parse_expression(tokens)?;
+            expect_token(tokens, Token::ListEnd)?;
+            Ok(Expr::Index {
+                target: Box::new(Expr::VariableRef {
+                    name: Cow::Owned(s),
+                    symbol: None,
+                }),
+                index: Box::new(index),
+                target_type: Type::Any,
+            })
+        }
+        Some(SpannedToken {
+            token: Token::LParen,
+            ..
+        }) => {
             tokens.next();
             let mut args = Vec::new();
             loop {
                 match tokens.peek() {
-                    Some(SpannedToken { token: Token::RParen, .. }) => {
+                    Some(SpannedToken {
+                        token: Token::RParen,
+                        ..
+                    }) => {
                         tokens.next();
                         break;
                     }
-                    Some(SpannedToken { token: Token::Comma, .. }) => {
+                    Some(SpannedToken {
+                        token: Token::Comma,
+                        ..
+                    }) => {
                         tokens.next();
                     }
                     None => return Err(ParserError::RParenNotFound(Token::Eof)),
@@ -48,13 +75,15 @@ pub fn parse_identifier<'a>(
                 returned_type: Some(Type::Void),
             })
         }
-        _ => return Ok(Expr::VariableRef {
-            name: Cow::Owned(s),
-            symbol: None,
-        })
+        _ => {
+            return Ok(Expr::VariableRef {
+                name: Cow::Owned(s),
+                symbol: None,
+            });
+        }
     }
- 
-   /*  match peek {
+
+    /*  match peek {
         SpannedToken { token: Token::ListStart, .. } => {
             tokens.next();
 

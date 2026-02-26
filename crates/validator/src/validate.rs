@@ -180,14 +180,13 @@ pub fn validate_expr<'a>(
                 }
                 BuiltInFunction::Print => {
                     validate_expr(&mut args[0], ctx)?;
+                    let t = get_type(&args[0], ctx, None);
                     validator_log(&format!("✅ Print funksiyası yoxlanılır"));
-                    if let t = get_type(&args[0], ctx, None) {
-                        if t == Type::Void {
-                            return Err(ValidatorError::TypeMismatch {
-                                expected: "Yazı".to_string(),
-                                found: format!("{t:?}"),
-                            });
-                        }
+                    if t == Type::Void {
+                        return Err(ValidatorError::TypeMismatch {
+                            expected: "Yazı".to_string(),
+                            found: format!("{t:?}"),
+                        });
                     }
                 }
                 BuiltInFunction::ConvertString => {
@@ -198,26 +197,24 @@ pub fn validate_expr<'a>(
                 | BuiltInFunction::StrLower
                 | BuiltInFunction::StrReverse => {
                     validator_log(&format!("✅ StrUpper funksiyası yoxlanılır"));
-                    if let t = get_type(&args[0], ctx, None) {
-                        if t != Type::String {
-                            return Err(ValidatorError::TypeMismatch {
-                                expected: Type::String.to_string(),
-                                found: format!("{t:?}"),
-                            });
-                        }
+                    let t = get_type(&args[0], ctx, None);
+                    if t != Type::String {
+                        return Err(ValidatorError::TypeMismatch {
+                            expected: Type::String.to_string(),
+                            found: format!("{t:?}"),
+                        });
                     }
                 }
 
                 BuiltInFunction::Len => {
-                    if let t = get_type(&args[0], ctx, None) {
-                        match t {
-                            Type::Array(_) => {}
-                            _ => {
-                                return Err(ValidatorError::TypeMismatch {
-                                    expected: "Array".to_string(), /* TODO: HardCode */
-                                    found: format!("{t:?}"),
-                                });
-                            }
+                    let t = get_type(&args[0], ctx, None);
+                    match t {
+                        Type::Array(_) => {}
+                        _ => {
+                            return Err(ValidatorError::TypeMismatch {
+                                expected: "Array".to_string(), /* TODO: HardCode */
+                                found: format!("{t:?}"),
+                            });
                         }
                     }
                     if args.len() != 1 {
@@ -271,7 +268,7 @@ pub fn validate_expr<'a>(
                         name: Cow::Borrowed(method.name),
                         return_type: cloned_ret_type,
                         parameters: method.params.clone(),
-                        is_allocator_used: false, // bu sonra müəyyən olunacaq
+                        is_allocator_used: false, //TODO:   bu sonra müəyyən olunacaq
                     })
                 })
                 .collect::<Result<Vec<_>, ValidatorError>>()?;
@@ -310,7 +307,7 @@ pub fn validate_expr<'a>(
         Expr::VariableRef { name, symbol } => {
             validator_log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
 
-            if let Some(mut sym) = ctx.lookup_variable(name) {
+            if let Some(sym) = ctx.lookup_variable(name) {
                 sym.is_used = true;
 
                 *symbol = Some(sym.clone());
