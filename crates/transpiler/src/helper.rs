@@ -176,7 +176,7 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
 pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> &'static str {
     match typ {
         Type::Integer => "isize",
-        Type::Natural => "usize",
+        Type::Natural => "isize",
         Type::Any => "any",
         Type::Void => "void",
         Type::ZigFloat => "f64",

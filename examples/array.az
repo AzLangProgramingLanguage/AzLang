@@ -1,2 +1,2 @@
 sabit siyahı<ədəd> a = [1,2,3,4]
-Çap(a)
+Çap(Uzunluq(a))

@@ -74,7 +74,6 @@ pub fn validate_expr<'a>(
             if let Some(var) = ctx.lookup_variable(name) {
                 var.is_used = true;
                 var.is_changed = true;
-
                 if !var.is_mutable {
                     return Err(ValidatorError::AssignmentToImmutableVariable(
                         name.to_string(),
