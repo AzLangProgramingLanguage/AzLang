@@ -1,17 +1,20 @@
-use crate::ast::{Else, Expr, IF};
-use crate::{binary_op::parse_binary_op_expr, errors::ParserError, expressions::parse_expression};
-use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
+use tokenizer::{
+    iterator::{SpannedToken, Tokens},
+    tokens::Token,
+};
 
-fn parse_block<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Vec<Expr<'a>>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
+use crate::{
+    ast::{Else, Expr, IF},
+    binary_op::parse_expression,
+    errors::ParserError,
+};
+
+fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr<'a>>, ParserError> {
     let mut block = Vec::new();
     let mut indent = 0;
 
     while let Some(tok) = tokens.peek() {
-        match tok {
+        match tok.token {
             Token::Indent => {
                 indent += 1;
                 tokens.next();
@@ -34,11 +37,8 @@ where
     Ok(block)
 }
 
-pub fn parse_if_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    let condition = parse_binary_op_expr(tokens)?;
+pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
+    let condition = parse_expression(tokens)?;
     let then_branch = parse_block(tokens)?;
 
     let mut else_if_branch = Vec::new();
@@ -46,16 +46,22 @@ where
 
     loop {
         match tokens.peek() {
-            Some(Token::ElseIf) => {
+            Some(SpannedToken {
+                token: Token::ElseIf,
+                span,
+            }) => {
                 tokens.next();
-                let cond = parse_binary_op_expr(tokens)?;
+                let cond = parse_expression(tokens)?;
                 let then_b = parse_block(tokens)?;
                 else_if_branch.push(IF {
                     condition: Box::new(cond),
                     body: then_b,
                 });
             }
-            Some(Token::Else) => {
+            Some(SpannedToken {
+                token: Token::Else,
+                span,
+            }) => {
                 tokens.next();
                 let then_b = parse_block(tokens)?;
                 else_branch = Some(Else { body: then_b });

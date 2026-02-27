@@ -2,6 +2,7 @@ use crate::{
     ast::{Expr, Operation},
     binary_op::parse_expression,
     builtin::parse_builtin,
+    condition::parse_if_expr,
     decl::parse_decl,
     errors::ParserError,
     function::parse_function_def,
@@ -201,6 +202,10 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
             },
             tokens,
         ),
+        SpannedToken {
+            token: Token::Conditional,
+            ..
+        } => parse_if_expr(tokens),
         SpannedToken {
             token: Token::LParen,
             ..

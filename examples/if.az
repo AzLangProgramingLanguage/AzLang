@@ -1,0 +1,6 @@
+əgər 1==1
+    Çap("Salam")
+yoxsa 2==2
+    Çap(2)
+əks
+    Çap(3)

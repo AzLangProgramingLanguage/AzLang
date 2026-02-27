@@ -1,4 +1,7 @@
-use parser::{ast::Expr, shared_ast::Type};
+use parser::{
+    ast::{Expr, Operation},
+    shared_ast::Type,
+};
 
 use crate::{TranspileContext, transpile::transpile_expr};
 
@@ -10,9 +13,9 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
         Expr::UnaryOp { op, expr: _ } => match *op {
-            "!" => Type::Bool,
-            "-" => Type::Integer,
-            "+" => Type::Natural,
+            Operation::Not => Type::Bool,
+            Operation::Subtract => Type::Integer,
+            Operation::Add => Type::Natural,
             _ => {
                 panic!("get_expr_type de bilinmeyen unaryOp tipi geldi ")
             }

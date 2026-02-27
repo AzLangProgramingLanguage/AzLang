@@ -16,9 +16,9 @@ pub fn get_type<'a>(
         Expr::Number(_) => Type::Integer,
         Expr::UnaryOp { op, expr } => {
             get_type(expr, ctx, typ);
-            match &**op {
-                "-" => Type::Integer,
-                "!" => Type::Bool,
+            match &*op {
+                Operation::Subtract => Type::Integer,
+                Operation::Not => Type::Bool,
                 _ => Type::Any,
             }
         }

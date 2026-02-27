@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod binary_op;
 pub mod builtin;
+pub mod condition;
 pub mod decl;
 pub mod function;
 pub mod helpers;
@@ -10,9 +11,9 @@ pub mod literal_parse;
 pub mod r#loop;
 pub mod template;
 pub mod types;
+
 /*
 pub mod builtin;
-pub mod condition;
 pub mod r#enum; */
 pub mod errors;
 mod expressions;

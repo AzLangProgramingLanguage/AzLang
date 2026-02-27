@@ -37,8 +37,8 @@ pub fn transpile_print<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> St
             if is_primite_value(&expr) {
                 ctx.used_try = true;
                 format!(
-                    "try std.fs.File.stdout().writeAll({})",
-                    transpile_expr(expr, ctx)
+                    "try std.fs.File.stdout().writeAll(\"{}\\n\")",
+                    transpile_expr(expr, ctx).trim_matches('"')
                 )
             } else {
                 let typ = get_expr_type(&expr);
