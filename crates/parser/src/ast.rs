@@ -57,7 +57,7 @@ pub enum Expr<'a> {
     Comment(String),
     List(Vec<Expr<'a>>),
     UnaryOp {
-        op: &'a str,
+        op: Operation,
         expr: Box<Expr<'a>>,
     },
     Index {

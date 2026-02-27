@@ -1,8 +1,16 @@
 use crate::{
-    ast::Expr, binary_op::parse_expression, builtin::parse_builtin, decl::parse_decl,
-    errors::ParserError, function::parse_function_def, helpers::expect_token,
-    identifier::parse_identifier, literal_parse::literals_parse, r#loop::parse_loop,
-    shared_ast::Type, template::parse_template_string_expr,
+    ast::{Expr, Operation},
+    binary_op::parse_expression,
+    builtin::parse_builtin,
+    decl::parse_decl,
+    errors::ParserError,
+    function::parse_function_def,
+    helpers::expect_token,
+    identifier::parse_identifier,
+    literal_parse::literals_parse,
+    r#loop::parse_loop,
+    shared_ast::Type,
+    template::parse_template_string_expr,
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -220,6 +228,15 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErro
                 }),
                 _ => return Err(ParserError::UnexpectedEOF),
             }
+        }
+        SpannedToken {
+            token: Token::Not, ..
+        } => {
+            let expr = parse_single_expr(tokens)?;
+            Ok(Expr::UnaryOp {
+                op: Operation::Not,
+                expr: Box::new(expr),
+            })
         }
 
         other => Err(ParserError::UnexpectedToken(
