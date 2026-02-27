@@ -1,6 +1,4 @@
-dəyişən a = [1,2,-4]
-a = [1,2,-3]
-Çap(a)
+
 /*
 tip Yazı
   Const: zigsabityazı
@@ -70,3 +68,4 @@ gəz [1,2,3,4] içində i
     a = a + 0.1
     Çap(a)
 */
+
