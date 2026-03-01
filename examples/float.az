@@ -1,0 +1,5 @@
+dəyişən kəsr a = 5.0
+Çap(a)
+a = 2.0
+a = -1.0 + 1.0 / 2.0
+Çap(`yeni a dəyəri: ${a} `)

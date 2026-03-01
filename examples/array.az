@@ -4,3 +4,8 @@ sabit siyahı<ədəd> a = [1,2,3,4]
 sabit yazı b = "asd"
 Çap(b[0])
 Çap(b[1])
+
+funksiya isEmpty(sabit siyahı<ədəd> b): ədəd
+    qaytar Uzunluq(b)
+
+Çap(isEmpty(a))

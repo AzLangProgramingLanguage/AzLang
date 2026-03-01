@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{os::unix::process, rc::Rc};
 
 use parser::{ast::Expr, shared_ast::Type};
 
@@ -14,7 +14,7 @@ pub fn function_call<'a>(
     match target {
         Some(expr) => {
             println!("{expr:?}");
-            std::process::exit(1); /*TODO: Burası method calldir */
+            panic!(" Burası hazır deyil {expr:?}");
         }
         None => {
             if let Some(function) = ctx.functions.get(&name) {
@@ -30,15 +30,20 @@ pub fn function_call<'a>(
                         },
                     );
                 }
-              
+
                 for i in 0..body_rc.len() {
                     let expr = body_rc[i].clone();
-
-                    runner_interpretator(ctx, expr);
+                    match expr {
+                        Expr::Return(s) => {
+                            return runner_interpretator(ctx, *s);
+                        }
+                        _ => {
+                            runner_interpretator(ctx, expr);
+                        }
+                    }
                 } //TODO: Burada Mütleq deyerleri temizlemek lazımdır.
-            }
-            else{
-                dbg!(2);//TODO: Burası funksiyada yok
+            } else {
+                dbg!(2); //TODO: Burası funksiyada yok
                 std::process::exit(1);
             }
         }

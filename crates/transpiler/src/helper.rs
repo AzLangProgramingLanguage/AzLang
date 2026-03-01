@@ -183,7 +183,7 @@ pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> &'static str {
         Type::Any => "any",
         Type::Void => "void",
         Type::ZigFloat => "f64",
-        Type::Float => "azlangEded",
+        Type::Float => "f64",
         Type::BigInteger => {
             if is_const {
                 "const i128"

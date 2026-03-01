@@ -1,16 +1,29 @@
+use std::fmt::Write;
+
 use crate::{
-    ast::{Expr, Parameter}, binary_op::parse_expression, errors::ParserError, helpers::expect_token, shared_ast::Type, types::parse_type
+    ast::{Expr, Parameter},
+    binary_op::parse_expression,
+    errors::ParserError,
+    helpers::expect_token,
+    shared_ast::Type,
+    types::parse_type,
 };
-use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
+use tokenizer::{
+    iterator::{SpannedToken, Tokens},
+    tokens::Token,
+};
 
-pub fn parse_function_def<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError>
-{
+pub fn parse_function_def<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
     let name = match tokens.next() {
-        Some(SpannedToken { token: Token::Identifier(n), .. }) => n,
+        Some(SpannedToken {
+            token: Token::Identifier(n),
+            ..
+        }) => n,
         None => return Err(ParserError::UnexpectedEOF),
-        Some(SpannedToken { token: other, .. }) => return Err(ParserError::FunctionNameNotFound(other.clone())),
+        Some(SpannedToken { token: other, .. }) => {
+            return Err(ParserError::FunctionNameNotFound(other.clone()));
+        }
     };
-
     expect_token(tokens, Token::LParen)?;
 
     let mut params = Vec::new();
@@ -22,37 +35,38 @@ pub fn parse_function_def<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErr
                 if matches!(tok.token, Token::MutableDecl | Token::ConstantDecl) {
                     tokens.next();
                 }
-
+                let param_type = parse_type(tokens)?;
                 let param_name = match tokens.next() {
-                    Some(SpannedToken { token: Token::Identifier(s), .. }) => s,
+                    Some(SpannedToken {
+                        token: Token::Identifier(s),
+                        ..
+                    }) => s,
                     other => {
                         return Err(ParserError::ParameterNameNotFound(other.unwrap().token));
                     }
                 };
-
-                let mut param_type = Type::Any;
-
-                match tokens.peek() {
-                    Some(SpannedToken { token: Token::Comma, .. }) => {
-                        tokens.next();
-                    }
-                    Some(SpannedToken { token: Token::Colon, .. }) => {
-                        tokens.next();
-                        param_type = parse_type(tokens)?;
-                    }
-                    Some(SpannedToken { token: Token::RParen, .. }) => break,
-                    None => return Err(ParserError::UnexpectedEOF),
-                    Some(SpannedToken { token: other, .. }) => {
-                        return Err(ParserError::ParameterNotExpected(other.clone()));
-                    }
-                }
-
                 params.push(Parameter {
                     name: param_name,
                     typ: param_type,
                     is_mutable,
                     is_pointer: false,
                 });
+                match tokens.peek() {
+                    Some(SpannedToken {
+                        token: Token::Comma,
+                        ..
+                    }) => {
+                        tokens.next();
+                    }
+                    Some(SpannedToken {
+                        token: Token::RParen,
+                        ..
+                    }) => break,
+                    None => return Err(ParserError::UnexpectedEOF),
+                    Some(SpannedToken { token: other, .. }) => {
+                        return Err(ParserError::ParameterNotExpected(other.clone()));
+                    }
+                }
             }
 
             Token::Comma => {
@@ -89,6 +103,11 @@ pub fn parse_function_def<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserErr
             }
         }
     }
+    // println!("{name:?}");
+    // println!("{params:?}");
+    // println!("{body:?}");
+    // println!("{return_type:?}");
+    // std::process::exit(1);
 
     Ok(Expr::FunctionDef {
         name,

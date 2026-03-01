@@ -19,7 +19,14 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
         Expr::String(s) => format!("\"{}\"", s.escape_default()),
         Expr::DynamicString(s) => format!("try allocator.dupe(u8, \"{}\")", s.escape_default()),
         Expr::Number(n) => n.to_string(),
-        Expr::Float(n) => n.to_string(),
+        Expr::Float(n) => {
+            let s = n.to_string();
+            if s.contains('.') || s.contains('e') {
+                s
+            } else {
+                format!("{}.0", s)
+            }
+        }
         Expr::Bool(n) => n.to_string(),
         Expr::Break => "break".to_string(),
         Expr::Continue => "continue".to_string(),
@@ -30,7 +37,11 @@ pub fn transpile_expr<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> Str
             args,
             returned_type,
         } => transpile_function_call(ctx, target, name, args, returned_type),
-        Expr::Loop { var_name, iterable, body } => {
+        Expr::Loop {
+            var_name,
+            iterable,
+            body,
+        } => {
             let iterable_str = transpile_expr(*iterable, ctx);
             let body_str = transpile_body(body, ctx);
             format!("for ({iterable_str})  |{var_name}| {{ {body_str} }}")
