@@ -35,13 +35,23 @@ pub fn builthin_call_runner<'a>(
             std::process::exit(1);
         }
         BuiltInFunction::Len => {
-            let arg = runner_interpretator(ctx, args.remove(0));
+            let mut arg = runner_interpretator(ctx, args.remove(0));
+            //TODO: Berbat bir kod  burada bunun yerine Value ENumu yarat
+            match &arg {
+                Expr::VariableRef { name, symbol } => {
+                    arg = runner_interpretator(ctx, arg);
+                }
+                _ => {}
+            }
 
             match arg {
                 Expr::List(s) => {
                     return Expr::Number(s.len() as i64);
                 }
                 _ => {
+                    println!("Salam {:?}", arg);
+                    std::process::exit(1);
+
                     return Expr::Number(0);
                 }
             }

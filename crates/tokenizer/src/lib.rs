@@ -204,7 +204,11 @@ impl<'a> Lexer<'a> {
             self.indent_level -= 1;
             Ok(Some(Token::Dedent))
         } else {
-            Err(LexerError::InCorrectSpaceSize)
+            Err(LexerError::InCorrectSpaceSize(SourceSpan {
+                start: self.start,
+                end: self.end,
+                line: self.line,
+            }))
         }
     }
     fn read_template_part(&mut self) -> Result<Token, LexerError> {
@@ -252,6 +256,7 @@ impl<'a> Lexer<'a> {
             '+' => Ok(Token::Add),
             '-' => Ok(Token::Subtract),
             '*' => Ok(Token::Multiply),
+            '/' if self.chars.next() == Some('*') => self.commentline(),
             '/' => Ok(Token::Divide),
             '%' => Ok(Token::Modulo),
             '>' => Ok(Token::Greater),
@@ -275,6 +280,19 @@ impl<'a> Lexer<'a> {
             }
         }
     }
+    fn commentline(&mut self) -> Result<Token, LexerError> {
+        loop {
+            match self.chars.next() {
+                Some('*') if self.chars.next().unwrap() == '/' => {
+                    return self.next_token();
+                }
+                None => {
+                    return self.next_token();
+                }
+                _ => {}
+            }
+        }
+    }
     fn next_token(&mut self) -> Result<Token, LexerError> {
         if let Some(LexerMode::Template) = self.mode_stack.last() {
             return self.read_template_part();
@@ -286,7 +304,6 @@ impl<'a> Lexer<'a> {
             Err(e) => return Err(e),
         }
         let char = self.chars.peek();
-
         let token = match char {
             Some('`') => {
                 self.chars.next();

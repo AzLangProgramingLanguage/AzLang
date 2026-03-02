@@ -1,7 +1,15 @@
+dəyişən kəsr a = 0.0
+gəz [1,2,3,4] içində i
+    a = a + 0.1
+    Çap(a)
+
+
+
+
 
 /*
 tip Yazı
-  Const: zigsabityazı
+    Const: zigsabityazı
   Mut: zigyazı
   metod Yeni(): yazı
     // Burasını Sistem Qərar Versin
@@ -63,9 +71,6 @@ tip Siyahı
     // Burasını Sistem Qərar Versin
 
 
-dəyişən kəsr a  = 0.0
-gəz [1,2,3,4] içində i
-    a = a + 0.1
-    Çap(a)
+
 */
 

@@ -15,9 +15,9 @@ pub enum LexerError {
     FloatUnKnow(ParseFloatError),
     NumberUnKnow(ParseIntError),
     CannotStartZeroNumber(SourceSpan, String),
-    InCorrectSpaceSize,
+    InCorrectSpaceSize(SourceSpan),
     UnexpectedToken(SourceSpan, char),
-    UnknownOperator(SourceSpan,String),
+    UnknownOperator(SourceSpan, String),
 }
 
 impl Display for LexerError {
@@ -48,16 +48,15 @@ impl Display for LexerError {
                 write!(
                     f,
                     "{} Yanlış ədəd formatı \"{}\" . Onluq ədədlərin başlangıcı sıfırla başlaya bilməz.",
-                    span,
-                    str
+                    span, str
                 )
             }
             LexerError::UnknownOperator(span, str) => {
                 write!(f, "{} Uyğunluq olmayan operator \"{}\"", span, str)
             }
-            
-            LexerError::InCorrectSpaceSize => {
-                write!(f, "Uyğunsuz boşluq var.")
+
+            LexerError::InCorrectSpaceSize(span) => {
+                write!(f, "{} Uyğunsuz boşluq var.", span)
             }
         }
     }
