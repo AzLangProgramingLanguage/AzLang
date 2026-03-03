@@ -547,7 +547,6 @@ pub fn validate_expr<'a>(
             if index_type == Type::Integer {
                 *target_type = Type::Integer;
             }
-            validator_log("indeksləmə2  əməliyyatını yoxlayır...");
 
             match index_type {
                 Type::Integer => {

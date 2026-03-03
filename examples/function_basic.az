@@ -1,3 +1,3 @@
-funksiya add(a: ədəd, b: ədəd): ədəd
+funksiya add(sabit ədəd a, sabit ədəd b): ədəd
     qaytar a + b
 Çap(add(1,2))
