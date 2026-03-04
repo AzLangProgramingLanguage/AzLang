@@ -6,14 +6,20 @@ use parser::{
 };
 
 use crate::{ValidatorContext, errors::ValidatorError, validate::validate_expr};
-
+//TODO: List Type Definition has a problem. We must use Type::Integer instead of Type::Natural
 pub fn get_type<'a>(
     value: &Expr<'a>,
     ctx: &mut ValidatorContext<'a>,
     typ: Option<&Type<'a>>,
 ) -> Type<'a> {
     match value {
-        Expr::Number(_) => Type::Integer,
+        Expr::Number(x) => {
+            if *x > 0 {
+                Type::Natural
+            } else {
+                Type::Integer
+            }
+        }
         Expr::UnaryOp { op, expr } => {
             get_type(expr, ctx, typ);
             match &*op {

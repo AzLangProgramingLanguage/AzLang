@@ -1,30 +1,35 @@
-use std::borrow::Cow;
+use tokenizer::{
+    iterator::{SpannedToken, Tokens},
+    tokens::Token,
+};
 
-use tokenizer::{iterator::Tokens, tokens::Token};
+use crate::{ast::Expr, binary_op::parse_expression, errors::ParserError};
 
-use crate::ast::Expr;
-
-pub fn parse_list<'a>(tokens: &mut Tokens) -> Expr<'a>
-{
+pub fn parse_list<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
     let mut elements = Vec::new();
+    loop {
+        let elemen = parse_expression(tokens)?;
+        elements.push(elemen);
 
-    for token in tokens.by_ref() {
-        match token.token {
-            Token::ListEnd => break,
-            Token::StringLiteral(s) => elements.push(Expr::String(s)),
-            Token::True => elements.push(Expr::Bool(true)),
-            Token::False => elements.push(Expr::Bool(false)),
-            Token::Float(num) => elements.push(Expr::Float(num)),
-            Token::Number(num) => elements.push(Expr::Number(num)),
-            Token::This => elements.push(Expr::VariableRef {
-                name: Cow::Borrowed("self"),
-                symbol: None,
-            }),
-            Token::Comma => continue,
-            Token::Newline => continue,
-            Token::Semicolon => continue,
-            _ => continue,
+        match tokens.next() {
+            Some(SpannedToken {
+                token: Token::ListEnd,
+                span,
+            }) => {
+                break;
+            }
+            Some(SpannedToken {
+                token: Token::Comma,
+                span,
+            }) => {}
+
+            Some(other) => {
+                return Err(ParserError::UnexpectedToken(other.span, other.token));
+            }
+            None => {
+                return Err(ParserError::UnexpectedEOF);
+            }
         }
     }
-    Expr::List(elements)
+    Ok(Expr::List(elements))
 }

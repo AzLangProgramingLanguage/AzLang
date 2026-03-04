@@ -17,7 +17,7 @@ pub fn parse_builtin<'a>(
     let (function, return_type) = match &token.token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
         Token::Input => (BuiltInFunction::Input, Type::String),
-        Token::Len => (BuiltInFunction::Len, Type::Integer),
+        Token::Len => (BuiltInFunction::Len, Type::Natural),
         Token::NumberFn => (BuiltInFunction::Number, Type::Integer),
         Token::Sum => (BuiltInFunction::Sum, Type::Integer),
         Token::RangeFn => (BuiltInFunction::Range, Type::Array(Box::new(Type::Integer))),

@@ -1,4 +1,4 @@
-əgər 1==1
+əgər 1!=1
     Çap("Salam")
 yoxsa 2==2
     Çap(2)

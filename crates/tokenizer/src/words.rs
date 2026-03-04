@@ -30,7 +30,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "tam" => Token::IntegerType,
             "yazı" => Token::StringType,
             "zigsabityazı" => Token::ZigConstString,
-            "zignatural" => Token::ZigNatural,
+            "natural" => Token::NaturalType,
             "ziginteger" => Token::ZigInteger,
             "zigyazı" => Token::ZigString,
             "zigsabitsiyahı" => Token::ZigConstArray,

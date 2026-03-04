@@ -16,7 +16,7 @@ pub fn literals_parse<'a>(
         Token::StringLiteral(s) => return Ok(Expr::String(s)),
         Token::Number(num) => return Ok(Expr::Number(num)),
         Token::Float(num) => return Ok(Expr::Float(num)),
-        Token::ListStart => return Ok(parse_list(tokens)),
+        Token::ListStart => return parse_list(tokens),
         _ => return Err(ParserError::UnexpectedToken(token.span, token.token)),
     };
 

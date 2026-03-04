@@ -1,7 +1,7 @@
-sabit siyahı<ədəd> a = [1,2,3,4]
+sabit siyahı<ədəd> a = [1,2,3,-4]
 
 
-funksiya isEmpty(sabit siyahı<ədəd> b): ədəd
+funksiya isEmpty(sabit siyahı<ədəd> b): natural
     qaytar Uzunluq(b)
 
 Çap(isEmpty(a))

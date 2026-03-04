@@ -331,7 +331,7 @@ impl<'a> Lexer<'a> {
             Some('[') => self.consume(Token::ListStart),
             Some(']') => self.consume(Token::ListEnd),
             Some('=') | Some('/') | Some('*') | Some('%') | Some('^') | Some('>') | Some('<')
-            | Some('+') | Some('-') => self.read_operator(),
+            | Some('+') | Some('-') | Some('!') => self.read_operator(),
             Some('0'..='9') => self.read_number(),
             Some('\'') | Some('"') => self.read_string(),
             Some(_) => self.read_word(),
