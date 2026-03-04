@@ -27,6 +27,8 @@ pub fn interpreter_run_repl() -> Result<(), InterPreterError> {
     println!("AzLang REPL başladı. Çıxmaq üçün 'exit' yaz.");
 
     let mut runner = Runner::new();
+    let mut validator = Validator::new();
+
 
     loop {
         print!("> ");
@@ -44,7 +46,6 @@ pub fn interpreter_run_repl() -> Result<(), InterPreterError> {
         let mut tokens = lexer.tokenize()?;
         let expressions = {
             let mut parsed_program = parser(&mut tokens)?;
-            let mut validator = Validator::new();
             validator.validate(&mut parsed_program)?;
             parsed_program.expressions
         };
