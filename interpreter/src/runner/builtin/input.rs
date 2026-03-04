@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use parser::ast::Expr;
 
-pub fn input<'a>() -> Expr<'a> {
+pub fn input<'a>() -> Expr {
     let mut input = String::new();
     std::io::stdin()
         .read_line(&mut input)

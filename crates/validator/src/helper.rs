@@ -1,17 +1,11 @@
-use std::borrow::Cow;
-
 use parser::{
     ast::{Expr, Operation},
     shared_ast::Type,
 };
 
-use crate::{ValidatorContext, errors::ValidatorError, validate::validate_expr};
+use crate::{Validator, errors::ValidatorError, validate::validate_expr};
 //TODO: List Type Definition has a problem. We must use Type::Integer instead of Type::Natural
-pub fn get_type<'a>(
-    value: &Expr<'a>,
-    ctx: &mut ValidatorContext<'a>,
-    typ: Option<&Type<'a>>,
-) -> Type<'a> {
+pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Type {
     match value {
         Expr::Number(x) => {
             if *x > 0 {
@@ -59,23 +53,24 @@ pub fn get_type<'a>(
 
             if let Some(t) = typ {
                 if let Type::User(enum_name) = t {
-                    if let Some(variants) = ctx.enum_defs.get(enum_name) {
-                        if variants.contains(name) {
-                            return t.clone();
-                        }
-                    }
+                    // if let Some(variants) = ctx.enum_defs.get(Cow::Owned(enum_name)) {
+                    //     if variants.contains(name) {
+                    //         return t.clone();
+                    //     }
+                    // }
                 }
             }
             return symbol.as_ref().unwrap().typ.clone();
         }
         Expr::StructInit { name, .. } => {
-            if let Some((..)) = ctx.struct_defs.get(name.as_ref()) {
-                Type::User(Cow::Owned(name.to_string()))
-            } else if let Some((..)) = ctx.union_defs.get(name.as_ref()) {
-                Type::User(Cow::Owned(name.to_string()))
-            } else {
-                Type::Any
-            }
+            Type::Any
+            // if let Some((..)) = ctx.struct_defs.get(name.as_ref()) {
+            //     Type::User(*name)
+            // } else if let Some((..)) = ctx.union_defs.get(name.as_ref()) {
+            //     Type::User(name.to_string())
+            // } else {
+            //     Type::Any
+            // }
         }
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
@@ -88,7 +83,7 @@ pub fn get_type<'a>(
         } => {
             let left_type = get_type(left, ctx, typ);
             let right_type = get_type(right, ctx, typ);
-            let last_type: Type<'_> = match *op {
+            let last_type: Type = match *op {
                 Operation::Equal
                 | Operation::NotEqual
                 | Operation::Less
@@ -126,19 +121,16 @@ pub fn get_type<'a>(
     }
 }
 
-pub fn validate_body<'a>(
-    body: &mut Vec<Expr<'a>>,
-    ctx: &mut ValidatorContext<'a>,
-) -> Result<(), ValidatorError> {
+pub fn validate_body<'a>(body: &mut Vec<Expr>, ctx: &mut Validator) -> Result<(), ValidatorError> {
     for expr in body {
         validate_expr(expr, ctx)?;
     }
     Ok(())
 }
 
-pub fn validate_bool_condition<'a>(
-    condition: &mut Expr<'a>,
-    ctx: &mut ValidatorContext<'a>,
+pub fn validate_bool_condition(
+    condition: &mut Expr,
+    ctx: &mut Validator,
 ) -> Result<(), ValidatorError> {
     validate_expr(condition, ctx)?;
 

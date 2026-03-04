@@ -2,7 +2,7 @@ use crate::runner::Runner;
 use crate::runner::runner::runner_interpretator;
 use parser::ast::Expr;
 
-pub fn sum<'a>(args: Vec<Expr<'a>>, ctx: &mut Runner<'a>) -> Expr<'a> {
+pub fn sum<'a>(args: Vec<Expr>, ctx: &mut Runner) -> Expr {
     let mut result = Expr::Number(0);
     for arg in args {
         let runned_arg = runner_interpretator(ctx, arg);

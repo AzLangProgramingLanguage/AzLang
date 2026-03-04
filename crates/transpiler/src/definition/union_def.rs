@@ -5,9 +5,9 @@ use parser::{ast::MethodType, shared_ast::Type};
 use crate::TranspileContext;
 
 pub fn transpile_union_def<'a>(
-    name: &'a str,
-    fields: Vec<(&str, Type<'_>)>,
-    methods: Vec<MethodType<'a>>,
+    name: String,
+    fields: Vec<(String, Type)>,
+    methods: Vec<MethodType>,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     /* let old_union = ctx.current_union.clone();

@@ -5,16 +5,16 @@ use crate::{ast::Expr, expressions::parse_single_expr};
 use tokenizer::iterator::{SpannedToken, Tokens};
 use tokenizer::tokens::Token;
 
-pub fn parse_expression<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
+pub fn parse_expression<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let expr = parse_single_expr(tokens)?;
     parse_binary_op_with_precedence(expr, tokens, 0)
 }
 
 fn parse_binary_op_with_precedence<'a>(
-    mut left: Expr<'a>,
+    mut left: Expr,
     tokens: &mut Tokens,
     min_precedence: u8,
-) -> Result<Expr<'a>, ParserError> {
+) -> Result<Expr, ParserError> {
     loop {
         let op = match tokens.peek() {
             Some(SpannedToken {

@@ -5,7 +5,7 @@ use parser::{
 
 use crate::{TranspileContext, transpile::transpile_expr};
 
-pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
+pub fn get_expr_type<'a>(expr: &Expr) -> Type {
     match expr {
         Expr::String(_) => Type::String,
         Expr::Number(_) => Type::Natural,
@@ -91,7 +91,7 @@ pub fn get_expr_type<'a>(expr: &Expr<'a>) -> Type<'a> {
     }
 }
 
-pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str {
+pub fn get_format_str_from_type<'a>(t: &Type, is_allocator: bool) -> &'a str {
     match t {
         Type::String => {
             if is_allocator {
@@ -176,7 +176,7 @@ pub fn get_format_str_from_type<'a>(t: &Type<'_>, is_allocator: bool) -> &'a str
     }
 }
 
-pub fn map_type<'a>(typ: &'a Type<'a>, is_const: bool) -> &'static str {
+pub fn map_type(typ: &Type, is_const: bool) -> &'static str {
     match typ {
         Type::Integer => "isize",
         Type::Natural => "usize",
@@ -251,7 +251,7 @@ pub fn is_primite_value(expr: &Expr) -> bool {
     )
 }
 
-pub fn transpile_body<'a>(body: Vec<Expr<'a>>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_body<'a>(body: Vec<Expr>, ctx: &mut TranspileContext<'a>) -> String {
     body.into_iter()
         .map(|expr| {
             let mut s = String::new();

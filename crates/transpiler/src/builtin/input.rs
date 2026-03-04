@@ -10,7 +10,7 @@ use crate::{
     transpile::transpile_expr,
 };
 
-pub fn transpile_input<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_input<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String {
     let transpiled_expr = transpile_expr(expr, ctx);
     ctx.needs_allocator = true;
     if !ctx.imports.contains("const std = @import(\"std\");") {

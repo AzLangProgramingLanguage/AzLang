@@ -1,49 +1,48 @@
-use std::{borrow::Cow, collections::HashMap};
-
+use std::collections::HashMap;
 pub mod errors;
 mod helper;
 pub mod validate;
+use crate::{errors::ValidatorError, validate::validate_expr};
 use parser::{
     ast::{Expr, Parameter, Program, Symbol},
     shared_ast::Type,
 };
 
-use crate::{errors::ValidatorError, validate::validate_expr};
-
 #[derive(Debug)]
-pub struct FunctionInfo<'a> {
-    pub return_type: Option<Type<'a>>,
-    pub parameters: Vec<Parameter<'a>>,
-    pub variables: HashMap<String, Symbol<'a>>,
+pub struct FunctionInfo {
+    pub return_type: Option<Type>,
+    pub parameters: Vec<Parameter>,
+    pub variables: HashMap<String, Symbol>,
 }
 
 #[derive(Debug)]
-pub struct MethodInfo<'a> {
-    pub name: Cow<'a, str>,
-    pub return_type: Option<Type<'a>>,
-    pub parameters: Vec<Parameter<'a>>,
+pub struct MethodInfo {
+    pub name: String,
+    pub return_type: Option<Type>,
+    pub parameters: Vec<Parameter>,
     pub is_allocator_used: bool,
 }
+
 #[derive(Debug)]
-pub struct ValidatorContext<'a> {
-    pub global_variables: HashMap<String, Symbol<'a>>,
-    pub functions: HashMap<Cow<'a, str>, FunctionInfo<'a>>,
-    pub struct_defs: HashMap<String, (Vec<(&'a str, Type<'a>)>, Vec<MethodInfo<'a>>)>,
-    pub union_defs: HashMap<String, (Vec<(&'a str, Type<'a>)>, Vec<MethodInfo<'a>>)>,
-    pub enum_defs: HashMap<Cow<'a, str>, Vec<Cow<'a, str>>>,
+pub struct Validator {
+    pub global_variables: HashMap<String, Symbol>,
+    pub functions: HashMap<String, FunctionInfo>,
+    pub struct_defs: HashMap<String, (Vec<(String, Type)>, Vec<MethodInfo>)>,
+    pub union_defs: HashMap<String, (Vec<(String, Type)>, Vec<MethodInfo>)>,
+    pub enum_defs: HashMap<String, Vec<String>>,
     pub is_allocator_used: bool,
     pub current_function: Option<String>,
-    pub current_return: Option<Box<Expr<'a>>>,
-    pub current_struct: Option<&'a str>,
+    pub current_return: Option<Box<Expr>>,
+    pub current_struct: Option<String>,
 }
 
-impl<'a> Default for ValidatorContext<'a> {
+impl Default for Validator {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> ValidatorContext<'a> {
+impl Validator {
     pub fn new() -> Self {
         Self {
             global_variables: HashMap::new(),
@@ -59,22 +58,22 @@ impl<'a> ValidatorContext<'a> {
     }
 
     pub fn validate_user_type(&self, name: &str) -> Result<(), ValidatorError> {
-        if let Some(_) = self.enum_defs.get(name) {
+        if self.enum_defs.get(name).is_some() {
             return Ok(());
         }
-        if let Some(_) = self.struct_defs.get(name) {
+        if self.struct_defs.get(name).is_some() {
             return Ok(());
         }
-        if let Some(_) = self.union_defs.get(name) {
+        if self.union_defs.get(name).is_some() {
             return Ok(());
         }
         Err(ValidatorError::UnknownType(name.to_string()))
     }
 
-    pub fn lookup_variable(&mut self, name: &str) -> Option<&mut Symbol<'a>> {
+    pub fn lookup_variable(&mut self, name: &str) -> Option<&mut Symbol> {
         if let Some(function) = &self.current_function {
             self.functions
-                .get_mut(&Cow::Owned(function.to_string()))
+                .get_mut(function)
                 .unwrap()
                 .variables
                 .get_mut(name)
@@ -83,17 +82,14 @@ impl<'a> ValidatorContext<'a> {
         }
     }
 
-    pub fn declare_function(
-        &mut self,
-        name: Cow<'a, str>,
-        func: FunctionInfo<'a>,
-    ) -> Option<FunctionInfo<'a>> {
+    pub fn declare_function(&mut self, name: String, func: FunctionInfo) -> Option<FunctionInfo> {
         self.functions.insert(name, func)
     }
-    pub fn declare_variable(&mut self, name: String, variable: Symbol<'a>) {
+
+    pub fn declare_variable(&mut self, name: String, variable: Symbol) {
         if let Some(function) = &self.current_function {
             self.functions
-                .get_mut(&Cow::Owned(function.to_string()))
+                .get_mut(function)
                 .unwrap()
                 .variables
                 .insert(name, variable);
@@ -101,7 +97,8 @@ impl<'a> ValidatorContext<'a> {
             self.global_variables.insert(name, variable);
         }
     }
-    pub fn validate(&mut self, parsed_program: &mut Program<'a>) -> Result<(), ValidatorError> {
+
+    pub fn validate(&mut self, parsed_program: &mut Program) -> Result<(), ValidatorError> {
         for expr in parsed_program.expressions.iter_mut() {
             validate_expr(expr, self)?;
         }
@@ -115,3 +112,4 @@ impl<'a> ValidatorContext<'a> {
         Ok(())
     }
 }
+

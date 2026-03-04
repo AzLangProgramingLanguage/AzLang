@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use parser::{ast::Expr, shared_ast::Type};
 
-pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a> {
+pub fn runner_interpretator(ctx: &mut Runner, expr: Expr) -> Expr {
     match expr {
         Expr::Decl {
             name,
@@ -15,7 +15,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             is_mutable,
             value,
         } => {
-            let new_value: Expr<'a> = runner_interpretator(ctx, *value);
+            let new_value: Expr = runner_interpretator(ctx, *value);
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
@@ -78,7 +78,7 @@ pub fn runner_interpretator<'a>(ctx: &mut Runner<'a>, expr: Expr<'a>) -> Expr<'a
             returned_type,
         } => function_call(ctx, target, name, args, returned_type),
         Expr::Assignment { name, value, .. } => {
-            let new_value: Expr<'a> = runner_interpretator(ctx, *value);
+            let new_value: Expr = runner_interpretator(ctx, *value);
             if let Some(var) = ctx.variables.get_mut(&name.to_string()) {
                 var.value = Rc::new(new_value);
             }

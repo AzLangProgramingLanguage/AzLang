@@ -11,7 +11,7 @@ use tokenizer::{
 
 use crate::ast::Expr;
 
-pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Expr<'a>, ParserError> {
+pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Expr, ParserError> {
     let data_typ = parse_type(tokens)?;
     let name = match tokens.next() {
         Some(SpannedToken {
@@ -34,7 +34,7 @@ pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Expr<'a>,
     })
 }
 
-pub fn is_primite_value_to_type<'a>(expr: &Expr<'a>) -> Type<'a> {
+pub fn is_primite_value_to_type<'a>(expr: &Expr) -> Type {
     match expr {
         Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,

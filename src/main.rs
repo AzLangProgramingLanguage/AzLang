@@ -1,6 +1,5 @@
 use cli::{Commands, cli};
 use compiler::compiler;
-use interpreter::interpreter;
 use logging::{error, parser_log};
 
 fn main() {
@@ -8,8 +7,12 @@ fn main() {
     parser_log("İşə Başlayıram");
     match command {
         Commands::Run { binary } => {
-            let mut output = String::new();
-            if let Err(e) = interpreter(&binary, &mut output) {
+             if let Err(e) = interpreter::interpreter_file(&binary) {
+                 error(e.to_string().as_str());
+             }
+        }
+        Commands::Repl => {
+            if let Err(e) = interpreter::interpreter_run_repl() {
                 error(e.to_string().as_str());
             }
         }

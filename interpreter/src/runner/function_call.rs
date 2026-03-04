@@ -1,16 +1,19 @@
 use std::{os::unix::process, rc::Rc};
 
-use parser::{ast::Expr, shared_ast::Type};
+use parser::{
+    ast::{Expr, Parameter},
+    shared_ast::Type,
+};
 
 use crate::runner::{Runner, Variable, runner::runner_interpretator};
 
-pub fn function_call<'a>(
-    ctx: &mut Runner<'a>,
-    target: Option<Box<Expr<'a>>>,
+pub fn function_call(
+    ctx: &mut Runner,
+    target: Option<Box<Expr>>,
     name: String,
-    args: Vec<Expr<'a>>,
-    returned_type: Option<Type<'a>>,
-) -> Expr<'a> {
+    args: Vec<Expr>,
+    returned_type: Option<Type>,
+) -> Expr {
     match target {
         Some(expr) => {
             println!("{expr:?}");
@@ -18,8 +21,8 @@ pub fn function_call<'a>(
         }
         None => {
             if let Some(function) = ctx.functions.get(&name) {
-                let body_rc = Rc::clone(&function.body);
-                let params = Rc::clone(&function.params);
+                let body_rc: Rc<Vec<Expr>> = Rc::clone(&function.body);
+                let params: Rc<Vec<Parameter>> = Rc::clone(&function.params);
                 for i in 0..params.len() {
                     ctx.variables.insert(
                         params[i].name.clone(),

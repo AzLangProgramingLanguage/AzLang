@@ -7,11 +7,11 @@ use parser::{
 
 use crate::{TranspileContext, helper::map_type};
 
-pub fn transpile_struct_def<'a>(
-    name: &'a str,
-    fields: Vec<(&str, Type<'a>, Option<Expr<'a>>)>,
-    methods: Vec<MethodType<'a>>,
-    ctx: &mut TranspileContext<'a>,
+pub fn transpile_struct_def(
+    name: String,
+    fields: Vec<(String, Type, Option<Expr>)>,
+    methods: Vec<MethodType>,
+    ctx: &mut TranspileContext,
 ) -> String {
     /* let old_struct = ctx.current_struct.clone();
 

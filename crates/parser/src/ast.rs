@@ -1,14 +1,12 @@
-use std::borrow::Cow;
+use crate::shared_ast::{BuiltInFunction, Type};
 use std::rc::Rc;
 
-use crate::shared_ast::{BuiltInFunction, Type};
-
 #[derive(Debug, Clone)]
-pub struct MethodType<'a> {
-    pub name: &'a str,
-    pub params: Vec<Parameter<'a>>,
-    pub body: Vec<Expr<'a>>,
-    pub return_type: Option<Type<'a>>,
+pub struct MethodType {
+    pub name: String,
+    pub params: Vec<Parameter>,
+    pub body: Vec<Expr>,
+    pub return_type: Option<Type>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,114 +28,114 @@ pub enum Operation {
 }
 
 #[derive(Debug, Clone)]
-pub struct IF<'a> {
-    pub condition: Box<Expr<'a>>,
-    pub body: Vec<Expr<'a>>,
+pub struct IF {
+    pub condition: Box<Expr>,
+    pub body: Vec<Expr>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Else<'a> {
-    pub body: Vec<Expr<'a>>,
+pub struct Else {
+    pub body: Vec<Expr>,
 }
 
 #[derive(Debug, Clone)]
-pub enum Expr<'a> {
+pub enum Expr {
     DynamicString(Rc<String>),
     Void,
-    Return(Box<Expr<'a>>),
+    Return(Box<Expr>),
     Time(std::time::Instant),
     String(String),
     Bool(bool),
     Number(i64),
     Char(char),
     EnumDecl {
-        name: Cow<'a, str>,
-        variants: Vec<Cow<'a, str>>,
+        name: String,
+        variants: Vec<String>,
     },
     Comment(String),
-    List(Vec<Expr<'a>>),
+    List(Vec<Expr>),
     UnaryOp {
         op: Operation,
-        expr: Box<Expr<'a>>,
+        expr: Box<Expr>,
     },
     Index {
-        target: Box<Expr<'a>>,
-        index: Box<Expr<'a>>,
-        target_type: Type<'a>,
+        target: Box<Expr>,
+        index: Box<Expr>,
+        target_type: Type,
     },
     Loop {
         var_name: String,
-        iterable: Box<Expr<'a>>,
-        body: Vec<Expr<'a>>,
+        iterable: Box<Expr>,
+        body: Vec<Expr>,
     },
     Float(f64),
     Decl {
-        name: Cow<'a, str>,
-        typ: Rc<Type<'a>>,
+        name: String,
+        typ: Rc<Type>,
         is_mutable: bool,
-        value: Box<Expr<'a>>,
+        value: Box<Expr>,
     },
     VariableRef {
-        name: Cow<'a, str>,
-        symbol: Option<Symbol<'a>>,
+        name: String,
+        symbol: Option<Symbol>,
     },
-    TemplateString(Vec<TemplateChunk<'a>>),
+    TemplateString(Vec<TemplateChunk>),
     Condition {
-        main: IF<'a>,
-        elif: Vec<IF<'a>>,
-        other: Option<Else<'a>>,
+        main: IF,
+        elif: Vec<IF>,
+        other: Option<Else>,
     },
     BuiltInCall {
         function: BuiltInFunction,
-        args: Vec<Expr<'a>>,
-        return_type: Type<'a>,
+        args: Vec<Expr>,
+        return_type: Type,
     },
     Call {
-        target: Option<Box<Expr<'a>>>,
+        target: Option<Box<Expr>>,
         name: String,
-        args: Vec<Expr<'a>>,
-        returned_type: Option<Type<'a>>,
+        args: Vec<Expr>,
+        returned_type: Option<Type>,
     },
     StructDef {
-        name: &'a str,
-        fields: Vec<(&'a str, Type<'a>, Option<Expr<'a>>)>,
-        methods: Vec<MethodType<'a>>,
+        name: String,
+        fields: Vec<(String, Type, Option<Expr>)>,
+        methods: Vec<MethodType>,
     },
     FunctionDef {
         name: String,
-        params: Vec<Parameter<'a>>,
-        body: Vec<Expr<'a>>,
-        return_type: Option<Type<'a>>,
+        params: Vec<Parameter>,
+        body: Vec<Expr>,
+        return_type: Option<Type>,
     },
     UnionType {
-        name: &'a str,
-        fields: Vec<(&'a str, Type<'a>)>,
-        methods: Vec<MethodType<'a>>,
+        name: String,
+        fields: Vec<(String, Type)>,
+        methods: Vec<MethodType>,
     },
     StructInit {
-        name: Cow<'a, str>,
-        args: Vec<(&'a str, Expr<'a>)>,
+        name: String,
+        args: Vec<(String, Expr)>,
     },
-
     Assignment {
-        name: Cow<'a, str>,
-        value: Box<Expr<'a>>,
-        symbol: Option<Symbol<'a>>,
+        name: String,
+        value: Box<Expr>,
+        symbol: Option<Symbol>,
     },
     BinaryOp {
-        left: Box<Expr<'a>>,
-        right: Box<Expr<'a>>,
+        left: Box<Expr>,
+        right: Box<Expr>,
         op: Operation,
-        return_type: Type<'a>,
+        return_type: Type,
     },
     Break,
     Continue,
     Match {
-        target: Box<Expr<'a>>,
-        arms: Vec<(Expr<'a>, Vec<Expr<'a>>)>,
+        target: Box<Expr>,
+        arms: Vec<(Expr, Vec<Expr>)>,
     },
 }
-impl<'a> Expr<'a> {
+
+impl Expr {
     pub fn as_number(&self) -> i64 {
         match self {
             Expr::Number(n) => *n,
@@ -153,30 +151,30 @@ impl<'a> Expr<'a> {
 }
 
 #[derive(Debug)]
-pub struct Program<'a> {
-    pub expressions: Vec<Expr<'a>>,
+pub struct Program {
+    pub expressions: Vec<Expr>,
 }
 
 #[derive(Clone, Debug)]
-pub struct Symbol<'a> {
-    pub typ: Type<'a>,
+pub struct Symbol {
+    pub typ: Type,
     pub is_mutable: bool,
     pub is_pointer: bool,
     pub is_used: bool,
     pub is_changed: bool,
-    //pub source_location: Option<Location>,
 }
 
 #[derive(Debug, Clone)]
-pub enum TemplateChunk<'a> {
+pub enum TemplateChunk {
     Literal(String),
-    Expr(Box<Expr<'a>>),
+    Expr(Box<Expr>),
 }
 
 #[derive(Clone, Debug)]
-pub struct Parameter<'a> {
+pub struct Parameter {
     pub name: String,
-    pub typ: Type<'a>,
+    pub typ: Type,
     pub is_mutable: bool,
     pub is_pointer: bool,
 }
+

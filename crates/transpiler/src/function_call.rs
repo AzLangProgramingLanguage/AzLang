@@ -2,12 +2,12 @@ use parser::{ast::Expr, shared_ast::Type};
 
 use crate::{TranspileContext, transpile::transpile_expr};
 
-pub fn transpile_function_call<'a>(
-    ctx: &mut TranspileContext<'a>,
-    target: Option<Box<Expr<'a>>>,
+pub fn transpile_function_call(
+    ctx: &mut TranspileContext,
+    target: Option<Box<Expr>>,
     name: String,
-    args: Vec<Expr<'a>>,
-    returned_type: Option<Type<'a>>,
+    args: Vec<Expr>,
+    returned_type: Option<Type>,
 ) -> String {
     let mut args_code = String::new();
     for arg in args {

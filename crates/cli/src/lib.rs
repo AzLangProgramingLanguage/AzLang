@@ -23,6 +23,8 @@ pub enum Commands {
         /// Məs: output/output
         binary: String,
     },
+    /// Interaktiv REPL rejimi
+    Repl,
 }
 
 pub fn cli() -> Cli {

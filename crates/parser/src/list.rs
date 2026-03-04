@@ -5,7 +5,7 @@ use tokenizer::{
 
 use crate::{ast::Expr, binary_op::parse_expression, errors::ParserError};
 
-pub fn parse_list<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
+pub fn parse_list<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let mut elements = Vec::new();
     loop {
         let elemen = parse_expression(tokens)?;

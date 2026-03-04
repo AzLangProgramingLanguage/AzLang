@@ -9,7 +9,7 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_identifier<'a>(tokens: &mut Tokens, s: String) -> Result<Expr<'a>, ParserError> {
+pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserError> {
     match tokens.peek() {
         Some(SpannedToken {
             token: Token::Assign,
@@ -33,7 +33,7 @@ pub fn parse_identifier<'a>(tokens: &mut Tokens, s: String) -> Result<Expr<'a>, 
             expect_token(tokens, Token::ListEnd)?;
             Ok(Expr::Index {
                 target: Box::new(Expr::VariableRef {
-                    name: Cow::Owned(s),
+                    name: s,
                     symbol: None,
                 }),
                 index: Box::new(index),
@@ -77,7 +77,7 @@ pub fn parse_identifier<'a>(tokens: &mut Tokens, s: String) -> Result<Expr<'a>, 
         }
         _ => {
             return Ok(Expr::VariableRef {
-                name: Cow::Owned(s),
+                name: s,
                 symbol: None,
             });
         }

@@ -11,10 +11,10 @@ use crate::{
 
 pub fn transpile_function_def<'a>(
     name: String,
-    params: Vec<Parameter<'a>>,
-    body: Vec<Expr<'a>>,
-    return_type: &Option<Type<'_>>,
-    _parent: Option<&'a str>,
+    params: Vec<Parameter>,
+    body: Vec<Expr>,
+    return_type: &Option<Type>,
+    _parent: Option<String>,
     ctx: &mut TranspileContext<'a>,
     _is_allocator: &bool,
 ) -> String {
@@ -24,7 +24,7 @@ pub fn transpile_function_def<'a>(
             new_str.push_str(transpile_param(&param).as_ref());
             new_str.push(',');
         }
-        new_str.pop(); 
+        new_str.pop();
         new_str
     };
     let ret_type = return_type.as_ref().unwrap_or(&Type::Void);

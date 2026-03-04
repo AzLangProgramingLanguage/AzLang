@@ -3,7 +3,7 @@ use crate::runner::runner::runner_interpretator;
 use parser::ast::{Expr, TemplateChunk};
 use std::fmt::Write;
 
-pub fn print_interpreter<'a>(expr: Expr<'a>, ctx: &mut Runner<'a>) -> String {
+pub fn print_interpreter<'a>(expr: Expr, ctx: &mut Runner) -> String {
     let mut output = String::new();
     match expr {
         Expr::TemplateString(chunks) => {

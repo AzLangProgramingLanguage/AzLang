@@ -9,7 +9,7 @@ use crate::{
     transpile::transpile_expr,
 };
 
-pub fn transpile_print<'a>(expr: Expr<'a>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_print<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String {
     let mut format_parts = String::new();
     let mut args: Vec<String> = Vec::new();
 

@@ -99,7 +99,7 @@ impl<'a> TranspileContext<'a> {
             Some(import.to_string())
         }
     }
-    pub fn transpile(&mut self, program: Program<'a>) -> String {
+    pub fn transpile(&mut self, program: Program) -> String {
         let mut main_body = String::new();
         let mut defs = String::new();
         let mut top_levels = String::new();
@@ -128,8 +128,8 @@ impl<'a> TranspileContext<'a> {
                     fields,
                     methods,
                 } => {
-                    let union = transpile_struct_def(name, fields, methods, self);
-                    defs.push_str(&union);
+                    // let union = transpile_struct_def(name, fields, methods, self);
+                    // defs.push_str(&union);
                 }
                 Expr::UnionType {
                     name,

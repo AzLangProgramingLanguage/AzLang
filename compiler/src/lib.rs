@@ -1,22 +1,20 @@
 mod cleaner;
+use parser::parser;
+use validator::Validator;
+
 use crate::{builder::build, cleaner::clean_ast, errors::CompilerError};
-use parser::Parser;
 use std::{env, fs, path::Path};
 
 mod builder;
 mod errors;
 
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
-    // 1. Dosyayı oku ve Transpile et
     let sdk = file_system::read_file(path)?;
-    let tokens = tokenizer::Lexer::new(&sdk)
-        .tokenize()
-        .map_err(|err| CompilerError::Lexer(err))?;
+    let mut tokens = tokenizer::Lexer::new(&sdk).tokenize()?;
 
-    let mut parser = Parser::new(tokens);
-    let mut parsed_program = parser.parse().map_err(|err| CompilerError::Parser(err))?;
+    let mut parsed_program = parser(&mut tokens)?;
 
-    let mut validator = validator::ValidatorContext::new();
+    let mut validator = Validator::new();
     validator.validate(&mut parsed_program)?;
     clean_ast(&mut parsed_program, &validator);
 

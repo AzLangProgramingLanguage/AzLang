@@ -18,7 +18,7 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr<'a>>, ParserError> {
+pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr>, ParserError> {
     let mut ast = Vec::new();
 
     while let Some(token) = tokens.peek() {
@@ -46,7 +46,7 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr<'a>>, 
     Ok(ast)
 }
 
-pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
+pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
     match token {
         SpannedToken {

@@ -5,14 +5,14 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type<'a>, ParserError> {
+pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type, ParserError> {
     let token = match tokens.next() {
         Some(token) => token,
         None => return Err(ParserError::UnexpectedEOF),
     };
 
     let typ = match token.token {
-        Token::Identifier(name) => Type::User(Cow::Owned(name)),
+        Token::Identifier(name) => Type::User(name),
         Token::IntegerType => Type::Integer,
         Token::BigIntegerType => Type::BigInteger,
         Token::LowIntegerType => Type::LowInteger,

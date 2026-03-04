@@ -32,7 +32,16 @@ impl From<FileSystem> for CompilerError {
         CompilerError::Io(e)
     }
 }
-
+impl From<LexerError> for CompilerError {
+    fn from(e: LexerError) -> Self {
+        CompilerError::Lexer(e)
+    }
+}
+impl From<ParserError> for CompilerError {
+    fn from(e: ParserError) -> Self {
+        CompilerError::Parser(e)
+    }
+}
 impl From<ValidatorError> for CompilerError {
     fn from(e: ValidatorError) -> Self {
         CompilerError::Validator(e)

@@ -1,13 +1,16 @@
-use parser::{ast::{Expr, Operation}, shared_ast::Type};
+use parser::{
+    ast::{Expr, Operation},
+    shared_ast::Type,
+};
 
 use crate::{TranspileContext, transpile::transpile_expr};
 
-pub fn transpile_binary_op<'a>(
-    ctx: &mut TranspileContext<'a>,
-    left: Box<Expr<'a>>,
-    right: Box<Expr<'a>>,
+pub fn transpile_binary_op(
+    ctx: &mut TranspileContext,
+    left: Box<Expr>,
+    right: Box<Expr>,
     op: Operation,
-    return_type: Type<'a>,
+    return_type: Type,
 ) -> String {
     let left = transpile_expr(*left, ctx);
     let right = transpile_expr(*right, ctx);

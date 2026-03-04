@@ -8,10 +8,7 @@ use crate::{
     shared_ast::Type,
 };
 
-pub fn literals_parse<'a>(
-    token: SpannedToken,
-    tokens: &mut Tokens,
-) -> Result<Expr<'a>, ParserError> {
+pub fn literals_parse<'a>(token: SpannedToken, tokens: &mut Tokens) -> Result<Expr, ParserError> {
     match token.token {
         Token::StringLiteral(s) => return Ok(Expr::String(s)),
         Token::Number(num) => return Ok(Expr::Number(num)),

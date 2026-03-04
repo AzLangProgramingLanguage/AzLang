@@ -39,7 +39,7 @@ use parser::{ast::Expr, shared_ast::Type};
 }
 */
 
-pub fn run_body<'a>(ctx: &mut Runner<'a>, body: Vec<Expr<'a>>) {
+pub fn run_body<'a>(ctx: &mut Runner, body: Vec<Expr>) {
     for expr in body {
         runner_interpretator(ctx, expr);
     }

@@ -7,7 +7,7 @@ use crate::{
     transpile::transpile_expr,
 };
 
-pub fn transpile_sum<'a>(args: &mut Vec<Expr<'a>>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_sum<'a>(args: &mut Vec<Expr>, ctx: &mut TranspileContext<'a>) -> String {
     ctx.used_sum_fn = true;
     let expr_type = get_expr_type(&args[0]);
     let list_code = {

@@ -9,7 +9,7 @@ use crate::{
     errors::ParserError,
 };
 
-fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr<'a>>, ParserError> {
+fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr>, ParserError> {
     let mut block = Vec::new();
     let mut indent = 0;
 
@@ -37,7 +37,7 @@ fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr<'a>>, ParserError> {
     Ok(block)
 }
 
-pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
+pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let condition = parse_expression(tokens)?;
     let then_branch = parse_block(tokens)?;
 

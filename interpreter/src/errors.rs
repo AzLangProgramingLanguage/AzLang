@@ -34,3 +34,13 @@ impl From<ValidatorError> for InterPreterError {
         InterPreterError::Validator(e)
     }
 }
+impl From<ParserError> for InterPreterError {
+    fn from(e: ParserError) -> Self {
+        InterPreterError::Parser(e)
+    }
+}
+impl From<LexerError> for InterPreterError {
+    fn from(e: LexerError) -> Self {
+        InterPreterError::Lexer(e)
+    }
+}

@@ -4,11 +4,9 @@ use tokenizer::{
     tokens::Token,
 };
 
-use crate::{
-    ast::{Expr, TemplateChunk},
-};
+use crate::ast::{Expr, TemplateChunk};
 
-pub fn parse_template_string_expr<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError> {
+pub fn parse_template_string_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let mut chunks = Vec::new();
     loop {
         let Some(token) = tokens.next() else { break };

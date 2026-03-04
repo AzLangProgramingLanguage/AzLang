@@ -85,10 +85,10 @@ impl Display for BuiltInFunction {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Type<'a> {
+pub enum Type {
     String,
-    Array(Box<Type<'a>>),
-    User(Cow<'a, str>),
+    Array(Box<Type>),
+    User(String),
     Integer,
     Natural,
     BigInteger,
@@ -108,7 +108,7 @@ pub enum Type<'a> {
     ZigInteger,
 }
 
-impl Display for Type<'_> {
+impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Type::String => write!(f, "Yazı"),

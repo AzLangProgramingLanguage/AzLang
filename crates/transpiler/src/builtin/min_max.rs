@@ -2,19 +2,15 @@ use parser::{ast::Expr, shared_ast::Type};
 
 use crate::{TranspileContext, helper::get_expr_type, transpile::transpile_expr};
 
-pub fn transpile_min<'a>(args: &mut Vec<Expr<'a>>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_min<'a>(args: &mut Vec<Expr>, ctx: &mut TranspileContext<'a>) -> String {
     transpile_min_max(args, ctx, "min")
 }
 
-pub fn transpile_max<'a>(args: &mut Vec<Expr<'a>>, ctx: &mut TranspileContext<'a>) -> String {
+pub fn transpile_max<'a>(args: &mut Vec<Expr>, ctx: &mut TranspileContext<'a>) -> String {
     transpile_min_max(args, ctx, "max")
 }
 
-fn transpile_min_max<'a>(
-    args: &mut Vec<Expr<'a>>,
-    ctx: &mut TranspileContext<'a>,
-    fn_name: &str,
-) -> String {
+fn transpile_min_max(args: &mut Vec<Expr>, ctx: &mut TranspileContext, fn_name: &str) -> String {
     let list_expr = args.remove(0);
 
     let final_list_code = match list_expr {
@@ -54,7 +50,7 @@ fn transpile_min_max<'a>(
     format!("{}( {})", fn_name, final_list_code) /*TODO: TypeCOde YOxdu */
 }
 
-pub fn inner_typer(inner_type: Type<'_>) -> &'static str {
+pub fn inner_typer(inner_type: Type) -> &'static str {
     match inner_type {
         Type::Array(inner) => inner_typer(*inner),
         Type::Integer => "usize",

@@ -30,19 +30,11 @@ pub mod structs; */
 mod tests;
 /*
  *//* pub mod union; */
-use crate::expressions::parse_expression_block;
+use crate::{errors::ParserError, expressions::parse_expression_block};
 use ast::Program;
 use tokenizer::iterator::Tokens;
-#[derive(Debug)]
-pub struct Parser {
-    tokens: Tokens,
-}
-impl Parser {
-    pub fn new(tokens: Tokens) -> Self {
-        Self { tokens }
-    }
-    pub fn parse(&mut self) -> Result<Program<'_>, errors::ParserError> {
-        let ast = parse_expression_block(&mut self.tokens)?;
-        Ok(Program { expressions: ast })
-    }
+
+pub fn parser(tokens: &mut Tokens) -> Result<Program, ParserError> {
+    let ast = parse_expression_block(tokens)?;
+    Ok(Program { expressions: ast })
 }

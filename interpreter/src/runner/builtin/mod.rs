@@ -13,23 +13,21 @@ mod input;
 mod print;
 mod sum;
 
-pub fn builthin_call_runner<'a>(
-    ctx: &mut Runner<'a>,
+pub fn builthin_call_runner(
+    ctx: &mut Runner,
     function: BuiltInFunction,
-    mut args: Vec<Expr<'a>>,
-    return_type: Type<'a>,
-) -> Expr<'a> {
+    mut args: Vec<Expr>,
+    return_type: Type,
+) -> Expr {
     match function {
         BuiltInFunction::Print => {
             let output = print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx);
-            ctx.output.push_str(&output);
 
             println!("{}", output);
             Expr::Void
         }
         BuiltInFunction::LastWord => {
             let output = print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx);
-            ctx.output.push_str(&output);
 
             println!("{}", output);
             std::process::exit(1);

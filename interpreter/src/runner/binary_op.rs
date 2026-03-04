@@ -1,14 +1,17 @@
-use parser::{ast::{Expr, Operation}, shared_ast::Type};
+use parser::{
+    ast::{Expr, Operation},
+    shared_ast::Type,
+};
 
 use crate::runner::{Runner, runner::runner_interpretator};
 
-pub fn binary_op_runner<'a>(
-    ctx: &mut Runner<'a>,
-    left: Box<Expr<'a>>,
-    right: Box<Expr<'a>>,
+pub fn binary_op_runner(
+    ctx: &mut Runner,
+    left: Box<Expr>,
+    right: Box<Expr>,
     op: Operation,
-    return_type: Type<'a>,
-) -> Expr<'a> {
+    return_type: Type,
+) -> Expr {
     let left = runner_interpretator(ctx, *left);
     let right = runner_interpretator(ctx, *right);
 
@@ -48,7 +51,6 @@ pub fn binary_op_runner<'a>(
         }
         Operation::Divide => {
             if let Type::Integer = return_type {
-
                 let left = left.as_number();
                 let right = right.as_number();
                 Expr::Number(left / right)
@@ -70,16 +72,11 @@ pub fn binary_op_runner<'a>(
                 Expr::Float(left % right)
             }
         }
-        Operation::Equal => {
-            match (left, right) {
-                (Expr::Number(b), Expr::Number(c)) => Expr::Bool(b == c),
-                (_, _) => Expr::Bool(false),
-            }
-           
-        }
-        Operation::NotEqual => {
-                Expr::Bool(false)  
-        }
+        Operation::Equal => match (left, right) {
+            (Expr::Number(b), Expr::Number(c)) => Expr::Bool(b == c),
+            (_, _) => Expr::Bool(false),
+        },
+        Operation::NotEqual => Expr::Bool(false),
         _ => Expr::Bool(false),
     };
 

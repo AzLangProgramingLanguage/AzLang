@@ -5,9 +5,9 @@ use parser::{ast::Expr, shared_ast::Type};
 use crate::{TranspileContext, helper::map_type, transpile::transpile_expr};
 pub fn transpile_decl<'a>(
     name: &String,
-    typ: Rc<Type<'a>>,
+    typ: Rc<Type>,
     is_mutable: bool,
-    value: Expr<'a>,
+    value: Expr,
     ctx: &mut TranspileContext<'a>,
 ) -> String {
     let type_str = map_type(&typ, !is_mutable);

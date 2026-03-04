@@ -10,10 +10,7 @@ use tokenizer::{
 
 use crate::ast::Expr;
 
-pub fn parse_builtin<'a>(
-    tokens: &mut Tokens,
-    token: &SpannedToken,
-) -> Result<Expr<'a>, ParserError> {
+pub fn parse_builtin<'a>(tokens: &mut Tokens, token: &SpannedToken) -> Result<Expr, ParserError> {
     let (function, return_type) = match &token.token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
         Token::Input => (BuiltInFunction::Input, Type::String),

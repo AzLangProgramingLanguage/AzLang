@@ -1,16 +1,21 @@
 use crate::errors::ParserError;
-use tokenizer::{iterator::{SpannedToken, Tokens}, tokens::Token};
+use tokenizer::{
+    iterator::{SpannedToken, Tokens},
+    tokens::Token,
+};
 
 use crate::{ast::Expr, expressions::parse_single_expr, helpers::expect_token};
 
-pub fn parse_loop<'a>(tokens: &mut Tokens) -> Result<Expr<'a>, ParserError>
-{
+pub fn parse_loop<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let iterable = parse_single_expr(tokens)?;
 
     expect_token(tokens, Token::In)?;
 
     let var_name = match tokens.next() {
-        Some(SpannedToken { token: Token::Identifier(name), .. }) => name,
+        Some(SpannedToken {
+            token: Token::Identifier(name),
+            ..
+        }) => name,
         Some(other) => return Err(ParserError::LoopVarNameNotFound(other.token)),
         None => return Err(ParserError::LoopVarNameNotFound(Token::Eof)),
     };
