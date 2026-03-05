@@ -11,6 +11,12 @@ pub fn transpile_function_call(
 ) -> String {
     let mut args_code = String::new();
     for arg in args {
+        match &arg {
+            Expr::VariableRef { name, symbol } => {
+                args_code.push('&');
+            }
+            _ => {}
+        }
         args_code.push_str(&transpile_expr(arg, ctx));
         args_code.push(',');
     }

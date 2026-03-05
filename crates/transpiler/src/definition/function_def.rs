@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use parser::{
     ast::{Expr, Parameter},
     shared_ast::Type,
@@ -54,7 +56,16 @@ pub fn transpile_function_def<'a>(
 }
 
 fn transpile_param(param: &Parameter) -> String {
-    let zig_type = map_type(&param.typ, !param.is_mutable);
+    // let zig_type =  match param.typ {
+    //     Type::Array(s) => format("siyahı<{}>",map_type(&*s, !param.is_mutable));
+    //
+    //     _ => map_type(&param.typ, !param.is_mutable).to_string()
+    // };
+    let zig_type = match (&param.typ, param.is_mutable) {
+        (Type::Array(s), false) => format!("[]const {}", map_type(&s, param.is_mutable)),
+        (Type::Array(s), true) => format!("[]{}", map_type(&s, param.is_mutable)),
+        _ => map_type(&param.typ, !param.is_mutable).to_string(),
+    };
     if param.is_mutable {
         format!("{}: *{}", param.name, zig_type)
     } else {

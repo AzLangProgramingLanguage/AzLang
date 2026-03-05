@@ -5,6 +5,7 @@ use crate::{
     binary_op::transpile_binary_op,
     builtin::{
         input::transpile_input,
+        len::transpile_len,
         min_max::{transpile_max, transpile_min},
         print::transpile_print,
         sum::transpile_sum,
@@ -89,6 +90,7 @@ pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String 
 
             BuiltInFunction::Min => transpile_min(&mut args, ctx),
             BuiltInFunction::Max => transpile_max(&mut args, ctx),
+            BuiltInFunction::Len => transpile_len(&mut args, ctx),
 
             _ => "None".to_string(),
         },

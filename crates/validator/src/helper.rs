@@ -7,13 +7,7 @@ use crate::{Validator, errors::ValidatorError, validate::validate_expr};
 //TODO: List Type Definition has a problem. We must use Type::Integer instead of Type::Natural
 pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Type {
     match value {
-        Expr::Number(x) => {
-            if *x > 0 {
-                Type::Natural
-            } else {
-                Type::Integer
-            }
-        }
+        Expr::Number(x) => Type::Integer,
         Expr::UnaryOp { op, expr } => {
             get_type(expr, ctx, typ);
             match &*op {

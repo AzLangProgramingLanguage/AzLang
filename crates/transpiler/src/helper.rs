@@ -8,7 +8,7 @@ use crate::{TranspileContext, transpile::transpile_expr};
 pub fn get_expr_type<'a>(expr: &Expr) -> Type {
     match expr {
         Expr::String(_) => Type::String,
-        Expr::Number(_) => Type::Natural,
+        Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
