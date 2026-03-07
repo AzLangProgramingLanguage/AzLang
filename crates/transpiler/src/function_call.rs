@@ -5,10 +5,11 @@ use crate::{TranspileContext, transpile::transpile_expr};
 pub fn transpile_function_call(
     ctx: &mut TranspileContext,
     target: Option<Box<Expr>>,
-    name: String,
+    name: Box<Expr>,
     args: Vec<Expr>,
     returned_type: Option<Type>,
 ) -> String {
+    let name = transpile_expr(*name, ctx);
     let mut args_code = String::new();
     for arg in args {
         match &arg {

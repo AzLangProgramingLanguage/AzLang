@@ -10,7 +10,7 @@ use crate::runner::{Runner, Variable, runner::runner_interpretator};
 pub fn function_call(
     ctx: &mut Runner,
     target: Option<Box<Expr>>,
-    name: String,
+    name: Box<Expr>,
     args: Vec<Expr>,
     returned_type: Option<Type>,
 ) -> Expr {

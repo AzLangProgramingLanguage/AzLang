@@ -92,14 +92,9 @@ pub enum Expr {
     },
     Call {
         target: Option<Box<Expr>>,
-        name: String,
+        name: Box<Expr>,
         args: Vec<Expr>,
         returned_type: Option<Type>,
-    },
-    StructDef {
-        name: String,
-        fields: Vec<(String, Type, Option<Expr>)>,
-        methods: Vec<MethodType>,
     },
     FunctionDef {
         name: String,
@@ -107,6 +102,12 @@ pub enum Expr {
         body: Vec<Expr>,
         return_type: Option<Type>,
     },
+    StructDef {
+        name: String,
+        fields: Vec<(String, Type, Option<Expr>)>,
+        methods: Vec<MethodType>,
+    },
+
     UnionType {
         name: String,
         fields: Vec<(String, Type)>,
@@ -177,4 +178,3 @@ pub struct Parameter {
     pub is_mutable: bool,
     pub is_pointer: bool,
 }
-

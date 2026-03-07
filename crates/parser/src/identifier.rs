@@ -40,41 +40,6 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
                 target_type: Type::Any,
             })
         }
-        Some(SpannedToken {
-            token: Token::LParen,
-            ..
-        }) => {
-            tokens.next();
-            let mut args = Vec::new();
-            loop {
-                match tokens.peek() {
-                    Some(SpannedToken {
-                        token: Token::RParen,
-                        ..
-                    }) => {
-                        tokens.next();
-                        break;
-                    }
-                    Some(SpannedToken {
-                        token: Token::Comma,
-                        ..
-                    }) => {
-                        tokens.next();
-                    }
-                    None => return Err(ParserError::RParenNotFound(Token::Eof)),
-                    _ => {
-                        args.push(parse_single_expr(tokens)?);
-                    }
-                }
-            }
-
-            Ok(Expr::Call {
-                target: None,
-                name: s,
-                args,
-                returned_type: Some(Type::Void),
-            })
-        }
         _ => {
             return Ok(Expr::VariableRef {
                 name: s,

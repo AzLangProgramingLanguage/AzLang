@@ -395,134 +395,137 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             returned_type,
             name,
         } => {
-            match target {
-                Some(variable) => {
-                    validate_expr(variable, ctx)?;
-                    let variable_type = get_type(variable, ctx, None);
-
-                    match variable_type {
-                        Type::String => {
-                            let union = ctx
-                                .union_defs
-                                .get("Yazı")
-                                .ok_or(ValidatorError::UnionNotFound("Yazı".to_string()))?;
-                            let maybe_method = union
-                                .1
-                                .iter()
-                                .find(|m| m.name.to_string() == name.to_string());
-                            let method = maybe_method.ok_or_else(|| {
-                                ValidatorError::FunctionNotFound(name.to_string())
-                            })?;
-                            /* TODO: Burada parametr ve args qiymetini yoxla */
-
-                            if method.parameters.len() != args.len() {
-                                return Err(ValidatorError::FunctionArgCountMismatch {
-                                    name: name.to_string(),
-                                    expected: method.parameters.len(),
-                                    found: args.len(),
-                                });
-                            }
-
-                            *returned_type = method.return_type.clone();
-                        }
-                        Type::Natural | Type::Integer | Type::Float => {
-                            let object = ctx
-                                .union_defs
-                                .get("Ədəd")
-                                .ok_or(ValidatorError::UnionNotFound("Ədəd".to_string()))?;
-                            let maybe_method = object
-                                .1
-                                .iter()
-                                .find(|m| m.name.to_string() == name.to_string());
-                            let method = maybe_method.ok_or_else(|| {
-                                ValidatorError::FunctionNotFound(name.to_string())
-                            })?;
-                            /* TODO: Burada parametr ve args qiymetini yoxla */
-
-                            if method.parameters.len() != args.len() {
-                                return Err(ValidatorError::FunctionArgCountMismatch {
-                                    name: name.to_string(),
-                                    expected: method.parameters.len(),
-                                    found: args.len(),
-                                });
-                            }
-
-                            *returned_type = method.return_type.clone();
-                        }
-                        Type::User(s) => {
-                            let union = ctx
-                                .union_defs
-                                .get(&s.to_string())
-                                .or_else(|| ctx.struct_defs.get(&s.to_string()))
-                                .ok_or(ValidatorError::UnionNotFound(s.to_string()))?;
-                            let maybe_method = union
-                                .1
-                                .iter()
-                                .find(|m| m.name.to_string() == name.to_string());
-                            let method = maybe_method.ok_or_else(|| {
-                                ValidatorError::FunctionNotFound(name.to_string())
-                                // Əgər ayrıca MethodNotFound error varsa onu istifadə et
-                            })?;
-                            if method.parameters.len() != args.len() {
-                                return Err(ValidatorError::FunctionArgCountMismatch {
-                                    name: name.to_string(),
-                                    expected: method.parameters.len(),
-                                    found: args.len(),
-                                });
-                            }
-
-                            *returned_type = method.return_type.clone();
-                        }
-                        Type::Array(_) => {
-                            let union = ctx
-                                .union_defs
-                                .get("Siyahı")
-                                .or_else(|| ctx.struct_defs.get("Siyahı"))
-                                .ok_or(ValidatorError::UnionNotFound("Siyahı".to_string()))?;
-                            let maybe_method = union
-                                .1
-                                .iter()
-                                .find(|m| m.name.to_string() == name.to_string());
-                            let method = maybe_method.ok_or_else(|| {
-                                ValidatorError::FunctionNotFound(name.to_string())
-                            })?;
-                            if method.parameters.len() != args.len() {
-                                return Err(ValidatorError::FunctionArgCountMismatch {
-                                    name: name.to_string(),
-                                    expected: method.parameters.len(),
-                                    found: args.len(),
-                                });
-                            }
-                            *returned_type = method.return_type.clone();
-                        }
-                        _ => {
-                            return Err(ValidatorError::UnionNotFound(
-                                "Enum tapılmadı".to_string(),
-                            ));
-                        }
-                    }
-                }
-                _ => {
-                    let func = ctx
-                        .functions
-                        .get(name)
-                        .ok_or(ValidatorError::FunctionNotFound(name.to_string()))?;
-                    validator_log(&format!("Funksiya çağırışı yoxlanılır: {}", name));
-
-                    if func.parameters.len() != args.len() {
-                        return Err(ValidatorError::FunctionArgCountMismatch {
-                            name: name.to_string(),
-                            expected: func.parameters.len(),
-                            found: args.len(),
-                        });
-                    }
-
-                    *returned_type = func.return_type.clone();
-                }
-            }
-            for arg in args.iter_mut() {
-                validate_expr(arg, ctx)?;
-            }
+            // match target {
+            //     Some(variable) => {
+            //         validate_expr(variable, ctx)?;
+            //         let variable_type = get_type(variable, ctx, None);
+            //
+            //     match variable_type {
+            //         Type::String => {
+            //             let union = ctx
+            //                 .union_defs
+            //                 .get("Yazı")
+            //                 .ok_or(ValidatorError::UnionNotFound("Yazı".to_string()))?;
+            //             let maybe_method = union
+            //                 .1
+            //                 .iter()
+            //                 .find(|m| m.name.to_string() == format!("{name:?}"));
+            //             let method = maybe_method.ok_or_else(|| {
+            //                 ValidatorError::FunctionNotFound(format!("{name:?}"))
+            //             })?;
+            //             /* TODO: Burada parametr ve args qiymetini yoxla */
+            //
+            //             if method.parameters.len() != args.len() {
+            //                 return Err(ValidatorError::FunctionArgCountMismatch {
+            //                     name: format!("{name:?}"),
+            //                     expected: method.parameters.len(),
+            //                     found: args.len(),
+            //                 });
+            //             }
+            //
+            //             *returned_type = method.return_type.clone();
+            //         }
+            //         Type::Natural | Type::Integer | Type::Float => {
+            //             let object = ctx
+            //                 .union_defs
+            //                 .get("Ədəd")
+            //                 .ok_or(ValidatorError::UnionNotFound("Ədəd".to_string()))?;
+            //             let maybe_method = object
+            //                 .1
+            //                 .iter()
+            //                 .find(|m| m.name.to_string() == name.to_string());
+            //             let method = maybe_method.ok_or_else(|| {
+            //                 ValidatorError::FunctionNotFound(name.to_string())
+            //             })?;
+            //             /* TODO: Burada parametr ve args qiymetini yoxla */
+            //
+            //             if method.parameters.len() != args.len() {
+            //                 return Err(ValidatorError::FunctionArgCountMismatch {
+            //                     name: name.to_string(),
+            //                     expected: method.parameters.len(),
+            //                     found: args.len(),
+            //                 });
+            //             }
+            //
+            //             *returned_type = method.return_type.clone();
+            //         }
+            //         Type::User(s) => {
+            //             // let union = ctx
+            //             //     .union_defs
+            //             //     .get(&s.to_string())
+            //             //     .or_else(|| ctx.struct_defs.get(&s.to_string()))
+            //             //     .ok_or(ValidatorError::UnionNotFound(s.to_string()))?;
+            //             // let maybe_method = union
+            //             //     .1
+            //             //     .iter()
+            //             //     .find(|m| m.name.to_string() == name.to_string());
+            //             // let method = maybe_method.ok_or_else(|| {
+            //             //     ValidatorError::FunctionNotFound(name.to_string())
+            //             //     // Əgər ayrıca MethodNotFound error varsa onu istifadə et
+            //             // })?;
+            //             // if method.parameters.len() != args.len() {
+            //             //     return Err(ValidatorError::FunctionArgCountMismatch {
+            //             //         name: name.to_string(),
+            //             //         expected: method.parameters.len(),
+            //             //         found: args.len(),
+            //             //     });
+            //             // }
+            //
+            //             //  *returned_type = method.return_type.clone();
+            //         }
+            //         Type::Array(_) => {
+            //             let union = ctx
+            //                 .union_defs
+            //                 .get("Siyahı")
+            //                 .or_else(|| ctx.struct_defs.get("Siyahı"))
+            //                 .ok_or(ValidatorError::UnionNotFound("Siyahı".to_string()))?;
+            //             let maybe_method = union
+            //                 .1
+            //                 .iter()
+            //                 .find(|m| m.name.to_string() == name.to_string());
+            //             // let method = maybe_method.ok_or_else(|| {
+            //             //     ValidatorError::FunctionNotFound(name.to_string())
+            //             // })?;
+            //             // if method.parameters.len() != args.len() {
+            //             //     return Err(ValidatorError::FunctionArgCountMismatch {
+            //             //         name: name.to_string(),
+            //             //         expected: method.parameters.len(),
+            //             //         found: args.len(),
+            //             //     });
+            //             // }
+            //             *returned_type = method.return_type.clone();
+            //         }
+            //         _ => {
+            //             return Err(ValidatorError::UnionNotFound(
+            //                 "Enum tapılmadı".to_string(),
+            //             ));
+            //         }
+            //     }
+            // }
+            // _ => {
+            //     // let func = ctx
+            //     //     .functions
+            //     //     .get(format!("{name:?}"))
+            //     //     .ok_or(ValidatorError::FunctionNotFound(format!("{name:?}")))?;
+            //     // validator_log(&format!(
+            //     //     "Funksiya çağırışı yoxlanılır: {}",
+            //     //     format!("{name:?}")
+            //     // ));
+            //
+            //     // if func.parameters.len() != args.len() {
+            //     //     return Err(ValidatorError::FunctionArgCountMismatch {
+            //     //         name: format!("{name:?}"),
+            //     //         expected: func.parameters.len(),
+            //     //         found: args.len(),
+            //     //     });
+            //     // }
+            //
+            //     // *returned_type = func.return_type.clone();
+            // }
+            //    },
+            // for arg in args.iter_mut() {
+            //     validate_expr(arg, ctx)?;
+            // }
         }
         Expr::Index {
             target,

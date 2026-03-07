@@ -1,11 +1,4 @@
-dəyişən kəsr a = 0.0
-gəz [1,2,3,4] içində i
-    a = a + 0.1
-    Çap(a)
-
-
-
-
+salam()()
 
 /*
 tip Yazı

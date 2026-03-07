@@ -15,6 +15,44 @@ fn parse_binary_op_with_precedence<'a>(
     tokens: &mut Tokens,
     min_precedence: u8,
 ) -> Result<Expr, ParserError> {
+    match tokens.peek() {
+        Some(SpannedToken {
+            token: Token::LParen,
+            ..
+        }) => {
+            tokens.next();
+            let mut args = Vec::new();
+            loop {
+                match tokens.peek() {
+                    Some(SpannedToken {
+                        token: Token::RParen,
+                        ..
+                    }) => {
+                        tokens.next();
+                        break;
+                    }
+                    Some(SpannedToken {
+                        token: Token::Comma,
+                        ..
+                    }) => {
+                        tokens.next();
+                    }
+                    None => return Err(ParserError::RParenNotFound(Token::Eof)),
+                    _ => {
+                        args.push(parse_single_expr(tokens)?);
+                    }
+                }
+            }
+            return Ok(Expr::Call {
+                target: None,
+                name: Box::new(left),
+                args,
+                returned_type: Some(Type::Void),
+            });
+        }
+
+        _ => {}
+    }
     loop {
         let op = match tokens.peek() {
             Some(SpannedToken {
