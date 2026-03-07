@@ -93,23 +93,23 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             methods,
         } => {
             validator_log(&format!("✅ Union tərifi yoxlanılır: '{name}'"));
-            // if ctx.union_defs.contains_key(*name) {
-            //     return Err(ValidatorError::DuplicateUnion(name.to_string()));
-            // }
+            if ctx.union_defs.contains_key(name) {
+                return Err(ValidatorError::DuplicateUnion(name.to_string()));
+            }
 
-            // ctx.union_defs
-            //     .insert(name.to_string(), (Vec::new(), Vec::new()));
-            // let method_infos: Vec<MethodInfo> = methods
-            //     .iter()
-            //     .map(|method| {
-            //         Ok(MethodInfo {
-            //             name: Cow::Borrowed(method.name),
-            //             return_type: method.return_type.clone(),
-            //             parameters: method.params.clone(),
-            //             is_allocator_used: false,
-            //         })
-            //     })
-            //     .collect::<Result<_, ValidatorError>>()?;
+            ctx.union_defs
+                .insert(name.to_string(), (Vec::new(), Vec::new()));
+            let method_infos: Vec<MethodInfo> = methods
+                .iter()
+                .map(|method| {
+                    Ok(MethodInfo {
+                        name: method.name.to_string(),
+                        return_type: method.return_type.clone(),
+                        parameters: method.params.clone(),
+                        is_allocator_used: false,
+                    })
+                })
+                .collect::<Result<_, ValidatorError>>()?;
             //
             // let newfields: Vec<(&str, Type)> = fields
             //     .iter()
@@ -247,9 +247,9 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             methods,
         } => {
             validator_log(&format!("✅ Struct tərifi yoxlanılır: '{}'", name));
-            // if ctx.struct_defs.contains_key(*name) {
-            //     return Err(ValidatorError::DuplicateStruct(name.to_string()));
-            // }
+            if ctx.struct_defs.contains_key(name) {
+                return Err(ValidatorError::DuplicateStruct(name.to_string()));
+            }
 
             // let method_infos = methods
             //     .iter()
