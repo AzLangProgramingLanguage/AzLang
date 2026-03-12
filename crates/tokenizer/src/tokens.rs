@@ -86,6 +86,7 @@ pub enum Token {
     Type,
     ZigString,
     CharType,
+    FnType,
     BoolType,
     FloatType,
     ZigFloat,

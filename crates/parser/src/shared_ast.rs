@@ -106,6 +106,7 @@ pub enum Type {
     ZigNatural,
     ZigFloat,
     ZigInteger,
+    Function,
 }
 
 impl Display for Type {
@@ -131,6 +132,7 @@ impl Display for Type {
             Type::ZigNatural => write!(f, "ZigNatural"),
             Type::ZigFloat => write!(f, "ZigFloat"),
             Type::ZigInteger => write!(f, "ZigInteger"),
+            Type::Function => write!(f, "Funksiya"),
         }
     }
 }

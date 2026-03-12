@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, write};
 
 use crate::tokens::Token;
 impl fmt::Display for Token {
@@ -74,6 +74,7 @@ impl fmt::Display for Token {
             Token::ZigString => write!(f, "zig string"),
             Token::CharType => write!(f, "char"),
             Token::BoolType => write!(f, "bool"),
+            Token::FnType => write!(f, "funskiya tipi"),
             Token::FloatType => write!(f, "float"),
             Token::ZigFloat => write!(f, "zig float"),
             Token::BigIntegerType => write!(f, "big integer"),

@@ -107,6 +107,7 @@ pub fn get_format_str_from_type<'a>(t: &Type, is_allocator: bool) -> &'a str {
                 "{d}"
             }
         }
+        Type::Function => "{s}",
         Type::ZigNatural
         | Type::ZigInteger
         | Type::Integer
@@ -219,6 +220,7 @@ pub fn map_type(typ: &Type, is_const: bool) -> &'static str {
         }
         Type::User(_) => "any",
         Type::Allocator => "std.mem.Allocator",
+        Type::Function => "any",
     }
 }
 

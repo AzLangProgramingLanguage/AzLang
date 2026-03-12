@@ -16,38 +16,46 @@ pub fn function_call(
 ) -> Expr {
     match target {
         Some(expr) => {
-            println!("{expr:?}");
             panic!(" Burası hazır deyil {expr:?}");
         }
         None => {
-            if let Some(function) = ctx.functions.get(&name) {
-                let body_rc: Rc<Vec<Expr>> = Rc::clone(&function.body);
-                let params: Rc<Vec<Parameter>> = Rc::clone(&function.params);
-                for i in 0..params.len() {
-                    ctx.variables.insert(
-                        params[i].name.clone(),
-                        Variable {
-                            value: Rc::new(args[i].clone()),
-                            typ: Rc::new(params[i].typ.clone()),
-                            is_mutable: params[i].is_mutable,
-                        },
-                    );
-                }
+            match &*name {
+                Expr::VariableRef {
+                    name: func_name,
+                    symbol,
+                } => {
+                    if let Some(function) = ctx.functions.get(func_name) {
+                        let body_rc: Rc<Vec<Expr>> = Rc::clone(&function.body);
+                        let params: Rc<Vec<Parameter>> = Rc::clone(&function.params);
+                        for i in 0..params.len() {
+                            ctx.variables.insert(
+                                params[i].name.clone(),
+                                Variable {
+                                    value: Rc::new(args[i].clone()),
+                                    typ: Rc::new(params[i].typ.clone()),
+                                    is_mutable: params[i].is_mutable,
+                                },
+                            );
+                        }
 
-                for i in 0..body_rc.len() {
-                    let expr = body_rc[i].clone();
-                    match expr {
-                        Expr::Return(s) => {
-                            return runner_interpretator(ctx, *s);
-                        }
-                        _ => {
-                            runner_interpretator(ctx, expr);
-                        }
+                        for i in 0..body_rc.len() {
+                            let expr = body_rc[i].clone();
+                            match expr {
+                                Expr::Return(s) => {
+                                    return runner_interpretator(ctx, *s);
+                                }
+                                _ => {
+                                    runner_interpretator(ctx, expr);
+                                }
+                            }
+                        } //TODO: Burada Mütleq deyerleri temizlemek lazımdır.
+                    } else {
+                        panic!("Bele bir funksiya yoxdur. ");
                     }
-                } //TODO: Burada Mütleq deyerleri temizlemek lazımdır.
-            } else {
-                dbg!(2); //TODO: Burası funksiyada yok
-                std::process::exit(1);
+                }
+                _ => {
+                    panic!("Buraya gəlməməliydi.")
+                }
             }
         }
     }

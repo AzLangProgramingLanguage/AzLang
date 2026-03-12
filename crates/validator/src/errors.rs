@@ -47,12 +47,14 @@ pub enum ValidatorError {
     NeverChangedMuttableVariable(String),
     FunctionAlreadyDefined(String),
     FunctionReturnTypeErr(String),
+    FunctionNameType(String),
 }
 
 impl Display for ValidatorError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ValidatorError::UnknownType(string) => write!(f, "Gözlənilməyən token '{string}'"),
+            ValidatorError::FunctionNameType(name) => write!(f, "'{name}' tipi funksiya deyil.  "),
             ValidatorError::AlreadyDecl(string) => write!(f, "'{string}' Dəyəri onsuzda var.  "),
             ValidatorError::DeclTypeMismatch {
                 name,

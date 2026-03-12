@@ -1,3 +1,6 @@
+
 funksiya add(sabit ədəd a, sabit ədəd b): ədəd
     qaytar a + b
-Çap(add(1,2))
+funksiya sss(): çağrılan
+    qaytar add
+Çap(sss()(1,2))

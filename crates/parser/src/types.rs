@@ -24,6 +24,7 @@ pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type, ParserError> {
         Token::ZigFloat => Type::ZigFloat,
         Token::ZigInteger => Type::ZigInteger,
         Token::BoolType => Type::Bool,
+        Token::FnType => Type::Function,
         Token::NaturalType => Type::Natural,
         Token::StringType => Type::String,
         Token::CharType => Type::Char,

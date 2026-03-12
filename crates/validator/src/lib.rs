@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 pub mod errors;
+pub mod function_call;
 mod helper;
 pub mod validate;
 use crate::{errors::ValidatorError, validate::validate_expr};
@@ -112,4 +113,3 @@ impl Validator {
         Ok(())
     }
 }
-

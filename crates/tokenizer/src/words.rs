@@ -10,6 +10,7 @@ pub fn tokenize_word(word: &str) -> Token {
             "yoxsa" => Token::ElseIf,
             "əks" => Token::Else,
             "funksiya" => Token::FunctionDef,
+            "çağrılan" => Token::FnType,
             "siyahı" => Token::Array,
             "Obyekt" => Token::Object,
             "öz" => Token::This,

@@ -4,12 +4,11 @@ use logging::{error, parser_log};
 
 fn main() {
     let command = cli().command;
-    parser_log("İşə Başlayıram");
     match command {
         Commands::Run { binary } => {
-             if let Err(e) = interpreter::interpreter_file(&binary) {
-                 error(e.to_string().as_str());
-             }
+            if let Err(e) = interpreter::interpreter_file(&binary) {
+                error(e.to_string().as_str());
+            }
         }
         Commands::Repl => {
             if let Err(e) = interpreter::interpreter_run_repl() {
