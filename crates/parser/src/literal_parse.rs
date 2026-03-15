@@ -8,13 +8,18 @@ use crate::{
     shared_ast::Type,
 };
 
-pub fn literals_parse<'a>(token: SpannedToken, tokens: &mut Tokens) -> Result<Expr, ParserError> {
-    match token.token {
-        Token::StringLiteral(s) => return Ok(Expr::String(s)),
-        Token::Number(num) => return Ok(Expr::Number(num)),
-        Token::Float(num) => return Ok(Expr::Float(num)),
+pub fn literals_parse<'a>(token: &SpannedToken, tokens: &mut Tokens) -> Result<Expr, ParserError> {
+    match &token.token {
+        Token::StringLiteral(s) => return Ok(Expr::String(s.to_string())),
+        Token::Number(num) => return Ok(Expr::Number(*num)),
+        Token::Float(num) => return Ok(Expr::Float(*num)),
         Token::ListStart => return parse_list(tokens),
-        _ => return Err(ParserError::UnexpectedToken(token.span, token.token)),
+        _ => {
+            return Err(ParserError::UnexpectedToken(
+                token.span.clone(),
+                token.token.clone(),
+            ));
+        }
     };
 
     /*     while let Some(Token::Dot) = tokens.peek() {
