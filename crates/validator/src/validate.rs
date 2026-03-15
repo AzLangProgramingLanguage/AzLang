@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::{HashMap, hash_map::Entry},
     rc::Rc,
 };
@@ -13,7 +12,7 @@ use parser::{
 use crate::{
     FunctionInfo, MethodInfo, Validator,
     errors::ValidatorError,
-    function_call::{self, validate_function_call},
+    function_call::{validate_function_call},
     helper::{get_type, validate_body, validate_bool_condition},
 };
 pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), ValidatorError> {
@@ -111,33 +110,6 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                     })
                 })
                 .collect::<Result<_, ValidatorError>>()?;
-            //
-            // let newfields: Vec<(&str, Type)> = fields
-            //     .iter()
-            //     .map(|(name, typ)| (*name, typ.clone()))
-            //     .collect();
-            // ctx.union_defs
-            //     .insert(name.to_string(), (newfields, method_infos));
-            // for method in methods.iter_mut() {
-            //     ctx.current_struct = Some(name);
-            //     for expr in &mut method.body {
-            //         validate_expr(expr, ctx)?;
-            //     }
-            //
-            //     if let Some(Type::User(name)) = &mut method.return_type {
-            //         match ctx.validate_user_type(name.as_ref()) {
-            //             Ok(_) => {}
-            //             Err(e) => return Err(e),
-            //         }
-            //     }
-            //     if let Some((_fields, ctx_methods)) = ctx.union_defs.get_mut(*name) {
-            //         if let Some(ctx_method) = ctx_methods.iter_mut().find(|m| m.name == method.name)
-            //         {
-            //             ctx_method.is_allocator_used = ctx.is_allocator_used;
-            //         }
-            //     }
-            //     ctx.is_allocator_used = false;
-            // }
 
             ctx.current_struct = None;
         }
@@ -251,45 +223,6 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             if ctx.struct_defs.contains_key(name) {
                 return Err(ValidatorError::DuplicateStruct(name.to_string()));
             }
-
-            // let method_infos = methods
-            //     .iter()
-            //     .map(|method| {
-            //         let mut cloned_ret_type = method.return_type.clone();
-            //         if let Some(Type::User(name)) = &mut cloned_ret_type {
-            //             match ctx.validate_user_type(name.as_ref()) {
-            //                 Ok(_) => {}
-            //                 Err(e) => return Err(e),
-            //             }
-            //         }
-            //         Ok(MethodInfo {
-            //             name: Cow::Borrowed(method.name),
-            //             return_type: cloned_ret_type,
-            //             parameters: method.params.clone(),
-            //             is_allocator_used: false, //TODO:   bu sonra müəyyən olunacaq
-            //         })
-            //     })
-            //     .collect::<Result<Vec<_>, ValidatorError>>()?;
-            //
-            // let newfields: Vec<(&str, Type)> = fields
-            //     .iter()
-            //     .map(|(name, typ, _)| (*name, typ.clone()))
-            //     .collect();
-            // ctx.struct_defs
-            //     .insert(name.to_string(), (newfields, method_infos));
-            // for method in methods.iter_mut() {
-            //     ctx.current_struct = Some(name);
-            //     for expr in &mut method.body {
-            //         validate_expr(expr, ctx)?;
-            //     }
-            //     validator_log(&format!(
-            //         "✅ Struct metodları yoxlanılır: '{}'",
-            //         method.name
-            //     ));
-            //
-            //     ctx.is_allocator_used = false;
-            //     ctx.current_struct = None;
-            // }
         }
 
         Expr::EnumDecl { name, variants } => {
@@ -311,18 +244,10 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
 
                 return Ok(());
             }
-
-            // if name == "self" && ctx.current_struct.is_some() {
-            //     *symbol = Some(Symbol {
-            //         typ: Type::User(ctx.current_struct.unwrap()),
-            //         is_mutable: false,
-            //         is_used: true,
-            //         is_pointer: false,
-            //         is_changed: false,
-            //     });
-            //     return Ok(());
-            // }
-
+            if let Some(sym) = ctx.functions.get(name) {
+                *symbol = Some(Symbol { typ: Type::Function, is_mutable: false, is_pointer: false, is_used: true, is_changed: false });
+                return Ok(());
+            }
             let is_enum_variant = ctx
                 .enum_defs
                 .values()

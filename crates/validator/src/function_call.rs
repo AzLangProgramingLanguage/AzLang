@@ -1,3 +1,5 @@
+use core::panic;
+
 use parser::{
     ast::{Expr, Symbol},
     shared_ast::Type,
@@ -37,10 +39,14 @@ pub fn validate_function_call(
                 is_used: true,
                 is_changed: false,
             });
+            println!("{:#?}",func.return_type);
             *return_type = func.return_type.clone();
         }
-        _ => {
-            return Err(ValidatorError::LoopIterableTypeNotFound);
+        Expr::Call { target, name, args, returned_type } => {
+            validate_function_call(ctx, target, args, returned_type, name)?;
+        }
+        other => {
+            panic!("{other:?}");  //BUG: Açıq
         }
     }
     match target {

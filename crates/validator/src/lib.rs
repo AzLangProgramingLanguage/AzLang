@@ -102,6 +102,7 @@ impl Validator {
     pub fn validate(&mut self, parsed_program: &mut Program) -> Result<(), ValidatorError> {
         for expr in parsed_program.expressions.iter_mut() {
             validate_expr(expr, self)?;
+
         }
         for variable in &self.global_variables {
             if variable.1.is_mutable && !variable.1.is_changed {
