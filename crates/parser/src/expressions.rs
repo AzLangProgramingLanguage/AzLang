@@ -62,13 +62,13 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         }
 
         SpannedToken {
-             token: Token::StringLiteral(_),
-             ..
-         } => literals_parse(token, tokens),
-         SpannedToken {
-             token: Token::Float(_num),
-             ..
-         } => literals_parse(token, tokens),
+            token: Token::StringLiteral(_),
+            ..
+        } => literals_parse(token, tokens),
+        SpannedToken {
+            token: Token::Float(_num),
+            ..
+        } => literals_parse(token, tokens),
         SpannedToken {
             token: Token::Number(_num),
             ..
@@ -205,7 +205,7 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             token: Token::Conditional,
             ..
         } => parse_if_expr(tokens),
-    
+
         SpannedToken {
             token: Token::Loop, ..
         } => parse_loop(tokens),

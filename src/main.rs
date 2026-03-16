@@ -1,6 +1,6 @@
 use cli::{Commands, cli};
 use compiler::compiler;
-use logging::{error, parser_log};
+use logging::error;
 
 fn main() {
     let command = cli().command;
