@@ -53,6 +53,9 @@ pub fn function_call(
                         panic!("Bele bir funksiya yoxdur. ");
                     }
                 }
+                Expr::Call { target, name, args, returned_type } => {
+                    function_call(ctx, target.clone(), name.clone(), args.clone(), returned_type.clone());
+                }
                 _ => {
                     panic!("Buraya gəlməməliydi.")
                 }

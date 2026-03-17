@@ -68,7 +68,9 @@ pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Ty
         }
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
-        Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
+        Expr::Call { returned_type, .. } => {
+            returned_type.clone().unwrap_or(Type::Any)
+        }, /* TODO: Burada Any Olmamalıdır */
         Expr::BinaryOp {
             left,
             right,

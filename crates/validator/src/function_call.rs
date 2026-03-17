@@ -41,9 +41,11 @@ pub fn validate_function_call(
             });
             println!("{:#?}",func.return_type);
             *return_type = func.return_type.clone();
+
         }
         Expr::Call { target, name, args, returned_type } => {
             validate_function_call(ctx, target, args, returned_type, name)?;
+            *returned_type = Some(Type::Integer);/*BUG:   */
         }
         other => {
             panic!("{other:?}");  //BUG: Açıq
@@ -59,5 +61,6 @@ pub fn validate_function_call(
     for arg in args.iter_mut() {
         validate_expr(arg, ctx)?;
     }
+    *return_type = Some(Type::Integer);
     Ok(())
 }

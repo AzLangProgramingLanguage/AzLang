@@ -2,6 +2,7 @@ use std::collections::HashMap;
 pub mod errors;
 pub mod function_call;
 mod helper;
+mod typed_ast;
 pub mod validate;
 use crate::{errors::ValidatorError, validate::validate_expr};
 use parser::{

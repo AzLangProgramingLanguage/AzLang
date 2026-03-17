@@ -150,14 +150,17 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 }
                 BuiltInFunction::Print => {
                     validate_expr(&mut args[0], ctx)?;
+                    
                     let t = get_type(&args[0], ctx, None);
                     validator_log(&format!("✅ Print funksiyası yoxlanılır"));
-                    if t == Type::Void {
+
+
+                  if t == Type::Void {
                         return Err(ValidatorError::TypeMismatch {
                             expected: "Yazı".to_string(),
                             found: format!("{t:?}"),
                         });
-                    }
+                    } 
                 }
                 BuiltInFunction::ConvertString => {
                     validator_log(&format!("✅ ConvertString funksiyası yoxlanılır"));
@@ -236,7 +239,6 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
         }
         Expr::VariableRef { name, symbol } => {
             validator_log(&format!("Dəmir Əmi dəyişənə baxır: `{}`", name));
-
             if let Some(sym) = ctx.lookup_variable(name) {
                 sym.is_used = true;
 
@@ -244,10 +246,18 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
 
                 return Ok(());
             }
+
             if let Some(sym) = ctx.functions.get(name) {
-                *symbol = Some(Symbol { typ: Type::Function, is_mutable: false, is_pointer: false, is_used: true, is_changed: false });
-                return Ok(());
+                ctx.declare_variable(name.to_string(), Symbol {
+                    typ: Type::Function,
+                    is_mutable: false,
+                    is_used: true,
+                    is_pointer: false,
+                    is_changed: false,
+                });
+                 return Ok(());
             }
+
             let is_enum_variant = ctx
                 .enum_defs
                 .values()
@@ -255,6 +265,7 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             if !is_enum_variant {
                 return Err(ValidatorError::UndefinedVariable(name.to_string()));
             }
+
             return Ok(());
         }
 
