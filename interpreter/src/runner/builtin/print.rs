@@ -19,9 +19,8 @@ pub fn print_interpreter<'a>(expr: Expr, ctx: &mut Runner) -> String {
                 }
             }
         }
-        _ => {
-            let evaluated = runner_interpretator(ctx, expr.clone());
-            exporter_to_string(&evaluated, ctx, &mut output);
+        other => {
+            exporter_to_string(&other, ctx, &mut output);
         }
     }
 
@@ -104,9 +103,8 @@ fn exporter_to_string(expr: &Expr, ctx: &Runner, out: &mut String) {
             out.push(']');
         }
 
-        _ => {
-            println!("Unknown type: {:?}", expr);
-            out.push_str("<unknown>")
+        other => {
+            panic!("{other:?}");
         }
     }
 }

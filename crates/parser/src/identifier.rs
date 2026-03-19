@@ -1,8 +1,12 @@
 use std::borrow::Cow;
 
 use crate::{
-    ast::{Expr, Symbol}, binary_op::parse_expression, errors::ParserError, expressions::parse_single_expr,
-    helpers::expect_token, shared_ast::Type,
+    ast::{Expr, Symbol},
+    binary_op::parse_expression,
+    errors::ParserError,
+    expressions::parse_single_expr,
+    helpers::expect_token,
+    shared_ast::Type,
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -24,12 +28,13 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
                 symbol: None,
             })
         }
-        Some(SpannedToken { token: Token::LParen, span }) => {
+        Some(SpannedToken {
+            token: Token::LParen,
+            span,
+        }) => {
             tokens.next();
             let mut args = Vec::new();
             loop {
-                println!("{:?}", tokens.peek());
-
                 match tokens.peek() {
                     Some(SpannedToken {
                         token: Token::RParen,
@@ -48,18 +53,25 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
                         return Err(ParserError::RParenNotFound(Token::Eof));
                     }
                     _ => {
-                        println!("Buraya çatdı {:?}", tokens.peek());
                         args.push(parse_single_expr(tokens)?);
                     }
                 }
             }
-            Ok(Expr::Call { target: None, name: Box::new(Expr::VariableRef { name: s, symbol: Some(Symbol {
-                is_changed: false,
-                is_mutable: false,
-                is_pointer: false,
-                is_used: true,
-                typ: Type::Function,
-            } )}), args, returned_type: None }) //TODO: Badd Code 
+            Ok(Expr::Call {
+                target: None,
+                name: Box::new(Expr::VariableRef {
+                    name: s,
+                    symbol: Some(Symbol {
+                        is_changed: false,
+                        is_mutable: false,
+                        is_pointer: false,
+                        is_used: true,
+                        typ: Type::Function,
+                    }),
+                }),
+                args,
+                returned_type: None,
+            }) //TODO: Badd Code 
         }
         Some(SpannedToken {
             token: Token::ListStart,

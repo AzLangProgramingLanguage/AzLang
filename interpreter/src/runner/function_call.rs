@@ -1,7 +1,7 @@
 use std::{os::unix::process, rc::Rc};
 
 use parser::{
-    ast::{Expr, Parameter},
+    ast::{Expr, Parameter, Symbol},
     shared_ast::Type,
 };
 
@@ -37,12 +37,13 @@ pub fn function_call(
                                 },
                             );
                         }
-
                         for i in 0..body_rc.len() {
                             let expr = body_rc[i].clone();
                             match expr {
                                 Expr::Return(s) => {
-                                    return runner_interpretator(ctx, *s);
+                                    let result = runner_interpretator(ctx, *s);
+                                    ctx.current_return = result.clone();
+                                    return result;
                                 }
                                 _ => {
                                     runner_interpretator(ctx, expr);
@@ -53,8 +54,34 @@ pub fn function_call(
                         panic!("Bele bir funksiya yoxdur. ");
                     }
                 }
-                Expr::Call { target, name, args, returned_type } => {
-                    function_call(ctx, target.clone(), name.clone(), args.clone(), returned_type.clone());
+                Expr::Call {
+                    target,
+                    name,
+                    args: inner_args,
+                    returned_type: return_type,
+                } => {
+                    let expr = function_call(
+                        ctx,
+                        target.clone(),
+                        name.clone(),
+                        inner_args.clone(),
+                        returned_type.clone(),
+                    );
+                    match expr.clone() {
+                        Expr::VariableRef {
+                            name,
+                            symbol:
+                                Some(Symbol {
+                                    typ: Type::Function,
+                                    ..
+                                }),
+                        } => {
+                            function_call(ctx, None, Box::new(expr), args.clone(), returned_type);
+                        }
+                        _ => {
+                            return expr;
+                        }
+                    }
                 }
                 _ => {
                     panic!("Buraya gəlməməliydi.")
@@ -62,5 +89,6 @@ pub fn function_call(
             }
         }
     }
+
     ctx.current_return.clone()
 }

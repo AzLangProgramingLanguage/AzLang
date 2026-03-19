@@ -23,8 +23,6 @@ fn parse_binary_op_with_precedence<'a>(
             tokens.next();
             let mut args = Vec::new();
             loop {
-                println!("{:?}", tokens.peek());
-
                 match tokens.peek() {
                     Some(SpannedToken {
                         token: Token::RParen,
@@ -43,7 +41,6 @@ fn parse_binary_op_with_precedence<'a>(
                         return Err(ParserError::RParenNotFound(Token::Eof));
                     }
                     _ => {
-                        println!("Buraya çatdı {:?}", tokens.peek());
                         args.push(parse_single_expr(tokens)?);
                     }
                 }

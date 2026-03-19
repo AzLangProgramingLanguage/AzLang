@@ -47,9 +47,6 @@ pub fn builthin_call_runner(
                     return Expr::Number(s.len() as i64);
                 }
                 _ => {
-                    println!("Salam {:?}", arg);
-                    std::process::exit(1);
-
                     return Expr::Number(0);
                 }
             }

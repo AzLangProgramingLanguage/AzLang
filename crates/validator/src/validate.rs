@@ -247,8 +247,15 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 return Ok(());
             }
 
-            if let Some(sym) = ctx.functions.get(name) {
+            if let Some(_sym) = ctx.functions.get(name) {
                 ctx.declare_variable(name.to_string(), Symbol {
+                    typ: Type::Function,
+                    is_mutable: false,
+                    is_used: true,
+                    is_pointer: false,
+                    is_changed: false,
+                });
+                *symbol = Some(Symbol {
                     typ: Type::Function,
                     is_mutable: false,
                     is_used: true,
