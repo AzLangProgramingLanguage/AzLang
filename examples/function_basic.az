@@ -1,6 +1,7 @@
+funksiya salamVer(sabit yazı ad): yazı
+    qaytar `Salam, ${ad}`
 
-funksiya add(sabit ədəd a, sabit ədəd b): ədəd
-    qaytar a + b
-funksiya sss(): çağrılan
-    qaytar add
-Çap(sss()(1,2))
+funksiya generator(): çağrılan
+    qaytar salamVer
+
+Çap(generator()("Əli"))

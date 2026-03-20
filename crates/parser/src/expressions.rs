@@ -245,7 +245,6 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
 
 /*
 Token::Type => parse_union_type(tokens),
-Token::This => parse_identifier(tokens, "self"),
 Token::Object => parse_struct_def(tokens),
 Token::Enum => parse_enum_decl(tokens),
 Token::Match => parse_match(tokens),

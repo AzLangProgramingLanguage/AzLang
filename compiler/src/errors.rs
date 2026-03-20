@@ -1,49 +1,19 @@
 use core::fmt;
-use file_system::errors::FileSystem;
+use std::fmt::Display;
 use parser::errors::ParserError;
 use tokenizer::errors::LexerError;
 use validator::errors::ValidatorError;
 
 #[derive(Debug)]
 pub enum CompilerError {
-    Io(FileSystem),
-    FileError(String),
     BuildError,
-    Parser(ParserError),
-    Lexer(LexerError),
-    Validator(ValidatorError),
 }
-
-impl fmt::Display for CompilerError {
+impl Display for CompilerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CompilerError::FileError(e) => write!(f, "{}", e),
-            CompilerError::Io(e) => write!(f, "{}", e),
-            CompilerError::BuildError => write!(f, "❌ Kompilyasiya xətası"),
-            CompilerError::Lexer(e) => write!(f, "Böyük Qardaş: {}", e),
-            CompilerError::Parser(e) => write!(f, "Böyük Qardaş: {}", e),
-            CompilerError::Validator(e) => write!(f, "Dəmir Əmi: {}", e),
+            CompilerError::BuildError => write!(f, "Program kompilyasiya edilərkən xəta baş verdi"),
         }
     }
+    
 }
 
-impl From<FileSystem> for CompilerError {
-    fn from(e: FileSystem) -> Self {
-        CompilerError::Io(e)
-    }
-}
-impl From<LexerError> for CompilerError {
-    fn from(e: LexerError) -> Self {
-        CompilerError::Lexer(e)
-    }
-}
-impl From<ParserError> for CompilerError {
-    fn from(e: ParserError) -> Self {
-        CompilerError::Parser(e)
-    }
-}
-impl From<ValidatorError> for CompilerError {
-    fn from(e: ValidatorError) -> Self {
-        CompilerError::Validator(e)
-    }
-}

@@ -14,7 +14,6 @@ edition = "2024"
 
 
 [dependencies]
-logging = { path = "./crates/logging" }
 cli = { path = "./crates/cli"}
 interpreter = { path = "./interpreter"}
 compiler = { path = "./compiler"}

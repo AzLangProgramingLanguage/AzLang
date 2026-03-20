@@ -462,8 +462,13 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 match expr {
                     Expr::Return(value) => {
                         validate_expr(value, ctx)?;
+                        
                         if let Some(typ) = return_type {
-                            if typ.clone() != get_type(value, ctx, None) {
+                            let val_type = get_type(value, ctx, None);
+                            if typ.clone() != val_type {
+                                println!("{value:?}");
+                                panic!("Return tipi '{val_type:?}' olmalıdır, ancak '{typ:?}' tipinde bir değer döndürülüyor.");
+                                
                                 return Err(ValidatorError::FunctionReturnTypeErr(typ.to_string()));
                             }
                         }

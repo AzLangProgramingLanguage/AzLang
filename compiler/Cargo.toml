@@ -6,6 +6,7 @@ edition = "2024"
 
 [dependencies]
 file_system = { path = "../crates/file_system" }
+logging = { path = "../crates/logging" }
 parser = { path = "../crates/parser" }
 tokenizer = { path = "../crates/tokenizer" }
 validator = { path = "../crates/validator" }

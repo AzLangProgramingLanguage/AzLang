@@ -9,7 +9,6 @@ dependencies = [
  "cli",
  "compiler",
  "interpreter",
- "logging",
 ]
 
 [[package]]
@@ -120,6 +119,7 @@ name = "compiler"
 version = "0.1.0"
 dependencies = [
  "file_system",
+ "logging",
  "parser",
  "tokenizer",
  "transpiler",

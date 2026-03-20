@@ -8,6 +8,7 @@ use crate::{Validator, errors::ValidatorError, validate::validate_expr};
 pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Type {
     match value {
         Expr::Number(x) => Type::Integer,
+        Expr::TemplateString(_) => Type::String,
         Expr::UnaryOp { op, expr } => {
             get_type(expr, ctx, typ);
             match &*op {
