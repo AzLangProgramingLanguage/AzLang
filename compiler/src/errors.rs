@@ -20,7 +20,7 @@ impl CompilerError {
                     print!("\x1b[31m[Böyük Qardaş]:\x1b[0m {} ", e.kind);
                     println!("\x1b[31m{}\x1b[0m",e.file);
                 },
-                CompilerError::BuildError => println!("\x1b[31m[Kiçikbacı Transpiler]:\x1b[0m Build zamanı bir xəta baş verdi"),
+                CompilerError::BuildError => println!("\x1b[35m[Kiçik Bacı Tərcüməçi]:\x1b[0m Build zamanı bir xəta baş verdi"),
                  CompilerError::Lexer(e) => println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", e),
                 CompilerError::Parser(e) => println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", e),
                 CompilerError::Validator(e) => println!("\x1b[33m[Dəmir Əmi Validator]:\x1b[0m {}", e),
