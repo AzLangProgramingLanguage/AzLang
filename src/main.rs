@@ -5,13 +5,22 @@ fn main() {
     let command = cli().command;
     match command {
         Commands::Run { binary } => {
-            interpreter::interpreter_file(&binary);
+            interpreter::interpreter_file(&binary).unwrap_or_else(|err| {
+                err.display();
+                std::process::exit(err.code());
+            });
         }
         Commands::Repl => {
-            interpreter::interpreter_run_repl();
+            interpreter::interpreter_run_repl().unwrap_or_else(|err| {
+                err.display();
+                std::process::exit(err.code());
+            });
         }
         Commands::Build { binary } => {
-            compiler(&binary);
+            compiler(&binary).unwrap_or_else(|err| {
+                err.display();
+                std::process::exit(err.code());
+            });
         }
     }
 }

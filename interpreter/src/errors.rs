@@ -1,26 +1,47 @@
-use core::fmt;
+use file_system::errors::{FileSystemError};
 use parser::errors::ParserError;
 use tokenizer::errors::LexerError;
 use validator::errors::ValidatorError;
 
-#[derive(Debug)]
 pub enum InterPreterError {
+    IO(FileSystemError),
     Lexer(LexerError),
     Parser(ParserError),
     Validator(ValidatorError),
 }
 
-impl fmt::Display for InterPreterError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            InterPreterError::Lexer(e) => write!(f, " {}", e),
-            InterPreterError::Parser(e) => write!(f, "{}", e),
-            InterPreterError::Validator(e) => write!(f, "Dəmir Əmi: {}", e),
+
+    impl InterPreterError {
+        pub fn display(&self) {
+            match self {
+                InterPreterError::IO(e) =>{
+                    print!("\x1b[31m[Böyük Qardaş]:\x1b[0m {} ", e.kind);
+                    println!("\x1b[31m{}\x1b[0m",e.file);
+                },
+                 InterPreterError::Lexer(e) => println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", e),
+                InterPreterError::Parser(e) => println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", e),
+                InterPreterError::Validator(e) => println!("\x1b[33m[Dəmir Əmi Validator]:\x1b[0m {}", e),
+            
+            }
+            
         }
+        pub fn code(&self) -> i32 {
+            match self {
+                InterPreterError::IO(e) => e.code(),
+                InterPreterError::Lexer(_) => 33,
+                InterPreterError::Parser(_) => 34,
+                InterPreterError::Validator(_) => 35,
+            }
+        }
+        
+    }
+
+
+impl From<FileSystemError> for InterPreterError {
+    fn from(e: FileSystemError) -> Self {
+        InterPreterError::IO(e)
     }
 }
-
-
 
 impl From<ValidatorError> for InterPreterError {
     fn from(e: ValidatorError) -> Self {
