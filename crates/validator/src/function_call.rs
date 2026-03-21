@@ -19,7 +19,11 @@ pub fn validate_function_call(
     match &mut **name {
         Expr::VariableRef {
             name: func_name,
-            symbol,
+            symbol:
+                Some(Symbol {
+                    typ: Type::Function,
+                    ..
+                }),
         } => {
             let func = ctx
                 .functions
@@ -32,13 +36,6 @@ pub fn validate_function_call(
                     found: args.len(),
                 });
             }
-            *symbol = Some(Symbol {
-                is_mutable: false,
-                typ: Type::Function,
-                is_pointer: false,
-                is_used: true,
-                is_changed: false,
-            });
             *return_type = func.return_type.clone();
         }
         Expr::Call {
@@ -51,16 +48,16 @@ pub fn validate_function_call(
             *returned_type = Some(Type::Function);
         }
         other => {
-            panic!("{other:?}"); //BUG: Açıq
+            return Err(ValidatorError::InvalidFunctionCall(other.to_string()));
         }
     }
-    match target {
-        Some(variable) => {
-            validate_expr(variable, ctx)?;
-            let variable_type = get_type(variable, ctx, None);
-        }
-        None => {}
+    if let Some(variable) = target {
+        //BUG: Hələ method çağırışlarını dəstəkləmədiyimiz üçün bu hissə hələ implementasiya edilməyib. Gələcəkdə method çağırışlarını dəstəkləmək üçün istifadə olunacaq.
+        panic!(
+            "Burası hələ implementasiya etməmişik, amma gələcəkdə method çağırışlarını dəstəkləmək üçün istifadə olunacaq."
+        );
     }
+
     for arg in args.iter_mut() {
         validate_expr(arg, ctx)?;
     }

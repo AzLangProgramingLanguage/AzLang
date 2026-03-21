@@ -4,6 +4,7 @@ use std::fmt::{Display, write};
 #[derive(Debug)]
 pub enum ValidatorError {
     UnknownType(String),
+    InvalidFunctionCall(String),
     AlreadyDecl(String),
     DeclTypeMismatch {
         name: String,
@@ -54,6 +55,7 @@ impl Display for ValidatorError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ValidatorError::UnknownType(string) => write!(f, "Gözlənilməyən token '{string}'"),
+            ValidatorError::InvalidFunctionCall(found) => write!(f, "{found} bir funksiya deyil."),
             ValidatorError::FunctionNameType(name) => write!(f, "'{name}' tipi funksiya deyil.  "),
             ValidatorError::AlreadyDecl(string) => write!(f, "'{string}' Dəyəri onsuzda var.  "),
             ValidatorError::DeclTypeMismatch {

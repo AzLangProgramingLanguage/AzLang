@@ -1,5 +1,5 @@
 use crate::shared_ast::{BuiltInFunction, Type};
-use std::rc::Rc;
+use std::{fmt::Display, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct MethodType {
@@ -134,6 +134,18 @@ pub enum Expr {
         target: Box<Expr>,
         arms: Vec<(Expr, Vec<Expr>)>,
     },
+}
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Expr::Number(n) => write!(f, "{n}"),
+            Expr::String(s) => write!(f, "\"{s}\""),
+            Expr::Bool(b) => write!(f, "{b}"),
+            Expr::Char(c) => write!(f, "'{c}'"),
+            other => write!(f, "{other:?}"),
+        }
+    }
+    
 }
 
 impl Expr {

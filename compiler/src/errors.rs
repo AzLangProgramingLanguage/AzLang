@@ -1,5 +1,3 @@
-use core::fmt;
-use std::{error::Error, fmt::Display};
 use file_system::errors::FileSystemError;
 use parser::errors::ParserError;
 use tokenizer::errors::LexerError;
