@@ -96,6 +96,7 @@ pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String 
         },
         Expr::List(list) => {
             let mut str_list = String::new();
+            //BUG: We have to fix this line. Because some array might be empty so it's return panic
             let str_type = map_type(&get_expr_type(&list[0]), true);
             for expr in list {
                 str_list.push_str(&transpile_expr(expr, ctx));

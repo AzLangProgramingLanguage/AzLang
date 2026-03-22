@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use parser::{
     ast::{Expr, Operation},
     shared_ast::Type,
@@ -69,9 +71,7 @@ pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Ty
         }
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
-        Expr::Call { returned_type, .. } => {
-            returned_type.clone().unwrap_or(Type::Any)
-        }, /* TODO: Burada Any Olmamalıdır */
+        Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
         Expr::BinaryOp {
             left,
             right,
@@ -136,4 +136,33 @@ pub fn validate_bool_condition(
         Type::Bool => Ok(()),
         other => Err(ValidatorError::IfConditionTypeMismatch(other.to_string())),
     }
+}
+
+pub fn reconcile_type(
+    typ: &mut Rc<Type>,
+    inferred: Type,
+    name: &str,
+) -> Result<(), ValidatorError> {
+    match (&**typ, &inferred) {
+        // Annotasiya yoxdur — nəticə çıxar
+        (Type::Any, _) => {
+            *typ = Rc::new(inferred);
+        }
+        // İnferred `Any` — heç nə etmə
+        (_, Type::Any) => {}
+        // String literal annotasiyaya uyğun gəlir
+        (Type::String, Type::LiteralString) => {
+            *typ = Rc::new(Type::LiteralString);
+        }
+        // Uyğunsuzluq
+        (expected, _) if inferred != **typ => {
+            return Err(ValidatorError::DeclTypeMismatch {
+                name: name.to_string(),
+                expected: inferred.to_string(),
+                found: expected.to_string(),
+            });
+        }
+        _ => {}
+    }
+    Ok(())
 }

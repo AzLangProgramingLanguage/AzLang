@@ -261,7 +261,7 @@ impl<'a> Lexer<'a> {
             '%' => Ok(Token::Modulo),
             '>' => Ok(Token::Greater),
             '<' => Ok(Token::Less),
-            '=' if self.chars.peek() == Some(&'=') => Ok(Token::Equal),
+            '=' if self.chars.next() == Some('=') => Ok(Token::Equal),
             '=' => Ok(Token::Assign),
             '!' if self.chars.peek() == Some(&'=') => Ok(Token::NotEqual),
             '!' => Ok(Token::Not),

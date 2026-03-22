@@ -12,8 +12,8 @@ use parser::{
 use crate::{
     FunctionInfo, MethodInfo, Validator,
     errors::ValidatorError,
-    function_call::{validate_function_call},
-    helper::{get_type, validate_body, validate_bool_condition},
+    function_call::validate_function_call,
+    helper::{get_type, reconcile_type, validate_body, validate_bool_condition},
 };
 pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), ValidatorError> {
     match expr {
@@ -23,31 +23,18 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             is_mutable,
             value,
         } => {
-            validator_log(&format!("✅ Declarasiya yaradılır: {name}"));
-            validator_log(&format!(
-                "{} yaradılır: '{}'",
-                if *is_mutable { "Dəyişən" } else { "Sabit" },
-                name
-            ));
+            let kind = if *is_mutable { "Dəyişən" } else { "Sabit" };
+            validator_log(&format!("✅ {kind} yaradılır: '{name}'"));
+
             if ctx.lookup_variable(name).is_some() {
                 return Err(ValidatorError::AlreadyDecl(name.to_string()));
             }
 
             validate_expr(value, ctx)?;
+
             let inferred = get_type(value, ctx, Some(typ));
-            if *typ == Type::Any.into() {
-                *typ = Rc::new(inferred);
-            } else if inferred != **typ {
-                if inferred == Type::LiteralString && **typ == Type::String {
-                    *typ = Rc::new(Type::LiteralString);
-                } else {
-                    return Err(ValidatorError::DeclTypeMismatch {
-                        name: name.to_string(),
-                        expected: inferred.to_string(),
-                        found: typ.to_string(),
-                    });
-                }
-            }
+            reconcile_type(typ, inferred, name)?;
+
             ctx.declare_variable(
                 name.to_string(),
                 Symbol {
@@ -59,7 +46,6 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 },
             );
         }
-
         Expr::Assignment {
             name,
             value,
@@ -150,17 +136,16 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 }
                 BuiltInFunction::Print => {
                     validate_expr(&mut args[0], ctx)?;
-                    
+
                     let t = get_type(&args[0], ctx, None);
                     validator_log(&format!("✅ Print funksiyası yoxlanılır"));
 
-
-                  if t == Type::Void {
+                    if t == Type::Void {
                         return Err(ValidatorError::TypeMismatch {
                             expected: "Yazı".to_string(),
                             found: format!("{t:?}"),
                         });
-                    } 
+                    }
                 }
                 BuiltInFunction::ConvertString => {
                     validator_log(&format!("✅ ConvertString funksiyası yoxlanılır"));
@@ -248,13 +233,16 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             }
 
             if let Some(_sym) = ctx.functions.get(name) {
-                ctx.declare_variable(name.to_string(), Symbol {
-                    typ: Type::Function,
-                    is_mutable: false,
-                    is_used: true,
-                    is_pointer: false,
-                    is_changed: false,
-                });
+                ctx.declare_variable(
+                    name.to_string(),
+                    Symbol {
+                        typ: Type::Function,
+                        is_mutable: false,
+                        is_used: true,
+                        is_pointer: false,
+                        is_changed: false,
+                    },
+                );
                 *symbol = Some(Symbol {
                     typ: Type::Function,
                     is_mutable: false,
@@ -262,7 +250,7 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                     is_pointer: false,
                     is_changed: false,
                 });
-                 return Ok(());
+                return Ok(());
             }
 
             let is_enum_variant = ctx
@@ -462,13 +450,10 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 match expr {
                     Expr::Return(value) => {
                         validate_expr(value, ctx)?;
-                        
+
                         if let Some(typ) = return_type {
                             let val_type = get_type(value, ctx, None);
                             if typ.clone() != val_type {
-                                println!("{value:?}");
-                                panic!("Return tipi '{val_type:?}' olmalıdır, ancak '{typ:?}' tipinde bir değer döndürülüyor.");
-                                
                                 return Err(ValidatorError::FunctionReturnTypeErr(typ.to_string()));
                             }
                         }
