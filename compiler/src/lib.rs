@@ -4,20 +4,21 @@ use parser::parser;
 use validator::Validator;
 
 use crate::{builder::build, cleaner::clean_ast, errors::CompilerError};
-use std::{env, fs, path::{Path, PathBuf}};
 use logging::translator_log;
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 mod builder;
 mod errors;
 
-pub fn compiler(path: &str)-> Result<(), CompilerError> {
+pub fn compiler(path: &str) -> Result<(), CompilerError> {
+    let sdk = file_system::read_file(path)?;
 
- let sdk = file_system::read_file(path)?;
-    let mut lexer = tokenizer::Lexer::new(&sdk);
-     let mut tokens = lexer.tokenize()?;
-     let mut parsed_program = parser(&mut tokens)?;
-    
-     let mut validator = validator::Validator::new();
-     validator.validate(&mut parsed_program)?;
+    let mut parsed_program = parser(sdk)?;
+
+    let mut validator = validator::Validator::new();
+    validator.validate(&mut parsed_program)?;
 
     clean_ast(&mut parsed_program, &validator);
 
@@ -32,8 +33,7 @@ pub fn compiler(path: &str)-> Result<(), CompilerError> {
     });
 
     build(output_zig.to_str().unwrap(), path)?;
-        Ok(())
-
+    Ok(())
 }
 fn bin_create_dir() -> Result<PathBuf, FileSystemError> {
     let bin_path = Path::new("./bin");
@@ -49,7 +49,7 @@ fn bin_create_dir() -> Result<PathBuf, FileSystemError> {
     Ok(bin_path.join("azlang_output.zig"))
 }
 
-fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(),FileSystemError> {
+fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), FileSystemError> {
     fs::create_dir_all(&dst)?;
     for entry in fs::read_dir(src)? {
         let entry = entry?;

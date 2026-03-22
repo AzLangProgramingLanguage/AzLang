@@ -1,11 +1,12 @@
 use core::fmt;
 use std::{fmt::Display, rc::Rc};
 
-use tokenizer::{iterator::SourceSpan, tokens::Token};
+use tokenizer::{Lexer, errors::LexerError, iterator::SourceSpan, tokens::Token};
 
 #[derive(Debug)]
 pub enum ParserError {
-    UnexpectedToken(SourceSpan,Token),
+    LexerError(LexerError),
+    UnexpectedToken(SourceSpan, Token),
     UnexpectedEOF,
     NotUserDirectValue,
     MethodNameNotFound(Token),
@@ -34,7 +35,10 @@ pub enum ParserError {
 impl Display for ParserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ParserError::UnexpectedToken(span,token) => write!(f, "{span} Gözlənilməyən token '{token}'"),
+            ParserError::LexerError(error) => write!(f, "{}", error),
+            ParserError::UnexpectedToken(span, token) => {
+                write!(f, "{span} Gözlənilməyən token '{token}'")
+            }
             ParserError::UnexpectedEOF => write!(f, "Gözlənilməyən EOF"),
             ParserError::NotUserDirectValue => write!(
                 f,
@@ -125,5 +129,11 @@ impl Display for ParserError {
                 write!(f, "Birləşik tip adı gözlənilirdi, tapıldı: '{token}'")
             }
         }
+    }
+}
+
+impl From<LexerError> for ParserError {
+    fn from(e: LexerError) -> Self {
+        ParserError::LexerError(e)
     }
 }

@@ -5,15 +5,17 @@ Thank you for your interest in contributing to **AzLang**! This document provide
 AzLang is built using a modular **Rust Workspace** approach. This allows the core logic to be shared between the interpreter and the compiler, ensuring consistency across different execution modes.
 ### Core Components
 - **`crates/cli`**: Handles command-line argument parsing via `clap`. Does **not** depend on the interpreter or compiler — the main binary wires them together.
-- **`interpreter`**: Executes the code directly by traversing the Abstract Syntax Tree (AST). Depends on `tokenizer`, `parser`, `validator`, `file_system`, and `logging`.
-- **`compiler`**: Transforms the source code into a target language via the `transpiler` module. Depends on `tokenizer`, `parser`, `validator`, `transpiler`, and `file_system`.
+- **`interpreter`**: Executes the code directly by traversing the Abstract Syntax Tree (AST). Depends on `parser`, `validator`, `file_system`, and `logging`.
+- **`compiler`**: Transforms the source code into a target language via the `transpiler` module. Depends on `parser`, `validator`, `transpiler`, `file_system`, and `logging`.
 - **`crates/`**: Internal libraries (crates) that handle specific tasks:
+  - `parser` — Tokenizes and parses source code into an AST; depends on `tokenizer`.
   - `tokenizer` — Lexical analysis; depends on `logging`.
-  - `parser` — AST construction; depends on `tokenizer`.
   - `validator` — Semantic validation; depends on `parser` and `logging`.
   - `transpiler` — Code generation; depends on `parser`.
   - `file_system` — File I/O utilities; no internal dependencies.
   - `logging` — Shared logging utilities; no internal dependencies.
+
+> **Design principle:** Large modules (`interpreter`, `compiler`) do not depend on low-level crates like `tokenizer` directly. All source processing is initiated through `parser`, which owns the full pipeline from raw source to AST.
 
 ---
 ## 🔄 Dependency Flow
@@ -38,27 +40,24 @@ graph TD
         FS[crates/file_system]
         LOG[crates/logging]
     end
+
     %% Main wires everything together
     MAIN --> CLI
     MAIN --> INT
     MAIN --> COMP
 
-    %% CLI only parses args
-    CLI -.->|clap only| MAIN
-
     %% Interpreter Flow
     INT --> PRS
-    INT --> TOK
     INT --> VAL
     INT --> FS
     INT --> LOG
 
     %% Compiler Flow
     COMP --> PRS
-    COMP --> TOK
     COMP --> VAL
     COMP --> TRANS
     COMP --> FS
+    COMP --> LOG
 
     %% Internal Dependencies
     VAL --> PRS
