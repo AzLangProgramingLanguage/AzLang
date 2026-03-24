@@ -8,6 +8,7 @@ mod definition;
 mod function_call;
 mod helper;
 pub mod transpile;
+pub mod strategy;
 
 mod zigbuiltin_functions;
 use parser::ast::{Expr, Program};

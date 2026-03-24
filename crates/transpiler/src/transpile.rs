@@ -1,4 +1,9 @@
-use parser::{ast::Expr, shared_ast::BuiltInFunction};
+use std::rc::Rc;
+
+use parser::{
+    ast::{Expr, Symbol},
+    shared_ast::{BuiltInFunction, Type},
+};
 
 use crate::{
     TranspileContext,
@@ -13,6 +18,7 @@ use crate::{
     declaration::variable_decl::transpile_decl,
     function_call::transpile_function_call,
     helper::{get_expr_type, map_type, transpile_body},
+    strategy::VariableDecl,
 };
 
 pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String {
@@ -31,7 +37,12 @@ pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String 
         Expr::Bool(n) => n.to_string(),
         Expr::Break => "break".to_string(),
         Expr::Continue => "continue".to_string(),
-        Expr::VariableRef { name, symbol: _ } => name.to_string(),
+        Expr::VariableRef {
+            name,
+            symbol: Some(Symbol {
+                is_pointer: true, ..
+            }),
+        } => name.to_string(),
         Expr::Call {
             target,
             name,
@@ -58,7 +69,7 @@ pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String 
             typ,
             is_mutable,
             value,
-        } => transpile_decl(&name.to_string(), typ, is_mutable, *value, ctx),
+        } => VariableDecl::transpile(name, &*typ, is_mutable, *value),
         Expr::Condition { main, elif, other } => {
             let mut condition_str = format!(
                 "if ({}) {{ {} }}",
