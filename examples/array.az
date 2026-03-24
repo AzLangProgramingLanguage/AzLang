@@ -1,4 +1,6 @@
 sabit siyahı<ədəd> a = []
+sabit siyahı<ədəd> b = [1,2]
+Çap(b)
 
 funksiya isEmpty(sabit siyahı<ədəd> b): qərar
     qaytar Uzunluq(b)==0
