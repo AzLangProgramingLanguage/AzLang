@@ -132,6 +132,14 @@ pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String 
 
             format!("return {transpiled_value}")
         }
+        Expr::VariableRef { name, symbol } => {
+            if let Some(sym) = symbol
+                && sym.is_pointer
+            {
+                return format!("*{name}");
+            }
+            name
+        }
 
         other => {
             println!("{:?}", other);
