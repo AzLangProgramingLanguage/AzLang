@@ -15,7 +15,6 @@ use crate::{
         print::transpile_print,
         sum::transpile_sum,
     },
-    declaration::variable_decl::transpile_decl,
     function_call::transpile_function_call,
     helper::{get_expr_type, map_type, transpile_body},
     strategy::VariableDecl,
