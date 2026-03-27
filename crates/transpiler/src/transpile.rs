@@ -68,7 +68,7 @@ pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String 
             typ,
             is_mutable,
             value,
-        } => VariableDecl::transpile(name, &*typ, is_mutable, *value),
+        } => VariableDecl::transpile(name, &*typ, is_mutable, *value, ctx),
         Expr::Condition { main, elif, other } => {
             let mut condition_str = format!(
                 "if ({}) {{ {} }}",
