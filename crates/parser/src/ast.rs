@@ -1,5 +1,5 @@
 use crate::shared_ast::{BuiltInFunction, Type};
-use std::{fmt::Display, rc::Rc};
+use std::{collections::HashMap, fmt::Display, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct MethodType {
@@ -36,6 +36,12 @@ pub struct IF {
 #[derive(Debug, Clone)]
 pub struct Else {
     pub body: Vec<Expr>,
+}
+#[derive(Debug)]
+pub struct FunctionDef {
+    pub params: Vec<Parameter>,
+    pub body: Vec<Expr>,
+    pub return_type: Option<Type>,
 }
 
 #[derive(Debug, Clone)]
@@ -96,12 +102,7 @@ pub enum Expr {
         args: Vec<Expr>,
         returned_type: Option<Type>,
     },
-    FunctionDef {
-        name: String,
-        params: Vec<Parameter>,
-        body: Vec<Expr>,
-        return_type: Option<Type>,
-    },
+
     StructDef {
         name: String,
         fields: Vec<(String, Type, Option<Expr>)>,
@@ -145,7 +146,6 @@ impl Display for Expr {
             other => write!(f, "{other:?}"),
         }
     }
-    
 }
 
 impl Expr {
@@ -165,6 +165,7 @@ impl Expr {
 
 #[derive(Debug)]
 pub struct Program {
+    pub functions: HashMap<String, FunctionDef>,
     pub expressions: Vec<Expr>,
 }
 

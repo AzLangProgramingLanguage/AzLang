@@ -409,64 +409,63 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             );
             *return_type = typ;
         }
-        Expr::FunctionDef {
-            name,
-            params,
-            body,
-            return_type,
-        } => {
-            validator_log(&format!("Funksiya tərifi yoxlanılır: {}", name));
-            if ctx.current_function.is_some() {
-                return Err(ValidatorError::NestedFunctionDefinition);
-            }
-            ctx.current_function = Some(name.to_string());
-
-            let function = match ctx.functions.entry(name.clone()) {
-                Entry::Occupied(_) => {
-                    return Err(ValidatorError::FunctionAlreadyDefined(name.to_string()));
-                }
-                Entry::Vacant(entry) => entry.insert(FunctionInfo {
-                    variables: HashMap::new(),
-                    return_type: return_type.clone(),
-                    parameters: vec![],
-                }),
-            };
-
-            for param in params.iter_mut() {
-                validator_log(&format!("Parametri yoxlanılır: {}", param.name));
-                let symbol = Symbol {
-                    typ: param.typ.clone(),
-                    is_mutable: param.is_mutable,
-                    is_used: false,
-                    is_pointer: param.is_mutable,
-                    is_changed: false,
-                };
-
-                function.variables.insert(param.name.clone(), symbol);
-            }
-            function.parameters = params.clone();
-
-            for expr in body.iter_mut() {
-                match expr {
-                    Expr::Return(value) => {
-                        validate_expr(value, ctx)?;
-
-                        if let Some(typ) = return_type {
-                            let val_type = get_type(value, ctx, None);
-                            if typ.clone() != val_type {
-                                return Err(ValidatorError::FunctionReturnTypeErr(typ.to_string()));
-                            }
-                        }
-                    }
-                    _ => {
-                        validate_expr(expr, ctx)?;
-                    }
-                }
-            }
-            ctx.current_function = None;
-            ctx.current_return = None;
-        }
-
+        // Expr::FunctionDef {
+        //     name,
+        //     params,
+        //     body,
+        //     return_type,
+        // } => {
+        //     validator_log(&format!("Funksiya tərifi yoxlanılır: {}", name));
+        //     if ctx.current_function.is_some() {
+        //         return Err(ValidatorError::NestedFunctionDefinition);
+        //     }
+        //     ctx.current_function = Some(name.to_string());
+        //
+        //     let function = match ctx.functions.entry(name.clone()) {
+        //         Entry::Occupied(_) => {
+        //             return Err(ValidatorError::FunctionAlreadyDefined(name.to_string()));
+        //         }
+        //         Entry::Vacant(entry) => entry.insert(FunctionInfo {
+        //             variables: HashMap::new(),
+        //             return_type: return_type.clone(),
+        //             parameters: vec![],
+        //         }),
+        //     };
+        //
+        //     for param in params.iter_mut() {
+        //         validator_log(&format!("Parametri yoxlanılır: {}", param.name));
+        //         let symbol = Symbol {
+        //             typ: param.typ.clone(),
+        //             is_mutable: param.is_mutable,
+        //             is_used: false,
+        //             is_pointer: param.is_mutable,
+        //             is_changed: false,
+        //         };
+        //
+        //         function.variables.insert(param.name.clone(), symbol);
+        //     }
+        //     function.parameters = params.clone();
+        //
+        //     for expr in body.iter_mut() {
+        //         match expr {
+        //             Expr::Return(value) => {
+        //                 validate_expr(value, ctx)?;
+        //
+        //                 if let Some(typ) = return_type {
+        //                     let val_type = get_type(value, ctx, None);
+        //                     if typ.clone() != val_type {
+        //                         return Err(ValidatorError::FunctionReturnTypeErr(typ.to_string()));
+        //                     }
+        //                 }
+        //             }
+        //             _ => {
+        //                 validate_expr(expr, ctx)?;
+        //             }
+        //         }
+        //     }
+        //     ctx.current_function = None;
+        //     ctx.current_return = None;
+        // }
         _ => {}
     }
     Ok(())

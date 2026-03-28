@@ -5,7 +5,10 @@ use crate::runner::{
 };
 use std::rc::Rc;
 
-use parser::{ast::{Expr, Symbol}, shared_ast::Type};
+use parser::{
+    ast::{Expr, Symbol},
+    shared_ast::Type,
+};
 
 pub fn runner_interpretator(ctx: &mut Runner, expr: Expr) -> Expr {
     match expr {
@@ -27,42 +30,42 @@ pub fn runner_interpretator(ctx: &mut Runner, expr: Expr) -> Expr {
             Expr::Void
         }
 
-        Expr::FunctionDef {
-            name,
-            params,
-            body,
-            return_type,
-        } => {
-            let body_rc = Rc::new(body);
-            let params_rc = Rc::new(params);
-            ctx.functions.insert(
-                name.clone(),
-                FunctionDef {
-                    params: params_rc,
-                    body: body_rc,
-                    return_type: return_type.unwrap_or(Type::Any),
-                },
-            );
-            ctx.variables.insert(
-                name.to_string(),
-                Variable {
-                    value: Rc::new(Expr::VariableRef {
-                        name: name,
-                        symbol: Some(Symbol {
-                            typ: Type::Function,
-                            is_mutable: false,
-                            is_used: true,
-                            is_pointer: false,
-                            is_changed: false,
-                        }),
-                    }),
-                    typ: Rc::new(Type::Function),
-                    is_mutable: false,
-                },
-            );
-
-            Expr::Void
-        }
+        // Expr::FunctionDef {
+        //     name,
+        //     params,
+        //     body,
+        //     return_type,
+        // } => {
+        //     let body_rc = Rc::new(body);
+        //     let params_rc = Rc::new(params);
+        //     ctx.functions.insert(
+        //         name.clone(),
+        //         FunctionDef {
+        //             params: params_rc,
+        //             body: body_rc,
+        //             return_type: return_type.unwrap_or(Type::Any),
+        //         },
+        //     );
+        //     ctx.variables.insert(
+        //         name.to_string(),
+        //         Variable {
+        //             value: Rc::new(Expr::VariableRef {
+        //                 name: name,
+        //                 symbol: Some(Symbol {
+        //                     typ: Type::Function,
+        //                     is_mutable: false,
+        //                     is_used: true,
+        //                     is_pointer: false,
+        //                     is_changed: false,
+        //                 }),
+        //             }),
+        //             typ: Rc::new(Type::Function),
+        //             is_mutable: false,
+        //         },
+        //     );
+        //
+        //     Expr::Void
+        // }
         Expr::Loop {
             var_name,
             iterable,
@@ -158,7 +161,7 @@ pub fn runner_interpretator(ctx: &mut Runner, expr: Expr) -> Expr {
             if let Some(var) = ctx.variables.get(&name) {
                 return var.value.as_ref().clone();
             }
-            
+
             Expr::Void
         }
         other => other,

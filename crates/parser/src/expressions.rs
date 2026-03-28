@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use crate::{
-    ast::{Expr, Operation},
+    ast::{Expr, Operation, Program},
     binary_op::parse_expression,
     builtin::parse_builtin,
     condition::parse_if_expr,
@@ -17,28 +19,52 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr>, ParserError> {
-    let mut ast = Vec::new();
+pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, ParserError> {
+    let mut ast = Program {
+        functions: HashMap::new(),
+        expressions: vec![],
+    };
 
     while let Some(token) = tokens.peek() {
-        match token.token {
-            Token::Newline | Token::Semicolon | Token::Indent => {
+        match token {
+            SpannedToken {
+                token: Token::Newline,
+                ..
+            } => {
                 tokens.next();
                 continue;
             }
 
-            Token::Import => {
-                tokens.nth(2);
+            SpannedToken {
+                token: Token::FunctionDef,
+                ..
+            } => {
+                let (name, function) = parse_function_def(tokens)?;
+                ast.functions.insert(name, function);
             }
-            Token::StringLiteral(_) | Token::Number(_) | Token::Float(_) => {
+
+            SpannedToken {
+                token: Token::StringLiteral(_),
+                ..
+            }
+            | SpannedToken {
+                token: Token::Number(_),
+                ..
+            }
+            | SpannedToken {
+                token: Token::Float(_),
+                ..
+            } => {
                 return Err(ParserError::NotUserDirectValue);
             }
-            Token::Eof => {
+            SpannedToken {
+                token: Token::Eof, ..
+            } => {
                 break;
             }
             _ => {
                 let expr = parse_expression(tokens)?;
-                ast.push(expr);
+                ast.expressions.push(expr);
             }
         }
     }
@@ -187,10 +213,6 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             token: Token::Identifier(s),
             ..
         } => parse_identifier(tokens, s.to_string()),
-        SpannedToken {
-            token: Token::FunctionDef,
-            ..
-        } => parse_function_def(tokens),
         SpannedToken {
             token: Token::ListStart,
             span,

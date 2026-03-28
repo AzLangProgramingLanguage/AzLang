@@ -1,11 +1,8 @@
-use std::fmt::Write;
-
 use crate::{
-    ast::{Expr, Parameter},
+    ast::{Expr, FunctionDef, Parameter},
     binary_op::parse_expression,
     errors::ParserError,
     helpers::expect_token,
-    shared_ast::Type,
     types::parse_type,
 };
 use tokenizer::{
@@ -13,7 +10,7 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_function_def(tokens: &mut Tokens) -> Result<Expr, ParserError> {
+pub fn parse_function_def(tokens: &mut Tokens) -> Result<(String, FunctionDef), ParserError> {
     let name = match tokens.next() {
         Some(SpannedToken {
             token: Token::Identifier(n),
@@ -103,16 +100,12 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             }
         }
     }
-    // println!("{name:?}");
-    // println!("{params:?}");
-    // println!("{body:?}");
-    // println!("{return_type:?}");
-    // std::process::exit(1);
-
-    Ok(Expr::FunctionDef {
+    Ok((
         name,
-        params,
-        body,
-        return_type,
-    })
+        FunctionDef {
+            params,
+            body,
+            return_type,
+        },
+    ))
 }

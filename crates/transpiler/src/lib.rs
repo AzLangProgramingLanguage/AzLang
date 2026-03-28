@@ -43,7 +43,6 @@ pub struct TranspileContext<'a> {
     pub is_find_method: bool,
     pub used_sum_fn: bool,
     pub used_split_n_fn: bool,
-
     pub needs_allocator: bool,
     pub used_split_auto_fn: bool,
     pub used_split_alloc_fn: bool,
@@ -108,23 +107,22 @@ impl<'a> TranspileContext<'a> {
 
         for expr in program.expressions {
             match expr {
-                Expr::FunctionDef {
-                    name,
-                    params,
-                    body,
-                    return_type,
-                } => {
-                    defs.push_str(&transpile_function_def(
-                        name,
-                        params,
-                        body,
-                        &return_type,
-                        None,
-                        self,
-                        &false,
-                    ));
-                }
-
+                // Expr::FunctionDef {
+                //     name,
+                //     params,
+                //     body,
+                //     return_type,
+                // } => {
+                //     defs.push_str(&transpile_function_def(
+                //         name,
+                //         params,
+                //         body,
+                //         &return_type,
+                //         None,
+                //         self,
+                //         &false,
+                //     ));
+                // }
                 Expr::StructDef {
                     name,
                     fields,

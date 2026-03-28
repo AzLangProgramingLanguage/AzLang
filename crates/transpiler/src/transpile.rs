@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
 use parser::{
-    ast::{Expr, Symbol},
+    ast::{Expr, Symbol, TemplateChunk},
+    literal_parse,
     shared_ast::{BuiltInFunction, Type},
 };
 
@@ -16,7 +17,7 @@ use crate::{
         sum::transpile_sum,
     },
     function_call::transpile_function_call,
-    helper::{get_expr_type, map_type, transpile_body},
+    helper::{get_expr_type, get_format_str_from_type, map_type, transpile_body},
     strategy::VariableDecl,
 };
 
@@ -24,6 +25,24 @@ pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String 
     match expr {
         Expr::String(s) => format!("\"{}\"", s.escape_default()),
         Expr::DynamicString(s) => format!("try allocator.dupe(u8, \"{}\")", s.escape_default()),
+        Expr::TemplateString(s) => {
+            let mut literal_str = String::new();
+            let mut args = String::from(",.{");
+            for pat in s {
+                match pat {
+                    TemplateChunk::Literal(s) => {
+                        literal_str.push_str(&s);
+                    }
+                    TemplateChunk::Expr(e) => {
+                        literal_str.push_str(get_format_str_from_type(&get_expr_type(&e), false));
+                        args.push_str(&format!("{},", transpile_expr(*e, ctx)));
+                    }
+                }
+            }
+            args.pop();
+            args.push('}');
+            format!("try std.fmt.allocPrint(allocator, comptime \"{literal_str}\"{args})",)
+        }
         Expr::Number(n) => n.to_string(),
         Expr::Float(n) => {
             let s = n.to_string();
@@ -139,7 +158,6 @@ pub fn transpile_expr<'a>(expr: Expr, ctx: &mut TranspileContext<'a>) -> String 
             }
             name
         }
-
         other => {
             println!("{:?}", other);
             panic!("Error")
