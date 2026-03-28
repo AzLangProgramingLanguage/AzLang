@@ -3,7 +3,7 @@ const c = @cImport({
     @cInclude("stdio.h");
 });
 
-pub fn input_alloc(allocator: std.mem.Allocator) !std.ArrayList(u8) {
+pub fn input_alloc(allocator: std.mem.Allocator) ![]u8 {
     try std.fs.File.stdout().writeAll("Eded girin: ");
     var result: std.ArrayList(u8) = .empty;
     errdefer result.deinit(allocator);
@@ -28,7 +28,7 @@ pub fn input_alloc(allocator: std.mem.Allocator) !std.ArrayList(u8) {
             break;
         }
     }
-    return result;
+    return result.items;
 }
 
 pub fn input_fixed(stdin_buffer: []u8, size: usize) []u8 {
