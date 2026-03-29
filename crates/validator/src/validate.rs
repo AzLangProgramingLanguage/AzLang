@@ -5,7 +5,7 @@ use std::{
 
 use logging::validator_log;
 use parser::{
-    ast::{Expr, Symbol, TemplateChunk},
+    ast::{Expr, Statement, Symbol, TemplateChunk},
     shared_ast::{BuiltInFunction, Type},
 };
 
@@ -15,9 +15,9 @@ use crate::{
     function_call::validate_function_call,
     helper::{get_type, reconcile_type, validate_body, validate_bool_condition},
 };
-pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), ValidatorError> {
-    match expr {
-        Expr::Decl {
+pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(), ValidatorError> {
+    match stmt {
+        Statement::Decl {
             name,
             typ,
             is_mutable,
@@ -26,11 +26,11 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             let kind = if *is_mutable { "Dəyişən" } else { "Sabit" };
             validator_log(&format!("✅ {kind} yaradılır: '{name}'"));
 
-            if ctx.lookup_variable(name).is_some() {
+            if ctx.lookup_variable(&name).is_some() {
                 return Err(ValidatorError::AlreadyDecl(name.to_string()));
             }
 
-            validate_expr(value, ctx)?;
+            validate_expr(value)?;
 
             let inferred = get_type(value, ctx, Some(typ));
             reconcile_type(typ, inferred, name)?;
@@ -45,6 +45,41 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                     is_changed: false,
                 },
             );
+        }
+        _ => todo!("Bura baxmaq lazımdır"),
+    }
+
+    Ok(())
+}
+
+pub fn validate_expr(expr: &Expr) -> Result<(), ValidatorError> {
+    match expr {
+        Expr::String(_) | Expr::Float(_) | Expr::Bool(_) | Expr::Number(_) => Ok(()),
+        Expr::Call {
+            target,
+            name,
+            args,
+            returned_type,
+        } => Ok(()),
+        Expr::Index {
+            target,
+            index,
+            target_type,
+        } => Ok(()),
+        _ => todo!("Bura baxmaq lazımdır"),
+    }
+}
+/*
+
+
+ match expr {
+        Expr::Decl {
+            name,
+            typ,
+            is_mutable,
+            value,
+        } => {
+
         }
         Expr::Assignment {
             name,
@@ -468,5 +503,4 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
         // }
         _ => {}
     }
-    Ok(())
-}
+*/
