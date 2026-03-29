@@ -1,7 +1,7 @@
 use crate::shared_ast::{BuiltInFunction, Type};
 use std::{collections::HashMap, fmt::Display, rc::Rc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MethodType {
     pub name: String,
     pub params: Vec<Parameter>,
@@ -27,24 +27,68 @@ pub enum Operation {
     Or,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct IF {
     pub condition: Box<Expr>,
     pub body: Vec<Expr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Else {
     pub body: Vec<Expr>,
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct FunctionDef {
     pub params: Vec<Parameter>,
     pub body: Vec<Expr>,
     pub return_type: Option<Type>,
 }
+#[derive(Debug, PartialEq)]
+pub enum Statement {
+    EnumDecl {
+        name: String,
+        variants: Vec<String>,
+    },
+    Decl {
+        name: String,
+        typ: Rc<Type>,
+        is_mutable: bool,
+        value: Box<Expr>,
+    },
+    StructDef {
+        name: String,
+        fields: Vec<(String, Type, Option<Expr>)>,
+        methods: Vec<MethodType>,
+    },
 
-#[derive(Debug, Clone)]
+    UnionType {
+        name: String,
+        fields: Vec<(String, Type)>,
+        methods: Vec<MethodType>,
+    },
+    Assignment {
+        name: String,
+        value: Box<Expr>,
+        symbol: Option<Symbol>,
+    },
+    Match {
+        target: Box<Expr>,
+        arms: Vec<(Expr, Vec<Expr>)>,
+    },
+    Condition {
+        main: IF,
+        elif: Vec<IF>,
+        other: Option<Else>,
+    },
+    Loop {
+        var_name: String,
+        iterable: Box<Expr>,
+        body: Vec<Expr>,
+    },
+    Expr(Expr),
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     DynamicString(Rc<String>),
     Void,
@@ -54,10 +98,6 @@ pub enum Expr {
     Bool(bool),
     Number(i64),
     Char(char),
-    EnumDecl {
-        name: String,
-        variants: Vec<String>,
-    },
     Comment(String),
     List(Vec<Expr>),
     UnaryOp {
@@ -69,28 +109,14 @@ pub enum Expr {
         index: Box<Expr>,
         target_type: Type,
     },
-    Loop {
-        var_name: String,
-        iterable: Box<Expr>,
-        body: Vec<Expr>,
-    },
+
     Float(f64),
-    Decl {
-        name: String,
-        typ: Rc<Type>,
-        is_mutable: bool,
-        value: Box<Expr>,
-    },
     VariableRef {
         name: String,
         symbol: Option<Symbol>,
     },
     TemplateString(Vec<TemplateChunk>),
-    Condition {
-        main: IF,
-        elif: Vec<IF>,
-        other: Option<Else>,
-    },
+
     BuiltInCall {
         function: BuiltInFunction,
         args: Vec<Expr>,
@@ -103,26 +129,11 @@ pub enum Expr {
         returned_type: Option<Type>,
     },
 
-    StructDef {
-        name: String,
-        fields: Vec<(String, Type, Option<Expr>)>,
-        methods: Vec<MethodType>,
-    },
-
-    UnionType {
-        name: String,
-        fields: Vec<(String, Type)>,
-        methods: Vec<MethodType>,
-    },
     StructInit {
         name: String,
         args: Vec<(String, Expr)>,
     },
-    Assignment {
-        name: String,
-        value: Box<Expr>,
-        symbol: Option<Symbol>,
-    },
+
     BinaryOp {
         left: Box<Expr>,
         right: Box<Expr>,
@@ -131,10 +142,6 @@ pub enum Expr {
     },
     Break,
     Continue,
-    Match {
-        target: Box<Expr>,
-        arms: Vec<(Expr, Vec<Expr>)>,
-    },
 }
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -166,10 +173,10 @@ impl Expr {
 #[derive(Debug)]
 pub struct Program {
     pub functions: HashMap<String, FunctionDef>,
-    pub expressions: Vec<Expr>,
+    pub expressions: Vec<Statement>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Symbol {
     pub typ: Type,
     pub is_mutable: bool,
@@ -178,13 +185,13 @@ pub struct Symbol {
     pub is_changed: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TemplateChunk {
     Literal(String),
     Expr(Box<Expr>),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Parameter {
     pub name: String,
     pub typ: Type,

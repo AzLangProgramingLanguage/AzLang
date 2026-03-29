@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use crate::tokens::Token;
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SourceSpan {
     pub start: u32,
     pub end: u32,
@@ -15,12 +15,12 @@ impl Display for SourceSpan {
         write!(f, "Sətir {}, sütun {}", self.line, self.start)
     }
 }
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SpannedToken {
     pub token: Token,
     pub span: SourceSpan,
 }
-#[derive(Default,Debug,Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Tokens {
     source: VecDeque<SpannedToken>,
 }
@@ -41,5 +41,8 @@ impl Tokens {
     }
     pub fn peek_nth(&self, index: usize) -> Option<&SpannedToken> {
         self.source.get(index)
+    }
+    pub fn push_front(&mut self, token: SpannedToken) {
+        self.source.push_front(token);
     }
 }

@@ -1,4 +1,4 @@
-use crate::errors::ParserError;
+use crate::{ast::Statement, errors::ParserError};
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
     tokens::Token,
@@ -6,7 +6,7 @@ use tokenizer::{
 
 use crate::{ast::Expr, expressions::parse_single_expr, helpers::expect_token};
 
-pub fn parse_loop<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
+pub fn parse_loop<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     let iterable = parse_single_expr(tokens)?;
 
     expect_token(tokens, Token::In)?;
@@ -42,7 +42,7 @@ pub fn parse_loop<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         }
     }
 
-    Ok(Expr::Loop {
+    Ok(Statement::Loop {
         var_name: var_name,
         iterable: Box::new(iterable),
         body,

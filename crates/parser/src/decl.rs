@@ -1,8 +1,8 @@
 use std::{borrow::Cow, rc::Rc};
 
 use crate::{
-    binary_op::parse_expression, errors::ParserError, helpers::expect_token, shared_ast::Type,
-    types::parse_type,
+    ast::Statement, binary_op::parse_expression, errors::ParserError, helpers::expect_token,
+    shared_ast::Type, types::parse_type,
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -11,7 +11,7 @@ use tokenizer::{
 
 use crate::ast::Expr;
 
-pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Expr, ParserError> {
+pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, ParserError> {
     let data_typ = parse_type(tokens)?;
     let name = match tokens.next() {
         Some(SpannedToken {
@@ -26,7 +26,7 @@ pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Expr, Par
 
     let value = parse_expression(tokens)?;
 
-    Ok(Expr::Decl {
+    Ok(Statement::Decl {
         name: name.into(),
         typ: Rc::new(data_typ),
         value: Box::new(value),

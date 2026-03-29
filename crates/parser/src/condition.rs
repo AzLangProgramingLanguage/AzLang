@@ -4,9 +4,10 @@ use tokenizer::{
 };
 
 use crate::{
-    ast::{Else, Expr, IF},
+    ast::{Else, Expr, IF, Statement},
     binary_op::parse_expression,
     errors::ParserError,
+    helpers::expect_token,
 };
 
 fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr>, ParserError> {
@@ -37,8 +38,9 @@ fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr>, ParserError> {
     Ok(block)
 }
 
-pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
+pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     let condition = parse_expression(tokens)?;
+    expect_token(tokens, Token::Colon)?;
     let then_branch = parse_block(tokens)?;
 
     let mut else_if_branch = Vec::new();
@@ -48,10 +50,11 @@ pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         match tokens.peek() {
             Some(SpannedToken {
                 token: Token::ElseIf,
-                span,
+                ..
             }) => {
                 tokens.next();
                 let cond = parse_expression(tokens)?;
+                expect_token(tokens, Token::Colon)?;
                 let then_b = parse_block(tokens)?;
                 else_if_branch.push(IF {
                     condition: Box::new(cond),
@@ -59,10 +62,10 @@ pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
                 });
             }
             Some(SpannedToken {
-                token: Token::Else,
-                span,
+                token: Token::Else, ..
             }) => {
                 tokens.next();
+                expect_token(tokens, Token::Colon)?;
                 let then_b = parse_block(tokens)?;
                 else_branch = Some(Else { body: then_b });
             }
@@ -70,7 +73,7 @@ pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         }
     }
 
-    Ok(Expr::Condition {
+    Ok(Statement::Condition {
         main: IF {
             condition: Box::new(condition),
             body: then_branch,

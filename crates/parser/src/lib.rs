@@ -1,3 +1,4 @@
+pub mod assign;
 pub mod ast;
 pub mod binary_op;
 pub mod builtin;
@@ -12,9 +13,6 @@ pub mod r#loop;
 pub mod template;
 pub mod types;
 
-/*
-pub mod builtin;
-pub mod r#enum; */
 pub mod errors;
 mod expressions;
 /*

@@ -10,7 +10,8 @@ use tokenizer::{
 
 use crate::ast::Expr;
 
-pub fn parse_builtin<'a>(tokens: &mut Tokens, token: SpannedToken) -> Result<Expr, ParserError> {
+pub fn parse_builtin<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
+    let token = tokens.peek().ok_or(ParserError::UnexpectedEOF)?;
     let (function, return_type) = match token.token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
         Token::Input => (BuiltInFunction::Input, Type::String),
@@ -30,7 +31,7 @@ pub fn parse_builtin<'a>(tokens: &mut Tokens, token: SpannedToken) -> Result<Exp
         Token::Min => (BuiltInFunction::Min, Type::Integer),
         Token::StrReverse => (BuiltInFunction::StrReverse, Type::String),
         Token::ConvertString => (BuiltInFunction::ConvertString, Type::String),
-        other => return Err(ParserError::UnsupportedBuiltInFunction(other.clone())),
+        _ => return Err(ParserError::UnsupportedBuiltInFunction(token.token.clone())),
     };
     let mut args = Vec::new();
 

@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
-    ast::{Expr, Operation, Program},
+    assign::parse_assign,
+    ast::{Expr, Operation, Program, Statement},
     binary_op::parse_expression,
     builtin::parse_builtin,
     condition::parse_if_expr,
@@ -15,7 +16,7 @@ use crate::{
     template::parse_template_string_expr,
 };
 use tokenizer::{
-    iterator::{SpannedToken, Tokens},
+    iterator::{SourceSpan, SpannedToken, Tokens},
     tokens::Token,
 };
 
@@ -25,14 +26,32 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, Parser
         expressions: vec![],
     };
 
-    while let Some(token) = tokens.peek() {
+    while let Some(token) = tokens.next() {
         match token {
             SpannedToken {
                 token: Token::Newline,
                 ..
             } => {
-                tokens.next();
                 continue;
+            }
+
+            SpannedToken {
+                token: Token::Conditional,
+                ..
+            } => {
+                ast.expressions.push(parse_if_expr(tokens)?);
+            }
+            SpannedToken {
+                token: Token::Identifier(s),
+                ..
+            } if tokens.peek().is_some_and(|t| t.token == Token::Assign) => {
+                ast.expressions.push(parse_assign(tokens, s.to_string())?);
+            }
+
+            SpannedToken {
+                token: Token::Loop, ..
+            } => {
+                ast.expressions.push(parse_loop(tokens)?);
             }
 
             SpannedToken {
@@ -42,7 +61,18 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, Parser
                 let (name, function) = parse_function_def(tokens)?;
                 ast.functions.insert(name, function);
             }
-
+            SpannedToken {
+                token: Token::ConstantDecl,
+                ..
+            } => {
+                ast.expressions.push(parse_decl(tokens, false)?);
+            }
+            SpannedToken {
+                token: Token::MutableDecl,
+                ..
+            } => {
+                ast.expressions.push(parse_decl(tokens, true)?);
+            }
             SpannedToken {
                 token: Token::StringLiteral(_),
                 ..
@@ -64,7 +94,7 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, Parser
             }
             _ => {
                 let expr = parse_expression(tokens)?;
-                ast.expressions.push(expr);
+                ast.expressions.push(Statement::Expr(expr));
             }
         }
     }
@@ -75,30 +105,26 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
     match token {
         SpannedToken {
-            token: Token::ConstantDecl,
-            ..
-        } => {
-            return parse_decl(tokens, false);
-        }
-        SpannedToken {
-            token: Token::MutableDecl,
-            ..
-        } => {
-            return parse_decl(tokens, true);
-        }
-
-        SpannedToken {
             token: Token::StringLiteral(_),
             ..
-        } => literals_parse(token, tokens),
+        } => {
+            tokens.push_front(token);
+            literals_parse(tokens)
+        }
         SpannedToken {
             token: Token::Float(_num),
             ..
-        } => literals_parse(token, tokens),
+        } => {
+            tokens.push_front(token);
+            literals_parse(tokens)
+        }
         SpannedToken {
             token: Token::Number(_num),
             ..
-        } => literals_parse(token, tokens),
+        } => {
+            tokens.push_front(token);
+            literals_parse(tokens)
+        }
         SpannedToken {
             token: Token::True, ..
         } => Ok(Expr::Bool(true)),
@@ -114,7 +140,7 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         SpannedToken {
             token: Token::Comment(s),
             ..
-        } => Ok(Expr::Comment(s)),
+        } => Ok(Expr::Comment(s.clone())),
         SpannedToken {
             token: Token::Return,
             ..
@@ -202,7 +228,8 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         | SpannedToken {
             token: Token::Ceil, ..
         } => {
-            let result = parse_builtin(tokens, token)?;
+            tokens.push_front(token);
+            let result = parse_builtin(tokens)?;
             Ok(result)
         }
         SpannedToken {
@@ -213,24 +240,15 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             token: Token::Identifier(s),
             ..
         } => parse_identifier(tokens, s.to_string()),
-        SpannedToken {
-            token: Token::ListStart,
-            span,
-        } => literals_parse(
-            SpannedToken {
-                token: Token::ListStart,
-                span: span.clone(),
-            },
-            tokens,
-        ),
-        SpannedToken {
-            token: Token::Conditional,
-            ..
-        } => parse_if_expr(tokens),
 
         SpannedToken {
-            token: Token::Loop, ..
-        } => parse_loop(tokens),
+            token: Token::ListStart,
+            ..
+        } => {
+            tokens.push_front(token);
+            literals_parse(tokens)
+        }
+
         SpannedToken {
             token: Token::Subtract,
             ..
@@ -264,85 +282,3 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         )),
     }
 }
-
-/*
-Token::Type => parse_union_type(tokens),
-Token::Object => parse_struct_def(tokens),
-Token::Enum => parse_enum_decl(tokens),
-Token::Match => parse_match(tokens),
-Token::Operator(op) if op == "-" => Ok(Expr::UnaryOp {
-    op,
-    expr: Box::new(parse_single_expr(tokens)?),
-}),
-,
-
-Token::Eof | Token::Semicolon | Token::Newline => Err(ParserError::UnexpectedEOF), */
-/* pub fn parse_single_expr<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
-    let token = match tokens.next() {
-        Some(t) => t,
-        None => Err(ParserError::UnexpectedEOF)?,
-    };
-    match token {
-        Token::StringLiteral(_s) => literals_parse(token, tokens),
-        Token::True => Ok(Expr::Bool(true)),
-        Token::False => Ok(Expr::Bool(false)),
-        Token::Break => Ok(Expr::Break),
-        Token::Continue => Ok(Expr::Continue),
-
-        Token::Float(_num) => literals_parse(&token, tokens),
-        Token::Backtick => parse_template_string_expr(tokens),
-        Token::Number(_num) => literals_parse(&token, tokens),
-        Token::This => parse_identifier(tokens, "self"),
-        Token::Object => parse_struct_def(tokens),
-        Token::Enum => parse_enum_decl(tokens),
-        Token::ListStart => literals_parse(token, tokens),
-        Token::ConstantDecl => parse_decl(tokens, false),
-        Token::MutableDecl => parse_decl(tokens, true),
-        Token::Match => parse_match(tokens),
-        Token::Return => {
-            let returned_value = parse_expression(tokens)?;
-            Ok(Expr::Return(Box::new(returned_value)))
-        }
-        Token::FunctionDef => parse_function_def(tokens),
-        Token::Operator(op) if op == "-" => Ok(Expr::UnaryOp {
-            op,
-            expr: Box::new(parse_single_expr(tokens)?),
-        }),
-        Token::Comment(s) => Ok(Expr::Comment(s)),
-        Token::Loop => parse_loop(tokens),
-        Token::Identifier(s) => parse_identifier(tokens, s),
-        Token::Type => parse_union_type(tokens),
-        Token::Conditional => parse_if_expr(tokens),
-
-        Token::Print
-        | Token::Input
-        | Token::Len
-        | Token::NumberFn
-        | Token::Sum
-        | Token::RangeFn
-        | Token::LastWord
-        | Token::Sqrt
-        | Token::Timer
-        | Token::Max
-        | Token::StrUpper
-        | Token::StrLower
-        | Token::Min
-        | Token::Zig
-        | Token::Mod
-        | Token::Trim
-        | Token::StrReverse
-        | Token::ConvertString
-        | Token::Round
-        | Token::Floor
-        | Token::Ceil => {
-            let result = parse_builtin(tokens, token)?;
-            Ok(result)
-        }
-        Token::Eof | Token::Semicolon | Token::Newline => Err(ParserError::UnexpectedEOF),
-        other => Err(ParserError::UnexpectedToken(other.clone())),
-    }
-}
- */
