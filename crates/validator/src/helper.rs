@@ -5,14 +5,14 @@ use parser::{
     shared_ast::Type,
 };
 
-use crate::{Validator, errors::ValidatorError, validate::validate_expr};
+use crate::{Validator, errors::ValidatorError, expr::validate_expr};
 //TODO: List Type Definition has a problem. We must use Type::Integer instead of Type::Natural
-pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Type {
+pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
     match value {
-        Expr::Number(x) => Type::Integer,
+        Expr::Number(_) => Type::Integer,
         Expr::TemplateString(_) => Type::String,
         Expr::UnaryOp { op, expr } => {
-            get_type(expr, ctx, typ);
+            get_type(expr, ctx);
             match &*op {
                 Operation::Subtract => Type::Integer,
                 Operation::Not => Type::Bool,
@@ -25,9 +25,9 @@ pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Ty
         Expr::String(_) => Type::LiteralString,
         Expr::List(items) => {
             if items.len() > 0 {
-                let item_type = get_type(&items[0], ctx, typ);
+                let item_type = get_type(&items[0], ctx);
                 for item in &items[1..] {
-                    let t = get_type(item, ctx, typ);
+                    let t = get_type(item, ctx);
                     if t != item_type {
                         return Type::Array(Box::new(Type::Any));
                     }
@@ -44,19 +44,6 @@ pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Ty
             target_type,
         } => target_type.clone(),
         Expr::VariableRef { name, symbol } => {
-            if let Some(s) = ctx.lookup_variable(name) {
-                return s.typ.clone();
-            }
-
-            if let Some(t) = typ {
-                if let Type::User(enum_name) = t {
-                    // if let Some(variants) = ctx.enum_defs.get(Cow::Owned(enum_name)) {
-                    //     if variants.contains(name) {
-                    //         return t.clone();
-                    //     }
-                    // }
-                }
-            }
             return symbol.as_ref().unwrap().typ.clone();
         }
         Expr::StructInit { name, .. } => {
@@ -78,8 +65,8 @@ pub fn get_type<'a>(value: &Expr, ctx: &mut Validator, typ: Option<&Type>) -> Ty
             op,
             return_type,
         } => {
-            let left_type = get_type(left, ctx, typ);
-            let right_type = get_type(right, ctx, typ);
+            let left_type = get_type(left, ctx);
+            let right_type = get_type(right, ctx);
             let last_type: Type = match *op {
                 Operation::Equal
                 | Operation::NotEqual
@@ -131,7 +118,7 @@ pub fn validate_bool_condition(
 ) -> Result<(), ValidatorError> {
     validate_expr(condition, ctx)?;
 
-    match get_type(condition, ctx, None) {
+    match get_type(condition, ctx) {
         Type::Any => Err(ValidatorError::IfConditionTypeUnknown),
         Type::Bool => Ok(()),
         other => Err(ValidatorError::IfConditionTypeMismatch(other.to_string())),

@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 pub mod errors;
+pub mod expr;
 pub mod function_call;
 mod helper;
+mod tests;
 mod typed_ast;
 pub mod validate;
-use crate::{errors::ValidatorError, validate::validate_expr};
+use crate::{errors::ValidatorError, validate::validate_statement};
 use parser::{
     ast::{Expr, Parameter, Program, Symbol},
     shared_ast::Type,
@@ -102,8 +104,7 @@ impl Validator {
 
     pub fn validate(&mut self, parsed_program: &mut Program) -> Result<(), ValidatorError> {
         for expr in parsed_program.expressions.iter_mut() {
-            validate_expr(expr, self)?;
-
+            validate_statement(expr, self)?;
         }
         for variable in &self.global_variables {
             if variable.1.is_mutable && !variable.1.is_changed {

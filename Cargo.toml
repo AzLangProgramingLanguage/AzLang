@@ -1,9 +1,8 @@
 [workspace]
 members = [
-    "crates/logging",
     "crates/cli",
     "interpreter",
-    "compiler", "crates/tests", "crates/visitor",
+    "compiler", 
 ]
 
 [package]
@@ -16,4 +15,3 @@ edition = "2024"
 [dependencies]
 cli = { path = "./crates/cli"}
 interpreter = { path = "./interpreter"}
-compiler = { path = "./compiler"}

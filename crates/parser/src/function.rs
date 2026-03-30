@@ -1,6 +1,6 @@
 use crate::{
     ast::{Expr, FunctionDef, Parameter},
-    binary_op::parse_expression,
+    binary_op::parse_statement,
     errors::ParserError,
     helpers::expect_token,
     types::parse_type,
@@ -96,7 +96,7 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<(String, FunctionDef), 
             }
             Token::Eof => break,
             _ => {
-                body.push(parse_expression(tokens)?);
+                body.push(parse_statement(tokens)?);
             }
         }
     }

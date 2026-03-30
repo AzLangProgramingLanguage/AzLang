@@ -1,13 +1,55 @@
-use crate::ast::Operation;
+use crate::assign::parse_assign;
+use crate::ast::{Operation, Statement};
+use crate::condition::parse_if_expr;
+use crate::decl::parse_decl;
 use crate::errors::ParserError;
+use crate::r#loop::parse_loop;
 use crate::shared_ast::Type;
 use crate::{ast::Expr, expressions::parse_single_expr};
 use tokenizer::iterator::{SpannedToken, Tokens};
 use tokenizer::tokens::Token;
 
+pub fn parse_statement<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
+    match tokens.peek() {
+        Some(SpannedToken {
+            token: Token::Conditional,
+            ..
+        }) => {
+            parse_if_expr(tokens)?;
+        }
+        Some(SpannedToken {
+            token: Token::Identifier(s),
+            ..
+        }) if tokens.peek().is_some_and(|t| t.token == Token::Assign) => {
+            parse_assign(tokens, s.to_string())?;
+        }
+
+        Some(SpannedToken {
+            token: Token::Loop, ..
+        }) => {
+            parse_loop(tokens)?;
+        }
+        Some(SpannedToken {
+            token: Token::ConstantDecl,
+            ..
+        }) => {
+            parse_decl(tokens, false)?;
+        }
+        Some(SpannedToken {
+            token: Token::MutableDecl,
+            ..
+        }) => {
+            parse_decl(tokens, true)?;
+        }
+        _ => {}
+    }
+    Ok(Statement::Expr(parse_expression(tokens)?))
+}
+
 pub fn parse_expression<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let expr = parse_single_expr(tokens)?;
-    parse_binary_op_with_precedence(expr, tokens, 0)
+
+    Ok(parse_binary_op_with_precedence(expr, tokens, 0)?)
 }
 
 fn parse_binary_op_with_precedence<'a>(

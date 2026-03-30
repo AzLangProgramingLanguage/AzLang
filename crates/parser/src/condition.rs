@@ -4,13 +4,13 @@ use tokenizer::{
 };
 
 use crate::{
-    ast::{Else, Expr, IF, Statement},
-    binary_op::parse_expression,
+    ast::{Else, IF, Statement},
+    binary_op::{parse_expression, parse_statement},
     errors::ParserError,
     helpers::expect_token,
 };
 
-fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr>, ParserError> {
+fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
     let mut block = Vec::new();
     let mut indent = 0;
 
@@ -32,7 +32,7 @@ fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Expr>, ParserError> {
                 tokens.next();
             }
             Token::Eof => break,
-            _ => block.push(parse_expression(tokens)?),
+            _ => block.push(parse_statement(tokens)?),
         }
     }
     Ok(block)
@@ -43,7 +43,7 @@ pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> 
     expect_token(tokens, Token::Colon)?;
     let then_branch = parse_block(tokens)?;
 
-    let mut else_if_branch = Vec::new();
+    let mut else_if_branch: Vec<IF> = Vec::new();
     let mut else_branch = None;
 
     loop {

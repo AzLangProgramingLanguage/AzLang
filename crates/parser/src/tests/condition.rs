@@ -2,27 +2,17 @@
 mod tests {
     use crate::ast::{Expr, Statement};
     use crate::condition::parse_if_expr;
+    use crate::tests::create_tokens;
     use tokenizer::iterator::{SourceSpan, Tokens};
     use tokenizer::tokens::Token;
 
-    fn create_tokens(tokens_vec: Vec<Token>) -> Tokens {
-        let mut tokens = Tokens::default();
-        for token in tokens_vec {
-            tokens.push(
-                token,
-                SourceSpan {
-                    start: 0,
-                    end: 0,
-                    line: 0,
-                },
-            );
-        }
-        tokens
+    // Body-dəki tək expression-u Statement::Expr-ə wrap edir
+    fn expr_stmt(expr: Expr) -> Statement {
+        Statement::Expr(expr)
     }
 
     #[test]
     fn test_parse_if_expr_simple() {
-        // Token::Conditional is already consumed by expressions.rs
         let mut tokens = create_tokens(vec![
             Token::True,
             Token::Colon,
@@ -32,14 +22,15 @@ mod tests {
             Token::Newline,
             Token::Dedent,
         ]);
-        let result = parse_if_expr(&mut tokens).expect("Failed to parse if expr");
+        let result = parse_if_expr(&mut tokens).expect("if parse edilmədi");
+
         if let Statement::Condition { main, elif, other } = result {
             assert_eq!(*main.condition, Expr::Bool(true));
-            assert_eq!(main.body, vec![Expr::Number(1)]);
+            assert_eq!(main.body, vec![expr_stmt(Expr::Number(1))]);
             assert!(elif.is_empty());
             assert!(other.is_none());
         } else {
-            panic!("Expected Condition statement");
+            panic!("Condition statement gözlənilirdi");
         }
     }
 
@@ -69,16 +60,20 @@ mod tests {
             Token::Newline,
             Token::Dedent,
         ]);
-        let result = parse_if_expr(&mut tokens).expect("Failed to parse if-elif-else expr");
+        let result = parse_if_expr(&mut tokens).expect("if-elif-else parse edilmədi");
+
         if let Statement::Condition { main, elif, other } = result {
             assert_eq!(*main.condition, Expr::Bool(true));
+            assert_eq!(main.body, vec![expr_stmt(Expr::Number(1))]);
+
             assert_eq!(elif.len(), 1);
             assert_eq!(*elif[0].condition, Expr::Bool(false));
-            assert_eq!(elif[0].body, vec![Expr::Number(2)]);
-            assert!(other.is_some());
-            assert_eq!(other.unwrap().body, vec![Expr::Number(3)]);
+            assert_eq!(elif[0].body, vec![expr_stmt(Expr::Number(2))]);
+
+            let else_branch = other.expect("else branch gözlənilirdi");
+            assert_eq!(else_branch.body, vec![expr_stmt(Expr::Number(3))]);
         } else {
-            panic!("Expected Condition statement");
+            panic!("Condition statement gözlənilirdi");
         }
     }
 
@@ -109,12 +104,13 @@ mod tests {
             Token::Newline,
             Token::Dedent,
         ]);
-        let result = parse_if_expr(&mut tokens).expect("Failed to parse multi-elif expr");
+        let result = parse_if_expr(&mut tokens).expect("multi-elif parse edilmədi");
+
         if let Statement::Condition { elif, .. } = result {
             assert_eq!(elif.len(), 2);
-            assert_eq!(elif[1].body, vec![Expr::Number(3)]);
+            assert_eq!(elif[1].body, vec![expr_stmt(Expr::Number(3))]);
         } else {
-            panic!("Expected Condition statement");
+            panic!("Condition statement gözlənilirdi");
         }
     }
 
@@ -131,4 +127,6 @@ mod tests {
         let result = parse_if_expr(&mut tokens);
         assert!(result.is_err());
     }
+
+    // --- parse_statement testləri ---
 }

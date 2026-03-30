@@ -30,20 +30,20 @@ pub enum Operation {
 #[derive(Debug, Clone, PartialEq)]
 pub struct IF {
     pub condition: Box<Expr>,
-    pub body: Vec<Expr>,
+    pub body: Vec<Statement>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Else {
-    pub body: Vec<Expr>,
+    pub body: Vec<Statement>,
 }
 #[derive(Debug, PartialEq)]
 pub struct FunctionDef {
     pub params: Vec<Parameter>,
-    pub body: Vec<Expr>,
+    pub body: Vec<Statement>,
     pub return_type: Option<Type>,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Statement {
     EnumDecl {
         name: String,
@@ -69,7 +69,6 @@ pub enum Statement {
     Assignment {
         name: String,
         value: Box<Expr>,
-        symbol: Option<Symbol>,
     },
     Match {
         target: Box<Expr>,

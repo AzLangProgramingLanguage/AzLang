@@ -12,7 +12,9 @@ use tokenizer::{
 use crate::ast::Expr;
 
 pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, ParserError> {
+    tokens.next();
     let data_typ = parse_type(tokens)?;
+
     let name = match tokens.next() {
         Some(SpannedToken {
             token: Token::Identifier(name),
@@ -23,7 +25,6 @@ pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement
         None => return Err(ParserError::DeclNameNotFound(Token::Eof)),
     };
     expect_token(tokens, Token::Assign)?;
-
     let value = parse_expression(tokens)?;
 
     Ok(Statement::Decl {

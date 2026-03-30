@@ -19,6 +19,5 @@ pub fn parse_assign(tokens: &mut Tokens, s: String) -> Result<Statement, ParserE
     Ok(Statement::Assignment {
         name: s,
         value: Box::new(value),
-        symbol: None,
     })
 }

@@ -1,22 +1,58 @@
-use std::{
-    collections::{HashMap, hash_map::Entry},
-    rc::Rc,
-};
-
 use logging::validator_log;
-use parser::{
-    ast::{Expr, Statement, Symbol, TemplateChunk},
-    shared_ast::{BuiltInFunction, Type},
-};
+use parser::ast::{Statement, Symbol};
 
 use crate::{
-    FunctionInfo, MethodInfo, Validator,
+    Validator,
     errors::ValidatorError,
-    function_call::validate_function_call,
-    helper::{get_type, reconcile_type, validate_body, validate_bool_condition},
+    expr::validate_expr,
+    helper::{get_type, reconcile_type},
 };
 pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(), ValidatorError> {
     match stmt {
+        Statement::Condition { main, elif, other } => {
+            validate_expr(&mut main.condition, ctx)?;
+            for expr in main.body.iter_mut() {
+                validate_statement(expr, ctx)?;
+            }
+            for elif in elif.iter_mut() {
+                validate_expr(&mut elif.condition, ctx)?;
+                for expr in elif.body.iter_mut() {
+                    validate_statement(expr, ctx)?;
+                }
+            }
+            if let Some(other) = other {
+                for expr in other.body.iter_mut() {
+                    validate_statement(expr, ctx)?;
+                }
+            }
+        }
+
+        Statement::Assignment { name, value } => {
+            validator_log(&format!("✅ Assignment yoxlanılır: '{name}'"));
+            validate_expr(value, ctx)?;
+            let inferred = get_type(value, ctx);
+
+            if let Some(var) = ctx.lookup_variable(name) {
+                var.is_used = true;
+                var.is_changed = true;
+                if !var.is_mutable {
+                    return Err(ValidatorError::AssignmentToImmutableVariable(
+                        name.to_string(),
+                    ));
+                }
+                if var.typ != inferred {
+                    return Err(ValidatorError::AssignmentTypeMismatch {
+                        name: name.to_string(),
+                        expected: inferred.to_string(),
+                        found: var.typ.to_string(),
+                    });
+                }
+            } else {
+                return Err(ValidatorError::UndefinedVariable(name.to_string()));
+            }
+            validate_expr(value, ctx)?;
+        }
+
         Statement::Decl {
             name,
             typ,
@@ -30,9 +66,9 @@ pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(
                 return Err(ValidatorError::AlreadyDecl(name.to_string()));
             }
 
-            validate_expr(value)?;
+            validate_expr(value, ctx)?;
 
-            let inferred = get_type(value, ctx, Some(typ));
+            let inferred = get_type(value, ctx);
             reconcile_type(typ, inferred, name)?;
 
             ctx.declare_variable(
@@ -52,23 +88,6 @@ pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(
     Ok(())
 }
 
-pub fn validate_expr(expr: &Expr) -> Result<(), ValidatorError> {
-    match expr {
-        Expr::String(_) | Expr::Float(_) | Expr::Bool(_) | Expr::Number(_) => Ok(()),
-        Expr::Call {
-            target,
-            name,
-            args,
-            returned_type,
-        } => Ok(()),
-        Expr::Index {
-            target,
-            index,
-            target_type,
-        } => Ok(()),
-        _ => todo!("Bura baxmaq lazımdır"),
-    }
-}
 /*
 
 

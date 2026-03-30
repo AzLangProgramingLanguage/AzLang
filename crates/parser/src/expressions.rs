@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     assign::parse_assign,
     ast::{Expr, Operation, Program, Statement},
-    binary_op::parse_expression,
+    binary_op::{parse_expression, parse_statement},
     builtin::parse_builtin,
     condition::parse_if_expr,
     decl::parse_decl,
@@ -36,43 +36,13 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, Parser
             }
 
             SpannedToken {
-                token: Token::Conditional,
-                ..
-            } => {
-                ast.expressions.push(parse_if_expr(tokens)?);
-            }
-            SpannedToken {
-                token: Token::Identifier(s),
-                ..
-            } if tokens.peek().is_some_and(|t| t.token == Token::Assign) => {
-                ast.expressions.push(parse_assign(tokens, s.to_string())?);
-            }
-
-            SpannedToken {
-                token: Token::Loop, ..
-            } => {
-                ast.expressions.push(parse_loop(tokens)?);
-            }
-
-            SpannedToken {
                 token: Token::FunctionDef,
                 ..
             } => {
                 let (name, function) = parse_function_def(tokens)?;
                 ast.functions.insert(name, function);
             }
-            SpannedToken {
-                token: Token::ConstantDecl,
-                ..
-            } => {
-                ast.expressions.push(parse_decl(tokens, false)?);
-            }
-            SpannedToken {
-                token: Token::MutableDecl,
-                ..
-            } => {
-                ast.expressions.push(parse_decl(tokens, true)?);
-            }
+
             SpannedToken {
                 token: Token::StringLiteral(_),
                 ..
@@ -93,8 +63,8 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, Parser
                 break;
             }
             _ => {
-                let expr = parse_expression(tokens)?;
-                ast.expressions.push(Statement::Expr(expr));
+                let expr = parse_statement(tokens)?;
+                ast.expressions.push(expr);
             }
         }
     }

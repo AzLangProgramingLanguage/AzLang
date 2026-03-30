@@ -6,7 +6,7 @@ use parser::{
 };
 
 use crate::{
-    Validator, errors::ValidatorError, function_call, helper::get_type, validate::validate_expr,
+    Validator, errors::ValidatorError, expr::validate_expr, function_call, helper::get_type,
 };
 
 pub fn validate_function_call(
