@@ -10,6 +10,7 @@ fn test_parse_statement_decl() {
         Token::Identifier("x".to_string()),
         Token::Assign,
         Token::Number(42),
+        Token::Newline,
     ]);
     let result = parse_statement(&mut tokens).expect("decl parse edilmədi");
     assert!(matches!(

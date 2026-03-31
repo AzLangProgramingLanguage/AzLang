@@ -1,11 +1,9 @@
-use std::rc::Rc;
+use crate::runner::runner::Value;
 
-use parser::ast::Expr;
-
-pub fn input<'a>() -> Expr {
+pub fn input() -> Value {
     let mut input = String::new();
     std::io::stdin()
         .read_line(&mut input)
         .expect("Input girilmedi");
-    Expr::DynamicString(Rc::new(input))
+    Value::String(input)
 }

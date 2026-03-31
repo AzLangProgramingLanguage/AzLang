@@ -1,5 +1,8 @@
 use logging::validator_log;
-use parser::ast::{Statement, Symbol};
+use parser::{
+    ast::{Expr, Statement, Symbol},
+    shared_ast::{BuiltInFunction, Type},
+};
 
 use crate::{
     Validator,
@@ -82,7 +85,36 @@ pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(
                 },
             );
         }
-        _ => todo!("Bura baxmaq lazımdır"),
+        Statement::Expr(expr) => match expr {
+            Expr::BuiltInCall {
+                function,
+                args,
+                return_type,
+            } => match function {
+                BuiltInFunction::Print => {
+                    if args.len() != 1 {
+                        return Err(ValidatorError::InvalidArgumentCount {
+                            name: function.to_string(),
+                            expected: 1,
+                            found: args.len(),
+                        });
+                    }
+                    validate_expr(&mut args[0], ctx)?;
+                    let t = get_type(&args[0], ctx);
+                    if t == Type::Void {
+                        return Err(ValidatorError::InvalidArgumentType {
+                            name: function.to_string(),
+                            expected: "not void".to_string(),
+                            found: t.to_string(),
+                        });
+                    }
+                    *return_type = Type::Void;
+                }
+                _ => todo!("Bura baxmaq lazımdır {:#?}", function),
+            },
+            _ => todo!("Bura baxmaq lazımdır {:#?}", expr),
+        },
+        _ => todo!("Bura baxmaq lazımdır {:#?}", stmt),
     }
 
     Ok(())

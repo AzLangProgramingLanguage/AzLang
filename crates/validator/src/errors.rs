@@ -25,6 +25,11 @@ pub enum ValidatorError {
         expected: usize,
         found: usize,
     },
+    InvalidArgumentType {
+        name: String,
+        expected: String,
+        found: String,
+    },
     TypeMismatch {
         expected: String,
         found: String,
@@ -65,6 +70,14 @@ impl Display for ValidatorError {
             } => write!(
                 f,
                 "'{name}' Dəyəri '{expected}' tipində olmalıdır, ancak '{found}' tipində var."
+            ),
+            ValidatorError::InvalidArgumentType {
+                name,
+                expected,
+                found,
+            } => write!(
+                f,
+                "'{name}' funksiyası '{expected}' tipində argumenti olmalıdır, ancak '{found}' tipində argumenti var."
             ),
             ValidatorError::DeclTypeUnknown(string) => {
                 write!(f, "'{string}' Dəyəri tipi bildirilməyib.")

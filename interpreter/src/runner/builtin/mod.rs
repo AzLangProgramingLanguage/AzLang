@@ -5,61 +5,42 @@ use parser::{
 
 use crate::runner::{
     Runner,
-    builtin::{input::input, print::print_interpreter, sum::sum},
-    runner::runner_interpretator,
+    builtin::{input::input, sum::sum},
+    runner::{Value, runner_interpretator},
 };
 
 mod input;
-mod print;
 mod sum;
 
 pub fn builthin_call_runner(
-    ctx: &mut Runner,
     function: BuiltInFunction,
-    mut args: Vec<Expr>,
+    mut args: Vec<Value>,
     return_type: Type,
-) -> Expr {
+) -> Value {
     match function {
         BuiltInFunction::Print => {
-            let output = print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx);
-
-            println!("{}", output);
-            Expr::Void
+            println!("{}", args.remove(0));
+            Value::Void
         }
         BuiltInFunction::LastWord => {
-            let output = print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx);
-
-            println!("{}", output);
+            println!("{}", args.remove(0));
             std::process::exit(1);
         }
         BuiltInFunction::Len => {
-            let mut arg = runner_interpretator(ctx, args.remove(0));
-            //TODO: Berbat bir kod  burada bunun yerine Value ENumu yarat
-            match &arg {
-                Expr::VariableRef { name, symbol } => {
-                    arg = runner_interpretator(ctx, arg);
-                }
-                _ => {}
-            }
+            let arg = args.remove(0);
 
             match arg {
-                Expr::List(s) => {
-                    return Expr::Number(s.len() as i64);
-                }
-                _ => {
-                    return Expr::Number(0);
-                }
+                Value::List(l) => Value::Number(l.len() as i64),
+                Value::String(s) => Value::Number(s.len() as i64),
+                _ => Value::Number(0),
             }
         }
         BuiltInFunction::Input => {
-            println!(
-                "{}",
-                print_interpreter(runner_interpretator(ctx, args.remove(0)), ctx)
-            );
+            println!("{}", args.remove(0));
             input()
         }
 
-        BuiltInFunction::Sum => sum(args, ctx),
-        _ => Expr::Void,
+        BuiltInFunction::Sum => sum(args),
+        _ => Value::Void,
     }
 }

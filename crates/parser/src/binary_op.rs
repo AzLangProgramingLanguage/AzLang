@@ -14,14 +14,12 @@ pub fn parse_statement<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError
         Some(SpannedToken {
             token: Token::Conditional,
             ..
-        }) => {
-            parse_if_expr(tokens)?;
-        }
+        }) => return Ok(parse_if_expr(tokens)?),
         Some(SpannedToken {
             token: Token::Identifier(s),
             ..
         }) if tokens.peek().is_some_and(|t| t.token == Token::Assign) => {
-            parse_assign(tokens, s.to_string())?;
+            return Ok(parse_assign(tokens, s.to_string())?);
         }
 
         Some(SpannedToken {
@@ -32,15 +30,11 @@ pub fn parse_statement<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError
         Some(SpannedToken {
             token: Token::ConstantDecl,
             ..
-        }) => {
-            parse_decl(tokens, false)?;
-        }
+        }) => return Ok(parse_decl(tokens, false)?),
         Some(SpannedToken {
             token: Token::MutableDecl,
             ..
-        }) => {
-            parse_decl(tokens, true)?;
-        }
+        }) => return Ok(parse_decl(tokens, true)?),
         _ => {}
     }
     Ok(Statement::Expr(parse_expression(tokens)?))

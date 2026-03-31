@@ -11,7 +11,7 @@ use tokenizer::{
 use crate::ast::Expr;
 
 pub fn parse_builtin<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
-    let token = tokens.peek().ok_or(ParserError::UnexpectedEOF)?;
+    let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
     let (function, return_type) = match token.token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
         Token::Input => (BuiltInFunction::Input, Type::String),
@@ -65,6 +65,7 @@ pub fn parse_builtin<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
                 _ => {
                     let expr = parse_expression(tokens)?;
                     args.push(expr);
+                    tokens.next();
                 }
             }
         }

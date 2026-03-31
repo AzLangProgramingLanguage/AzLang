@@ -1,5 +1,5 @@
 use cli::{Commands, cli};
-use compiler::compiler;
+//use compiler::compiler;
 
 fn main() {
     let command = cli().command;
@@ -17,10 +17,12 @@ fn main() {
             });
         }
         Commands::Build { binary } => {
+            /*
             compiler(&binary).unwrap_or_else(|err| {
                 err.display();
                 std::process::exit(err.code());
             });
+            */
         }
     }
 }

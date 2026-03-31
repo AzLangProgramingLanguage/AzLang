@@ -1,18 +1,20 @@
 use std::{collections::HashMap, rc::Rc};
 mod builtin;
-mod function_call;
+//mod function_call;
 mod helpers;
 mod runner;
 use parser::{
-    ast::{Expr, Parameter, Program},
+    ast::{Expr, Parameter, Program, Statement},
     shared_ast::Type,
 };
+
+use crate::runner::runner::Value;
 mod binary_op;
 mod handlers;
 
 #[derive(Debug)]
-struct Variable {
-    value: Rc<Expr>,
+pub struct Variable {
+    value: Value,
     typ: Rc<Type>,
     is_mutable: bool,
 }
@@ -66,8 +68,7 @@ impl Runner {
         }
     }
 
-    pub fn run(&mut self, expr: Expr) {
+    pub fn run(&mut self, expr: Statement) {
         runner::runner_interpretator(self, expr);
     }
 }
-

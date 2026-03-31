@@ -154,21 +154,6 @@ impl Display for Expr {
     }
 }
 
-impl Expr {
-    pub fn as_number(&self) -> i64 {
-        match self {
-            Expr::Number(n) => *n,
-            _ => 0,
-        }
-    }
-    pub fn as_float(&self) -> f64 {
-        match self {
-            Expr::Float(f) => *f,
-            _ => 0.0,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct Program {
     pub functions: HashMap<String, FunctionDef>,

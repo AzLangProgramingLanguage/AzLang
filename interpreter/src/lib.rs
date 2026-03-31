@@ -5,7 +5,6 @@ mod errors;
 mod runner;
 use crate::{errors::InterPreterError, runner::Runner};
 use parser::parser;
-pub use validator::validate::validate_expr;
 
 pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
     let sdk = file_system::read_file(path)?;
@@ -15,8 +14,8 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
     let mut validator = validator::Validator::new();
     validator.validate(&mut parsed_program)?;
     let mut runner = Runner::new();
-    for expr in parsed_program.expressions {
-        runner.run(expr);
+    for stmt in parsed_program.expressions {
+        runner.run(stmt);
     }
     Ok(())
 }
@@ -44,8 +43,9 @@ pub fn interpreter_run_repl() -> Result<(), InterPreterError> {
             validator.validate(&mut parsed_program)?;
             parsed_program.expressions
         };
-        for expr in expressions {
+        /*  for expr in expressions {
             runner.run(expr);
         }
+         */
     }
 }
