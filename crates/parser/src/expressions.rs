@@ -230,9 +230,12 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             })
         }
 
-        other => Err(ParserError::UnexpectedToken(
-            other.span.clone(),
-            other.token.clone(),
-        )),
+        other => {
+            panic!("{other:#?}");
+            return Err(ParserError::UnexpectedToken(
+                other.span.clone(),
+                other.token.clone(),
+            ));
+        }
     }
 }

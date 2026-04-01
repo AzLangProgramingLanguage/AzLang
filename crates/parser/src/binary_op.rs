@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::assign::parse_assign;
 use crate::ast::{Operation, Statement};
 use crate::condition::parse_if_expr;
@@ -43,6 +45,7 @@ pub fn parse_statement<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError
 pub fn parse_expression<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let expr = parse_single_expr(tokens)?;
 
+    println!("Parse Expressions {expr:#?}");
     Ok(parse_binary_op_with_precedence(expr, tokens, 0)?)
 }
 
@@ -51,6 +54,7 @@ fn parse_binary_op_with_precedence<'a>(
     tokens: &mut Tokens,
     min_precedence: u8,
 ) -> Result<Expr, ParserError> {
+    tokens.next();
     match tokens.peek() {
         Some(SpannedToken {
             token: Token::LParen,

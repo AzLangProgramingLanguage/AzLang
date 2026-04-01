@@ -3,7 +3,6 @@ mod tests {
     use crate::ast::{Expr, Statement};
     use crate::condition::parse_if_expr;
     use crate::tests::create_tokens;
-    use tokenizer::iterator::{SourceSpan, Tokens};
     use tokenizer::tokens::Token;
 
     // Body-dəki tək expression-u Statement::Expr-ə wrap edir

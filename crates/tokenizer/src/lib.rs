@@ -263,7 +263,7 @@ impl<'a> Lexer<'a> {
             '<' => Ok(Token::Less),
             '=' if self.chars.next() == Some('=') => Ok(Token::Equal),
             '=' => Ok(Token::Assign),
-            '!' if self.chars.peek() == Some(&'=') => Ok(Token::NotEqual),
+            '!' if self.chars.next() == Some('=') => Ok(Token::NotEqual),
             '!' => Ok(Token::Not),
             '&' if self.chars.peek() == Some(&'=') => Ok(Token::DoubleAnd),
             '&' => Ok(Token::And),

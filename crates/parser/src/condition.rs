@@ -14,22 +14,19 @@ fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
     let mut block = Vec::new();
     let mut indent = 0;
 
-    while let Some(tok) = tokens.peek() {
+    while let Some(tok) = tokens.next() {
         match tok.token {
             Token::Indent => {
                 indent += 1;
-                tokens.next();
             }
             Token::Dedent => {
                 indent -= 1;
-                tokens.next();
                 if indent <= 0 {
                     break;
                 }
             }
             Token::Newline => {
                 indent = 0;
-                tokens.next();
             }
             Token::Eof => break,
             _ => block.push(parse_statement(tokens)?),
@@ -39,8 +36,8 @@ fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
 }
 
 pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
+    tokens.next();
     let condition = parse_expression(tokens)?;
-    expect_token(tokens, Token::Colon)?;
     let then_branch = parse_block(tokens)?;
 
     let mut else_if_branch: Vec<IF> = Vec::new();

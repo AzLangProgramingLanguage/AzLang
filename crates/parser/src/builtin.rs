@@ -11,6 +11,7 @@ use tokenizer::{
 use crate::ast::Expr;
 
 pub fn parse_builtin<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
+    panic!("Token {:#?}", tokens.peek());
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
     let (function, return_type) = match token.token {
         Token::Print => (BuiltInFunction::Print, Type::Void),

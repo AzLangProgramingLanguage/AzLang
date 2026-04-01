@@ -2,7 +2,9 @@ use core::fmt;
 use std::fmt::Display;
 
 use super::Runner;
-use crate::runner::{Variable, binary_op::binary_op_runner, builtin::builthin_call_runner};
+use crate::runner::{
+    Variable, binary_op::binary_op_runner, builtin::builthin_call_runner, helpers::run_body,
+};
 
 use parser::ast::{Expr, Statement, TemplateChunk};
 #[derive(Debug, Clone)]
@@ -102,6 +104,22 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
                 },
             );
         }
+        Statement::Condition { main, elif, other } => {
+            if matches!(get_primitive_value(ctx, *main.condition), Value::Bool(true)) {
+                run_body(ctx, main.body);
+            }
+            for branch in elif {
+                if matches!(
+                    get_primitive_value(ctx, *branch.condition),
+                    Value::Bool(true)
+                ) {
+                    run_body(ctx, branch.body);
+                }
+            }
+            if let Some(other) = other {
+                run_body(ctx, other.body);
+            }
+        }
         Statement::Assignment { name, value, .. } => {
             let new_value: Value = get_primitive_value(ctx, *value);
             let var = ctx.variables.get_mut(&name).unwrap();
@@ -122,43 +140,7 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
             }
             _ => todo!(),
         },
-        _ => {} // Expr::FunctionDef {
-                //     name,
-                //     params,
-                //     body,
-                //     return_type,
-                // } => {
-                //     let body_rc = Rc::new(body);
-                //     let params_rc = Rc::new(params);
-                //     ctx.functions.insert(
-                //         name.clone(),
-                //         FunctionDef {
-                //             params: params_rc,
-                //             body: body_rc,
-                //             return_type: return_type.unwrap_or(Type::Any),
-                //         },
-                //     );
-                //     ctx.variables.insert(
-                //         name.to_string(),
-                //         Variable {
-                //             value: Rc::new(Expr::VariableRef {
-                //                 name: name,
-                //                 symbol: Some(Symbol {
-                //                     typ: Type::Function,
-                //                     is_mutable: false,
-                //                     is_used: true,
-                //                     is_pointer: false,
-                //                     is_changed: false,
-                //                 }),
-                //             }),
-                //             typ: Rc::new(Type::Function),
-                //             is_mutable: false,
-                //         },
-                //     );
-                //
-                //     Expr::Void
-                // }
-                /*
+        _ => {} /*
                  Expr::Loop {
                      var_name,
                      iterable,
@@ -199,23 +181,7 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
                      Expr::Void
                  }
                  Expr::Condition { main, elif, other } => {
-                     if matches!(runner_interpretator(ctx, *main.condition), Expr::Bool(true)) {
-                         run_body(ctx, main.body);
-                         return Expr::Void;
-                     }
-                     for branch in elif {
-                         if matches!(
-                             runner_interpretator(ctx, *branch.condition),
-                             Expr::Bool(true)
-                         ) {
-                             run_body(ctx, branch.body);
-                             return Expr::Void;
-                         }
-                     }
-                     if let Some(other) = other {
-                         run_body(ctx, other.body);
-                     }
-                     Expr::Void
+                                          Expr::Void
                  }
                  Expr::Index {
                      target,
