@@ -12,6 +12,7 @@ use tokenizer::iterator::{SpannedToken, Tokens};
 use tokenizer::tokens::Token;
 
 pub fn parse_statement<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
+    println!("{:#?}", tokens.peek());
     match tokens.peek() {
         Some(SpannedToken {
             token: Token::Conditional,
@@ -54,8 +55,7 @@ fn parse_binary_op_with_precedence<'a>(
     tokens: &mut Tokens,
     min_precedence: u8,
 ) -> Result<Expr, ParserError> {
-    tokens.next();
-    match tokens.peek() {
+    match tokens.peek_nth(1) {
         Some(SpannedToken {
             token: Token::LParen,
             ..
@@ -96,7 +96,7 @@ fn parse_binary_op_with_precedence<'a>(
         _ => {}
     }
     loop {
-        let op = match tokens.peek() {
+        let op = match tokens.peek_nth(1) {
             Some(SpannedToken {
                 token: Token::Add, ..
             }) => Operation::Add,
@@ -147,18 +147,17 @@ fn parse_binary_op_with_precedence<'a>(
             }) => Operation::LessEqual,
             _ => break,
         };
+        tokens.next();
 
         let precedence = operator_precedence(&op);
         if precedence < min_precedence {
             break;
         }
-
         tokens.next();
 
         let rhs = parse_single_expr(tokens)?;
 
         let right = parse_binary_op_with_precedence(rhs, tokens, precedence + 1)?;
-
         left = Expr::BinaryOp {
             left: Box::new(left),
             right: Box::new(right),
