@@ -27,9 +27,7 @@ pub fn parse_statement<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError
 
         Some(SpannedToken {
             token: Token::Loop, ..
-        }) => {
-            parse_loop(tokens)?;
-        }
+        }) => return Ok(parse_loop(tokens)?),
         Some(SpannedToken {
             token: Token::ConstantDecl,
             ..
@@ -38,9 +36,8 @@ pub fn parse_statement<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError
             token: Token::MutableDecl,
             ..
         }) => return Ok(parse_decl(tokens, true)?),
-        _ => {}
+        _ => return Ok(Statement::Expr(parse_expression(tokens)?)),
     }
-    Ok(Statement::Expr(parse_expression(tokens)?))
 }
 
 pub fn parse_expression<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
@@ -55,7 +52,10 @@ fn parse_binary_op_with_precedence<'a>(
     tokens: &mut Tokens,
     min_precedence: u8,
 ) -> Result<Expr, ParserError> {
-    match tokens.peek_nth(1) {
+    println!("Parse Binary Op {left:#?}");
+
+    /*
+    match tokens.peek() {
         Some(SpannedToken {
             token: Token::LParen,
             ..
@@ -94,9 +94,9 @@ fn parse_binary_op_with_precedence<'a>(
         }
 
         _ => {}
-    }
+    } */
     loop {
-        let op = match tokens.peek_nth(1) {
+        let op = match tokens.peek() {
             Some(SpannedToken {
                 token: Token::Add, ..
             }) => Operation::Add,

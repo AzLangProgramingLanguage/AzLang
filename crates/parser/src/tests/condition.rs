@@ -14,7 +14,6 @@ mod tests {
     fn test_parse_if_expr_simple() {
         let mut tokens = create_tokens(vec![
             Token::True,
-            Token::Colon,
             Token::Newline,
             Token::Indent,
             Token::Number(1),

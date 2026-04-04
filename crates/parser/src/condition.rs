@@ -36,7 +36,6 @@ fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
 }
 
 pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
-    tokens.next();
     let condition = parse_expression(tokens)?;
     let then_branch = parse_block(tokens)?;
 

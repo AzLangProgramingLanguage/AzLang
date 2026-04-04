@@ -69,20 +69,20 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, Parser
 }
 
 pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
-    let token = tokens.peek().ok_or(ParserError::UnexpectedEOF)?;
+    let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
     match token {
         SpannedToken {
             token: Token::StringLiteral(_),
             ..
-        } => literals_parse(tokens),
+        } => literals_parse(token, tokens),
         SpannedToken {
             token: Token::Float(_num),
             ..
-        } => literals_parse(tokens),
+        } => literals_parse(token, tokens),
         SpannedToken {
             token: Token::Number(_num),
             ..
-        } => literals_parse(tokens),
+        } => literals_parse(token, tokens),
         SpannedToken {
             token: Token::True, ..
         } => Ok(Expr::Bool(true)),
@@ -186,7 +186,7 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         | SpannedToken {
             token: Token::Ceil, ..
         } => {
-            let result = parse_builtin(tokens)?;
+            let result = parse_builtin(token, tokens)?;
             Ok(result)
         }
         SpannedToken {
@@ -201,7 +201,7 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         SpannedToken {
             token: Token::ListStart,
             ..
-        } => literals_parse(tokens),
+        } => literals_parse(token, tokens),
 
         SpannedToken {
             token: Token::Subtract,
@@ -231,6 +231,7 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         }
 
         other => {
+            print!("{other:?}");
             panic!("{other:#?}");
             return Err(ParserError::UnexpectedToken(
                 other.span.clone(),

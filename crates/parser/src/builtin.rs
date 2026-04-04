@@ -10,9 +10,7 @@ use tokenizer::{
 
 use crate::ast::Expr;
 
-pub fn parse_builtin<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
-    panic!("Token {:#?}", tokens.peek());
-    let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
+pub fn parse_builtin<'a>(token: SpannedToken, tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let (function, return_type) = match token.token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
         Token::Input => (BuiltInFunction::Input, Type::String),
@@ -35,28 +33,24 @@ pub fn parse_builtin<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         _ => return Err(ParserError::UnsupportedBuiltInFunction(token.token.clone())),
     };
     let mut args = Vec::new();
-
     if let Some(SpannedToken {
         token: Token::LParen,
         ..
     }) = tokens.peek()
     {
         tokens.next();
-        while let Some(token) = tokens.peek() {
+        while let Some(token) = tokens.next() {
             match token {
                 SpannedToken {
                     token: Token::RParen,
                     span,
                 } => {
-                    tokens.next();
                     break;
                 }
                 SpannedToken {
                     token: Token::Comma,
                     span,
-                } => {
-                    tokens.next();
-                }
+                } => {}
                 SpannedToken {
                     token: Token::Newline,
                     span,
@@ -65,6 +59,7 @@ pub fn parse_builtin<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
                 }
                 _ => {
                     let expr = parse_expression(tokens)?;
+                    println!("Builtin Arg: {:#?} {:#?}", expr, tokens.peek());
                     args.push(expr);
                     tokens.next();
                 }
