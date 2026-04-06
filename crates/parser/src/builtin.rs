@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::{
     binary_op::parse_expression,
     errors::ParserError,
@@ -39,18 +41,21 @@ pub fn parse_builtin<'a>(token: SpannedToken, tokens: &mut Tokens) -> Result<Exp
     }) = tokens.peek()
     {
         tokens.next();
-        while let Some(token) = tokens.next() {
+        while let Some(token) = tokens.peek() {
             match token {
                 SpannedToken {
                     token: Token::RParen,
                     span,
                 } => {
+                    tokens.next();
                     break;
                 }
                 SpannedToken {
                     token: Token::Comma,
                     span,
-                } => {}
+                } => {
+                    tokens.next();
+                }
                 SpannedToken {
                     token: Token::Newline,
                     span,
@@ -59,9 +64,8 @@ pub fn parse_builtin<'a>(token: SpannedToken, tokens: &mut Tokens) -> Result<Exp
                 }
                 _ => {
                     let expr = parse_expression(tokens)?;
-                    println!("Builtin Arg: {:#?} {:#?}", expr, tokens.peek());
+
                     args.push(expr);
-                    tokens.next();
                 }
             }
         }

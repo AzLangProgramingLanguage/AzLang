@@ -1,6 +1,6 @@
-use parser::ast::Expr;
+use parser::{ast::Expr, shared_ast::Type};
 
-use crate::{Validator, errors::ValidatorError};
+use crate::{Validator, errors::ValidatorError, helper::get_type};
 
 pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), ValidatorError> {
     match expr {
@@ -20,11 +20,24 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 return Err(ValidatorError::UndefinedVariable(name.to_string()));
             }
         }
+        Expr::BinaryOp {
+            left,
+            right,
+            op,
+            return_type,
+        } => {
+            validate_expr(left, ctx)?;
+            validate_expr(right, ctx)?;
+            Ok(())
+        }
         Expr::Index {
             target,
             index,
             target_type,
         } => Ok(()),
-        _ => todo!("Bura baxmaq lazımdır"),
+        other => {
+            println!("Bura baxmaq lazımdır {:#?}", other);
+            todo!("Bura baxmaq lazımdır")
+        }
     }
 }

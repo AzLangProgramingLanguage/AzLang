@@ -13,6 +13,7 @@ mod tests {
     #[test]
     fn test_parse_if_expr_simple() {
         let mut tokens = create_tokens(vec![
+            Token::Conditional,
             Token::True,
             Token::Newline,
             Token::Indent,

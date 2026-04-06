@@ -231,7 +231,6 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         }
 
         other => {
-            print!("{other:?}");
             panic!("{other:#?}");
             return Err(ParserError::UnexpectedToken(
                 other.span.clone(),
