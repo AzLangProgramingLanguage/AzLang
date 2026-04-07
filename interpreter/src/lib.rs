@@ -8,9 +8,7 @@ use parser::parser;
 
 pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
     let sdk = file_system::read_file(path)?;
-
     let mut parsed_program = parser(sdk)?;
-
     let mut validator = validator::Validator::new();
     validator.validate(&mut parsed_program)?;
     let mut runner = Runner::new();

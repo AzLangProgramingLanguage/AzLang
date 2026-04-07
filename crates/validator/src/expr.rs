@@ -20,12 +20,7 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 return Err(ValidatorError::UndefinedVariable(name.to_string()));
             }
         }
-        Expr::BinaryOp {
-            left,
-            right,
-            op,
-            return_type,
-        } => {
+        Expr::BinaryOp { left, right, op } => {
             validate_expr(left, ctx)?;
             validate_expr(right, ctx)?;
             Ok(())

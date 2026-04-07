@@ -6,7 +6,10 @@ use crate::runner::{
     Variable, binary_op::binary_op_runner, builtin::builthin_call_runner, helpers::run_body,
 };
 
-use parser::ast::{Expr, Statement, TemplateChunk};
+use parser::{
+    ast::{Expr, Statement, TemplateChunk},
+    shared_ast::Type,
+};
 #[derive(Debug, Clone)]
 pub enum Value {
     Number(i64),
@@ -45,7 +48,7 @@ impl Value {
     }
 }
 
-pub fn get_primitive_value(ctx: &mut Runner, expr: Expr) -> Value {
+pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>) -> Value {
     match expr {
         Expr::Number(n) => Value::Number(n),
         Expr::String(s) => Value::String(s),
@@ -57,14 +60,16 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr) -> Value {
             for chunk in chunks {
                 match chunk {
                     TemplateChunk::Literal(l) => s.push_str(&l),
-                    TemplateChunk::Expr(v) => s.push_str(&get_primitive_value(ctx, *v).to_string()),
+                    TemplateChunk::Expr(v) => {
+                        s.push_str(&get_primitive_value(ctx, *v, None).to_string())
+                    }
                 }
             }
             Value::String(s)
         }
         Expr::List(l) => Value::List(
             l.iter()
-                .map(|x| get_primitive_value(ctx, x.clone()))
+                .map(|x| get_primitive_value(ctx, x.clone(), None))
                 .collect(),
         ),
         Expr::Void => Value::Void,
@@ -72,15 +77,10 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr) -> Value {
             let var = ctx.variables.get(&name).unwrap();
             var.value.clone()
         }
-        Expr::BinaryOp {
-            left,
-            right,
-            op,
-            return_type,
-        } => {
-            let left_value = get_primitive_value(ctx, *left);
-            let right_value = get_primitive_value(ctx, *right);
-            binary_op_runner(ctx, left_value, right_value, op, return_type)
+        Expr::BinaryOp { left, right, op } => {
+            let left_value = get_primitive_value(ctx, *left, None);
+            let right_value = get_primitive_value(ctx, *right, None);
+            binary_op_runner(ctx, left_value, right_value, op, None)
         }
         _ => panic!("Invalid expression"),
     }
@@ -94,7 +94,7 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
             is_mutable,
             value,
         } => {
-            let new_value: Value = get_primitive_value(ctx, *value);
+            let new_value: Value = get_primitive_value(ctx, *value, Some((*typ).clone()));
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
@@ -105,15 +105,18 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
             );
         }
         Statement::Condition { main, elif, other } => {
-            if matches!(get_primitive_value(ctx, *main.condition), Value::Bool(true)) {
-                run_body(ctx, main.body);
+            if matches!(
+                get_primitive_value(ctx, *main.condition, None),
+                Value::Bool(true)
+            ) {
+                return run_body(ctx, main.body);
             }
             for branch in elif {
                 if matches!(
-                    get_primitive_value(ctx, *branch.condition),
+                    get_primitive_value(ctx, *branch.condition, None),
                     Value::Bool(true)
                 ) {
-                    run_body(ctx, branch.body);
+                    return run_body(ctx, branch.body);
                 }
             }
             if let Some(other) = other {
@@ -121,7 +124,7 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
             }
         }
         Statement::Assignment { name, value, .. } => {
-            let new_value: Value = get_primitive_value(ctx, *value);
+            let new_value: Value = get_primitive_value(ctx, *value, None);
             let var = ctx.variables.get_mut(&name).unwrap();
             var.value = new_value;
         }
@@ -133,7 +136,7 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
             } => {
                 let args_values: Vec<Value> = args
                     .iter()
-                    .map(|x| get_primitive_value(ctx, x.clone()))
+                    .map(|x| get_primitive_value(ctx, x.clone(), None))
                     .collect();
 
                 builthin_call_runner(function, args_values, return_type);

@@ -215,7 +215,6 @@ pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
                     left: Box::new(Expr::Number(-1)),
                     right: Box::new(Expr::VariableRef { name, symbol }),
                     op: crate::ast::Operation::Multiply,
-                    return_type: Type::Integer,
                 }),
                 _ => return Err(ParserError::UnexpectedEOF),
             }

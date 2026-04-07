@@ -156,7 +156,6 @@ fn parse_binary_op_with_precedence<'a>(
             left: Box::new(left),
             right: Box::new(right),
             op,
-            return_type: Type::Any,
         };
     }
 

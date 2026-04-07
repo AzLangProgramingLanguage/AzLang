@@ -4,17 +4,17 @@ use parser::{
 };
 
 use crate::runner::{Runner, runner::Value};
-
+//TODO: Burası güncellene bilinir
 pub fn binary_op_runner(
     ctx: &mut Runner,
     left: Value,
     right: Value,
     op: Operation,
-    return_type: Type,
+    cast_type: Option<Type>,
 ) -> Value {
     let result = match op {
         Operation::Add => {
-            if let Type::Integer = return_type {
+            if let Some(Type::Integer) = cast_type {
                 let left = left.as_number();
                 let right = right.as_number();
                 Value::Number(left + right)
@@ -25,7 +25,7 @@ pub fn binary_op_runner(
             }
         }
         Operation::Subtract => {
-            if let Type::Integer = return_type {
+            if let Some(Type::Integer) = cast_type {
                 let left = left.as_number();
                 let right = right.as_number();
                 Value::Number(left - right)
@@ -36,7 +36,7 @@ pub fn binary_op_runner(
             }
         }
         Operation::Multiply => {
-            if let Type::Integer = return_type {
+            if let Some(Type::Integer) = cast_type {
                 let left = left.as_number();
                 let right = right.as_number();
                 Value::Number(left * right)
@@ -47,7 +47,7 @@ pub fn binary_op_runner(
             }
         }
         Operation::Divide => {
-            if let Type::Integer = return_type {
+            if let Some(Type::Integer) = cast_type {
                 let left = left.as_number();
                 let right = right.as_number();
                 Value::Number(left / right)
@@ -59,7 +59,7 @@ pub fn binary_op_runner(
             }
         }
         Operation::Modulo => {
-            if let Type::Natural = return_type {
+            if let Some(Type::Integer) = cast_type {
                 let left = left.as_number();
                 let right = right.as_number();
                 Value::Number(left % right)
@@ -73,7 +73,10 @@ pub fn binary_op_runner(
             (Value::Number(b), Value::Number(c)) => Value::Bool(b == c),
             (_, _) => Value::Bool(false),
         },
-        Operation::NotEqual => Value::Bool(false),
+        Operation::NotEqual => match (left, right) {
+            (Value::Number(b), Value::Number(c)) => Value::Bool(b != c),
+            (_, _) => Value::Bool(false),
+        },
         _ => Value::Bool(false),
     };
 

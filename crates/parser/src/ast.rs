@@ -137,7 +137,6 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
         op: Operation,
-        return_type: Type,
     },
     Break,
     Continue,
