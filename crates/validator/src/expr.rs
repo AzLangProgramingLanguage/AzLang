@@ -20,6 +20,27 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
                 return Err(ValidatorError::UndefinedVariable(name.to_string()));
             }
         }
+        Expr::List(ex) => {
+            let mut iter = ex.iter();
+
+            let typ = match iter.next() {
+                Some(first) => get_type(first, ctx),
+                None => Type::Any,
+            };
+
+            for e in iter {
+                let current_type = get_type(e, ctx);
+
+                if current_type != typ {
+                    return Err(ValidatorError::TypeMismatch {
+                        expected: typ,
+                        found: current_type,
+                    });
+                }
+            }
+
+            Ok(())
+        }
         Expr::BinaryOp { left, right, op } => {
             validate_expr(left, ctx)?;
             validate_expr(right, ctx)?;

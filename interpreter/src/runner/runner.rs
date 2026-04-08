@@ -82,7 +82,13 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
             let right_value = get_primitive_value(ctx, *right, None);
             binary_op_runner(ctx, left_value, right_value, op, None)
         }
-        _ => panic!("Invalid expression"),
+        // Expr::Call {
+        //     target,
+        //     name,
+        //     args,
+        //     returned_type,
+        // } => if ctx.functions.get(name) {},
+        other => panic!("{other:#?} Invalid expression"),
     }
 }
 

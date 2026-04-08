@@ -16,13 +16,7 @@ fn main() {
                 std::process::exit(err.code());
             });
         }
-        Commands::Build { binary } => {
-            /*
-            compiler(&binary).unwrap_or_else(|err| {
-                err.display();
-                std::process::exit(err.code());
-            });
-            */
+        Commands::Build { binary } => { /* compiler(&binary).unwrap_or_else(|err| { err.display(); std::process::exit(err.code()); }); */
         }
     }
 }

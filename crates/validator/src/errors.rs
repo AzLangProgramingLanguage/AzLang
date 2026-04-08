@@ -1,6 +1,8 @@
 use core::fmt;
 use std::fmt::{Display, write};
 
+use parser::shared_ast::Type;
+
 #[derive(Debug)]
 pub enum ValidatorError {
     UnknownType(String),
@@ -31,8 +33,8 @@ pub enum ValidatorError {
         found: String,
     },
     TypeMismatch {
-        expected: String,
-        found: String,
+        expected: Type,
+        found: Type,
     },
     UnknownStruct(String),
     DuplicateStruct(String),

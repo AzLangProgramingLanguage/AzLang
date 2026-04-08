@@ -11,6 +11,7 @@ use tokenizer::{
 };
 
 pub fn parse_function_def(tokens: &mut Tokens) -> Result<(String, FunctionDef), ParserError> {
+    tokens.next();
     let name = match tokens.next() {
         Some(SpannedToken {
             token: Token::Identifier(n),
