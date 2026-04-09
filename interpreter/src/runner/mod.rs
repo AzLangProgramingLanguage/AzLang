@@ -4,7 +4,7 @@ mod builtin;
 mod helpers;
 mod runner;
 use parser::{
-    ast::{Expr, Parameter, Program, Statement},
+    ast::{Expr, FunctionDef, Parameter, Program, Statement},
     shared_ast::Type,
 };
 
@@ -32,13 +32,6 @@ pub struct StructDef {
     name: String,
     fields: Vec<(String, Type, Option<Expr>)>,
     methods: Vec<Method>,
-}
-
-#[derive(Debug)]
-pub struct FunctionDef {
-    params: Rc<Vec<Parameter>>,
-    body: Rc<Vec<Expr>>,
-    return_type: Type,
 }
 
 #[derive(Debug)]

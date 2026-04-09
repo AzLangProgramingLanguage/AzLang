@@ -1,5 +1,5 @@
 use core::fmt;
-use std::fmt::Display;
+use std::{fmt::Display, rc::Rc};
 
 use super::Runner;
 use crate::runner::{
@@ -7,7 +7,7 @@ use crate::runner::{
 };
 
 use parser::{
-    ast::{Expr, Statement, TemplateChunk},
+    ast::{Expr, Statement, Symbol, TemplateChunk},
     shared_ast::Type,
 };
 #[derive(Debug, Clone)]
@@ -82,12 +82,42 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
             let right_value = get_primitive_value(ctx, *right, None);
             binary_op_runner(ctx, left_value, right_value, op, None)
         }
-        // Expr::Call {
-        //     target,
-        //     name,
-        //     args,
-        //     returned_type,
-        // } => if ctx.functions.get(name) {},
+        Expr::Call {
+            target,
+            name,
+            args,
+            returned_type,
+        } => match *name {
+            Expr::VariableRef {
+                name,
+                symbol:
+                    Some(Symbol {
+                        typ: Type::Function,
+                        ..
+                    }),
+            } => {
+                if let Some(function) = ctx.functions.get(&name).cloned() {
+                    for (index, param) in function.params.iter().enumerate() {
+                        let variable = get_primitive_value(ctx, args[index].clone(), None);
+                        ctx.variables.insert(
+                            param.name.clone(),
+                            Variable {
+                                value: variable,
+                                typ: Rc::new(param.typ.clone()),
+                                is_mutable: param.is_mutable,
+                            },
+                        );
+                    }
+                    for stmt in function.body.clone() {
+                        runner_interpretator(ctx, stmt);
+                    }
+                    Value::Void
+                } else {
+                    panic!("{name} function not found")
+                }
+            }
+            _ => todo!(),
+        },
         other => panic!("{other:#?} Invalid expression"),
     }
 }

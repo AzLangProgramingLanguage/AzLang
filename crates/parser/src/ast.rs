@@ -37,7 +37,7 @@ pub struct IF {
 pub struct Else {
     pub body: Vec<Statement>,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FunctionDef {
     pub params: Vec<Parameter>,
     pub body: Vec<Statement>,
