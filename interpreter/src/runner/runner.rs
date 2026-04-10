@@ -165,6 +165,9 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
             var.value = new_value;
         }
         Statement::Expr(expr) => match expr {
+            Expr::Return(v) => {
+                ctx.current_return = *v;
+            }
             Expr::BuiltInCall {
                 function,
                 args,
@@ -177,7 +180,7 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
 
                 builthin_call_runner(function, args_values, return_type);
             }
-            _ => todo!(),
+            other => todo!("{other:?} not yet implemented "),
         },
         _ => {} /*
                  Expr::Loop {

@@ -45,7 +45,7 @@ pub struct UnionType {
 pub struct Runner {
     variables: HashMap<String, Variable>,
     structdefs: HashMap<String, StructDef>,
-    functions: HashMap<String, FunctionDef>,
+    pub functions: HashMap<String, FunctionDef>,
     uniontypes: HashMap<String, UnionType>,
     current_return: Expr,
 }

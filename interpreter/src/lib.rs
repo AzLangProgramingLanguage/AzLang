@@ -12,6 +12,7 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
     let mut validator = validator::Validator::new();
     validator.validate(&mut parsed_program)?;
     let mut runner = Runner::new();
+    runner.functions = parsed_program.functions;
     for stmt in parsed_program.expressions {
         runner.run(stmt);
     }
@@ -20,7 +21,6 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
 
 pub fn interpreter_run_repl() -> Result<(), InterPreterError> {
     println!("AzLang REPL başladı. Çıxmaq üçün 'exit' yaz.");
-
     let mut runner = Runner::new();
     let mut validator = Validator::new();
 
@@ -39,11 +39,14 @@ pub fn interpreter_run_repl() -> Result<(), InterPreterError> {
         let expressions = {
             let mut parsed_program = parser(input)?;
             validator.validate(&mut parsed_program)?;
+            for function in parsed_program.functions {
+                runner.functions.insert(function.0, function.1);
+            }
             parsed_program.expressions
         };
-        /*  for expr in expressions {
+
+        for expr in expressions {
             runner.run(expr);
         }
-         */
     }
 }
