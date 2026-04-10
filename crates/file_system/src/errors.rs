@@ -1,16 +1,18 @@
 use core::fmt;
 use std::{fmt::Display, io};
+#[derive(Debug)]
 pub enum FileSystemKind {
     IOError(io::Error),
     UnsupportedFile,
     FileNotFound,
 }
+#[derive(Debug)]
 pub struct FileSystemError {
     pub kind: FileSystemKind,
     pub file: String,
 }
 impl FileSystemError {
-      pub fn code(&self) -> i32 {
+    pub fn code(&self) -> i32 {
         match self.kind {
             FileSystemKind::IOError(_) => 30,
             FileSystemKind::UnsupportedFile => 31,
@@ -28,15 +30,14 @@ impl From<io::Error> for FileSystemError {
     }
 }
 
-    
-
 impl Display for FileSystemKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             FileSystemKind::IOError(e) => write!(f, "IO Error: {}", e),
-            FileSystemKind::UnsupportedFile => write!(f, "Dəstəklənməyən Fayl, yalnız .az faylları dəstəklənir"),
+            FileSystemKind::UnsupportedFile => {
+                write!(f, "Dəstəklənməyən Fayl, yalnız .az faylları dəstəklənir")
+            }
             FileSystemKind::FileNotFound => write!(f, "Fayl tapılmadı"),
-            
         }
     }
 }

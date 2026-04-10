@@ -5,6 +5,18 @@ use std::path::PathBuf;
 use crate::errors::FileSystemError;
 use crate::errors::FileSystemKind;
 pub mod errors;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn read_file_test() {
+        let path = "test.az";
+        let read_file = read_file(path);
+        assert!(read_file.is_err());
+    }
+}
+
 pub fn read_file(path: &str) -> Result<String, FileSystemError> {
     if !path.ends_with(".az") {
         return Err(FileSystemError {
@@ -32,12 +44,10 @@ pub fn write_file(path: &PathBuf, content: &String) -> Result<(), FileSystemErro
     return match write {
         Ok(_) => Ok(()),
         Err(e) => match e.kind() {
-            io::ErrorKind::NotFound => {
-                Err(FileSystemError {
-                    kind: FileSystemKind::FileNotFound,
-                    file: path.to_string_lossy().to_string(),
-                })
-            }
+            io::ErrorKind::NotFound => Err(FileSystemError {
+                kind: FileSystemKind::FileNotFound,
+                file: path.to_string_lossy().to_string(),
+            }),
             _ => Err(FileSystemError {
                 kind: FileSystemKind::UnsupportedFile,
                 file: path.to_string_lossy().to_string(),

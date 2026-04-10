@@ -11,6 +11,31 @@ use std::{
 };
 mod builder;
 mod errors;
+#[cfg(test)]
+mod __tests__ {
+    use crate::cleaner;
+    use crate::parser;
+    use file_system::read_file;
+
+    #[test]
+    pub fn compiler_test() {
+        let sdk = file_system::read_file("../examples/test.az");
+        assert!(sdk.is_ok());
+
+        let parsed_program = parser(sdk.unwrap());
+        assert!(parsed_program.is_ok());
+
+        // ✅ unwrap() bir dəfə çağır, nəticəni saxla
+        let mut program = parsed_program.unwrap();
+
+        let mut validator = validator::Validator::new();
+        assert!(validator.validate(&mut program).is_ok());
+
+        cleaner::clean_ast(&mut program, &validator);
+
+        let mut ctx = transpiler::TranspileContext::new();
+    }
+}
 
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let sdk = file_system::read_file(path)?;
@@ -22,17 +47,17 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
 
     clean_ast(&mut parsed_program, &validator);
 
-    let mut ctx = transpiler::TranspileContext::new();
-    let code = ctx.transpile(parsed_program);
-
-    let output_zig = bin_create_dir()?;
-
-    file_system::write_file(&output_zig, &code).unwrap_or_else(|err| {
-        println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", err.kind);
-        std::process::exit(err.code());
-    });
-
-    build(output_zig.to_str().unwrap(), path)?;
+    // let mut ctx = transpiler::TranspileContext::new();
+    // let code = ctx.transpile(parsed_program);
+    //
+    // let output_zig = bin_create_dir()?;
+    //
+    // file_system::write_file(&output_zig, &code).unwrap_or_else(|err| {
+    //     println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", err.kind);
+    //     std::process::exit(err.code());
+    // });
+    //
+    // build(output_zig.to_str().unwrap(), path)?;
     Ok(())
 }
 fn bin_create_dir() -> Result<PathBuf, FileSystemError> {
