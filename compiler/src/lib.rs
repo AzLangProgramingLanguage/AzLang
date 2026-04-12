@@ -11,31 +11,7 @@ use std::{
 };
 mod builder;
 mod errors;
-#[cfg(test)]
-mod __tests__ {
-    use crate::cleaner;
-    use crate::parser;
-    use file_system::read_file;
-
-    #[test]
-    pub fn compiler_test() {
-        let sdk = file_system::read_file("../examples/test.az");
-        assert!(sdk.is_ok());
-
-        let parsed_program = parser(sdk.unwrap());
-        assert!(parsed_program.is_ok());
-
-        // ✅ unwrap() bir dəfə çağır, nəticəni saxla
-        let mut program = parsed_program.unwrap();
-
-        let mut validator = validator::Validator::new();
-        assert!(validator.validate(&mut program).is_ok());
-
-        cleaner::clean_ast(&mut program, &validator);
-
-        let mut ctx = transpiler::TranspileContext::new();
-    }
-}
+mod tests;
 
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let sdk = file_system::read_file(path)?;
