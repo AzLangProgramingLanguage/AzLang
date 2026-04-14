@@ -1,8 +1,12 @@
 use std::{borrow::Cow, rc::Rc};
 
 use crate::{
-    ast::Statement, binary_op::parse_expression, errors::ParserError, helpers::expect_token,
-    shared_ast::Type, types::parse_type,
+    ast::Statement,
+    binary_op::parse_expression,
+    errors::ParserError,
+    helpers::expect_token,
+    shared_ast::{StringEnum, Type},
+    types::parse_type,
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -35,13 +39,14 @@ pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement
     })
 }
 
-pub fn is_primite_value_to_type<'a>(expr: &Expr) -> Type {
+pub fn is_primite_value_to_type<'a>(expr: &Expr, is_mutable: bool) -> Type {
     match expr {
         Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
-        Expr::String(_) => Type::LiteralString,
+        Expr::String(_) if is_mutable => Type::String(StringEnum::LiteralString),
+        Expr::String(_) => Type::String(StringEnum::LiteralConstString),
         _ => Type::Any,
     }
 }

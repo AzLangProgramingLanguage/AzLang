@@ -3,7 +3,7 @@ use core::panic;
 use crate::{
     binary_op::parse_expression,
     errors::ParserError,
-    shared_ast::{BuiltInFunction, Type},
+    shared_ast::{BuiltInFunction, StringEnum, Type},
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -15,23 +15,41 @@ use crate::ast::Expr;
 pub fn parse_builtin<'a>(token: SpannedToken, tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let (function, return_type) = match token.token {
         Token::Print => (BuiltInFunction::Print, Type::Void),
-        Token::Input => (BuiltInFunction::Input, Type::String),
+        Token::Input => (
+            BuiltInFunction::Input,
+            Type::String(StringEnum::DynamicString),
+        ),
         Token::Len => (BuiltInFunction::Len, Type::Natural),
         Token::NumberFn => (BuiltInFunction::Number, Type::Integer),
         Token::Sum => (BuiltInFunction::Sum, Type::Integer),
         Token::RangeFn => (BuiltInFunction::Range, Type::Array(Box::new(Type::Integer))),
 
-        Token::LastWord => (BuiltInFunction::LastWord, Type::String),
+        Token::LastWord => (BuiltInFunction::LastWord, Type::Void),
         Token::Timer => (BuiltInFunction::Timer, Type::Integer),
         Token::Max => (BuiltInFunction::Max, Type::Integer),
         Token::Zig => (BuiltInFunction::Zig, Type::Void),
-        Token::StrLower => (BuiltInFunction::StrLower, Type::String),
+        Token::StrLower => (
+            BuiltInFunction::StrLower,
+            Type::String(StringEnum::DynamicString),
+        ),
         Token::Allocator => (BuiltInFunction::Allocator, Type::Void),
-        Token::StrUpper => (BuiltInFunction::StrUpper, Type::String),
-        Token::Trim => (BuiltInFunction::Trim, Type::String),
+        Token::StrUpper => (
+            BuiltInFunction::StrUpper,
+            Type::String(StringEnum::DynamicString),
+        ),
+        Token::Trim => (
+            BuiltInFunction::Trim,
+            Type::String(StringEnum::DynamicString),
+        ),
         Token::Min => (BuiltInFunction::Min, Type::Integer),
-        Token::StrReverse => (BuiltInFunction::StrReverse, Type::String),
-        Token::ConvertString => (BuiltInFunction::ConvertString, Type::String),
+        Token::StrReverse => (
+            BuiltInFunction::StrReverse,
+            Type::String(StringEnum::DynamicString),
+        ),
+        Token::ConvertString => (
+            BuiltInFunction::ConvertString,
+            Type::String(StringEnum::DynamicString),
+        ),
         _ => return Err(ParserError::UnsupportedBuiltInFunction(token.token.clone())),
     };
     let mut args = Vec::new();
@@ -60,7 +78,7 @@ pub fn parse_builtin<'a>(token: SpannedToken, tokens: &mut Tokens) -> Result<Exp
                     token: Token::Newline,
                     span,
                 } => {
-                    return Err(ParserError::ExpectedToken(Token::RParen, Token::Newline)); //TODO: Uncesarry Clone  Error Must be Increate messsage
+                    return Err(ParserError::ExpectedToken(Token::RParen, Token::Newline));
                 }
                 _ => {
                     let expr = parse_expression(tokens)?;

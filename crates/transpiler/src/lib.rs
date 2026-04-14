@@ -1,13 +1,21 @@
 use std::collections::{HashMap, HashSet};
 
-use parser::ast::{FunctionDef, Program};
-
+use parser::ast::{Expr, FunctionDef, Program};
+pub mod helper;
 mod tests;
+pub mod transpile;
+pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
+    match expr {
+        Expr::String(s) => format!("\"{s}\""),
+        Expr::Number(num) => num.to_string(),
+        _ => String::from("void"),
+    }
+}
 
 // use std::collections::{HashMap, HashSet};
 //
 // mod binary_op;
-// pub mod builtin;
+pub mod builtin;
 // mod codegen;
 // pub mod declaration;
 // mod definition;

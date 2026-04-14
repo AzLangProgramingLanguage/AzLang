@@ -1,3 +1,17 @@
+use parser::shared_ast::{StringEnum, Type};
+
+pub fn map_typ(typ: &Type) -> &'static str {
+    match typ {
+        Type::Natural => "i64",
+        Type::String(typ) => match typ {
+            StringEnum::DynamicString => "[]u8",
+            StringEnum::LiteralString => "[]u8",
+            StringEnum::LiteralConstString => "[]const u8",
+        },
+        _ => "Any",
+    }
+}
+
 // use parser::{
 //     ast::{Expr, Operation},
 //     shared_ast::Type,

@@ -1,4 +1,7 @@
-use crate::{errors::ParserError, shared_ast::Type};
+use crate::{
+    errors::ParserError,
+    shared_ast::{StringEnum, Type},
+};
 use std::borrow::Cow;
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
@@ -16,8 +19,6 @@ pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type, ParserError> {
         Token::IntegerType => Type::Integer,
         Token::BigIntegerType => Type::BigInteger,
         Token::LowIntegerType => Type::LowInteger,
-        Token::ZigString => Type::LiteralString,
-        Token::ZigConstString => Type::LiteralConstString,
         Token::ZigConstArray => Type::ZigConstArray,
         Token::ZigArray => Type::ZigArray,
         Token::ZigNatural => Type::ZigNatural,
@@ -26,7 +27,7 @@ pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type, ParserError> {
         Token::BoolType => Type::Bool,
         Token::FnType => Type::Function,
         Token::NaturalType => Type::Natural,
-        Token::StringType => Type::String,
+        Token::StringType => Type::String(StringEnum::DynamicString),
         Token::CharType => Type::Char,
         Token::Void => Type::Void,
         Token::FloatType => Type::Float,

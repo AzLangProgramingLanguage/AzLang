@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{borrow::Cow, fmt::Display};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -86,7 +87,7 @@ impl Display for BuiltInFunction {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    String,
+    String(StringEnum),
     Array(Box<Type>),
     User(String),
     Integer,
@@ -99,8 +100,6 @@ pub enum Type {
     Void,
     Any,
     Float,
-    LiteralString,
-    LiteralConstString,
     ZigArray,
     ZigConstArray,
     ZigNatural,
@@ -108,11 +107,26 @@ pub enum Type {
     ZigInteger,
     Function,
 }
+#[derive(Debug, Clone, PartialEq)]
+pub enum StringEnum {
+    DynamicString,
+    LiteralString,
+    LiteralConstString,
+}
+impl Display for StringEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StringEnum::DynamicString => write!(f, "Dinamik Yazı"),
+            StringEnum::LiteralString => write!(f, "Yazı"),
+            StringEnum::LiteralConstString => write!(f, "Sabit yazı"),
+        }
+    }
+}
 
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::String => write!(f, "Yazı"),
+            Type::String(typ) => write!(f, "{}", typ),
             Type::Array(_) => write!(f, "Siyahı"),
             Type::User(name) => write!(f, "İstifadəçi({name})"),
             Type::Integer => write!(f, "Tam Ədəd"),
@@ -125,8 +139,6 @@ impl Display for Type {
             Type::Void => write!(f, "Boşluq"),
             Type::Any => write!(f, "Hərşey"),
             Type::Float => write!(f, "Onluq Ədəd"),
-            Type::LiteralString => write!(f, "LiteralString"),
-            Type::LiteralConstString => write!(f, "LiteralConstString"),
             Type::ZigArray => write!(f, "ZigArray"),
             Type::ZigConstArray => write!(f, "ZigConstArray"),
             Type::ZigNatural => write!(f, "ZigNatural"),
