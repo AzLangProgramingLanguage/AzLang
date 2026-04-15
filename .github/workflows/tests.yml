@@ -1,0 +1,19 @@
+name: AzLang Tests
+on: [push, pull_request]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "AzLang Tests"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tests
+      - run: echo "Parser testing"
+      - run: cargo test --package parser --verbose
+      - run: echo "Validator testing"
+      - run: cargo test --package validator --verbose
+      - run: echo "Transpiler testing"
+      - run: cargo test --package transpiler --verbose
+      - run: echo "Compiler testing"
+      - run: cargo test --package compiler --verbose

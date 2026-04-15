@@ -17,7 +17,7 @@ use crate::ast::Expr;
 
 pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, ParserError> {
     tokens.next();
-    let data_typ = parse_type(tokens)?;
+    let mut data_typ = parse_type(tokens)?;
 
     let name = match tokens.next() {
         Some(SpannedToken {
@@ -30,6 +30,15 @@ pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement
     };
     expect_token(tokens, Token::Assign)?;
     let value = parse_expression(tokens)?;
+    match (&value, &data_typ) {
+        (Expr::String(_s), Type::String(_d)) if is_mutable => {
+            data_typ = Type::String(StringEnum::LiteralString)
+        }
+        (Expr::String(_s), Type::String(_d)) => {
+            data_typ = Type::String(StringEnum::LiteralConstString)
+        }
+        _ => {}
+    }
 
     Ok(Statement::Decl {
         name: name.into(),
