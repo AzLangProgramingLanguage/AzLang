@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use parser::{
     ast::{Expr, Operation},
-    shared_ast::Type,
+    shared_ast::{StringEnum, Type},
 };
 
 use crate::{Validator, errors::ValidatorError, expr::validate_expr};
@@ -10,7 +10,7 @@ use crate::{Validator, errors::ValidatorError, expr::validate_expr};
 pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
     match value {
         Expr::Number(_) => Type::Integer,
-        Expr::TemplateString(_) => Type::String,
+        Expr::TemplateString(_) => Type::String(StringEnum::DynamicString),
         Expr::UnaryOp { op, expr } => {
             get_type(expr, ctx);
             match &*op {
@@ -22,7 +22,7 @@ pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
         Expr::Bool(_) => Type::Bool,
 
         Expr::Float(_) => Type::Float,
-        Expr::String(_) => Type::LiteralString,
+        Expr::String(_) => Type::String(StringEnum::LiteralString),
         Expr::List(items) => {
             if items.len() > 0 {
                 let item_type = get_type(&items[0], ctx);
@@ -133,9 +133,7 @@ pub fn reconcile_type(
         // İnferred `Any` — heç nə etmə
         (_, Type::Any) => {}
         // String literal annotasiyaya uyğun gəlir
-        (Type::String, Type::LiteralString) => {
-            *typ = Rc::new(Type::LiteralString);
-        }
+
         // Uyğunsuzluq
         (expected, _) if inferred != **typ => {
             return Err(ValidatorError::DeclTypeMismatch {

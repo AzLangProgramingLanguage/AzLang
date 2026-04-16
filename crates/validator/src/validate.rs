@@ -86,32 +86,53 @@ pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(
             );
         }
         Statement::Expr(expr) => match expr {
-            Expr::BuiltInCall {
-                function,
-                args,
-                return_type,
-            } => match function {
-                BuiltInFunction::Print => {
-                    if args.len() != 1 {
-                        return Err(ValidatorError::InvalidArgumentCount {
-                            name: function.to_string(),
-                            expected: 1,
-                            found: args.len(),
-                        });
+            Expr::BuiltInCall { function, args, .. } => {
+                match function.expected_arg_count() {
+                    Some(n) => {
+                        if n != args.len() {
+                            return Err(ValidatorError::InvalidArgumentCount {
+                                name: function.to_string(),
+                                expected: n,
+                                found: args.len(),
+                            });
+                        }
                     }
-                    validate_expr(&mut args[0], ctx)?;
-                    let t = get_type(&args[0], ctx);
-                    if t == Type::Void {
-                        return Err(ValidatorError::InvalidArgumentType {
-                            name: function.to_string(),
-                            expected: "not void".to_string(),
-                            found: t.to_string(),
-                        });
+                    None => {
+                        if args.len() < 1 {
+                            return Err(ValidatorError::InvalidArgumentCount {
+                                name: function.to_string(),
+                                expected: 1,
+                                found: args.len(),
+                            });
+                        }
                     }
-                    *return_type = Type::Void;
                 }
-                _ => todo!("Bura baxmaq lazımdır {:#?}", function),
-            },
+                match function {
+                    BuiltInFunction::Print => {
+                        validate_expr(&mut args[0], ctx)?;
+                        let t = get_type(&args[0], ctx);
+                        if t == Type::Void {
+                            return Err(ValidatorError::InvalidArgumentType {
+                                name: function.to_string(),
+                                expected: "not void".to_string(),
+                                found: t.to_string(),
+                            });
+                        }
+                    }
+                    BuiltInFunction::Input => {
+                        validate_expr(&mut args[0], ctx)?;
+                        let t = get_type(&args[0], ctx);
+                        if t == Type::Void {
+                            return Err(ValidatorError::InvalidArgumentType {
+                                name: function.to_string(),
+                                expected: "not void".to_string(),
+                                found: t.to_string(),
+                            });
+                        }
+                    }
+                    _ => todo!("Bura baxmaq lazımdır {:#?}", function),
+                }
+            }
             _ => todo!("Bura baxmaq lazımdır {:#?}", expr),
         },
         _ => todo!("Bura baxmaq lazımdır {:#?}", stmt),
@@ -206,16 +227,7 @@ pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(
         } => {
             validator_log(&format!("✅ Built-in funksiya yoxlanılır: {function:?}"));
 
-            if function.expected_arg_count().is_some() {
-                let expected = function.expected_arg_count().unwrap();
-                if args.len() != expected {
-                    return Err(ValidatorError::InvalidArgumentCount {
-                        name: function.to_string(),
-                        expected,
-                        found: args.len(),
-                    });
-                }
-            }
+
             match function {
                 BuiltInFunction::Allocator | BuiltInFunction::Trim => {
                     ctx.is_allocator_used = true;
