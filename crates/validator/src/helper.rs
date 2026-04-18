@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
 use parser::{
-    ast::{Expr, Operation},
+    ast::{Expr, Operation, Statement},
     shared_ast::{StringEnum, Type},
 };
 
-use crate::{Validator, errors::ValidatorError, expr::validate_expr};
+use crate::{Validator, errors::ValidatorError, expr::validate_expr, validate::validate_statement};
 //TODO: List Type Definition has a problem. We must use Type::Integer instead of Type::Natural
 pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
     match value {
@@ -100,24 +100,14 @@ pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
     }
 }
 
-pub fn validate_body<'a>(body: &mut Vec<Expr>, ctx: &mut Validator) -> Result<(), ValidatorError> {
-    for expr in body {
-        validate_expr(expr, ctx)?;
-    }
-    Ok(())
-}
-
-pub fn validate_bool_condition(
-    condition: &mut Expr,
+pub fn validate_body<'a>(
+    body: &mut Vec<Statement>,
     ctx: &mut Validator,
 ) -> Result<(), ValidatorError> {
-    validate_expr(condition, ctx)?;
-
-    match get_type(condition, ctx) {
-        Type::Any => Err(ValidatorError::IfConditionTypeUnknown),
-        Type::Bool => Ok(()),
-        other => Err(ValidatorError::IfConditionTypeMismatch(other.to_string())),
+    for expr in body.iter_mut() {
+        validate_statement(expr, ctx)?;
     }
+    Ok(())
 }
 
 pub fn reconcile_type(
@@ -126,15 +116,15 @@ pub fn reconcile_type(
     name: &str,
 ) -> Result<(), ValidatorError> {
     match (&**typ, &inferred) {
-        // Annotasiya yoxdur — nəticə çıxar
         (Type::Any, _) => {
             *typ = Rc::new(inferred);
         }
-        // İnferred `Any` — heç nə etmə
         (_, Type::Any) => {}
-        // String literal annotasiyaya uyğun gəlir
 
-        // Uyğunsuzluq
+        (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {
+            *typ = Rc::new(Type::String(StringEnum::LiteralConstString));
+        }
+
         (expected, _) if inferred != **typ => {
             return Err(ValidatorError::DeclTypeMismatch {
                 name: name.to_string(),

@@ -8,25 +8,19 @@ use crate::{
     Validator,
     errors::ValidatorError,
     expr::validate_expr,
-    helper::{get_type, reconcile_type},
+    helper::{get_type, reconcile_type, validate_body},
 };
 pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(), ValidatorError> {
     match stmt {
         Statement::Condition { main, elif, other } => {
             validate_expr(&mut main.condition, ctx)?;
-            for expr in main.body.iter_mut() {
-                validate_statement(expr, ctx)?;
-            }
+            validate_body(&mut main.body, ctx)?;
             for elif in elif.iter_mut() {
                 validate_expr(&mut elif.condition, ctx)?;
-                for expr in elif.body.iter_mut() {
-                    validate_statement(expr, ctx)?;
-                }
+                validate_body(&mut elif.body, ctx)?;
             }
             if let Some(other) = other {
-                for expr in other.body.iter_mut() {
-                    validate_statement(expr, ctx)?;
-                }
+                validate_body(&mut other.body, ctx)?;
             }
         }
 

@@ -1,10 +1,8 @@
 mod cleaner;
 use file_system::errors::FileSystemError;
 use parser::parser;
-use validator::Validator;
 
 use crate::{builder::build, cleaner::clean_ast, errors::CompilerError};
-use logging::translator_log;
 use std::{
     env, fs,
     path::{Path, PathBuf},

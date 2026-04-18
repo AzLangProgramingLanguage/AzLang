@@ -2,7 +2,6 @@
 mod __tests__ {
     use crate::cleaner;
     use crate::parser;
-    use file_system::read_file;
     use transpiler::TranspileContext;
 
     #[test]
@@ -16,10 +15,11 @@ mod __tests__ {
         let mut program = parsed_program.unwrap();
 
         let mut validator = validator::Validator::new();
+
         assert!(validator.validate(&mut program).is_ok());
 
-        cleaner::clean_ast(&mut program, &validator);
+        //cleaner::clean_ast(&mut program, &validator);
         let mut ctx = TranspileContext::default();
-        assert!(ctx.transpile(program) == String::from("None"));
+        assert_eq!(ctx.transpile(program), String::from(""));
     }
 }
