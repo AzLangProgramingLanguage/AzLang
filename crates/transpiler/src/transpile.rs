@@ -17,7 +17,7 @@ use crate::{TranspileContext, helper::map_typ, transpile_expr};
 //     strategy::VariableDecl,
 // };
 
-pub fn transpile(stmt: Statement, ctx: &mut TranspileContext) -> String {
+pub fn transpile_stmt(stmt: Statement, ctx: &mut TranspileContext) -> String {
     match stmt {
         Statement::Decl {
             name,
@@ -33,7 +33,9 @@ pub fn transpile(stmt: Statement, ctx: &mut TranspileContext) -> String {
                 transpile_expr(*value, ctx)
             )
         }
-        _ => String::from("Any"),
+        Statement::Expr(expr) => transpile_expr(expr, ctx),
+
+        other => String::from(""),
     }
 }
 //

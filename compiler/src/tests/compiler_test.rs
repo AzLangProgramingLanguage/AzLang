@@ -6,7 +6,7 @@ mod __tests__ {
 
     #[test]
     pub fn compiler_test() {
-        let sdk = file_system::read_file("../examples/test.az");
+        let sdk = file_system::read_file("../examples/variables.az");
         assert!(sdk.is_ok());
 
         let parsed_program = parser(sdk.unwrap());

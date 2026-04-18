@@ -7,7 +7,7 @@ mod tests {
         shared_ast::{StringEnum, Type},
     };
 
-    use crate::{TranspileContext, transpile::transpile};
+    use crate::{TranspileContext, transpile::transpile_stmt};
 
     #[test]
     fn variable_decl_num_test() {
@@ -26,11 +26,11 @@ mod tests {
         };
 
         assert_eq!(
-            transpile(const_statement, &mut ctx),
+            transpile_stmt(const_statement, &mut ctx),
             String::from("const a: i64 = 1")
         );
         assert_eq!(
-            transpile(var_statement, &mut ctx),
+            transpile_stmt(var_statement, &mut ctx),
             String::from("var a: i64 = 1")
         )
     }
@@ -51,11 +51,11 @@ mod tests {
         };
 
         assert_eq!(
-            transpile(const_statement, &mut ctx),
+            transpile_stmt(const_statement, &mut ctx),
             String::from("const a: []const u8 = \"S\"")
         );
         assert_eq!(
-            transpile(var_statement, &mut ctx),
+            transpile_stmt(var_statement, &mut ctx),
             String::from("var a: []u8 = \"Salam\"")
         )
     }

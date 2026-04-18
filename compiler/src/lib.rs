@@ -2,9 +2,9 @@ mod cleaner;
 use file_system::errors::FileSystemError;
 use parser::parser;
 
-use crate::{builder::build, cleaner::clean_ast, errors::CompilerError};
+use crate::{cleaner::clean_ast, errors::CompilerError};
 use std::{
-    env, fs,
+    fs,
     path::{Path, PathBuf},
 };
 mod builder;

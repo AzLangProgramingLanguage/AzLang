@@ -1,6 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
-use parser::ast::{Expr, FunctionDef, Program};
+use parser::{
+    ast::{Expr, FunctionDef, Program},
+    shared_ast::BuiltInFunction,
+};
+
+use crate::transpile::transpile_stmt;
 pub mod helper;
 mod tests;
 pub mod transpile;
@@ -8,6 +13,13 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
     match expr {
         Expr::String(s) => format!("\"{s}\""),
         Expr::Number(num) => num.to_string(),
+        Expr::BuiltInCall {
+            function,
+            args,
+            return_type,
+        } => match function {
+            _ => todo!(),
+        },
         _ => String::from("void"),
     }
 }
@@ -74,7 +86,18 @@ pub struct TranspileContext {
 }
 impl TranspileContext {
     pub fn transpile(&mut self, program: Program) -> String {
-        String::from("")
+        let mut body = String::new();
+        for stmt in program.expressions {
+            body.push_str(&transpile_stmt(stmt, self));
+        }
+        format!(
+            "
+        pub fn main()
+        {{
+         {body}
+        }}    
+            "
+        )
     }
 }
 //
