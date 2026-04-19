@@ -1,11 +1,10 @@
-use std::collections::{HashMap, HashSet};
-
 use parser::{
     ast::{Expr, FunctionDef, Program},
     shared_ast::BuiltInFunction,
 };
-
-use crate::transpile::transpile_stmt;
+use std::collections::{HashMap, HashSet};
+pub mod builtin;
+use crate::{builtin::print, transpile::transpile_stmt};
 pub mod helper;
 mod tests;
 pub mod transpile;
@@ -15,9 +14,10 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
         Expr::Number(num) => num.to_string(),
         Expr::BuiltInCall {
             function,
-            args,
+            mut args,
             return_type,
         } => match function {
+            BuiltInFunction::Print => print::transpile_print(args.swap_remove(0), ctx),
             _ => todo!(),
         },
         _ => String::from("void"),
@@ -27,7 +27,6 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
 // use std::collections::{HashMap, HashSet};
 //
 // mod binary_op;
-pub mod builtin;
 // mod codegen;
 // pub mod declaration;
 // mod definition;
@@ -85,6 +84,15 @@ pub struct TranspileContext {
     pub is_used_self: bool, */
 }
 impl TranspileContext {
+    pub fn add_import(&mut self, import: &str) -> Option<String> {
+        if self.imports.contains(import) {
+            None
+        } else {
+            self.imports.insert(import.to_string());
+            Some(import.to_string())
+        }
+    }
+
     pub fn transpile(&mut self, program: Program) -> String {
         let mut body = String::new();
         for stmt in program.expressions {
@@ -102,15 +110,7 @@ impl TranspileContext {
 }
 //
 // impl<'a> TranspileContext<'a> {
-//     pub fn add_import(&mut self, import: &str) -> Option<String> {
-//         if self.imports.contains(import) {
-//             None
-//         } else {
-//             self.imports.insert(import.to_string());
-//             Some(import.to_string())
-//         }
-//     }
-//     pub fn transpile(&mut self, program: Program) -> String {
+//   //     pub fn transpile(&mut self, program: Program) -> String {
 //         let mut main_body = String::new();
 //         let mut defs = String::new();
 //         let mut top_levels = String::new();

@@ -16,7 +16,7 @@ mod tests {
             expressions: vec![],
         };
         let mut ctx = TranspileContext::default();
-        assert!(ctx.transpile(program) == "")
+        assert_eq!(ctx.transpile(program), "")
     }
     #[test]
     fn transpile_variable() {
