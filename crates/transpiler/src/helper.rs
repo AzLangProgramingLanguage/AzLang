@@ -160,7 +160,7 @@ pub fn get_format_str_from_type(t: &Type) -> &'static str {
 // }
 //
 pub fn is_semicolon_needed(stmt: &Statement) -> bool {
-    matches!(stmt, Statement::Expr(..))
+    matches!(stmt, Statement::Expr(..) | Statement::Decl { .. })
 }
 //
 pub fn is_primite_value(expr: &Expr) -> bool {

@@ -8,7 +8,7 @@ use crate::{
     helper::{get_expr_type, get_format_str_from_type, is_primite_value},
     transpile_expr,
 };
-pub fn transpile_print<'a>(expr: Expr, ctx: &mut TranspileContext) -> String {
+pub fn transpile_print(expr: Expr, ctx: &mut TranspileContext) -> String {
     let mut format_parts = String::new();
     let mut args: Vec<String> = Vec::new();
 
@@ -34,7 +34,7 @@ pub fn transpile_print<'a>(expr: Expr, ctx: &mut TranspileContext) -> String {
 
         _ => {
             if is_primite_value(&expr) {
-                ctx.used_try = true;
+                // ctx.used_try = true;
                 format!(
                     "try std.fs.File.stdout().writeAll(\"{}\\n\")",
                     transpile_expr(expr, ctx).trim_matches('"')
@@ -46,7 +46,7 @@ pub fn transpile_print<'a>(expr: Expr, ctx: &mut TranspileContext) -> String {
                     "  const to_string = @import(\"./dependencies/to_string.zig\").to_string; ",
                 );
                 if matches!(typ, Type::Array(_)) {
-                    ctx.needs_allocator = true;
+                    // ctx.needs_allocator = true;
                     format!(
                         "std.debug.print(\"{{s}}\\n\",.{{ (try to_string(@TypeOf({}),allocator,{})) }})",
                         transpiled, transpiled

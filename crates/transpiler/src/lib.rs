@@ -4,7 +4,7 @@ use parser::{
 };
 use std::collections::{HashMap, HashSet};
 pub mod builtin;
-use crate::{builtin::print, transpile::transpile_stmt};
+use crate::{builtin::print, helper::is_semicolon_needed, transpile::transpile_stmt};
 pub mod helper;
 mod tests;
 pub mod transpile;
@@ -12,12 +12,22 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
     match expr {
         Expr::String(s) => format!("\"{s}\""),
         Expr::Number(num) => num.to_string(),
+        Expr::VariableRef { name, symbol } => {
+            if let Some(sym) = symbol
+                && sym.is_pointer
+            {
+                format!("*{name}")
+            } else {
+                name
+            }
+        }
         Expr::BuiltInCall {
             function,
             mut args,
             return_type,
         } => match function {
             BuiltInFunction::Print => print::transpile_print(args.swap_remove(0), ctx),
+
             _ => todo!(),
         },
         _ => String::from("void"),
@@ -57,18 +67,18 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext {
     pub imports: HashSet<String>,
-    pub used_try: bool,
-    pub uses_stdout: bool,
-    pub used_min_fn: bool,
-    pub used_max_fn: bool,
+    // pub used_try: bool,
+    // pub uses_stdout: bool,
+    // pub used_min_fn: bool,
+    // pub used_max_fn: bool,
     pub functions: HashMap<String, FunctionDef>,
-    pub used_input_fn: bool,
-    pub is_find_method: bool,
-    pub used_sum_fn: bool,
-    pub used_split_n_fn: bool,
-    pub needs_allocator: bool,
-    pub used_split_auto_fn: bool,
-    pub used_split_alloc_fn: bool,
+    // pub used_input_fn: bool,
+    // pub is_find_method: bool,
+    // pub used_sum_fn: bool,
+    // pub used_split_n_fn: bool,
+    // pub needs_allocator: bool,
+    // pub used_split_auto_fn: bool,
+    // pub used_split_alloc_fn: bool,
     /*     pub is_used_allocator: bool,
     pub current_struct: Option<&'a str>,
     pub current_union: Option<&'a str>,
@@ -95,16 +105,30 @@ impl TranspileContext {
 
     pub fn transpile(&mut self, program: Program) -> String {
         let mut body = String::new();
+
         for stmt in program.expressions {
-            body.push_str(&transpile_stmt(stmt, self));
+            if is_semicolon_needed(&stmt) {
+                body.push_str(&transpile_stmt(stmt, self));
+                body.push(';');
+            } else {
+                body.push_str(&transpile_stmt(stmt, self));
+            }
         }
+        let imports = self
+            .imports
+            .iter()
+            .map(|s| s.as_str())
+            .collect::<Vec<_>>()
+            .join(";");
         format!(
             "
+        {}
         pub fn main()
         {{
          {body}
         }}    
-            "
+            ",
+            imports
         )
     }
 }

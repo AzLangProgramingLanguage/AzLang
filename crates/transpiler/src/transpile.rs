@@ -6,21 +6,6 @@ use crate::{
     transpile_expr,
 };
 
-// use crate::{
-//     TranspileContext,
-//     binary_op::transpile_binary_op,
-//     builtin::{
-//         input::transpile_input,
-//         len::transpile_len,
-//         min_max::{transpile_max, transpile_min},
-//         print::transpile_print,
-//         sum::transpile_sum,
-//     },
-//     function_call::transpile_function_call,
-//     helper::{get_expr_type, get_format_str_from_type, map_type, transpile_body},
-//     strategy::VariableDecl,
-// };
-
 pub fn transpile_stmt(stmt: Statement, ctx: &mut TranspileContext) -> String {
     match stmt {
         Statement::Decl {

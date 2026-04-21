@@ -17,5 +17,10 @@ pub fn compiler_test() {
 
     //cleaner::clean_ast(&mut program, &validator);
     let mut ctx = TranspileContext::default();
-    assert_eq!(ctx.transpile(program), String::from(""));
+    assert_eq!(
+        ctx.transpile(program),
+        String::from(
+            "\n          const to_string = @import(\"./dependencies/to_string.zig\").to_string; \n        pub fn main()\n        {\n         const b: []const u8 = \"Salam\";std.debug.print(\"{s}\\n\",.{b});\n        }    \n            "
+        )
+    );
 }

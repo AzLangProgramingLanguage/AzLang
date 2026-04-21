@@ -16,7 +16,10 @@ mod tests {
             expressions: vec![],
         };
         let mut ctx = TranspileContext::default();
-        assert_eq!(ctx.transpile(program), "")
+        assert_eq!(
+            ctx.transpile(program),
+            "\n        pub fn main()\n        {\n         \n        }    \n            "
+        )
     }
     #[test]
     fn transpile_variable() {
@@ -30,5 +33,10 @@ mod tests {
             functions: HashMap::new(),
             expressions: vec![statement],
         };
+        let mut ctx = TranspileContext::default();
+        assert_eq!(
+            ctx.transpile(program),
+            "\n        pub fn main()\n        {\n         const a: i64 = 1;\n        }    \n            "
+        )
     }
 }
