@@ -12,6 +12,12 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
     match expr {
         Expr::String(s) => format!("\"{s}\""),
         Expr::Number(num) => num.to_string(),
+        Expr::Bool(bool) => {
+            if bool {
+                return String::from("true");
+            }
+            String::from("false")
+        }
         Expr::VariableRef { name, symbol } => {
             if let Some(sym) = symbol
                 && sym.is_pointer

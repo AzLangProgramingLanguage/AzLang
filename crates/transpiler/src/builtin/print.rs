@@ -35,10 +35,20 @@ pub fn transpile_print(expr: Expr, ctx: &mut TranspileContext) -> String {
         _ => {
             if is_primite_value(&expr) {
                 // ctx.used_try = true;
-                format!(
-                    "try std.fs.File.stdout().writeAll(\"{}\\n\")",
-                    transpile_expr(expr, ctx).trim_matches('"')
-                )
+                match expr {
+                    Expr::Bool(true) => {
+                        String::from("try std.fs.File.stdout().writeAll(\"doğrudur\n\")")
+                    }
+                    Expr::Bool(false) => {
+                        String::from("try std.fs.File.stdout().writeAll(\"yanlışdır\n\")")
+                    }
+                    _ => {
+                        format!(
+                            "try std.fs.File.stdout().writeAll(\"{}\\n\")",
+                            transpile_expr(expr, ctx).trim_matches('"')
+                        )
+                    }
+                }
             } else {
                 let typ = get_expr_type(&expr);
                 let transpiled = transpile_expr(expr, ctx);

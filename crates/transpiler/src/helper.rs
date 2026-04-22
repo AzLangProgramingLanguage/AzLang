@@ -108,6 +108,7 @@ pub fn get_format_str_from_type(t: &Type) -> &'static str {
         Type::String(StringEnum::LiteralString) | Type::String(StringEnum::LiteralConstString) => {
             "{s}"
         }
+        Type::Integer => "{}",
         _ => todo!(),
     }
 }
