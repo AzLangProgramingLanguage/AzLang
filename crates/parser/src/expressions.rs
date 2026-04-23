@@ -8,7 +8,6 @@ use crate::{
     function::parse_function_def,
     identifier::parse_identifier,
     literal_parse::literals_parse,
-    shared_ast::Type,
     template::parse_template_string_expr,
 };
 use tokenizer::{
@@ -16,7 +15,7 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, ParserError> {
+pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Program, ParserError> {
     let mut ast = Program {
         functions: HashMap::new(),
         expressions: vec![],
@@ -37,6 +36,9 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, Parser
                 ..
             } => {
                 let (name, function) = parse_function_def(tokens)?;
+                if ast.functions.get(&name).is_some() {
+                    return Err(ParserError::FunctionAlreadyAsigned(name));
+                }
                 ast.functions.insert(name, function);
             }
 
@@ -68,7 +70,7 @@ pub fn parse_expression_block<'a>(tokens: &mut Tokens) -> Result<Program, Parser
     Ok(ast)
 }
 
-pub fn parse_single_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
+pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
     match token {
         SpannedToken {

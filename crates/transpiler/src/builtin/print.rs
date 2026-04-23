@@ -12,6 +12,8 @@ pub fn transpile_print(expr: Expr, ctx: &mut TranspileContext) -> String {
     let mut format_parts = String::new();
     let mut args: Vec<String> = Vec::new();
 
+    ctx.imports
+        .insert("const std = @import(\"std\");".to_string());
     match expr {
         Expr::TemplateString(chunks) => {
             for chunk in chunks {

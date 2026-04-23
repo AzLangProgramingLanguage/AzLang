@@ -30,6 +30,7 @@ pub enum ParserError {
     EnumDeclNameNotFound(Token),
     EnumNewLineNotFound(Token),
     UnionDeclNameNotFound(Token),
+    FunctionAlreadyAsigned(String),
 }
 
 impl Display for ParserError {
@@ -127,6 +128,9 @@ impl Display for ParserError {
             }
             ParserError::UnionDeclNameNotFound(token) => {
                 write!(f, "Birləşik tip adı gözlənilirdi, tapıldı: '{token}'")
+            }
+            ParserError::FunctionAlreadyAsigned(s) => {
+                write!(f, "{s} adlı funksiya onunsuzda var")
             }
         }
     }

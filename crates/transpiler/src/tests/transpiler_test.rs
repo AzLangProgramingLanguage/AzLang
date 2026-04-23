@@ -18,7 +18,7 @@ mod tests {
         let mut ctx = TranspileContext::default();
         assert_eq!(
             ctx.transpile(program),
-            "\n        \n        pub fn main()\n        {\n         \n        }    \n            "
+            "\n        \n        pub fn main() !void\n        {\n         \n        }    \n            "
         )
     }
     #[test]
@@ -36,7 +36,7 @@ mod tests {
         let mut ctx = TranspileContext::default();
         assert_eq!(
             ctx.transpile(program),
-            "\n        \n        pub fn main()\n        {\n         const a: i64 = 1;\n        }    \n            "
+            "\n        \n        pub fn main() !void\n        {\n         const a: i64 = 1;\n        }    \n            "
         )
     }
 }

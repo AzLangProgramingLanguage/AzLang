@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod tests {
-    use std::{rc::Rc, result};
 
     use crate::{TranspileContext, builtin::print};
     use parser::{

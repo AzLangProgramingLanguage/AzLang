@@ -1,4 +1,7 @@
-use parser::{ast::Expr, shared_ast::Type};
+use parser::{
+    ast::{Expr, TemplateChunk},
+    shared_ast::Type,
+};
 
 use crate::{Validator, errors::ValidatorError, helper::get_type};
 
@@ -51,6 +54,14 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             index,
             target_type,
         } => Ok(()),
+        Expr::TemplateString(chunk) => {
+            for ch in chunk {
+                if let TemplateChunk::Expr(expr) = ch {
+                    validate_expr(expr, ctx)?;
+                }
+            }
+            Ok(())
+        }
         other => {
             println!("Bura baxmaq lazımdır {:#?}", other);
             todo!("Bura baxmaq lazımdır")

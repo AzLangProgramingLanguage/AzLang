@@ -1,5 +1,5 @@
 use parser::{
-    ast::{Expr, FunctionDef, Program},
+    ast::{Expr, FunctionDef, Operation, Program},
     shared_ast::BuiltInFunction,
 };
 use std::collections::{HashMap, HashSet};
@@ -36,7 +36,12 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
 
             _ => todo!(),
         },
-        _ => String::from("void"),
+        Expr::BinaryOp { left, right, op } => {
+            let left = transpile_expr(*left, ctx);
+            let right = transpile_expr(*right, ctx);
+            format!("{left} {op} {right}")
+        }
+        other => panic!("Buraya çatmamalıydı. Burası hele hazır deyil {other:?}"),
     }
 }
 
@@ -129,7 +134,7 @@ impl TranspileContext {
         format!(
             "
         {}
-        pub fn main()
+        pub fn main() !void
         {{
          {body}
         }}    

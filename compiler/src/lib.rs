@@ -2,7 +2,7 @@ mod cleaner;
 use file_system::errors::FileSystemError;
 use parser::parser;
 
-use crate::{cleaner::clean_ast, errors::CompilerError};
+use crate::{builder::build, cleaner::clean_ast, errors::CompilerError};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -21,17 +21,17 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
 
     clean_ast(&mut parsed_program, &validator);
 
-    // let mut ctx = transpiler::TranspileContext::new();
-    // let code = ctx.transpile(parsed_program);
-    //
-    // let output_zig = bin_create_dir()?;
-    //
-    // file_system::write_file(&output_zig, &code).unwrap_or_else(|err| {
-    //     println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", err.kind);
-    //     std::process::exit(err.code());
-    // });
-    //
-    // build(output_zig.to_str().unwrap(), path)?;
+    let mut ctx = transpiler::TranspileContext::default();
+    let code = ctx.transpile(parsed_program);
+
+    let output_zig = bin_create_dir()?;
+
+    file_system::write_file(&output_zig, &code).unwrap_or_else(|err| {
+        println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", err.kind);
+        std::process::exit(err.code());
+    });
+
+    build(output_zig.to_str().unwrap(), path)?;
     Ok(())
 }
 fn bin_create_dir() -> Result<PathBuf, FileSystemError> {
