@@ -44,9 +44,24 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
 
             Ok(())
         }
-        Expr::BinaryOp { left, right, op } => {
+        Expr::BinaryOp {
+            left,
+            right,
+            op,
+            return_type,
+        } => {
             validate_expr(left, ctx)?;
             validate_expr(right, ctx)?;
+            let returned_type = get_type(
+                &Expr::BinaryOp {
+                    left: left.clone(),
+                    right: right.clone(),
+                    op: *op,
+                    return_type: Type::Any,
+                },
+                ctx,
+            );
+            *return_type = returned_type;
             Ok(())
         }
         Expr::Index {

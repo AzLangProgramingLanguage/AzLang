@@ -92,7 +92,7 @@ pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(
                         }
                     }
                     None => {
-                        if args.len() < 1 {
+                        if args.is_empty() {
                             return Err(ValidatorError::InvalidArgumentCount {
                                 name: function.to_string(),
                                 expected: 1,

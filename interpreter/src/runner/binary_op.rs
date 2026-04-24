@@ -12,7 +12,7 @@ pub fn binary_op_runner(
     op: Operation,
     cast_type: Option<Type>,
 ) -> Value {
-    let result = match op {
+    match op {
         Operation::Add => {
             if let Some(Type::Integer) = cast_type {
                 let left = left.as_number();
@@ -78,7 +78,5 @@ pub fn binary_op_runner(
             (_, _) => Value::Bool(false),
         },
         _ => Value::Bool(false),
-    };
-
-    result
+    }
 }

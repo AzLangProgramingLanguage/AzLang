@@ -36,7 +36,12 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
 
             _ => todo!(),
         },
-        Expr::BinaryOp { left, right, op } => {
+        Expr::BinaryOp {
+            left,
+            right,
+            op,
+            return_type,
+        } => {
             let left = transpile_expr(*left, ctx);
             let right = transpile_expr(*right, ctx);
             format!("{left} {op} {right}")

@@ -59,7 +59,12 @@ pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
 
         Expr::BuiltInCall { return_type, .. } => return_type.clone(),
         Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
-        Expr::BinaryOp { left, right, op } => {
+        Expr::BinaryOp {
+            left,
+            right,
+            op,
+            return_type,
+        } => {
             let left_type = get_type(left, ctx);
             let right_type = get_type(right, ctx);
             let last_type: Type = match *op {

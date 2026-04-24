@@ -17,7 +17,7 @@ pub fn map_typ(typ: &Type) -> &'static str {
     }
 }
 
-pub fn get_expr_type<'a>(expr: &Expr) -> Type {
+pub fn get_expr_type(expr: &Expr) -> Type {
     match expr {
         Expr::String(_) => Type::String(StringEnum::LiteralConstString),
         Expr::Number(_) => Type::Integer,
@@ -47,37 +47,11 @@ pub fn get_expr_type<'a>(expr: &Expr) -> Type {
         } => return_type.clone(),
 
         Expr::BinaryOp {
-            left, op, right, ..
-        } => {
-            /*TODO:: Bu nə pis koddu belə */
-            let left_type = get_expr_type(left);
-            let right_type = get_expr_type(right);
-
-            let comparison_ops = ["==", "!=", "<", "<=", ">", ">="];
-            let logic_ops = ["&&", "||"];
-            let arithmetic_ops = ["+", "-", "*", "/", "%"];
-
-            /*   if comparison_ops.contains(&op) || logic_ops.contains(&op) {
-                return Type::Bool;
-            }
-
-            if arithmetic_ops.contains(&op) {
-                if left_type == Type::Integer && right_type == Type::Integer {
-                    return Type::Integer;
-                } else if left_type == Type::Natural && right_type == Type::Natural {
-                    return Type::Natural;
-                } else if left_type == Type::Float && right_type == Type::Float {
-                    return Type::Float;
-                } else if left_type == Type::Integer && right_type == Type::Natural {
-                    return Type::Integer;
-                } else if left_type == Type::Natural && right_type == Type::Integer {
-                    return Type::Integer;
-                } else {
-                    return Type::Float;
-                }
-            } */
-            Type::Any
-        }
+            left,
+            op,
+            right,
+            return_type,
+        } => return_type.clone(),
         Expr::Index {
             target: _,
             index: _,
@@ -109,7 +83,9 @@ pub fn get_format_str_from_type(t: &Type) -> &'static str {
             "{s}"
         }
         Type::Integer => "{}",
-        _ => todo!(),
+        other => {
+            panic!("{other:?}")
+        }
     }
 }
 //

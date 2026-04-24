@@ -8,6 +8,7 @@ use crate::{
     function::parse_function_def,
     identifier::parse_identifier,
     literal_parse::literals_parse,
+    shared_ast::Type,
     template::parse_template_string_expr,
 };
 use tokenizer::{
@@ -217,6 +218,7 @@ pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
                     left: Box::new(Expr::Number(-1)),
                     right: Box::new(Expr::VariableRef { name, symbol }),
                     op: crate::ast::Operation::Multiply,
+                    return_type: Type::Integer,
                 }),
                 _ => return Err(ParserError::UnexpectedEOF),
             }

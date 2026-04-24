@@ -43,6 +43,7 @@ mod tests {
             left: Box::new(Expr::Number(1)),
             right: Box::new(Expr::Number(1)),
             op: Operation::Equal,
+            return_type: Type::Integer,
         };
         let expr2 = Expr::Bool(false);
         let result2 = transpile_stmt(
