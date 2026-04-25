@@ -20,7 +20,7 @@ pub fn compiler_test() {
     assert_eq!(
         ctx.transpile(program),
         String::from(
-            "\n          const to_string = @import(\"./dependencies/to_string.zig\").to_string; \n        pub fn main()\n        {\n         const b: []const u8 = \"Salam\";std.debug.print(\"{s}\\n\",.{b});\n        }    \n            "
+            "const std = @import(\"std\"); pub fn main() !void {const b: []const u8 = \"Salam\";std.debug.print(\"{s}\\n\",.{b});}"
         )
     );
 }

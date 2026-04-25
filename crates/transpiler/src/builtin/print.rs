@@ -13,7 +13,7 @@ pub fn transpile_print(expr: Expr, ctx: &mut TranspileContext) -> String {
     let mut args: Vec<String> = Vec::new();
 
     ctx.imports
-        .insert("const std = @import(\"std\");".to_string());
+        .insert("const std = @import(\"std\")".to_string());
     match expr {
         Expr::TemplateString(chunks) => {
             for chunk in chunks {
@@ -54,10 +54,11 @@ pub fn transpile_print(expr: Expr, ctx: &mut TranspileContext) -> String {
             } else {
                 let typ = get_expr_type(&expr);
                 let transpiled = transpile_expr(expr, ctx);
-                ctx.add_import(
-                    "  const to_string = @import(\"./dependencies/to_string.zig\").to_string; ",
-                );
+
                 if matches!(typ, Type::Array(_)) {
+                    ctx.add_import(
+                        "  const to_string = @import(\"./dependencies/to_string.zig\").to_string ",
+                    );
                     // ctx.needs_allocator = true;
                     format!(
                         "std.debug.print(\"{{s}}\\n\",.{{ (try to_string(@TypeOf({}),allocator,{})) }})",
