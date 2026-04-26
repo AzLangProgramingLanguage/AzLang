@@ -1,4 +1,4 @@
-use core::fmt;
+use core::{fmt, panic};
 use std::{fmt::Display, rc::Rc};
 
 use super::Runner;
@@ -85,7 +85,7 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
         } => {
             let left_value = get_primitive_value(ctx, *left, None);
             let right_value = get_primitive_value(ctx, *right, None);
-            binary_op_runner(ctx, left_value, right_value, op, Some(return_type))
+            binary_op_runner(ctx, left_value, right_value, op, cast_typ)
         }
         Expr::Call {
             target,
@@ -114,7 +114,12 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
                         );
                     }
                     for stmt in function.body.clone() {
-                        runner_interpretator(ctx, stmt);
+                        match stmt {
+                            Statement::Expr(Expr::Return(e)) => {
+                                return get_primitive_value(ctx, *e, function.return_type);
+                            }
+                            _ => runner_interpretator(ctx, stmt),
+                        }
                     }
                     Value::Void
                 } else {

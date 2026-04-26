@@ -1,4 +1,4 @@
-funksiya square(x: ədəd): ədəd
+funksiya square(sabit ədəd x): ədəd
     qaytar x*x
 
 Çap(square(2))
