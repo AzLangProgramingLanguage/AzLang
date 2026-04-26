@@ -16,10 +16,7 @@ mod tests {
             expressions: vec![],
         };
         let mut ctx = TranspileContext::default();
-        assert_eq!(
-            ctx.transpile(program),
-            "\n        \n        pub fn main() !void\n        {\n         \n        }    \n            "
-        )
+        assert_eq!(ctx.transpile(program), " pub fn main() !void {}")
     }
     #[test]
     fn transpile_variable() {
@@ -36,7 +33,7 @@ mod tests {
         let mut ctx = TranspileContext::default();
         assert_eq!(
             ctx.transpile(program),
-            "\n        \n        pub fn main() !void\n        {\n         const a: i64 = 1;\n        }    \n            "
+            " pub fn main() !void {const a: i64 = 1;}"
         )
     }
 }

@@ -130,22 +130,16 @@ impl TranspileContext {
                 body.push_str(&transpile_stmt(stmt, self));
             }
         }
-        let imports = self
+        let mut imports = self
             .imports
             .iter()
             .map(|s| s.as_str())
             .collect::<Vec<_>>()
             .join(";");
-        format!(
-            "
-        {}
-        pub fn main() !void
-        {{
-         {body}
-        }}    
-            ",
-            imports
-        )
+        if !self.imports.is_empty() {
+            imports.push(';');
+        }
+        format!("{imports} pub fn main() !void {{{body}}}")
     }
 }
 //
