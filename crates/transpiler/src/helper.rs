@@ -38,7 +38,7 @@ pub fn get_expr_type(expr: &Expr) -> Type {
             name,
             args,
             returned_type,
-        } => returned_type.as_ref().unwrap().clone(),
+        } => returned_type.as_ref().unwrap().clone(), //BUG: Have bug must be write tests
         Expr::VariableRef { name: _, symbol } => symbol.as_ref().unwrap().typ.clone(),
         Expr::BuiltInCall {
             function: _,

@@ -2,8 +2,31 @@ use crate::parser;
 use transpiler::TranspileContext;
 
 #[test]
-pub fn compiler_test() {
+pub fn compiler_variable_test() {
     let sdk = file_system::read_file("../examples/variables.az");
+    assert!(sdk.is_ok());
+
+    let parsed_program = parser(sdk.unwrap());
+    assert!(parsed_program.is_ok());
+
+    let mut program = parsed_program.unwrap();
+
+    let mut validator = validator::Validator::new();
+
+    assert!(validator.validate(&mut program).is_ok());
+
+    //cleaner::clean_ast(&mut program, &validator);
+    let mut ctx = TranspileContext::default();
+    assert_eq!(
+        ctx.transpile(program),
+        String::from(
+            "const std = @import(\"std\"); pub fn main() !void {const b: []const u8 = \"Salam\";std.debug.print(\"{s}\\n\",.{b});}"
+        )
+    );
+}
+#[test]
+pub fn compiler_array() {
+    let sdk = file_system::read_file("../examples/array.az");
     assert!(sdk.is_ok());
 
     let parsed_program = parser(sdk.unwrap());

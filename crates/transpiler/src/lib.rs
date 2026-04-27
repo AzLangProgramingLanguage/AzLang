@@ -1,10 +1,17 @@
 use parser::{
     ast::{Expr, FunctionDef, Operation, Program},
-    shared_ast::BuiltInFunction,
+    shared_ast::{BuiltInFunction, Type},
 };
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    result,
+};
 pub mod builtin;
-use crate::{builtin::print, helper::is_semicolon_needed, transpile::transpile_stmt};
+use crate::{
+    builtin::print,
+    helper::{is_semicolon_needed, map_typ},
+    transpile::transpile_stmt,
+};
 pub mod helper;
 mod tests;
 pub mod transpile;
@@ -45,6 +52,16 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
             let left = transpile_expr(*left, ctx);
             let right = transpile_expr(*right, ctx);
             format!("{left} {op} {right}")
+        }
+        Expr::List(exprs) => {
+            let mut result = format!("[{}]{} {{", exprs.len(), map_typ(&Type::Natural));
+            for expr in exprs {
+                result.push_str(&transpile_expr(expr, ctx));
+                result.push(',');
+            }
+            result.pop();
+            result.push('}');
+            result
         }
         other => panic!("Buraya çatmamalıydı. Burası hele hazır deyil {other:?}"),
     }

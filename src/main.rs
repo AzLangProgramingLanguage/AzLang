@@ -1,6 +1,5 @@
 use cli::{Commands, cli};
 use compiler::compiler;
-
 fn main() {
     let command = cli().command;
     match command {
