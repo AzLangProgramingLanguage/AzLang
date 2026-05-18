@@ -1,9 +1,10 @@
 use parser::{
-    ast::{Expr, FunctionDef, Operation, Program},
+    ast::{Expr, FunctionDef, Operation, Program, Symbol},
     shared_ast::{BuiltInFunction, Type},
 };
 use std::{
     collections::{HashMap, HashSet},
+    fmt::format,
     result,
 };
 pub mod builtin;
@@ -63,6 +64,30 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
             result.push('}');
             result
         }
+        Expr::Call {
+            target,
+            name,
+            args,
+            returned_type,
+        } => match *name {
+            Expr::VariableRef {
+                name,
+                symbol:
+                    Some(Symbol {
+                        typ: Type::Function,
+                        ..
+                    }),
+            } => {
+                let mut parameters = String::new();
+                for arg in args {
+                    parameters.push_str(&transpile_expr(arg, ctx));
+                    parameters.push(',')
+                }
+                parameters.pop();
+                format!("{name}({parameters})")
+            }
+            _ => String::new(),
+        },
         other => panic!("Buraya çatmamalıydı. Burası hele hazır deyil {other:?}"),
     }
 }

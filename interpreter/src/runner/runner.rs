@@ -8,7 +8,7 @@ use crate::runner::{
 
 use parser::{
     ast::{Expr, Statement, Symbol, TemplateChunk},
-    shared_ast::Type,
+    shared_ast::{BuiltInFunction, Type},
 };
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -28,7 +28,21 @@ impl Display for Value {
             Value::String(s) => write!(f, "{}", s),
             Value::Bool(b) => write!(f, "{}", b),
             Value::Char(c) => write!(f, "{}", c),
-            Value::List(l) => write!(f, "{:?}", l),
+
+            Value::List(l) => {
+                write!(f, "[")?;
+
+                for (i, item) in l.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+
+                    write!(f, "{}", item)?;
+                }
+
+                write!(f, "]")
+            }
+
             Value::Void => write!(f, "void"),
         }
     }
@@ -127,6 +141,30 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
                 }
             }
             _ => todo!(),
+        },
+        Expr::BuiltInCall {
+            function,
+            args,
+            return_type,
+        } => match function {
+            BuiltInFunction::Len => match args.get(0) {
+                Some(current_expr) => {
+                    let value = get_primitive_value(ctx, current_expr.clone(), cast_typ);
+                    match value {
+                        Value::List(s) => Value::Number(s.len() as i64),
+                        Value::String(s) => Value::Number(s.len() as i64),
+                        _ => Value::Number(0),
+                    }
+                }
+                _ => Value::Void, // Some(Expr::List(s)) => Value::Number(s.len() as i64),
+                                  // Some(Expr::String(s)) => Value::Number(s.len() as i64),
+                                  // _ => {
+                                  //     println!("{function:?}  {:?} ", args);
+                                  //     Value::Number(0)
+                                  // }
+            },
+
+            _ => Value::Void,
         },
         other => panic!("{other:#?} Invalid expression"),
     }
