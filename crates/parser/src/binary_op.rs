@@ -1,5 +1,3 @@
-use core::panic;
-
 use crate::assign::parse_assign;
 use crate::ast::{Operation, Statement};
 use crate::condition::parse_if_expr;
@@ -11,84 +9,82 @@ use crate::{ast::Expr, expressions::parse_single_expr};
 use tokenizer::iterator::{SpannedToken, Tokens};
 use tokenizer::tokens::Token;
 
-pub fn parse_statement<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
+pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     match tokens.peek() {
         Some(SpannedToken {
             token: Token::Conditional,
             ..
-        }) => return Ok(parse_if_expr(tokens)?),
+        }) => parse_if_expr(tokens),
         Some(SpannedToken {
             token: Token::Identifier(s),
             ..
         }) if tokens.peek().is_some_and(|t| t.token == Token::Assign) => {
-            return Ok(parse_assign(tokens, s.to_string())?);
+            parse_assign(tokens, s.to_string())
         }
 
         Some(SpannedToken {
             token: Token::Loop, ..
-        }) => return Ok(parse_loop(tokens)?),
+        }) => parse_loop(tokens),
         Some(SpannedToken {
             token: Token::ConstantDecl,
             ..
-        }) => return Ok(parse_decl(tokens, false)?),
+        }) => parse_decl(tokens, false),
         Some(SpannedToken {
             token: Token::MutableDecl,
             ..
-        }) => return Ok(parse_decl(tokens, true)?),
-        _ => return Ok(Statement::Expr(parse_expression(tokens)?)),
+        }) => parse_decl(tokens, true),
+        _ => Ok(Statement::Expr(parse_expression(tokens)?)),
     }
 }
 
-pub fn parse_expression<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
+pub fn parse_expression(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let expr = parse_single_expr(tokens)?;
 
-    Ok(parse_binary_op_with_precedence(expr, tokens, 0)?)
+    parse_binary_op_with_precedence(expr, tokens, 0)
 }
 
-fn parse_binary_op_with_precedence<'a>(
+fn parse_binary_op_with_precedence(
     mut left: Expr,
     tokens: &mut Tokens,
     min_precedence: u8,
 ) -> Result<Expr, ParserError> {
-    match tokens.peek() {
-        Some(SpannedToken {
-            token: Token::LParen,
-            ..
-        }) => {
-            tokens.next();
-            let mut args = Vec::new();
-            loop {
-                match tokens.peek() {
-                    Some(SpannedToken {
-                        token: Token::RParen,
-                        ..
-                    }) => {
-                        tokens.next();
-                        break;
-                    }
-                    Some(SpannedToken {
-                        token: Token::Comma,
-                        ..
-                    }) => {
-                        tokens.next();
-                    }
-                    None => {
-                        return Err(ParserError::RParenNotFound(Token::Eof));
-                    }
-                    _ => {
-                        args.push(parse_single_expr(tokens)?);
-                    }
+    dbg!(min_precedence);
+    if let Some(SpannedToken {
+        token: Token::LParen,
+        ..
+    }) = tokens.peek()
+    {
+        tokens.next();
+        let mut args = Vec::new();
+        loop {
+            match tokens.peek() {
+                Some(SpannedToken {
+                    token: Token::RParen,
+                    ..
+                }) => {
+                    tokens.next();
+                    break;
+                }
+                Some(SpannedToken {
+                    token: Token::Comma,
+                    ..
+                }) => {
+                    tokens.next();
+                }
+                None => {
+                    return Err(ParserError::RParenNotFound(Token::Eof));
+                }
+                _ => {
+                    args.push(parse_single_expr(tokens)?);
                 }
             }
-            return Ok(Expr::Call {
-                target: None,
-                name: Box::new(left),
-                args,
-                returned_type: Some(Type::Void),
-            });
         }
-
-        _ => {}
+        return Ok(Expr::Call {
+            target: None,
+            name: Box::new(left),
+            args,
+            returned_type: Some(Type::Void),
+        });
     }
     loop {
         let op = match tokens.peek() {
@@ -148,8 +144,11 @@ fn parse_binary_op_with_precedence<'a>(
         if precedence < min_precedence {
             break;
         }
+        dbg!(&tokens);
 
         let rhs = parse_single_expr(tokens)?;
+        dbg!(&rhs);
+        println!("Then {tokens:?}");
 
         let right = parse_binary_op_with_precedence(rhs, tokens, precedence + 1)?;
         left = Expr::BinaryOp {
