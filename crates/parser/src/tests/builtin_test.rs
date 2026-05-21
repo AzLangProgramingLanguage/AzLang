@@ -58,14 +58,19 @@ fn test_multiple_binary_op() {
         Token::Add,
         Token::Number(2),
         Token::Add,
-        Token::Number(2),
+        Token::Number(4),
     ]);
     let result = parse_statement(&mut tokens).expect("parse edilemedi");
     let expected = Statement::Expr(Expr::BuiltInCall {
         function: BuiltInFunction::Print,
         args: vec![Expr::BinaryOp {
             left: Box::new(Expr::Number(2)),
-            right: Box::new(Expr::Number(2)),
+            right: Box::new(Expr::BinaryOp {
+                left: Box::new(Expr::Number(2)),
+                right: Box::new(Expr::Number(4)),
+                op: crate::ast::Operation::Add,
+                return_type: Type::Any,
+            }),
             op: crate::ast::Operation::Add,
             return_type: Type::Any,
         }],

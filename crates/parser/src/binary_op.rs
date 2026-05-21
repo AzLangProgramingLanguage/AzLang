@@ -144,13 +144,11 @@ fn parse_binary_op_with_precedence(
         if precedence < min_precedence {
             break;
         }
-        dbg!(&tokens);
 
-        let rhs = parse_single_expr(tokens)?;
-        dbg!(&rhs);
-        println!("Then {tokens:?}");
+        let rhs = parse_expression(tokens)?;
 
         let right = parse_binary_op_with_precedence(rhs, tokens, precedence + 1)?;
+        dbg!(&right);
         left = Expr::BinaryOp {
             left: Box::new(left),
             right: Box::new(right),

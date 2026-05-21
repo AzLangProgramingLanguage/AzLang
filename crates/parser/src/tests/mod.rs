@@ -16,6 +16,7 @@ pub fn create_tokens(tokens_vec: Vec<Token>) -> Tokens {
     tokens
 }
 mod assignment;
+mod binary_op_test;
 mod builtin_test;
 mod condition;
 mod decl;
