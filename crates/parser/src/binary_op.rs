@@ -48,7 +48,6 @@ fn parse_binary_op_with_precedence(
     tokens: &mut Tokens,
     min_precedence: u8,
 ) -> Result<Expr, ParserError> {
-    dbg!(min_precedence);
     if let Some(SpannedToken {
         token: Token::LParen,
         ..
@@ -138,17 +137,16 @@ fn parse_binary_op_with_precedence(
             }) => Operation::LessEqual,
             _ => break,
         };
-        tokens.next();
 
         let precedence = operator_precedence(&op);
         if precedence < min_precedence {
             break;
         }
 
-        let rhs = parse_expression(tokens)?;
+        tokens.next();
+        let rhs = parse_single_expr(tokens)?;
 
         let right = parse_binary_op_with_precedence(rhs, tokens, precedence + 1)?;
-        dbg!(&right);
         left = Expr::BinaryOp {
             left: Box::new(left),
             right: Box::new(right),

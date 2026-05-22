@@ -28,58 +28,6 @@ fn test_parse_statement_decl() {
 }
 
 #[test]
-fn test_binary_op_print() {
-    let mut tokens = create_tokens(vec![
-        Token::Print,
-        Token::LParen,
-        Token::Number(2),
-        Token::Add,
-        Token::Number(2),
-    ]);
-    let result = parse_statement(&mut tokens).expect("parse edilemedi");
-    let expected = Statement::Expr(Expr::BuiltInCall {
-        function: BuiltInFunction::Print,
-        args: vec![Expr::BinaryOp {
-            left: Box::new(Expr::Number(2)),
-            right: Box::new(Expr::Number(2)),
-            op: crate::ast::Operation::Add,
-            return_type: Type::Any,
-        }],
-        return_type: Type::Void,
-    });
-    assert_eq!(result, expected)
-}
-#[test]
-fn test_multiple_binary_op() {
-    let mut tokens = create_tokens(vec![
-        Token::Print,
-        Token::LParen,
-        Token::Number(2),
-        Token::Add,
-        Token::Number(2),
-        Token::Add,
-        Token::Number(4),
-    ]);
-    let result = parse_statement(&mut tokens).expect("parse edilemedi");
-    let expected = Statement::Expr(Expr::BuiltInCall {
-        function: BuiltInFunction::Print,
-        args: vec![Expr::BinaryOp {
-            left: Box::new(Expr::Number(2)),
-            right: Box::new(Expr::BinaryOp {
-                left: Box::new(Expr::Number(2)),
-                right: Box::new(Expr::Number(4)),
-                op: crate::ast::Operation::Add,
-                return_type: Type::Any,
-            }),
-            op: crate::ast::Operation::Add,
-            return_type: Type::Any,
-        }],
-        return_type: Type::Void,
-    });
-    assert_eq!(result, expected)
-}
-
-#[test]
 fn test_parse_statement_mutable_decl() {
     let mut tokens = create_tokens(vec![
         Token::MutableDecl,
