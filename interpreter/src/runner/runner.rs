@@ -99,7 +99,7 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
         } => {
             let left_value = get_primitive_value(ctx, *left, None);
             let right_value = get_primitive_value(ctx, *right, None);
-            binary_op_runner(ctx, left_value, right_value, op, cast_typ)
+            binary_op_runner(ctx, left_value, right_value, op, Some(return_type))
         }
         Expr::Call {
             target,

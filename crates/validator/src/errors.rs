@@ -3,7 +3,7 @@ use std::fmt::{Display, write};
 
 use parser::shared_ast::Type;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ValidatorError {
     UnknownType(String),
     InvalidFunctionCall(String),
@@ -56,6 +56,7 @@ pub enum ValidatorError {
     FunctionAlreadyDefined(String),
     FunctionReturnTypeErr(String),
     FunctionNameType(String),
+    NotUsedVariable(String),
 }
 
 impl Display for ValidatorError {
@@ -174,6 +175,12 @@ impl Display for ValidatorError {
                 write!(
                     f,
                     "Funskiyada səhv dəyər qaytarır '{string}' tipində olmalıydı  "
+                )
+            }
+            ValidatorError::NotUsedVariable(var) => {
+                write!(
+                    f,
+                    "'{var}' dəyəri heç istifadə olunmayıb. İstifadə olunmamış dəyəri isə qeyd etməyə eytiyac yoxdur. "
                 )
             }
         }

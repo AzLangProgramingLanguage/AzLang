@@ -1,5 +1,4 @@
-
-use crate::Validator;
+use crate::{Validator, errors::ValidatorError};
 use parser::{
     ast::{Expr, Program, Statement},
     shared_ast::Type,
@@ -18,15 +17,18 @@ fn test_variable_decl() {
         }],
         functions: HashMap::new(),
     };
-    validator.validate(&mut program).unwrap();
-
-    // Dəyişənin düzgün yaradıldığını yoxla
+    let result = validator.validate(&mut program);
     let sym = validator
         .global_variables
         .get("x")
         .expect("'x' dəyişəni tapılmadı");
     assert_eq!(sym.typ, Type::Integer);
-    assert_eq!(sym.is_mutable, false);
+    assert!(!sym.is_mutable);
+
+    assert_eq!(
+        result,
+        Err(ValidatorError::NotUsedVariable("x".to_string()))
+    );
 }
 
 #[test]
@@ -49,7 +51,6 @@ fn test_variable_decl_already_declared() {
         ],
         functions: HashMap::new(),
     };
-    // Eyni adda iki dəyişən -> AlreadyDecl xətası gözlənilir
     let result = validator.validate(&mut program);
     assert!(result.is_err());
 }
@@ -66,7 +67,6 @@ fn test_mutable_variable_never_changed() {
         }],
         functions: HashMap::new(),
     };
-    // Mutable yaradılıb amma heç vaxt dəyişdirilməyib -> NeverChangedMuttableVariable
     let result = validator.validate(&mut program);
     assert!(result.is_err());
 }

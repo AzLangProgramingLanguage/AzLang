@@ -112,6 +112,9 @@ impl Validator {
                     variable.0.to_string(),
                 ));
             }
+            if !variable.1.is_used {
+                return Err(ValidatorError::NotUsedVariable(variable.0.clone()));
+            }
         }
         Ok(())
     }

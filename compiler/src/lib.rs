@@ -19,8 +19,6 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let mut validator = validator::Validator::new();
     validator.validate(&mut parsed_program)?;
 
-    clean_ast(&mut parsed_program, &validator);
-
     let mut ctx = transpiler::TranspileContext::default();
     let code = ctx.transpile(parsed_program);
 
