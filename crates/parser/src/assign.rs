@@ -10,10 +10,11 @@ use crate::{
 };
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
-    tokens::Token,
+    tokens::{self, Token},
 };
 
 pub fn parse_assign(tokens: &mut Tokens, s: String) -> Result<Statement, ParserError> {
+    tokens.next();
     expect_token(tokens, Token::Assign)?;
     let value = parse_expression(tokens)?;
     Ok(Statement::Assignment {

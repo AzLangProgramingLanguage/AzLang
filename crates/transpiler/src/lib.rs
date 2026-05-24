@@ -19,6 +19,7 @@ pub mod transpile;
 pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
     match expr {
         Expr::String(s) => format!("\"{s}\""),
+        Expr::Float(f) => format!("{f}"),
         Expr::Number(num) => num.to_string(),
         Expr::Bool(bool) => {
             if bool {

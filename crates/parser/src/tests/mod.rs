@@ -1,6 +1,7 @@
 use tokenizer::iterator::{SourceSpan, Tokens};
 use tokenizer::tokens::Token;
 
+type TestResult = Result<(), Box<dyn std::error::Error>>;
 pub fn create_tokens(tokens_vec: Vec<Token>) -> Tokens {
     let mut tokens = Tokens::default();
     for token in tokens_vec {

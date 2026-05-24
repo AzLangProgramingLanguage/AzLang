@@ -15,7 +15,7 @@ use tokenizer::{
 
 use crate::ast::Expr;
 
-pub fn parse_decl<'a>(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, ParserError> {
+pub fn parse_decl(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, ParserError> {
     tokens.next();
     let mut data_typ = parse_type(tokens)?;
 

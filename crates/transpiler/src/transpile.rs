@@ -45,8 +45,11 @@ pub fn transpile_stmt(stmt: Statement, ctx: &mut TranspileContext) -> String {
             }
             result
         }
+        Statement::Assignment { name, value } => {
+            format!("{name} = {}; ", transpile_expr(*value, ctx))
+        }
         Statement::Expr(expr) => transpile_expr(expr, ctx),
-        other => String::from(""),
+        other => todo!("Burası hele hazır deyil {other:?}"),
     }
 }
 //

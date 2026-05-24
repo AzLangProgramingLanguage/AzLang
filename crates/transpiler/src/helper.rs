@@ -13,7 +13,8 @@ pub fn map_typ(typ: &Type) -> &'static str {
             StringEnum::LiteralString => "[]u8",
             StringEnum::LiteralConstString => "[]const u8",
         },
-        _ => "Any",
+        Type::Float => "f64",
+        other => todo!("Hele burası hazır deyil {other:?}"),
     }
 }
 
@@ -90,6 +91,7 @@ pub fn get_format_str_from_type(t: &Type) -> &'static str {
         }
         Type::Integer => "{}",
         Type::Any => "anytype",
+        Type::Float => "{d}",
         other => {
             panic!("{other:?}")
         }

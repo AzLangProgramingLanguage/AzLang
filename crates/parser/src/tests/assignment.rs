@@ -1,37 +1,72 @@
 #[cfg(test)]
 mod tests {
     use crate::assign::parse_assign;
-    use crate::ast::{Expr, Statement};
+    use crate::ast::{Expr, Operation, Statement};
+    use crate::binary_op::{parse_expression, parse_statement};
+    use crate::decl::parse_decl;
+    use crate::shared_ast::{StringEnum, Type};
+    use crate::tests::{TestResult, create_tokens};
+    use std::rc::Rc;
     use tokenizer::iterator::{SourceSpan, Tokens};
-    use tokenizer::tokens::Token;
+    use tokenizer::tokens::{self, Token};
 
-    fn create_tokens(tokens_vec: Vec<Token>) -> Tokens {
-        let mut tokens = Tokens::default();
-        for token in tokens_vec {
-            tokens.push(
-                token,
-                SourceSpan {
-                    start: 0,
-                    end: 0,
-                    line: 0,
-                },
-            );
-        }
-        tokens
+    #[test]
+    fn test_parse_assign_simple() -> TestResult {
+        let mut tokens = create_tokens(vec![
+            Token::Identifier("x".to_string()),
+            Token::Assign,
+            Token::Number(42),
+        ]);
+        let result = parse_assign(&mut tokens, "x".to_string())?;
+
+        assert_eq!(
+            result,
+            Statement::Assignment {
+                name: "x".to_string(),
+                value: Box::new(Expr::Number(42))
+            }
+        );
+        Ok(())
     }
 
     #[test]
-    fn test_parse_assign_simple() {
-        // Identifier is already consumed by the caller (expressions.rs),
-        // so we start with '=' (Token::Assign).
-        let mut tokens = create_tokens(vec![Token::Assign, Token::Number(42)]);
-        let result = parse_assign(&mut tokens, "x".to_string()).expect("Failed to parse assign");
-        if let Statement::Assignment { name, value, .. } = result {
-            assert_eq!(name, "x");
-            assert_eq!(*value, Expr::Number(42));
-        } else {
-            panic!("Expected Assignment statement");
-        }
+    fn test_parse_decl_float_mutable() -> TestResult {
+        let mut tokens = create_tokens(vec![
+            Token::ConstantDecl,
+            Token::StringType,
+            Token::Identifier("a".to_string()),
+            Token::Assign,
+            Token::Float(2.1),
+        ]);
+        let result = parse_decl(&mut tokens, false)?;
+
+        assert_eq!(
+            result,
+            Statement::Decl {
+                name: "a".to_string(),
+                typ: Rc::new(Type::String(StringEnum::DynamicString)),
+                is_mutable: false,
+                value: Box::new(Expr::Float(2.1)),
+            }
+        );
+        Ok(())
+    }
+    #[test]
+    fn test_parse_assign_float() -> TestResult {
+        let mut tokens = create_tokens(vec![
+            Token::Identifier("c".to_string()),
+            Token::Assign,
+            Token::Float(2.1),
+        ]);
+        let result = parse_statement(&mut tokens)?;
+        assert_eq!(
+            result,
+            Statement::Assignment {
+                name: "c".to_string(),
+                value: Box::new(Expr::Float(2.1))
+            }
+        );
+        Ok(())
     }
 
     #[test]
@@ -40,31 +75,28 @@ mod tests {
         let result = parse_assign(&mut tokens, "x".to_string());
         assert!(result.is_err());
     }
-
     #[test]
-    fn test_parse_assign_complex_expr() {
+    fn test_parse_assign_complex_expr() -> TestResult {
         let mut tokens = create_tokens(vec![
+            Token::Identifier("sum".to_string()),
             Token::Assign,
             Token::Number(10),
             Token::Add,
             Token::Number(20),
         ]);
-        let result =
-            parse_assign(&mut tokens, "sum".to_string()).expect("Failed to parse complex assign");
-        if let Statement::Assignment { name, value, .. } = result {
-            assert_eq!(name, "sum");
-            if let Expr::BinaryOp {
-                left, right, op, ..
-            } = *value
-            {
-                assert_eq!(*left, Expr::Number(10));
-                assert_eq!(*right, Expr::Number(20));
-                assert_eq!(op, crate::ast::Operation::Add);
-            } else {
-                panic!("Expected BinaryOp expression");
+        let result = parse_assign(&mut tokens, "sum".to_string())?;
+        assert_eq!(
+            result,
+            Statement::Assignment {
+                name: "sum".to_string(),
+                value: Box::new(Expr::BinaryOp {
+                    left: Box::new(Expr::Number(10)),
+                    right: Box::new(Expr::Number(20)),
+                    op: Operation::Add,
+                    return_type: Type::Any
+                })
             }
-        } else {
-            panic!("Expected Assignment statement");
-        }
+        );
+        Ok(())
     }
 }

@@ -7,7 +7,7 @@ use crate::r#loop::parse_loop;
 use crate::shared_ast::Type;
 use crate::{ast::Expr, expressions::parse_single_expr};
 use tokenizer::iterator::{SpannedToken, Tokens};
-use tokenizer::tokens::Token;
+use tokenizer::tokens::{self, Token};
 
 pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     match tokens.peek() {
@@ -18,7 +18,7 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
         Some(SpannedToken {
             token: Token::Identifier(s),
             ..
-        }) if tokens.peek().is_some_and(|t| t.token == Token::Assign) => {
+        }) if tokens.peek_nth(1).is_some_and(|t| t.token == Token::Assign) => {
             parse_assign(tokens, s.to_string())
         }
 

@@ -141,3 +141,4 @@ impl From<LexerError> for ParserError {
         ParserError::LexerError(e)
     }
 }
+impl std::error::Error for ParserError {}
