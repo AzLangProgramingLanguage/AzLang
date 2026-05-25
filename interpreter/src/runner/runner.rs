@@ -3,14 +3,15 @@ use std::{fmt::Display, rc::Rc};
 
 use super::Runner;
 use crate::runner::{
-    Variable, binary_op::binary_op_runner, builtin::builthin_call_runner, helpers::run_body,
+    Variable, binary_op::binary_op_runner, builtin::builthin_call_runner,
+    function_call::function_call, helpers::run_body,
 };
 
 use parser::{
     ast::{Expr, Statement, Symbol, TemplateChunk},
     shared_ast::{BuiltInFunction, Type},
 };
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Number(i64),
     Float(f64),
@@ -106,42 +107,7 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
             name,
             args,
             returned_type,
-        } => match *name {
-            Expr::VariableRef {
-                name,
-                symbol:
-                    Some(Symbol {
-                        typ: Type::Function,
-                        ..
-                    }),
-            } => {
-                if let Some(function) = ctx.functions.get(&name).cloned() {
-                    for (index, param) in function.params.iter().enumerate() {
-                        let variable = get_primitive_value(ctx, args[index].clone(), None);
-                        ctx.variables.insert(
-                            param.name.clone(),
-                            Variable {
-                                value: variable,
-                                typ: Rc::new(param.typ.clone()),
-                                is_mutable: param.is_mutable,
-                            },
-                        );
-                    }
-                    for stmt in function.body.clone() {
-                        match stmt {
-                            Statement::Expr(Expr::Return(e)) => {
-                                return get_primitive_value(ctx, *e, function.return_type);
-                            }
-                            _ => runner_interpretator(ctx, stmt),
-                        }
-                    }
-                    Value::Void
-                } else {
-                    panic!("{name} function not found")
-                }
-            }
-            _ => todo!(),
-        },
+        } => function_call(ctx, target, name, args, returned_type),
         Expr::BuiltInCall {
             function,
             args,

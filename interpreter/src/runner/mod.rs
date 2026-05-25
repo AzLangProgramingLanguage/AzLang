@@ -1,8 +1,9 @@
 use std::{collections::HashMap, rc::Rc};
 mod builtin;
-//mod function_call;
+pub mod function_call;
 mod helpers;
 mod runner;
+mod tests;
 use parser::{
     ast::{Expr, FunctionDef, Parameter, Program, Statement},
     shared_ast::Type,
