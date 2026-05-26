@@ -5,7 +5,7 @@ mod helpers;
 mod runner;
 mod tests;
 use parser::{
-    ast::{Expr, FunctionDef, Parameter, Program, Statement},
+    ast::{Expr, FunctionDef, Statement},
     shared_ast::Type,
 };
 
@@ -16,8 +16,6 @@ mod handlers;
 #[derive(Debug)]
 pub struct Variable {
     value: Value,
-    typ: Rc<Type>,
-    is_mutable: bool,
 }
 
 #[derive(Debug)]

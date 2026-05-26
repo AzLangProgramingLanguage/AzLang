@@ -1,7 +1,7 @@
-use std::{os::unix::process, rc::Rc};
+use std::rc::Rc;
 
 use parser::{
-    ast::{Expr, Parameter, Statement, Symbol},
+    ast::{Expr, Statement, Symbol},
     shared_ast::Type,
 };
 
@@ -12,11 +12,12 @@ use crate::runner::{
 
 pub fn function_call(
     ctx: &mut Runner,
-    target: Option<Box<Expr>>,
+    _target: Option<Box<Expr>>,
     name: Box<Expr>,
     args: Vec<Expr>,
-    returned_type: Option<Type>,
+    _returned_type: Option<Type>,
 ) -> Value {
+    dbg!(&name);
     match *name {
         Expr::VariableRef {
             name,
@@ -33,13 +34,14 @@ pub fn function_call(
                         param.name.clone(),
                         Variable {
                             value: variable,
-                            typ: Rc::new(param.typ.clone()),
-                            is_mutable: param.is_mutable,
+                            // typ: Rc::new(param.typ.clone()),
+                            // is_mutable: param.is_mutable,
                         },
                     );
                 }
                 println!("Hellooo");
                 for stmt in function.body.clone() {
+                    dbg!(&stmt);
                     match stmt {
                         Statement::Expr(Expr::Return(e)) => {
                             return get_primitive_value(ctx, *e, function.return_type);

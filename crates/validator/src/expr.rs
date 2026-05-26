@@ -69,6 +69,10 @@ pub fn validate_expr(expr: &mut Expr, ctx: &mut Validator) -> Result<(), Validat
             index,
             target_type,
         } => Ok(()),
+        Expr::Return(e) => {
+            validate_expr(&mut **e, ctx)?;
+            Ok(())
+        }
         Expr::TemplateString(chunk) => {
             for ch in chunk {
                 if let TemplateChunk::Expr(expr) = ch {

@@ -127,9 +127,11 @@ pub fn validate_statement(stmt: &mut Statement, ctx: &mut Validator) -> Result<(
                     _ => todo!("Bura baxmaq lazımdır {:#?}", function),
                 }
             }
-            _ => todo!("Bura baxmaq lazımdır {:#?}", expr),
+            _ => {
+                return validate_expr(expr, ctx);
+            }
         },
-        _ => todo!("Bura baxmaq lazımdır {:#?}", stmt),
+        _ => todo!("Bura  baxmaq lazımdır {:#?}", stmt),
     }
 
     Ok(())

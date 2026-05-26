@@ -1,12 +1,8 @@
-use parser::{
-    ast::Expr,
-    shared_ast::{BuiltInFunction, Type},
-};
+use parser::shared_ast::{BuiltInFunction, Type};
 
 use crate::runner::{
-    Runner,
     builtin::{input::input, sum::sum},
-    runner::{Value, runner_interpretator},
+    runner::Value,
 };
 
 mod input;
@@ -15,7 +11,7 @@ mod sum;
 pub fn builthin_call_runner(
     function: BuiltInFunction,
     mut args: Vec<Value>,
-    return_type: Type,
+    _return_type: Type,
 ) -> Value {
     match function {
         BuiltInFunction::Print => {

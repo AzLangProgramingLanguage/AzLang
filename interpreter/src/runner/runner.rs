@@ -1,5 +1,5 @@
 use core::{fmt, panic};
-use std::{fmt::Display, rc::Rc};
+use std::fmt::Display;
 
 use super::Runner;
 use crate::runner::{
@@ -8,7 +8,7 @@ use crate::runner::{
 };
 
 use parser::{
-    ast::{Expr, Statement, Symbol, TemplateChunk},
+    ast::{Expr, Statement, TemplateChunk},
     shared_ast::{BuiltInFunction, Type},
 };
 #[derive(Debug, Clone, PartialEq)]
@@ -88,7 +88,7 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
                 .collect(),
         ),
         Expr::Void => Value::Void,
-        Expr::VariableRef { name, symbol } => {
+        Expr::VariableRef { name, symbol: _ } => {
             let var = ctx.variables.get(&name).unwrap();
             var.value.clone()
         }
@@ -111,9 +111,9 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
         Expr::BuiltInCall {
             function,
             args,
-            return_type,
+            return_type: _,
         } => match function {
-            BuiltInFunction::Len => match args.get(0) {
+            BuiltInFunction::Len => match args.first() {
                 Some(current_expr) => {
                     let value = get_primitive_value(ctx, current_expr.clone(), cast_typ);
                     match value {
@@ -149,8 +149,8 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
                 name.to_string(),
                 Variable {
                     value: new_value,
-                    typ,
-                    is_mutable,
+                    // typ,
+                    // is_mutable,
                 },
             );
         }

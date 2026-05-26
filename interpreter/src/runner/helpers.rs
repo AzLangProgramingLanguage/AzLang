@@ -1,5 +1,5 @@
 use crate::runner::{Runner, runner::runner_interpretator};
-use parser::ast::{Expr, Statement};
+use parser::ast::Statement;
 
 /*
  *
@@ -19,7 +19,7 @@ use parser::ast::{Expr, Statement};
 }
 */
 
-pub fn run_body<'a>(ctx: &mut Runner, body: Vec<Statement>) {
+pub fn run_body(ctx: &mut Runner, body: Vec<Statement>) {
     for expr in body {
         runner_interpretator(ctx, expr);
     }

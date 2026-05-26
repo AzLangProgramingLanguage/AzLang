@@ -1,12 +1,9 @@
-use parser::{
-    ast::{Expr, Operation},
-    shared_ast::Type,
-};
+use parser::{ast::Operation, shared_ast::Type};
 
 use crate::runner::{Runner, runner::Value};
 //TODO: Burası güncellene bilinir
 pub fn binary_op_runner(
-    ctx: &mut Runner,
+    _ctx: &mut Runner,
     left: Value,
     right: Value,
     op: Operation,

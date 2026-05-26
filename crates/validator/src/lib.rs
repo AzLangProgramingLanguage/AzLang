@@ -103,6 +103,26 @@ impl Validator {
     }
 
     pub fn validate(&mut self, parsed_program: &mut Program) -> Result<(), ValidatorError> {
+        for func in parsed_program.functions.iter_mut() {
+            for param in &func.1.params {
+                self.global_variables.insert(
+                    param.name.clone(),
+                    Symbol {
+                        typ: param.typ.clone(),
+                        is_mutable: param.is_mutable,
+                        is_pointer: param.is_pointer,
+                        is_used: false,
+                        is_changed: false,
+                    },
+                );
+            }
+            for stmt in func.1.body.iter_mut() {
+                validate_statement(stmt, self)?;
+            }
+            for param in &func.1.params {
+                self.global_variables.remove(&param.name);
+            }
+        }
         for expr in parsed_program.expressions.iter_mut() {
             validate_statement(expr, self)?;
         }
