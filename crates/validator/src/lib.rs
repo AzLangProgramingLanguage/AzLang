@@ -8,7 +8,7 @@ mod typed_ast;
 pub mod validate;
 use crate::{errors::ValidatorError, validate::validate_statement};
 use parser::{
-    ast::{Expr, Parameter, Program, Symbol},
+    ast::{Expr, FunctionDef, Parameter, Program, Symbol},
     shared_ast::Type,
 };
 
@@ -30,7 +30,7 @@ pub struct MethodInfo {
 #[derive(Debug)]
 pub struct Validator {
     pub global_variables: HashMap<String, Symbol>,
-    pub functions: HashMap<String, FunctionInfo>,
+    pub functions: HashMap<String, FunctionDef>,
     pub struct_defs: HashMap<String, (Vec<(String, Type)>, Vec<MethodInfo>)>,
     pub union_defs: HashMap<String, (Vec<(String, Type)>, Vec<MethodInfo>)>,
     pub enum_defs: HashMap<String, Vec<String>>,
@@ -75,31 +75,31 @@ impl Validator {
     }
 
     pub fn lookup_variable(&mut self, name: &str) -> Option<&mut Symbol> {
-        if let Some(function) = &self.current_function {
-            self.functions
-                .get_mut(function)
-                .unwrap()
-                .variables
-                .get_mut(name)
-        } else {
-            self.global_variables.get_mut(name)
-        }
+        // if let Some(function) = &self.current_function {
+        //     self.functions
+        //         .get_mut(function)
+        //         .unwrap()
+        //         .variables
+        //         .get_mut(name)
+        // } else {
+        self.global_variables.get_mut(name)
+        // }
     }
 
-    pub fn declare_function(&mut self, name: String, func: FunctionInfo) -> Option<FunctionInfo> {
+    pub fn declare_function(&mut self, name: String, func: FunctionDef) -> Option<FunctionDef> {
         self.functions.insert(name, func)
     }
 
     pub fn declare_variable(&mut self, name: String, variable: Symbol) {
-        if let Some(function) = &self.current_function {
-            self.functions
-                .get_mut(function)
-                .unwrap()
-                .variables
-                .insert(name, variable);
-        } else {
-            self.global_variables.insert(name, variable);
-        }
+        // if let Some(function) = &self.current_function {
+        //     self.functions
+        //         .get_mut(function)
+        //         .unwrap()
+        //         .variables
+        //         .insert(name, variable);
+        // } else {
+        self.global_variables.insert(name, variable);
+        // }
     }
 
     pub fn validate(&mut self, parsed_program: &mut Program) -> Result<(), ValidatorError> {

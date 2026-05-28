@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use parser::{
     ast::{Expr, Statement, Symbol},
     shared_ast::Type,
@@ -17,7 +15,6 @@ pub fn function_call(
     args: Vec<Expr>,
     _returned_type: Option<Type>,
 ) -> Value {
-    dbg!(&name);
     match *name {
         Expr::VariableRef {
             name,
@@ -39,9 +36,7 @@ pub fn function_call(
                         },
                     );
                 }
-                println!("Hellooo");
                 for stmt in function.body.clone() {
-                    dbg!(&stmt);
                     match stmt {
                         Statement::Expr(Expr::Return(e)) => {
                             return get_primitive_value(ctx, *e, function.return_type);

@@ -29,10 +29,10 @@ pub fn validate_function_call(
                 .functions
                 .get(func_name)
                 .ok_or(ValidatorError::FunctionNotFound(func_name.to_string()))?;
-            if func.parameters.len() != args.len() {
+            if func.params.len() != args.len() {
                 return Err(ValidatorError::FunctionArgCountMismatch {
                     name: format!("{func_name:?}"),
-                    expected: func.parameters.len(),
+                    expected: func.params.len(),
                     found: args.len(),
                 });
             }

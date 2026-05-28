@@ -90,7 +90,7 @@ pub fn get_format_str_from_type(t: &Type) -> &'static str {
             "{s}"
         }
         Type::Integer => "{}",
-        Type::Any => "anytype",
+        Type::Any => "{any}",
         Type::Float => "{d}",
         other => {
             panic!("{other:?}")
