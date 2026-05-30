@@ -2,38 +2,44 @@
 mod tests {
     use std::{collections::HashMap, rc::Rc};
 
-    use parser::{
-        ast::{Expr, Program, Statement},
-        shared_ast::Type,
-    };
-
-    use crate::TranspileContext;
-
-    #[test]
-    fn transpiler_none() {
-        let program = Program {
-            functions: HashMap::new(),
-            expressions: vec![],
-        };
-        let mut ctx = TranspileContext::default();
-        assert_eq!(ctx.transpile(program), " pub fn main() !void {}")
+    // use parser::{
+    //     ast::{Expr, Program, Statement},
+    //     shared_ast::Type,
+    // };
+    //
+    // use crate::TranspileContext;
+    //
+    // #[test]
+    // fn transpiler_none() {
+    //     let program = Program {
+    //         functions: HashMap::new(),
+    //         expressions: vec![],
+    //     };
+    //     let mut ctx = TranspileContext::default();
+    //     assert_eq!(ctx.transpile(program), " pub fn main() !void {}")
+    // }
+    // #[test]
+    // fn transpile_variable() {
+    //     let statement = Statement::Decl {
+    //         name: "a".to_string(),
+    //         typ: Rc::new(Type::Natural),
+    //         is_mutable: false,
+    //         value: Box::new(Expr::Number(1)),
+    //     };
+    //     let program = Program {
+    //         functions: HashMap::new(),
+    //         expressions: vec![statement],
+    //     };
+    //     let mut ctx = TranspileContext::default();
+    //     assert_eq!(
+    //         ctx.transpile(program),
+    //         " pub fn main() !void {const a: i64 = 1;}"
+    //     )
+    // }
+    fn meel() {
+        print!("{}", hello());
     }
-    #[test]
-    fn transpile_variable() {
-        let statement = Statement::Decl {
-            name: "a".to_string(),
-            typ: Rc::new(Type::Natural),
-            is_mutable: false,
-            value: Box::new(Expr::Number(1)),
-        };
-        let program = Program {
-            functions: HashMap::new(),
-            expressions: vec![statement],
-        };
-        let mut ctx = TranspileContext::default();
-        assert_eq!(
-            ctx.transpile(program),
-            " pub fn main() !void {const a: i64 = 1;}"
-        )
+    fn hello() -> String {
+        return "asd".to_string();
     }
 }

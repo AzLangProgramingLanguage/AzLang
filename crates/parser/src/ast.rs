@@ -108,6 +108,12 @@ pub enum Statement {
         is_mutable: bool,
         value: Box<Expr>,
     },
+    FunctionDef {
+        name: String,
+        return_typ: Type,
+        params: Vec<Parameter>,
+        body: Vec<Statement>,
+    },
     StructDef {
         name: String,
         fields: Vec<(String, Type, Option<Expr>)>,
@@ -172,7 +178,6 @@ pub enum Expr {
     BuiltInCall {
         function: BuiltInFunction,
         args: Vec<Expr>,
-        return_type: Type,
     },
     Call {
         target: Option<Box<Expr>>,
@@ -207,16 +212,9 @@ impl Display for Expr {
     }
 }
 
-#[derive(Debug)]
-pub struct Program {
-    pub functions: HashMap<String, FunctionDef>,
-    pub expressions: Vec<Statement>,
-}
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct Symbol {
     pub typ: Type,
-    pub is_mutable: bool,
     pub is_pointer: bool,
     pub is_used: bool,
     pub is_changed: bool,
@@ -232,6 +230,5 @@ pub enum TemplateChunk {
 pub struct Parameter {
     pub name: String,
     pub typ: Type,
-    pub is_mutable: bool,
     pub is_pointer: bool,
 }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    ast::{Expr, Operation, Program},
+    ast::{Expr, Operation, Statement},
     binary_op::{parse_expression, parse_statement},
     builtin::parse_builtin,
     errors::ParserError,
@@ -16,11 +16,8 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Program, ParserError> {
-    let mut ast = Program {
-        functions: HashMap::new(),
-        expressions: vec![],
-    };
+pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
+    let mut ast: Vec<Statement> = vec![];
 
     while let Some(token) = tokens.peek() {
         match token {
@@ -32,17 +29,16 @@ pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Program, ParserErro
                 continue;
             }
 
-            SpannedToken {
-                token: Token::FunctionDef,
-                ..
-            } => {
-                let (name, function) = parse_function_def(tokens)?;
-                if ast.functions.get(&name).is_some() {
-                    return Err(ParserError::FunctionAlreadyAsigned(name));
-                }
-                ast.functions.insert(name, function);
-            }
-
+            // SpannedToken {
+            //     token: Token::FunctionDef,
+            //     ..
+            // } => {
+            //     let (name, function) = parse_function_def(tokens)?;
+            //     if ast.functions.get(&name).is_some() {
+            //         return Err(ParserError::FunctionAlreadyAsigned(name));
+            //     }
+            //     ast.functions.insert(name, function);
+            // }
             SpannedToken {
                 token: Token::StringLiteral(_),
                 ..
@@ -64,7 +60,7 @@ pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Program, ParserErro
             }
             _ => {
                 let expr = parse_statement(tokens)?;
-                ast.expressions.push(expr);
+                ast.push(expr);
             }
         }
     }

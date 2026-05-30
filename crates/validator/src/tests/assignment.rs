@@ -9,7 +9,7 @@ use crate::{Validator, errors::ValidatorError};
 
 #[test]
 fn test_assignment_success() {
-    let mut validator = Validator::new();
+    let mut validator = Validator::default();
     let mut program = Program {
         expressions: vec![
             // Əvvəlcə mutable dəyişən yaradırıq

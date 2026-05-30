@@ -91,6 +91,5 @@ pub fn parse_builtin<'a>(token: SpannedToken, tokens: &mut Tokens) -> Result<Exp
     Ok(Expr::BuiltInCall {
         function,
         args,
-        return_type,
     })
 }

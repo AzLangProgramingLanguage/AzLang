@@ -22,3 +22,4 @@ mod builtin_test;
 mod condition;
 mod decl;
 mod enum_test;
+mod function_decl;

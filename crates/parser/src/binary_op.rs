@@ -3,6 +3,7 @@ use crate::ast::{Operation, Statement};
 use crate::condition::parse_if_expr;
 use crate::decl::parse_decl;
 use crate::errors::ParserError;
+use crate::function::parse_function_def;
 use crate::r#loop::parse_loop;
 use crate::shared_ast::Type;
 use crate::{ast::Expr, expressions::parse_single_expr};
@@ -21,6 +22,10 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
         }) if tokens.peek_nth(1).is_some_and(|t| t.token == Token::Assign) => {
             parse_assign(tokens, s.to_string())
         }
+        Some(SpannedToken {
+            token: Token::FunctionDef,
+            span,
+        }) => parse_function_def(tokens),
 
         Some(SpannedToken {
             token: Token::Loop, ..

@@ -1,5 +1,4 @@
-use std::{result, vec};
-
+#[cfg(test)]
 use tokenizer::tokens::Token;
 
 use crate::{
@@ -22,7 +21,6 @@ fn test_parse_statement_decl() {
     let expected = Statement::Expr(Expr::BuiltInCall {
         function: BuiltInFunction::Print,
         args: vec![Expr::String("Hello".to_string())],
-        return_type: Type::Void,
     });
     assert_eq!(result, expected);
 }

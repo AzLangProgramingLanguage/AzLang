@@ -1,12 +1,8 @@
 use parser::{
-    ast::{Expr, FunctionDef, Operation, Program, Symbol},
+    ast::{Expr, FunctionDef, Symbol},
     shared_ast::{BuiltInFunction, Type},
 };
-use std::{
-    collections::{HashMap, HashSet},
-    fmt::format,
-    result,
-};
+use std::collections::{HashMap, HashSet};
 pub mod builtin;
 use crate::{
     builtin::print,

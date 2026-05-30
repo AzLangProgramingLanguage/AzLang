@@ -2,10 +2,13 @@ use std::rc::Rc;
 
 use parser::{
     ast::{Expr, Operation, Statement},
-    shared_ast::{StringEnum, Type},
+    shared_ast::{BuiltInFunction, StringEnum, Type},
 };
 
-use crate::{Validator, errors::ValidatorError, expr::validate_expr, validate::validate_statement};
+use crate::{
+    Validator, ast::Program, errors::ValidatorError, expr::validate_expr,
+    validate::validate_statement,
+};
 //TODO: List Type Definition has a problem. We must use Type::Integer instead of Type::Natural
 pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
     match value {
@@ -57,7 +60,30 @@ pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
             // }
         }
 
-        Expr::BuiltInCall { return_type, .. } => return_type.clone(),
+        Expr::BuiltInCall {  function , ..} => {
+            match function {
+                BuiltInFunction::Print => Type::Void,
+                BuiltInFunction::Input => Type::String(StringEnum::DynamicString),
+                BuiltInFunction::Len => Type::Natural,
+                BuiltInFunction::Number => Type::Integer,
+                BuiltInFunction::Sum => Type::Integer,
+                BuiltInFunction::Range => Type::Array(Box::new(Type::Integer)),
+                BuiltInFunction::LastWord => Type::Void,
+                BuiltInFunction::Timer => Type::Integer,
+                BuiltInFunction::Max => Type::Integer,
+                BuiltInFunction::Zig => Type::Void,
+                BuiltInFunction::StrLower | BuiltInFunction::StrUpper | BuiltInFunction::Trim | BuiltInFunction::StrReverse | BuiltInFunction::ConvertString => {
+                    Type::String(StringEnum::DynamicString)
+                }
+                BuiltInFunction::Allocator => Type::Void,
+                BuiltInFunction::Min => Type::Integer,
+                BuiltInFunction::Sqrt => Type::Float,
+                BuiltInFunction::Mod => Type::Integer,
+                BuiltInFunction::Ceil => Type::Integer,
+                BuiltInFunction::Floor => Type::Integer,
+                BuiltInFunction::Round => Type::Integer,
+            }
+        },
         Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
         Expr::BinaryOp {
             left,
@@ -106,38 +132,33 @@ pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
 }
 
 pub fn validate_body<'a>(
-    body: &mut Vec<Statement>,
+    body: Vec<Statement>,
+    program: &mut Program,
     ctx: &mut Validator,
 ) -> Result<(), ValidatorError> {
-    for expr in body.iter_mut() {
-        validate_statement(expr, ctx)?;
+    for expr in body {
+        validate_statement(expr, program, ctx)?;
     }
     Ok(())
 }
 
-pub fn reconcile_type(
-    typ: &mut Rc<Type>,
-    inferred: Type,
-    name: &str,
-) -> Result<(), ValidatorError> {
-    match (&**typ, &inferred) {
-        (Type::Any, _) => {
-            *typ = Rc::new(inferred);
-        }
-        (_, Type::Any) => {}
-
+pub fn reconcile_type(typ: Rc<Type>, inferred: Type, name: &str) -> Result<Type, ValidatorError> {
+    match (&*typ, &inferred) {
+        (Type::Any, _) => Ok(inferred),
+        (other, Type::Any) => Ok(other.clone()),
         (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {
-            *typ = Rc::new(Type::String(StringEnum::LiteralConstString));
+            return Ok(Type::String(StringEnum::LiteralConstString));
         }
 
-        (expected, _) if inferred != **typ => {
+        (expected, other) if inferred != *other => {
             return Err(ValidatorError::DeclTypeMismatch {
                 name: name.to_string(),
                 expected: inferred.to_string(),
                 found: expected.to_string(),
             });
         }
-        _ => {}
+        other => {
+            return Ok(other.0.clone());
+        }
     }
-    Ok(())
 }

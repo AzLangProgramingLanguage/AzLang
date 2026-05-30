@@ -28,10 +28,9 @@ pub mod structs; */
 mod tests;
 /*
  *//* pub mod union; */
-use crate::{errors::ParserError, expressions::parse_expression_block};
-use ast::Program;
+use crate::{ast::Statement, errors::ParserError, expressions::parse_expression_block};
 
-pub fn parser(sdk: String) -> Result<Program, ParserError> {
+pub fn parser(sdk: String) -> Result<Vec<Statement>, ParserError> {
     let mut lexer = tokenizer::Lexer::new(&sdk);
     let mut tokens = lexer.tokenize()?;
     let ast = parse_expression_block(&mut tokens)?;

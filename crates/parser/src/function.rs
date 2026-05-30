@@ -1,8 +1,9 @@
 use crate::{
-    ast::{Expr, FunctionDef, Parameter},
+    ast::{Expr, FunctionDef, Parameter, Statement},
     binary_op::parse_statement,
     errors::ParserError,
     helpers::expect_token,
+    shared_ast::Type,
     types::parse_type,
 };
 use tokenizer::{
@@ -10,7 +11,7 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_function_def(tokens: &mut Tokens) -> Result<(String, FunctionDef), ParserError> {
+pub fn parse_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     tokens.next();
     let name = match tokens.next() {
         Some(SpannedToken {
@@ -46,8 +47,7 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<(String, FunctionDef), 
                 params.push(Parameter {
                     name: param_name,
                     typ: param_type,
-                    is_mutable,
-                    is_pointer: false,
+                    is_pointer: is_mutable,
                 });
                 match tokens.peek() {
                     Some(SpannedToken {
@@ -79,7 +79,7 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<(String, FunctionDef), 
     expect_token(tokens, Token::RParen)?;
     expect_token(tokens, Token::Colon)?;
 
-    let return_type = Some(parse_type(tokens)?);
+    let return_type = parse_type(tokens)?;
 
     expect_token(tokens, Token::Newline)?;
     expect_token(tokens, Token::Indent)?;
@@ -101,12 +101,10 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<(String, FunctionDef), 
             }
         }
     }
-    Ok((
+    Ok(Statement::FunctionDef {
         name,
-        FunctionDef {
-            params,
-            body,
-            return_type,
-        },
-    ))
+        return_typ: return_type,
+        body,
+        params,
+    })
 }

@@ -1,10 +1,10 @@
+#[cfg(test)]
 use crate::{
     ast::{Expr, Operation, Statement},
     binary_op::{parse_expression, parse_statement},
     shared_ast::{BuiltInFunction, Type},
     tests::{TestResult, create_tokens},
 };
-#[cfg(test)]
 use tokenizer::tokens::Token;
 
 #[test]

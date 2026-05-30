@@ -1,7 +1,5 @@
-use std::borrow::Cow;
-
 use crate::{
-    ast::{Expr, Statement, Symbol},
+    ast::{Expr, Symbol},
     binary_op::parse_expression,
     errors::ParserError,
     expressions::parse_single_expr,
@@ -50,7 +48,6 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
                     name: s,
                     symbol: Some(Symbol {
                         is_changed: false,
-                        is_mutable: false,
                         is_pointer: false,
                         is_used: true,
                         typ: Type::Function,
@@ -58,7 +55,7 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
                 }),
                 args,
                 returned_type: None,
-            }) //TODO: Badd Code 
+            })
         }
         Some(SpannedToken {
             token: Token::ListStart,
@@ -76,11 +73,9 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
                 target_type: Type::Any,
             })
         }
-        _ => {
-            return Ok(Expr::VariableRef {
-                name: s,
-                symbol: None,
-            });
-        }
+        _ => Ok(Expr::VariableRef {
+            name: s,
+            symbol: None,
+        }),
     }
 }
