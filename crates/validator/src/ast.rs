@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
-use parser::{ast::Parameter, shared_ast::{BuiltInFunction, Type}};
+use parser::{
+    ast::{Parameter, Symbol},
+    shared_ast::{BuiltInFunction, Type},
+};
 
-struct Function {
+pub struct Function {
     name: String,
     body: Vec<Ast>,
     params: Vec<Parameter>,
@@ -21,6 +24,7 @@ pub enum Expr {
         args: Vec<Expr>,
         return_type: Type,
     },
+    VariableRef(String),
 }
 
 pub struct Decl {
@@ -30,5 +34,6 @@ pub struct Decl {
 }
 pub enum Ast {
     Decl(Decl),
+    Assign(String, Box<Expr>),
     Expr(Expr),
 }

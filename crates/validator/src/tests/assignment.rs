@@ -1,103 +1,94 @@
-use std::{collections::HashMap, rc::Rc};
-
+#[cfg(test)]
+use crate::{Validator, errors::ValidatorError};
 use parser::{
-    ast::{Expr, Program, Statement},
+    ast::{Expr, Statement},
     shared_ast::Type,
 };
+use std::assert_matches;
+use std::rc::Rc;
 
-use crate::{Validator, errors::ValidatorError};
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+fn decl(name: &str, typ: Type, is_mutable: bool, value: Expr) -> Statement {
+    Statement::Decl {
+        name: name.to_string(),
+        typ: Rc::new(typ),
+        is_mutable,
+        value: Box::new(value),
+    }
+}
+
+fn assign(name: &str, value: Expr) -> Statement {
+    Statement::Assignment {
+        name: name.to_string(),
+        value: Box::new(value),
+    }
+}
+fn print_variable(name: &str) -> Statement {
+    Statement::Expr(Expr::BuiltInCall {
+        function: parser::shared_ast::BuiltInFunction::Print,
+        args: vec![Expr::VariableRef {
+            name: name.to_string(),
+            symbol: None,
+        }],
+    })
+}
+
+// ─── Tests ──────────────────────────────────────────────────────────────────
 
 #[test]
 fn test_assignment_success() {
-    let mut validator = Validator::default();
-    let mut program = Program {
-        expressions: vec![
-            // Əvvəlcə mutable dəyişən yaradırıq
-            Statement::Decl {
-                name: "x".to_string(),
-                typ: Rc::new(Type::Integer),
-                is_mutable: true,
-                value: Box::new(Expr::Number(1)),
-            },
-            // Sonra ona yeni dəyər veririk
-            Statement::Assignment {
-                name: "x".to_string(),
-                value: Box::new(Expr::Number(2)),
-            },
-        ],
-        functions: HashMap::new(),
-    };
-    validator.validate(&mut program).unwrap();
+    let result = Validator::default()
+        .validate(vec![
+            decl("x", Type::Integer, true, Expr::Number(1)),
+            assign("x", Expr::Number(2)),
+            print_variable("x"),
+        ])
+        .expect("valid program should not fail");
 
-    let sym = validator.global_variables.get("x").expect("'x' tapılmadı");
-    assert!(sym.is_changed);
-    assert!(sym.is_used);
+    let symbol = result
+        .variables
+        .last()
+        .expect("variable stack should not be empty")
+        .get("x")
+        .expect("symbol 'x' should exist in scope");
+
+    assert!(
+        symbol.is_changed,
+        "x should be marked as changed after assignment"
+    );
+    assert!(
+        symbol.is_used,
+        "x should be marked as used after assignment"
+    );
 }
 
 #[test]
 fn test_assignment_to_immutable() {
-    let mut validator = Validator::new();
-    let mut program = Program {
-        expressions: vec![
-            Statement::Decl {
-                name: "x".to_string(),
-                typ: Rc::new(Type::Integer),
-                is_mutable: false,
-                value: Box::new(Expr::Number(1)),
-            },
-            Statement::Assignment {
-                name: "x".to_string(),
-                value: Box::new(Expr::Number(2)),
-            },
-        ],
-        functions: HashMap::new(),
-    };
-    let result = validator.validate(&mut program);
-    assert!(matches!(
+    let result = Validator::default().validate(vec![
+        decl("x", Type::Integer, false, Expr::Number(1)),
+        assign("x", Expr::Number(2)),
+    ]);
+
+    assert_matches!(
         result,
         Err(ValidatorError::AssignmentToImmutableVariable(_))
-    ));
+    );
 }
 
 #[test]
 fn test_assignment_type_mismatch() {
-    let mut validator = Validator::new();
-    let mut program = Program {
-        expressions: vec![
-            Statement::Decl {
-                name: "x".to_string(),
-                typ: Rc::new(Type::Integer),
-                is_mutable: true,
-                value: Box::new(Expr::Number(1)),
-            },
-            // Integer dəyişənə String vermək cəhdi
-            Statement::Assignment {
-                name: "x".to_string(),
-                value: Box::new(Expr::String("salam".to_string())),
-            },
-        ],
-        functions: HashMap::new(),
-    };
-    let result = validator.validate(&mut program);
-    assert!(matches!(
-        result,
-        Err(ValidatorError::AssignmentTypeMismatch { .. })
-    ));
+    let result = Validator::default().validate(vec![
+        decl("x", Type::Integer, true, Expr::Number(1)),
+        assign("x", Expr::String("salam".to_string())),
+    ]);
+
+    assert_matches!(result, Err(ValidatorError::AssignmentTypeMismatch { .. }));
 }
 
 #[test]
 fn test_assignment_undefined_variable() {
-    let mut validator = Validator::new();
-    let mut program = Program {
-        expressions: vec![
-            // Heç yaradılmamış dəyişənə assign etmək cəhdi
-            Statement::Assignment {
-                name: "x".to_string(),
-                value: Box::new(Expr::Number(1)),
-            },
-        ],
-        functions: HashMap::new(),
-    };
-    let result = validator.validate(&mut program);
-    assert!(matches!(result, Err(ValidatorError::UndefinedVariable(_))));
+    let result = Validator::default().validate(vec![assign("x", Expr::Number(1))]);
+
+    assert_matches!(result, Err(ValidatorError::UndefinedVariable(_)));
 }

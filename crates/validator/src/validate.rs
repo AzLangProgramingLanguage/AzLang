@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use parser::{
     ast::{Expr::BuiltInCall, Statement, Symbol},
     shared_ast::{BuiltInFunction, StringEnum, Type},
@@ -11,7 +13,7 @@ use crate::{
     },
     errors::ValidatorError,
     expr::validate_expr,
-    helper::{get_type, reconcile_type},
+    helper::{get_type, reconcile_type, type_checking},
 };
 pub fn validate_statement(
     stmt: Statement,
@@ -49,48 +51,24 @@ pub fn validate_statement(
                 value: Box::new(val),
             }));
         }
-        Statement::Expr(expr) => match expr {
-            BuiltInCall { function, mut args } => {
-                let mut validated_args = Vec::new();
-                while let Some(arg) = args.pop() {
-                    validated_args.push(validate_expr(arg, ctx)?);
-                }
-
-                let return_type = match &function {
-                    &BuiltInFunction::Print => Type::Void,
-                    &BuiltInFunction::Input => Type::String(StringEnum::DynamicString),
-                    &BuiltInFunction::Len => Type::Natural,
-                    &BuiltInFunction::Number => Type::Integer,
-                    &BuiltInFunction::Sum => Type::Integer,
-                    &BuiltInFunction::Range => Type::Array(Box::new(Type::Integer)),
-                    &BuiltInFunction::LastWord => Type::Void,
-                    &BuiltInFunction::Timer => Type::Integer,
-                    &BuiltInFunction::Max => Type::Integer,
-                    &BuiltInFunction::Zig => Type::Void,
-                    &BuiltInFunction::StrLower
-                    | &BuiltInFunction::StrUpper
-                    | &BuiltInFunction::Trim
-                    | &BuiltInFunction::StrReverse
-                    | &BuiltInFunction::ConvertString => Type::String(StringEnum::DynamicString),
-                    &BuiltInFunction::Allocator => Type::Void,
-                    &BuiltInFunction::Min => Type::Integer,
-                    &BuiltInFunction::Sqrt => Type::Float,
-                    &BuiltInFunction::Mod => Type::Integer,
-                    &BuiltInFunction::Ceil => Type::Integer,
-                    &BuiltInFunction::Floor => Type::Integer,
-                    &BuiltInFunction::Round => Type::Integer,
-                };
-
-                program
-                    .expressions
-                    .push(Ast::Expr(ValidatorExpr::BuiltInCall {
-                        function,
-                        args: validated_args,
-                        return_type,
-                    }));
+        Statement::Assignment { name, value } => {
+            let inferred = get_type(&value, ctx);
+            let symbol = ctx.lookup_variable_mut_with_err(&name)?;
+            symbol.is_changed = true;
+            if !symbol.is_pointer {
+                return Err(ValidatorError::AssignmentToImmutableVariable(name));
             }
-            _ => todo!(),
-        },
+
+            type_checking(symbol.typ.clone(), inferred)?;
+
+            let val = validate_expr(*value, ctx)?;
+
+            program.expressions.push(Ast::Assign(name, Box::new(val)));
+        }
+        Statement::Expr(expr) => {
+            let expr = validate_expr(expr, ctx)?;
+            program.expressions.push(Ast::Expr(expr));
+        }
         _ => {}
     }
     Ok(())

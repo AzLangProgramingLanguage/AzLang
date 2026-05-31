@@ -60,29 +60,29 @@ pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
             // }
         }
 
-        Expr::BuiltInCall {  function , ..} => {
-            match function {
-                BuiltInFunction::Print => Type::Void,
-                BuiltInFunction::Input => Type::String(StringEnum::DynamicString),
-                BuiltInFunction::Len => Type::Natural,
-                BuiltInFunction::Number => Type::Integer,
-                BuiltInFunction::Sum => Type::Integer,
-                BuiltInFunction::Range => Type::Array(Box::new(Type::Integer)),
-                BuiltInFunction::LastWord => Type::Void,
-                BuiltInFunction::Timer => Type::Integer,
-                BuiltInFunction::Max => Type::Integer,
-                BuiltInFunction::Zig => Type::Void,
-                BuiltInFunction::StrLower | BuiltInFunction::StrUpper | BuiltInFunction::Trim | BuiltInFunction::StrReverse | BuiltInFunction::ConvertString => {
-                    Type::String(StringEnum::DynamicString)
-                }
-                BuiltInFunction::Allocator => Type::Void,
-                BuiltInFunction::Min => Type::Integer,
-                BuiltInFunction::Sqrt => Type::Float,
-                BuiltInFunction::Mod => Type::Integer,
-                BuiltInFunction::Ceil => Type::Integer,
-                BuiltInFunction::Floor => Type::Integer,
-                BuiltInFunction::Round => Type::Integer,
-            }
+        Expr::BuiltInCall { function, .. } => match function {
+            BuiltInFunction::Print => Type::Void,
+            BuiltInFunction::Input => Type::String(StringEnum::DynamicString),
+            BuiltInFunction::Len => Type::Natural,
+            BuiltInFunction::Number => Type::Integer,
+            BuiltInFunction::Sum => Type::Integer,
+            BuiltInFunction::Range => Type::Array(Box::new(Type::Integer)),
+            BuiltInFunction::LastWord => Type::Void,
+            BuiltInFunction::Timer => Type::Integer,
+            BuiltInFunction::Max => Type::Integer,
+            BuiltInFunction::Zig => Type::Void,
+            BuiltInFunction::StrLower
+            | BuiltInFunction::StrUpper
+            | BuiltInFunction::Trim
+            | BuiltInFunction::StrReverse
+            | BuiltInFunction::ConvertString => Type::String(StringEnum::DynamicString),
+            BuiltInFunction::Allocator => Type::Void,
+            BuiltInFunction::Min => Type::Integer,
+            BuiltInFunction::Sqrt => Type::Float,
+            BuiltInFunction::Mod => Type::Integer,
+            BuiltInFunction::Ceil => Type::Integer,
+            BuiltInFunction::Floor => Type::Integer,
+            BuiltInFunction::Round => Type::Integer,
         },
         Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
         Expr::BinaryOp {
@@ -141,24 +141,35 @@ pub fn validate_body<'a>(
     }
     Ok(())
 }
+pub fn type_checking(left: Type, right: Type) -> Result<(), ValidatorError> {
+    match (left, right) {
+        (Type::Any, _) => Ok(()),
+        (_, Type::Any) => Ok(()),
+        (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {
+            Ok(())
+        }
 
+        (expected, other) if expected != other => Err(ValidatorError::AssignmentTypeMismatch {
+            name: other.to_string(),
+            expected: expected.to_string(),
+            found: other.to_string(),
+        }),
+        _ => Ok(()),
+    }
+}
 pub fn reconcile_type(typ: Rc<Type>, inferred: Type, name: &str) -> Result<Type, ValidatorError> {
     match (&*typ, &inferred) {
         (Type::Any, _) => Ok(inferred),
         (other, Type::Any) => Ok(other.clone()),
         (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {
-            return Ok(Type::String(StringEnum::LiteralConstString));
+            Ok(Type::String(StringEnum::LiteralConstString))
         }
 
-        (expected, other) if inferred != *other => {
-            return Err(ValidatorError::DeclTypeMismatch {
-                name: name.to_string(),
-                expected: inferred.to_string(),
-                found: expected.to_string(),
-            });
-        }
-        other => {
-            return Ok(other.0.clone());
-        }
+        (expected, other) if inferred != *other => Err(ValidatorError::DeclTypeMismatch {
+            name: name.to_string(),
+            expected: inferred.to_string(),
+            found: expected.to_string(),
+        }),
+        other => Ok(other.0.clone()),
     }
 }

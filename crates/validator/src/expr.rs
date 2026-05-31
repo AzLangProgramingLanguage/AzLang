@@ -1,4 +1,14 @@
-use crate::{Validator, ast, errors::ValidatorError, helper::get_type};
+use parser::{
+    ast::Symbol,
+    shared_ast::{BuiltInFunction, StringEnum, Type},
+};
+
+use crate::{
+    Validator,
+    ast::{self, Ast},
+    errors::ValidatorError,
+    helper::get_type,
+};
 type ParserExpr = parser::ast::Expr;
 type ValidatorExpr = ast::Expr;
 
@@ -9,6 +19,48 @@ pub fn validate_expr(
     match expr {
         ParserExpr::String(s) => Ok(ValidatorExpr::String(s)),
         ParserExpr::Number(n) => Ok(ValidatorExpr::Number(n)),
+        ParserExpr::VariableRef { name, .. } => {
+            let symbol = ctx.lookup_variable_mut_with_err(&name)?;
+            symbol.is_used = true;
+            Ok(ValidatorExpr::VariableRef(name))
+        }
+        ParserExpr::BuiltInCall { function, mut args } => {
+            let mut validated_args = Vec::new();
+            while let Some(arg) = args.pop() {
+                validated_args.push(validate_expr(arg, ctx)?);
+            }
+
+            let return_type = match &function {
+                &BuiltInFunction::Print => Type::Void,
+                &BuiltInFunction::Input => Type::String(StringEnum::DynamicString),
+                &BuiltInFunction::Len => Type::Natural,
+                &BuiltInFunction::Number => Type::Integer,
+                &BuiltInFunction::Sum => Type::Integer,
+                &BuiltInFunction::Range => Type::Array(Box::new(Type::Integer)),
+                &BuiltInFunction::LastWord => Type::Void,
+                &BuiltInFunction::Timer => Type::Integer,
+                &BuiltInFunction::Max => Type::Integer,
+                &BuiltInFunction::Zig => Type::Void,
+                &BuiltInFunction::StrLower
+                | &BuiltInFunction::StrUpper
+                | &BuiltInFunction::Trim
+                | &BuiltInFunction::StrReverse
+                | &BuiltInFunction::ConvertString => Type::String(StringEnum::DynamicString),
+                &BuiltInFunction::Allocator => Type::Void,
+                &BuiltInFunction::Min => Type::Integer,
+                &BuiltInFunction::Sqrt => Type::Float,
+                &BuiltInFunction::Mod => Type::Integer,
+                &BuiltInFunction::Ceil => Type::Integer,
+                &BuiltInFunction::Floor => Type::Integer,
+                &BuiltInFunction::Round => Type::Integer,
+            };
+
+            Ok(ValidatorExpr::BuiltInCall {
+                function,
+                args: validated_args,
+                return_type,
+            })
+        }
         _ => todo!(), // Expr::String(_) | Expr::Float(_) | Expr::Bool(_) | Expr::Number(_) => Ok(()),
                       // Expr::Call {
                       //     target,
