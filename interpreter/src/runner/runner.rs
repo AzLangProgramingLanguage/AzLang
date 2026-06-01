@@ -1,4 +1,4 @@
-use core::{fmt, panic};
+use core::fmt;
 use std::fmt::Display;
 
 use super::Runner;
@@ -7,10 +7,10 @@ use crate::runner::{
     function_call::function_call, helpers::run_body,
 };
 
-use parser::{
-    ast::{Expr, Statement, TemplateChunk},
-    shared_ast::{BuiltInFunction, Type},
-};
+use parser::shared_ast::{BuiltInFunction, Type};
+use validator::ast::TemplateChunk;
+use validator::ast::{Ast, Expr};
+type Statement = Ast;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Number(i64),
@@ -107,7 +107,7 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
             name,
             args,
             returned_type,
-        } => function_call(ctx, target, name, args, returned_type),
+        } => function_call(ctx, target, name, args, Some(returned_type)),
         Expr::BuiltInCall {
             function,
             args,
@@ -136,7 +136,7 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
     }
 }
 
-pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
+pub fn runner_interpretator(ctx: &mut Runner, stmt: Ast) {
     match stmt {
         Statement::Decl {
             name,
@@ -144,7 +144,7 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
             is_mutable,
             value,
         } => {
-            let new_value: Value = get_primitive_value(ctx, *value, Some((*typ).clone()));
+            let new_value: Value = get_primitive_value(ctx, *value, Some(typ.clone()));
             ctx.variables.insert(
                 name.to_string(),
                 Variable {
@@ -196,90 +196,5 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Statement) {
             }
             other => todo!("{other:?} not yet implemented "),
         },
-        _ => {} /*
-                 Expr::Loop {
-                     var_name,
-                     iterable,
-                     body,
-                 } => {
-                     let iterable_value = runner_interpretator(ctx, *iterable);
-                     if let Expr::List(list) = iterable_value {
-                         for item in list {
-                             ctx.variables.insert(
-                                 var_name.to_string(),
-                                 Variable {
-                                     value: Rc::new(item),
-                                     typ: Rc::new(Type::Any),
-                                     is_mutable: false,
-                                 },
-                             );
-                             run_body(ctx, body.clone());
-                         }
-                     }
-                     Expr::Void
-                 }
-                 Expr::Return(value) => {
-                     ctx.current_return = runner_interpretator(ctx, *value);
-                     Expr::Void
-                 }
-                 Expr::Call {
-                     target,
-                     name,
-                     args,
-                     returned_type,
-                 } => function_call(ctx, target, name, args, returned_type),
-                 Expr::Assignment { name, value, .. } => {
-                     let new_value: Expr = runner_interpretator(ctx, *value);
-                     if let Some(var) = ctx.variables.get_mut(&name.to_string()) {
-                         var.value = Rc::new(new_value);
-                     }
-
-                     Expr::Void
-                 }
-                 Expr::Condition { main, elif, other } => {
-                                          Expr::Void
-                 }
-                 Expr::Index {
-                     target,
-                     index,
-                     target_type,
-                 } => {
-                     let new_target = runner_interpretator(ctx, *target);
-                     let new_index = runner_interpretator(ctx, *index);
-                     match (new_target, new_index) {
-                         (Expr::List(s), Expr::Number(n)) => {
-                             return s.get(n as usize).unwrap().clone(); //TODO: Uncessessary CLone
-                         }
-                         (Expr::String(s), Expr::Number(n)) => {
-                             return Expr::Char(s.chars().nth(n as usize).unwrap()); /* TODO: Used unwrap
-                             remove it, it's too
-                             dangerious
-                              */
-                         }
-                         _ => {}
-                     }
-                     Expr::Void
-                 }
-                 Expr::BinaryOp {
-                     left,
-                     right,
-                     op,
-                     return_type,
-                 } => binary_op_runner(ctx, left, right, op, return_type),
-
-                 Expr::BuiltInCall {
-                     function,
-                     args,
-                     return_type,
-                 } => builthin_call_runner(ctx, function, args, return_type),
-                 Expr::VariableRef { name, symbol } => {
-                     if let Some(var) = ctx.variables.get(&name) {
-                         return var.value.as_ref().clone();
-                     }
-
-                     Expr::Void
-                 }
-                 other => other,
-                */
     }
 }

@@ -5,11 +5,7 @@ use parser::{
     shared_ast::{BuiltInFunction, StringEnum, Type},
 };
 
-use crate::{
-    Validator, ast::Program, errors::ValidatorError, expr::validate_expr,
-    validate::validate_statement,
-};
-//TODO: List Type Definition has a problem. We must use Type::Integer instead of Type::Natural
+use crate::{Validator, ast::Ast, errors::ValidatorError, validate::validate_statement};
 pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
     match value {
         Expr::Number(_) => Type::Integer,
@@ -84,13 +80,11 @@ pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
             BuiltInFunction::Floor => Type::Integer,
             BuiltInFunction::Round => Type::Integer,
         },
-        Expr::Call { returned_type, .. } => returned_type.clone().unwrap_or(Type::Any), /* TODO: Burada Any Olmamalıdır */
-        Expr::BinaryOp {
-            left,
-            right,
-            op,
-            return_type,
-        } => {
+        Expr::Call { name, .. } => {
+            todo!()
+            // ctx.functions.get()
+        }
+        Expr::BinaryOp { left, right, op } => {
             let left_type = get_type(left, ctx);
             let right_type = get_type(right, ctx);
             let last_type: Type = match *op {
@@ -133,13 +127,13 @@ pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
 
 pub fn validate_body<'a>(
     body: Vec<Statement>,
-    program: &mut Program,
     ctx: &mut Validator,
-) -> Result<(), ValidatorError> {
+) -> Result<Vec<Ast>, ValidatorError> {
+    let mut result = Vec::new();
     for expr in body {
-        validate_statement(expr, program, ctx)?;
+        result.push(validate_statement(expr, ctx)?);
     }
-    Ok(())
+    Ok(result)
 }
 pub fn type_checking(left: Type, right: Type) -> Result<(), ValidatorError> {
     match (left, right) {

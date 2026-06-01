@@ -1,12 +1,16 @@
 use std::{collections::HashMap, vec};
-mod ast;
+pub mod ast;
 pub mod errors;
 pub mod expr;
 //pub mod function_call;
 mod helper;
 mod tests;
 pub mod validate;
-use crate::{ast::Program, errors::ValidatorError, validate::validate_statement};
+use crate::{
+    ast::{Function, Program},
+    errors::ValidatorError,
+    validate::validate_statement,
+};
 use parser::{
     ast::{Expr, FunctionDef, Parameter, Statement, Symbol},
     shared_ast::Type,
@@ -81,7 +85,7 @@ impl Validator {
         }
     }
 
-    pub fn validate(mut self, ast: Vec<Statement>) -> Result<Validator, ValidatorError> {
+    pub fn validate(mut self, ast: Vec<Statement>) -> Result<(Validator, Program), ValidatorError> {
         let mut program = Program {
             functions: vec![],
             expressions: vec![],
@@ -89,7 +93,30 @@ impl Validator {
         self.variables.push(HashMap::new());
         self.function_decl(&ast);
         for stmt in ast {
-            validate_statement(stmt, &mut program, &mut self)?;
+            match stmt {
+                Statement::FunctionDef {
+                    name,
+                    return_typ,
+                    params,
+                    body,
+                } => {
+                    let mut validated_body = Vec::new();
+                    for s in body {
+                        validated_body.push(validate_statement(s, &mut self)?);
+                    }
+                    program.functions.push(Function {
+                        name,
+                        body: validated_body,
+                        params,
+                        return_typ,
+                    });
+                }
+                stmt => {
+                    program
+                        .expressions
+                        .push(validate_statement(stmt, &mut self)?);
+                }
+            }
         }
 
         if let Some(scope) = self.variables.last() {
@@ -97,13 +124,13 @@ impl Validator {
                 if !symbol.is_used {
                     return Err(ValidatorError::NotUsedVariable(name.clone()));
                 }
-                if symbol.is_pointer && !symbol.is_changed {
+                if symbol.is_mutable && !symbol.is_changed {
                     return Err(ValidatorError::NeverChangedMuttableVariable(name.clone()));
                 }
             }
         }
 
-        Ok(self)
+        Ok((self, program))
     }
 
     // pub fn validate_user_type(&self, name: &str) -> Result<(), ValidatorError> {

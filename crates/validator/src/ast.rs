@@ -1,39 +1,88 @@
-use std::collections::HashMap;
-
 use parser::{
-    ast::{Parameter, Symbol},
+    ast::{Operation, Parameter, Symbol},
     shared_ast::{BuiltInFunction, Type},
 };
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Function {
-    name: String,
-    body: Vec<Ast>,
-    params: Vec<Parameter>,
-    return_typ: Type,
+    pub name: String,
+    pub body: Vec<Ast>,
+    pub params: Vec<Parameter>,
+    pub return_typ: Type,
 }
+#[derive(Debug, Clone, PartialEq)]
 pub struct Program {
     pub functions: Vec<Function>,
     pub expressions: Vec<Ast>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct IF {
+    pub condition: Box<Expr>,
+    pub body: Vec<Ast>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Else {
+    pub body: Vec<Ast>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TemplateChunk {
+    Literal(String),
+    Expr(Box<Expr>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     String(String),
     Number(i64),
+    Float(f64),
+    Bool(bool),
+    Char(char),
+    TemplateString(Vec<TemplateChunk>),
+    List(Vec<Expr>),
+    Void,
+    Return(Box<Expr>),
+    VariableRef {
+        name: String,
+        symbol: Option<Symbol>,
+    },
+    BinaryOp {
+        left: Box<Expr>,
+        right: Box<Expr>,
+        op: Operation,
+        return_type: Type,
+    },
+    Call {
+        target: Option<Box<Expr>>,
+        name: Box<Expr>,
+        args: Vec<Expr>,
+        returned_type: Type,
+    },
     BuiltInCall {
         function: BuiltInFunction,
         args: Vec<Expr>,
         return_type: Type,
     },
-    VariableRef(String),
 }
 
-pub struct Decl {
-    pub name: String,
-    pub typ: Type,
-    pub value: Box<Expr>,
-}
+#[derive(Debug, Clone, PartialEq)]
 pub enum Ast {
-    Decl(Decl),
-    Assign(String, Box<Expr>),
+    Decl {
+        name: String,
+        typ: Type,
+        is_mutable: bool,
+        value: Box<Expr>,
+    },
+    Assignment {
+        name: String,
+        value: Box<Expr>,
+    },
+    Condition {
+        main: IF,
+        elif: Vec<IF>,
+        other: Option<Else>,
+    },
     Expr(Expr),
 }

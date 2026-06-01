@@ -1,7 +1,6 @@
-use parser::{
-    ast::{Expr, Statement, Symbol},
-    shared_ast::Type,
-};
+use parser::shared_ast::Type;
+
+use validator::ast::{Ast, Expr};
 
 use crate::runner::{
     Runner, Variable,
@@ -16,14 +15,7 @@ pub fn function_call(
     _returned_type: Option<Type>,
 ) -> Value {
     match *name {
-        Expr::VariableRef {
-            name,
-            symbol:
-                Some(Symbol {
-                    typ: Type::Function,
-                    ..
-                }),
-        } => {
+        Expr::VariableRef { name, symbol: _ } => {
             if let Some(function) = ctx.functions.get(&name).cloned() {
                 for (index, param) in function.params.iter().enumerate() {
                     let variable = get_primitive_value(ctx, args[index].clone(), None);
@@ -31,15 +23,13 @@ pub fn function_call(
                         param.name.clone(),
                         Variable {
                             value: variable,
-                            // typ: Rc::new(param.typ.clone()),
-                            // is_mutable: param.is_mutable,
                         },
                     );
                 }
                 for stmt in function.body.clone() {
                     match stmt {
-                        Statement::Expr(Expr::Return(e)) => {
-                            return get_primitive_value(ctx, *e, function.return_type);
+                        Ast::Expr(Expr::Return(e)) => {
+                            return get_primitive_value(ctx, *e, Some(function.return_type));
                         }
                         _ => runner_interpretator(ctx, stmt),
                     }

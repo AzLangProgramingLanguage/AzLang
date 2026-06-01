@@ -1,18 +1,32 @@
 use std::io::{self, Write};
-use validator::Validator;
+use validator::{Validator, ast::Ast};
 mod errors;
 mod runner;
 use crate::{errors::InterPreterError, runner::Runner};
-use parser::parser;
-
+use parser::{ast::Parameter, parser, shared_ast::Type};
+#[derive(Debug, Clone, PartialEq)]
+pub struct Function {
+    body: Vec<Ast>,
+    params: Vec<Parameter>,
+    return_type: Type,
+}
 pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
     let sdk = file_system::read_file(path)?;
-    let mut parsed_program = parser(sdk)?;
-    let mut validator = validator::Validator::new();
-    validator.validate(&mut parsed_program)?;
+    let parsed_program = parser(sdk)?;
+    let validator = validator::Validator::default();
+    let result = validator.validate(parsed_program)?;
     let mut runner = Runner::new();
-    runner.functions = parsed_program.functions;
-    for stmt in parsed_program.expressions {
+    for function in result.1.functions {
+        runner.functions.insert(
+            function.name,
+            Function {
+                body: function.body,
+                params: function.params,
+                return_type: function.return_typ,
+            },
+        );
+    }
+    for stmt in result.1.expressions {
         runner.run(stmt);
     }
     Ok(())
@@ -21,7 +35,7 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
 pub fn interpreter_run_repl() -> Result<(), InterPreterError> {
     println!("AzLang REPL başladı. Çıxmaq üçün 'exit' yaz.");
     let mut runner = Runner::new();
-    let mut validator = Validator::new();
+    let mut validator = Validator::default();
 
     loop {
         print!("> ");
@@ -35,16 +49,20 @@ pub fn interpreter_run_repl() -> Result<(), InterPreterError> {
         if trimmed == "exit" {
             return Ok(());
         }
-        let expressions = {
-            let mut parsed_program = parser(input)?;
-            validator.validate(&mut parsed_program)?;
-            for function in parsed_program.functions {
-                runner.functions.insert(function.0, function.1);
-            }
-            parsed_program.expressions
-        };
-
-        for expr in expressions {
+        let parsed_program = parser(input)?;
+        let (new_validator, program) = validator.validate(parsed_program)?;
+        validator = new_validator;
+        for function in program.functions {
+            runner.functions.insert(
+                function.name,
+                Function {
+                    body: function.body,
+                    params: function.params,
+                    return_type: function.return_typ,
+                },
+            );
+        }
+        for expr in program.expressions {
             runner.run(expr);
         }
     }

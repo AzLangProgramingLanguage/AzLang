@@ -5,11 +5,13 @@ mod helpers;
 mod runner;
 mod tests;
 use parser::{
-    ast::{Expr, FunctionDef, Statement},
+    ast::{FunctionDef, Statement},
     shared_ast::Type,
 };
+use parser::ast::Expr as ParserExpr;
+use validator::ast::{Ast, Expr};
 
-use crate::runner::runner::Value;
+use crate::{Function, runner::runner::Value};
 mod binary_op;
 mod handlers;
 
@@ -22,14 +24,14 @@ pub struct Variable {
 struct Method {
     name: String,
     params: Vec<(String, Type)>,
-    body: Vec<Expr>,
+    body: Vec<ParserExpr>,
     return_type: Option<Type>,
 }
 
 #[derive(Debug)]
 pub struct StructDef {
     name: String,
-    fields: Vec<(String, Type, Option<Expr>)>,
+    fields: Vec<(String, Type, Option<ParserExpr>)>,
     methods: Vec<Method>,
 }
 
@@ -44,7 +46,7 @@ pub struct UnionType {
 pub struct Runner {
     variables: HashMap<String, Variable>,
     structdefs: HashMap<String, StructDef>,
-    pub functions: HashMap<String, FunctionDef>,
+    pub functions: HashMap<String, Function>,
     uniontypes: HashMap<String, UnionType>,
     current_return: Expr,
 }
@@ -60,7 +62,7 @@ impl Runner {
         }
     }
 
-    pub fn run(&mut self, expr: Statement) {
+    pub fn run(&mut self, expr: Ast) {
         runner::runner_interpretator(self, expr);
     }
 }
