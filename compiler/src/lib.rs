@@ -1,8 +1,8 @@
-mod cleaner;
+// mod cleaner;
 use file_system::errors::FileSystemError;
 use parser::parser;
 
-use crate::{builder::build, cleaner::clean_ast, errors::CompilerError};
+use crate::{builder::build, errors::CompilerError};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -14,13 +14,13 @@ mod tests;
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let sdk = file_system::read_file(path)?;
 
-    let mut parsed_program = parser(sdk)?;
+    let parsed_program = parser(sdk)?;
 
-    let mut validator = validator::Validator::new();
-    validator.validate(&mut parsed_program)?;
+    let validator = validator::Validator::default();
+    let result = validator.validate(parsed_program)?;
 
     let mut ctx = transpiler::TranspileContext::default();
-    let code = ctx.transpile(parsed_program);
+    let code = ctx.transpile();
 
     let output_zig = bin_create_dir()?;
 

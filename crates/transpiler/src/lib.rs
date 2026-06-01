@@ -23,34 +23,34 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
             }
             String::from("false")
         }
-        Expr::VariableRef { name, symbol } => {
-            if let Some(sym) = symbol
-                && sym.is_pointer
-            {
-                format!("*{name}")
-            } else {
-                name
-            }
-        }
-        Expr::BuiltInCall {
-            function,
-            mut args,
-            return_type,
-        } => match function {
-            BuiltInFunction::Print => print::transpile_print(args.swap_remove(0), ctx),
-
-            _ => todo!(),
-        },
-        Expr::BinaryOp {
-            left,
-            right,
-            op,
-            return_type,
-        } => {
-            let left = transpile_expr(*left, ctx);
-            let right = transpile_expr(*right, ctx);
-            format!("{left} {op} {right}")
-        }
+        // Expr::VariableRef { name, symbol } => {
+        //     if let Some(sym) = symbol
+        //         && sym.is_pointer
+        //     {
+        //         format!("*{name}")
+        //     } else {
+        //         name
+        //     }
+        // }
+        // Expr::BuiltInCall {
+        //     function,
+        //     mut args,
+        //     return_type,
+        // } => match function {
+        //     BuiltInFunction::Print => print::transpile_print(args.swap_remove(0), ctx),
+        //
+        //     _ => todo!(),
+        // },
+        // Expr::BinaryOp {
+        //     left,
+        //     right,
+        //     op,
+        //     return_type,
+        // } => {
+        //     let left = transpile_expr(*left, ctx);
+        //     let right = transpile_expr(*right, ctx);
+        //     format!("{left} {op} {right}")
+        // }
         Expr::List(exprs) => {
             let mut result = format!("[{}]{} {{", exprs.len(), map_typ(&Type::Natural));
             for expr in exprs {
@@ -61,30 +61,30 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
             result.push('}');
             result
         }
-        Expr::Call {
-            target,
-            name,
-            args,
-            returned_type,
-        } => match *name {
-            Expr::VariableRef {
-                name,
-                symbol:
-                    Some(Symbol {
-                        typ: Type::Function,
-                        ..
-                    }),
-            } => {
-                let mut parameters = String::new();
-                for arg in args {
-                    parameters.push_str(&transpile_expr(arg, ctx));
-                    parameters.push(',')
-                }
-                parameters.pop();
-                format!("{name}({parameters})")
-            }
-            _ => String::new(),
-        },
+        // Expr::Call {
+        //     target,
+        //     name,
+        //     args,
+        //     returned_type,
+        // } => match *name {
+        //     Expr::VariableRef {
+        //         name,
+        //         symbol:
+        //             Some(Symbol {
+        //                 typ: Type::Function,
+        //                 ..
+        //             }),
+        //     } => {
+        //         let mut parameters = String::new();
+        //         for arg in args {
+        //             parameters.push_str(&transpile_expr(arg, ctx));
+        //             parameters.push(',')
+        //         }
+        //         parameters.pop();
+        //         format!("{name}({parameters})")
+        //     }
+        //     _ => String::new(),
+        // },
         other => panic!("Buraya çatmamalıydı. Burası hele hazır deyil {other:?}"),
     }
 }
@@ -158,27 +158,28 @@ impl TranspileContext {
         }
     }
 
-    pub fn transpile(&mut self, program: Program) -> String {
-        let mut body = String::new();
-
-        for stmt in program.expressions {
-            if is_semicolon_needed(&stmt) {
-                body.push_str(&transpile_stmt(stmt, self));
-                body.push(';');
-            } else {
-                body.push_str(&transpile_stmt(stmt, self));
-            }
-        }
-        let mut imports = self
-            .imports
-            .iter()
-            .map(|s| s.as_str())
-            .collect::<Vec<_>>()
-            .join(";");
-        if !self.imports.is_empty() {
-            imports.push(';');
-        }
-        format!("{imports} pub fn main() !void {{{body}}}")
+    pub fn transpile(&mut self) -> String {
+        String::new()
+        // let mut body = String::new();
+        //
+        // for stmt in program.expressions {
+        //     if is_semicolon_needed(&stmt) {
+        //         body.push_str(&transpile_stmt(stmt, self));
+        //         body.push(';');
+        //     } else {
+        //         body.push_str(&transpile_stmt(stmt, self));
+        //     }
+        // }
+        // let mut imports = self
+        //     .imports
+        //     .iter()
+        //     .map(|s| s.as_str())
+        //     .collect::<Vec<_>>()
+        //     .join(";");
+        // if !self.imports.is_empty() {
+        //     imports.push(';');
+        // }
+        // format!("{imports} pub fn main() !void {{{body}}}")
     }
 }
 //
