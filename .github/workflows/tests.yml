@@ -1,11 +1,36 @@
 name: AzLang Tests
 on: [push, pull_request]
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  tests:
+  build_and_test:
+    name: Build & Test (Rust 1.96)
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install Rust (1.96)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.96.0
+          components: rustfmt, clippy
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-rust-1.96
+
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Build
+        run: cargo build --verbose
 
       - name: Run parser tests
         id: parser
