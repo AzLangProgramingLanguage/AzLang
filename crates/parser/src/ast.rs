@@ -183,7 +183,6 @@ pub enum Expr {
         target: Option<Box<Expr>>,
         name: Box<Expr>,
         args: Vec<Expr>,
-        returned_type: Option<Type>,
     },
 
     StructInit {
@@ -195,7 +194,6 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
         op: Operation,
-        return_type: Type,
     },
     Break,
     Continue,
@@ -215,7 +213,7 @@ impl Display for Expr {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Symbol {
     pub typ: Type,
-    pub is_pointer: bool,
+    pub is_mutable: bool,
     pub is_used: bool,
     pub is_changed: bool,
 }

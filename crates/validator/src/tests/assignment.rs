@@ -38,7 +38,8 @@ fn print_variable(name: &str) -> Statement {
 
 #[test]
 fn test_assignment_success() {
-    let result = Validator::default()
+    let validator = Validator::default();
+    let result = validator
         .validate(vec![
             decl("x", Type::Integer, true, Expr::Number(1)),
             assign("x", Expr::Number(2)),
@@ -47,6 +48,7 @@ fn test_assignment_success() {
         .expect("valid program should not fail");
 
     let symbol = result
+        .0
         .variables
         .last()
         .expect("variable stack should not be empty")

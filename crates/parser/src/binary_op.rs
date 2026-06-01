@@ -87,7 +87,6 @@ fn parse_binary_op_with_precedence(
             target: None,
             name: Box::new(left),
             args,
-            returned_type: Some(Type::Void),
         });
     }
     loop {
@@ -156,7 +155,6 @@ fn parse_binary_op_with_precedence(
             left: Box::new(left),
             right: Box::new(right),
             op,
-            return_type: Type::Any,
         };
     }
 

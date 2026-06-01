@@ -1,4 +1,5 @@
 use tokenizer::iterator::{SourceSpan, Tokens};
+
 use tokenizer::tokens::Token;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -22,4 +23,5 @@ mod builtin_test;
 mod condition;
 mod decl;
 mod enum_test;
+mod function_call;
 mod function_decl;

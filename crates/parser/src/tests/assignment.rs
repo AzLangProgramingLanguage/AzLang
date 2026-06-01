@@ -2,13 +2,12 @@
 mod tests {
     use crate::assign::parse_assign;
     use crate::ast::{Expr, Operation, Statement};
-    use crate::binary_op::{parse_expression, parse_statement};
+    use crate::binary_op::parse_statement;
     use crate::decl::parse_decl;
     use crate::shared_ast::{StringEnum, Type};
     use crate::tests::{TestResult, create_tokens};
     use std::rc::Rc;
-    use tokenizer::iterator::{SourceSpan, Tokens};
-    use tokenizer::tokens::{self, Token};
+    use tokenizer::tokens::Token;
 
     #[test]
     fn test_parse_assign_simple() -> TestResult {
@@ -93,7 +92,6 @@ mod tests {
                     left: Box::new(Expr::Number(10)),
                     right: Box::new(Expr::Number(20)),
                     op: Operation::Add,
-                    return_type: Type::Any
                 })
             }
         );

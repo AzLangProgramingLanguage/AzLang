@@ -17,7 +17,6 @@ fn test_binary_op_print() -> TestResult {
             left: Box::new(Expr::Number(2)),
             right: Box::new(Expr::Number(2)),
             op: Operation::Add,
-            return_type: Type::Any,
         }
     );
     Ok(())
@@ -40,11 +39,9 @@ fn test_multi_add_binary_op() -> TestResult {
                 left: Box::new(Expr::Number(2)),
                 right: Box::new(Expr::Number(2)),
                 op: Operation::Add,
-                return_type: Type::Any,
             }),
             right: Box::new(Expr::Number(4)),
             op: Operation::Add,
-            return_type: Type::Any,
         }
     );
     Ok(())
@@ -76,10 +73,8 @@ fn test_multiply_add_binary_op() -> TestResult {
                 left: Box::new(Expr::Number(2)),
                 right: Box::new(Expr::Number(4)),
                 op: Operation::Multiply,
-                return_type: Type::Any,
             }),
             op: Operation::Add,
-            return_type: Type::Any,
         }
     );
     assert_eq!(
@@ -89,11 +84,9 @@ fn test_multiply_add_binary_op() -> TestResult {
                 left: Box::new(Expr::Number(2)),
                 right: Box::new(Expr::Number(2)),
                 op: Operation::Multiply,
-                return_type: Type::Any,
             }),
             right: Box::new(Expr::Number(4)),
             op: Operation::Add,
-            return_type: Type::Any,
         }
     );
     Ok(())
@@ -111,7 +104,6 @@ fn test_equal_binary_op() -> TestResult {
             left: Box::new(Expr::Number(2)),
             right: Box::new(Expr::Number(2)),
             op: Operation::Equal,
-            return_type: Type::Any,
         }
     );
     assert_eq!(
@@ -120,7 +112,6 @@ fn test_equal_binary_op() -> TestResult {
             left: Box::new(Expr::Number(2)),
             right: Box::new(Expr::Number(2)),
             op: Operation::NotEqual,
-            return_type: Type::Any,
         }
     );
     Ok(())
