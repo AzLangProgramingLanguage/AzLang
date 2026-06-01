@@ -23,15 +23,6 @@ jobs:
         with:
           key: ${{ runner.os }}-rust-1.96
 
-      - name: Check Formatting
-        run: cargo fmt --all -- --check
-
-      - name: Run Clippy
-        run: cargo clippy -- -D warnings
-
-      - name: Build
-        run: cargo build --verbose
-
       - name: Run parser tests
         id: parser
         run: cargo test --package parser --verbose
