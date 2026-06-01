@@ -10,41 +10,16 @@ jobs:
       - name: Run parser tests
         id: parser
         run: cargo test --package parser --verbose
-        continue-on-error: true
 
       - name: Run validator tests
         id: validator
         run: cargo test --package validator --verbose
-        continue-on-error: true
 
       - name: Run transpiler tests
         id: transpiler
         run: cargo test --package transpiler --verbose
-        continue-on-error: true
 
       - name: Run compiler tests
         id: compiler
         run: cargo test --package compiler --verbose
-        continue-on-error: true
 
-      - name: Final result
-        if: always()
-        run: |
-          results=(
-            "parser:${{ steps.parser.outcome }}"
-            "validator:${{ steps.validator.outcome }}"
-            "transpiler:${{ steps.transpiler.outcome }}"
-            "compiler:${{ steps.compiler.outcome }}"
-          )
-          failed=0
-          for r in "${results[@]}"; do
-            name="${r%%:*}"
-            status="${r##*:}"
-            if [ "$status" != "success" ]; then
-              echo "❌ $name: $status"
-              failed=1
-            else
-              echo "✅ $name: $status"
-            fi
-          done
-          exit $failed
