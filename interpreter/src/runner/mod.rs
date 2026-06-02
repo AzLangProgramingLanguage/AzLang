@@ -4,11 +4,11 @@ pub mod function_call;
 mod helpers;
 mod runner;
 mod tests;
+use parser::ast::Expr as ParserExpr;
 use parser::{
     ast::{FunctionDef, Statement},
     shared_ast::Type,
 };
-use parser::ast::Expr as ParserExpr;
 use validator::ast::{Ast, Expr};
 
 use crate::{Function, runner::runner::Value};

@@ -27,7 +27,7 @@ pub fn validate_statement(
                 return Err(ValidatorError::AlreadyDecl(name.to_string()));
             }
 
-            let mut inferred = get_type(&value, ctx);
+            let mut inferred = get_type(&value, ctx)?;
             inferred = reconcile_type(typ, inferred, &name)?;
 
             ctx.declare_variable(
@@ -49,7 +49,7 @@ pub fn validate_statement(
             })
         }
         Statement::Assignment { name, value } => {
-            let inferred = get_type(&value, ctx);
+            let inferred = get_type(&value, ctx)?;
             let symbol = ctx.lookup_variable_mut_with_err(&name)?;
             symbol.is_changed = true;
             if !symbol.is_mutable {

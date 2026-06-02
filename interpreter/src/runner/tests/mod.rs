@@ -1,10 +1,10 @@
 #[cfg(test)]
-
+mod binary_op;
 mod tests {
-    use validator::ast::{Expr, Ast};
+    use validator::ast::{Ast, Expr};
 
-    use crate::runner::{Runner, function_call::function_call, runner::Value};
     use crate::Function;
+    use crate::runner::{Runner, function_call::function_call, runner::Value};
     use parser::shared_ast::Type;
 
     #[test]

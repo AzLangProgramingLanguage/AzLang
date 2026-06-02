@@ -1,5 +1,6 @@
 use parser::{
     ast::Symbol,
+    binary_op,
     shared_ast::{BuiltInFunction, StringEnum, Type},
 };
 
@@ -16,6 +17,7 @@ pub fn validate_expr(
     expr: ParserExpr,
     ctx: &mut Validator,
 ) -> Result<ValidatorExpr, ValidatorError> {
+    let return_type = get_type(&expr, ctx)?;
     match expr {
         ParserExpr::String(s) => Ok(ValidatorExpr::String(s)),
         ParserExpr::Number(n) => Ok(ValidatorExpr::Number(n)),
@@ -30,11 +32,9 @@ pub fn validate_expr(
                     parser::ast::TemplateChunk::Literal(l) => {
                         Ok(crate::ast::TemplateChunk::Literal(l))
                     }
-                    parser::ast::TemplateChunk::Expr(e) => {
-                        Ok(crate::ast::TemplateChunk::Expr(Box::new(validate_expr(
-                            *e, ctx,
-                        )?)))
-                    }
+                    parser::ast::TemplateChunk::Expr(e) => Ok(crate::ast::TemplateChunk::Expr(
+                        Box::new(validate_expr(*e, ctx)?),
+                    )),
                 })
                 .collect();
             Ok(ValidatorExpr::TemplateString(validated?))
@@ -51,22 +51,11 @@ pub fn validate_expr(
         ParserExpr::VariableRef { name, symbol } => {
             let s = ctx.lookup_variable_mut_with_err(&name)?;
             s.is_used = true;
-            Ok(ValidatorExpr::VariableRef {
-                name,
-                symbol,
-            })
+            Ok(ValidatorExpr::VariableRef { name, symbol })
         }
         ParserExpr::BinaryOp { left, right, op } => {
             let left = validate_expr(*left, ctx)?;
             let right = validate_expr(*right, ctx)?;
-            let return_type = get_type(
-                &ParserExpr::BinaryOp {
-                    left: Box::new(ParserExpr::Void),
-                    right: Box::new(ParserExpr::Void),
-                    op,
-                },
-                ctx,
-            );
             Ok(ValidatorExpr::BinaryOp {
                 left: Box::new(left),
                 right: Box::new(right),
@@ -74,11 +63,7 @@ pub fn validate_expr(
                 return_type,
             })
         }
-        ParserExpr::Call {
-            target,
-            name,
-            args,
-        } => {
+        ParserExpr::Call { target, name, args } => {
             let target = {
                 match target {
                     Some(t) => Some(Box::new(validate_expr(*t, ctx)?)),
@@ -91,12 +76,13 @@ pub fn validate_expr(
                 validated_args.push(validate_expr(arg, ctx)?);
             }
             let returned_type = match &*name {
-                ValidatorExpr::VariableRef { name: func_name, .. } => {
-                    ctx.functions
-                        .get(func_name)
-                        .map(|f| f.return_type.clone())
-                        .unwrap_or(Type::Any)
-                }
+                ValidatorExpr::VariableRef {
+                    name: func_name, ..
+                } => ctx
+                    .functions
+                    .get(func_name)
+                    .map(|f| f.return_type.clone())
+                    .unwrap_or(Type::Any),
                 _ => Type::Any,
             };
             Ok(ValidatorExpr::Call {

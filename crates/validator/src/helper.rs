@@ -6,122 +6,130 @@ use parser::{
 };
 
 use crate::{Validator, ast::Ast, errors::ValidatorError, validate::validate_statement};
-pub fn get_type<'a>(value: &Expr, ctx: &Validator) -> Type {
+pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
     match value {
-        Expr::Number(_) => Type::Integer,
-        Expr::TemplateString(_) => Type::String(StringEnum::DynamicString),
+        Expr::Number(_) => Ok(Type::Integer),
+        Expr::TemplateString(_) => Ok(Type::String(StringEnum::DynamicString)),
         Expr::UnaryOp { op, expr } => {
-            get_type(expr, ctx);
+            get_type(expr, ctx)?;
             match &*op {
-                Operation::Subtract => Type::Integer,
-                Operation::Not => Type::Bool,
-                _ => Type::Any,
+                Operation::Subtract => Ok(Type::Integer),
+                Operation::Not => Ok(Type::Bool),
+                _ => Err(ValidatorError::UnknownType(format!("unary op {op:?}"))),
             }
         }
-        Expr::Bool(_) => Type::Bool,
-
-        Expr::Float(_) => Type::Float,
-        Expr::String(_) => Type::String(StringEnum::LiteralString),
+        Expr::Bool(_) => Ok(Type::Bool),
+        Expr::Float(_) => Ok(Type::Float),
+        Expr::String(_) => Ok(Type::String(StringEnum::LiteralString)),
         Expr::List(items) => {
-            if items.len() > 0 {
-                let item_type = get_type(&items[0], ctx);
-                for item in &items[1..] {
-                    let t = get_type(item, ctx);
-                    if t != item_type {
-                        return Type::Array(Box::new(Type::Any));
-                    }
-                }
-
-                Type::Array(Box::new(item_type))
-            } else {
-                Type::Any
+            if items.is_empty() {
+                return Err(ValidatorError::UnknownType("empty list".to_string()));
             }
+            let item_type = get_type(&items[0], ctx)?;
+            for item in &items[1..] {
+                let t = get_type(item, ctx)?;
+                if t != item_type {
+                    return Err(ValidatorError::TypeMismatch {
+                        expected: item_type.clone(),
+                        found: t,
+                    });
+                }
+            }
+            Ok(Type::Array(Box::new(item_type)))
         }
         Expr::Index {
             target: _,
             index: _,
             target_type,
-        } => target_type.clone(),
+        } => Ok(target_type.clone()),
         Expr::VariableRef { name, symbol } => {
-            return symbol.as_ref().unwrap().typ.clone();
+            if let Some(s) = symbol {
+                return Ok(s.typ.clone());
+            }
+            if let Some(s) = ctx.lookup_variable(name) {
+                return Ok(s.typ.clone());
+            }
+            Err(ValidatorError::UndefinedVariable(name.clone()))
         }
-        Expr::StructInit { name, .. } => {
-            Type::Any
-            // if let Some((..)) = ctx.struct_defs.get(name.as_ref()) {
-            //     Type::User(*name)
-            // } else if let Some((..)) = ctx.union_defs.get(name.as_ref()) {
-            //     Type::User(name.to_string())
-            // } else {
-            //     Type::Any
-            // }
-        }
-
+        Expr::StructInit { name, .. } => Err(ValidatorError::UnknownStruct(name.clone())),
         Expr::BuiltInCall { function, .. } => match function {
-            BuiltInFunction::Print => Type::Void,
-            BuiltInFunction::Input => Type::String(StringEnum::DynamicString),
-            BuiltInFunction::Len => Type::Natural,
-            BuiltInFunction::Number => Type::Integer,
-            BuiltInFunction::Sum => Type::Integer,
-            BuiltInFunction::Range => Type::Array(Box::new(Type::Integer)),
-            BuiltInFunction::LastWord => Type::Void,
-            BuiltInFunction::Timer => Type::Integer,
-            BuiltInFunction::Max => Type::Integer,
-            BuiltInFunction::Zig => Type::Void,
+            BuiltInFunction::Print => Ok(Type::Void),
+            BuiltInFunction::Input => Ok(Type::String(StringEnum::DynamicString)),
+            BuiltInFunction::Len => Ok(Type::Natural),
+            BuiltInFunction::Number => Ok(Type::Integer),
+            BuiltInFunction::Sum => Ok(Type::Integer),
+            BuiltInFunction::Range => Ok(Type::Array(Box::new(Type::Integer))),
+            BuiltInFunction::LastWord => Ok(Type::Void),
+            BuiltInFunction::Timer => Ok(Type::Integer),
+            BuiltInFunction::Max => Ok(Type::Integer),
+            BuiltInFunction::Zig => Ok(Type::Void),
             BuiltInFunction::StrLower
             | BuiltInFunction::StrUpper
             | BuiltInFunction::Trim
             | BuiltInFunction::StrReverse
-            | BuiltInFunction::ConvertString => Type::String(StringEnum::DynamicString),
-            BuiltInFunction::Allocator => Type::Void,
-            BuiltInFunction::Min => Type::Integer,
-            BuiltInFunction::Sqrt => Type::Float,
-            BuiltInFunction::Mod => Type::Integer,
-            BuiltInFunction::Ceil => Type::Integer,
-            BuiltInFunction::Floor => Type::Integer,
-            BuiltInFunction::Round => Type::Integer,
+            | BuiltInFunction::ConvertString => Ok(Type::String(StringEnum::DynamicString)),
+            BuiltInFunction::Allocator => Ok(Type::Void),
+            BuiltInFunction::Min => Ok(Type::Integer),
+            BuiltInFunction::Sqrt => Ok(Type::Float),
+            BuiltInFunction::Mod => Ok(Type::Integer),
+            BuiltInFunction::Ceil => Ok(Type::Integer),
+            BuiltInFunction::Floor => Ok(Type::Integer),
+            BuiltInFunction::Round => Ok(Type::Integer),
         },
+        Expr::Return(e) => get_type(e, ctx),
         Expr::Call { name, .. } => {
-            todo!()
-            // ctx.functions.get()
+            Err(ValidatorError::InvalidFunctionCall(format!("{name:?}")))
         }
         Expr::BinaryOp { left, right, op } => {
-            let left_type = get_type(left, ctx);
-            let right_type = get_type(right, ctx);
-            let last_type: Type = match *op {
+            let left_type = get_type(left, ctx)?;
+            let right_type = get_type(right, ctx)?;
+            match *op {
                 Operation::Equal
                 | Operation::NotEqual
                 | Operation::Less
                 | Operation::LessEqual
                 | Operation::Greater
-                | Operation::GreaterEqual => {
-                    if left_type != right_type {
-                        return Type::Bool;
-                    }
-                    Type::Bool
-                }
+                | Operation::GreaterEqual => Ok(Type::Bool),
                 Operation::And | Operation::Or => {
-                    if left_type != Type::Bool || right_type != Type::Bool {
-                        return Type::Bool;
+                    if left_type != Type::Bool {
+                        return Err(ValidatorError::TypeMismatch {
+                            expected: Type::Bool,
+                            found: left_type,
+                        });
                     }
-                    Type::Bool
+                    if right_type != Type::Bool {
+                        return Err(ValidatorError::TypeMismatch {
+                            expected: Type::Bool,
+                            found: right_type,
+                        });
+                    }
+                    Ok(Type::Bool)
                 }
                 Operation::Add
                 | Operation::Subtract
                 | Operation::Multiply
                 | Operation::Divide
                 | Operation::Modulo => match (left_type, right_type) {
-                    (Type::Integer, Type::Integer) => Type::Integer,
-                    (Type::Natural, Type::Natural) => Type::Natural,
-                    (Type::Float, Type::Float) => Type::Float,
-                    (Type::Integer, Type::Float) => Type::Float,
-                    (Type::Float, Type::Integer) => Type::Float,
-                    _ => Type::Any,
+                    (Type::Integer, Type::Integer) => Ok(Type::Integer),
+                    (Type::Natural, Type::Natural) => Ok(Type::Natural),
+                    (Type::Float, Type::Float) => Ok(Type::Float),
+                    (Type::Integer, Type::Float) => Ok(Type::Float),
+                    (Type::Float, Type::Integer) => Ok(Type::Float),
+                    (l, r) => Err(ValidatorError::TypeMismatch {
+                        expected: l,
+                        found: r,
+                    }),
                 },
-                _ => Type::Any,
-            };
-            last_type
+                _ => Err(ValidatorError::UnknownType(format!("unknown binary op {op:?}"))),
+            }
         }
-        _ => Type::Any,
+        Expr::Void => Ok(Type::Void),
+        Expr::Char(_) => Ok(Type::Char),
+        Expr::DynamicString(_) => Ok(Type::String(StringEnum::DynamicString)),
+        Expr::Time(_) => Ok(Type::Void),
+        Expr::Comment(_) => Ok(Type::Void),
+        Expr::Break | Expr::Continue => Ok(Type::Void),
+        _ => Err(ValidatorError::UnknownType(format!("unknown expr {value:?}"))),
     }
 }
 
