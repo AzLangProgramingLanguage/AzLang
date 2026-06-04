@@ -1,7 +1,10 @@
 use std::rc::Rc;
 
 use parser::{
-    ast::{Expr, Operation, Statement},
+    ast::{
+        Expr::{self, VariableRef},
+        Operation, Statement,
+    },
     shared_ast::{BuiltInFunction, StringEnum, Type},
 };
 
@@ -49,6 +52,9 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
             if let Some(s) = ctx.lookup_variable(name) {
                 return Ok(s.typ.clone());
             }
+            if ctx.functions.contains_key(name) {
+                return Ok(Type::Function);
+            }
             Err(ValidatorError::UndefinedVariable(name.clone()))
         }
         Expr::StructInit { name, .. } => Err(ValidatorError::UnknownStruct(name.clone())),
@@ -77,9 +83,16 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
             BuiltInFunction::Round => Ok(Type::Integer),
         },
         Expr::Return(e) => get_type(e, ctx),
-        Expr::Call { name, .. } => {
-            Err(ValidatorError::InvalidFunctionCall(format!("{name:?}")))
-        }
+        Expr::Call { name, .. } => match &**name {
+            VariableRef { name, symbol } => {
+                if let Some(func) = ctx.functions.get(name) {
+                    Ok(func.return_type.clone())
+                } else {
+                    Err(ValidatorError::FunctionNotFound(name.clone()))
+                }
+            }
+            _ => Err(ValidatorError::InvalidFunctionCall(format!(" {name:?}"))),
+        },
         Expr::BinaryOp { left, right, op } => {
             let left_type = get_type(left, ctx)?;
             let right_type = get_type(right, ctx)?;
@@ -120,7 +133,9 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
                         found: r,
                     }),
                 },
-                _ => Err(ValidatorError::UnknownType(format!("unknown binary op {op:?}"))),
+                _ => Err(ValidatorError::UnknownType(format!(
+                    "unknown binary op {op:?}"
+                ))),
             }
         }
         Expr::Void => Ok(Type::Void),
@@ -129,7 +144,9 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
         Expr::Time(_) => Ok(Type::Void),
         Expr::Comment(_) => Ok(Type::Void),
         Expr::Break | Expr::Continue => Ok(Type::Void),
-        _ => Err(ValidatorError::UnknownType(format!("unknown expr {value:?}"))),
+        _ => Err(ValidatorError::UnknownType(format!(
+            "unknown expr {value:?}"
+        ))),
     }
 }
 

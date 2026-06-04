@@ -51,7 +51,10 @@ pub fn validate_expr(
         ParserExpr::VariableRef { name, symbol } => {
             let s = ctx.lookup_variable_mut_with_err(&name)?;
             s.is_used = true;
-            Ok(ValidatorExpr::VariableRef { name, symbol })
+            Ok(ValidatorExpr::VariableRef {
+                name,
+                symbol: s.clone(),
+            })
         }
         ParserExpr::BinaryOp { left, right, op } => {
             let left = validate_expr(*left, ctx)?;
@@ -64,32 +67,45 @@ pub fn validate_expr(
             })
         }
         ParserExpr::Call { target, name, args } => {
-            let target = {
-                match target {
-                    Some(t) => Some(Box::new(validate_expr(*t, ctx)?)),
-                    None => None,
+            let target = target
+                .map(|t| validate_expr(*t, ctx))
+                .transpose()?
+                .map(Box::new);
+
+            let func_name = match *name {
+                ParserExpr::VariableRef { name: nam, .. } => {
+                    ctx.functions
+                        .get(&nam)
+                        .ok_or_else(|| ValidatorError::FunctionNotFound(nam.clone()))?;
+                    nam
+                }
+                _ => {
+                    return Err(ValidatorError::FunctionNotFound(format!(
+                        "{name:?} bu bir funksiya deyil"
+                    )));
                 }
             };
-            let name = Box::new(validate_expr(*name, ctx)?);
-            let mut validated_args = Vec::new();
-            for arg in args {
-                validated_args.push(validate_expr(arg, ctx)?);
-            }
-            let returned_type = match &*name {
-                ValidatorExpr::VariableRef {
-                    name: func_name, ..
-                } => ctx
-                    .functions
-                    .get(func_name)
-                    .map(|f| f.return_type.clone())
-                    .unwrap_or(Type::Any),
-                _ => Type::Any,
+
+            let new_name = ValidatorExpr::VariableRef {
+                name: func_name,
+                symbol: Symbol {
+                    typ: Type::Function,
+                    is_mutable: false,
+                    is_used: false,
+                    is_changed: false,
+                },
             };
+
+            let validated_args = args
+                .into_iter()
+                .map(|arg| validate_expr(arg, ctx))
+                .collect::<Result<Vec<_>, _>>()?;
+
             Ok(ValidatorExpr::Call {
                 target,
-                name,
+                name: Box::new(new_name),
                 args: validated_args,
-                returned_type,
+                returned_type: return_type,
             })
         }
         ParserExpr::BuiltInCall { function, args } => {

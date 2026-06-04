@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod binary_op;
 mod tests {
+    use parser::ast::Symbol;
     use validator::ast::{Ast, Expr};
 
     use crate::Function;
@@ -25,7 +26,12 @@ mod tests {
             None,
             Box::new(Expr::VariableRef {
                 name: "Hello".to_string(),
-                symbol: None,
+                symbol: Symbol {
+                    typ: Type::Function,
+                    is_mutable: false,
+                    is_used: false,
+                    is_changed: false,
+                },
             }),
             vec![],
             None,
@@ -51,7 +57,12 @@ mod tests {
             None,
             Box::new(Expr::VariableRef {
                 name: "Hello".to_string(),
-                symbol: None,
+                symbol: Symbol {
+                    typ: Type::Function,
+                    is_mutable: false,
+                    is_used: false,
+                    is_changed: false,
+                },
             }),
             vec![],
             Some(Type::Integer),
@@ -73,7 +84,12 @@ mod tests {
                 }],
                 body: vec![Ast::Expr(Expr::Return(Box::new(Expr::VariableRef {
                     name: "a".to_string(),
-                    symbol: None,
+                    symbol: Symbol {
+                        typ: Type::Function,
+                        is_mutable: false,
+                        is_used: false,
+                        is_changed: false,
+                    },
                 })))],
                 return_type: Type::Integer,
             },
@@ -84,7 +100,12 @@ mod tests {
             None,
             Box::new(Expr::VariableRef {
                 name: "Hello".to_string(),
-                symbol: None,
+                symbol: Symbol {
+                    typ: Type::Function,
+                    is_mutable: false,
+                    is_used: false,
+                    is_changed: false,
+                },
             }),
             vec![Expr::Number(1)],
             Some(Type::Integer),

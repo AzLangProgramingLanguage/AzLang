@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 use parser::{
     ast::{Expr::BuiltInCall, Statement, Symbol},
@@ -7,15 +7,12 @@ use parser::{
 type ValidatorExpr = crate::ast::Expr;
 use crate::{
     Validator,
-    ast::{self, Ast, IF, Else},
+    ast::{self, Ast, Else, Function, IF},
     errors::ValidatorError,
     expr::validate_expr,
     helper::{get_type, reconcile_type, type_checking},
 };
-pub fn validate_statement(
-    stmt: Statement,
-    ctx: &mut Validator,
-) -> Result<Ast, ValidatorError> {
+pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, ValidatorError> {
     match stmt {
         Statement::Decl {
             name,
@@ -65,6 +62,7 @@ pub fn validate_statement(
                 value: Box::new(val),
             })
         }
+
         Statement::Condition { main, elif, other } => {
             let condition = validate_expr(*main.condition, ctx)?;
             let mut validated_body = Vec::new();
@@ -89,13 +87,15 @@ pub fn validate_statement(
                 });
             }
 
-            let validated_other = other.map(|o| {
-                let mut body = Vec::new();
-                for stmt in o.body {
-                    body.push(validate_statement(stmt, ctx)?);
-                }
-                Ok::<Else, ValidatorError>(Else { body })
-            }).transpose()?;
+            let validated_other = other
+                .map(|o| {
+                    let mut body = Vec::new();
+                    for stmt in o.body {
+                        body.push(validate_statement(stmt, ctx)?);
+                    }
+                    Ok::<Else, ValidatorError>(Else { body })
+                })
+                .transpose()?;
 
             Ok(Ast::Condition {
                 main: validated_main,

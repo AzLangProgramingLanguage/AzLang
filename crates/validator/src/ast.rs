@@ -46,7 +46,7 @@ pub enum Expr {
     Return(Box<Expr>),
     VariableRef {
         name: String,
-        symbol: Option<Symbol>,
+        symbol: Symbol,
     },
     BinaryOp {
         left: Box<Expr>,
