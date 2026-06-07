@@ -33,6 +33,7 @@ pub enum Token {
     Zig,
     Match, // uyğun
     Arrow, // ->
+    At,    // @
     Loop,
     Break,
     Print,

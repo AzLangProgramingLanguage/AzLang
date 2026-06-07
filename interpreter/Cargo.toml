@@ -8,3 +8,4 @@ file_system = { path = "../crates/file_system/" }
 logging = { path = "../crates/logging/" }
 parser = { path = "../crates/parser/" }
 validator = { path = "../crates/validator/" }
+libloading = "0.8"

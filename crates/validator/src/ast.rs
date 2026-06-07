@@ -11,9 +11,19 @@ pub struct Function {
     pub return_typ: Type,
 }
 #[derive(Debug, Clone, PartialEq)]
+pub struct ExternalFunctionDef {
+    pub name: String,
+    pub params: Vec<Parameter>,
+    pub return_typ: Type,
+    pub library: String,
+    pub symbol: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Program {
     pub functions: Vec<Function>,
     pub expressions: Vec<Ast>,
+    pub external_functions: Vec<ExternalFunctionDef>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

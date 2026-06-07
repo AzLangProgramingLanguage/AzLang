@@ -328,6 +328,7 @@ impl<'a> Lexer<'a> {
             Some('.') => self.consume(Token::Dot),
             Some('}') => self.consume(Token::RBrace),
             Some('_') => self.consume(Token::Underscore),
+            Some('@') => self.consume(Token::At),
             Some('[') => self.consume(Token::ListStart),
             Some(']') => self.consume(Token::ListEnd),
             Some('=') | Some('/') | Some('*') | Some('%') | Some('^') | Some('>') | Some('<')

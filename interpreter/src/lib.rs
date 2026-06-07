@@ -4,6 +4,7 @@ mod errors;
 mod runner;
 use crate::{errors::InterPreterError, runner::Runner};
 use parser::{ast::Parameter, parser, shared_ast::Type};
+use runner::ExternalFunction;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     body: Vec<Ast>,
@@ -23,6 +24,17 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
                 body: function.body,
                 params: function.params,
                 return_type: function.return_typ,
+            },
+        );
+    }
+    for ext in result.1.external_functions {
+        runner.external_functions.insert(
+            ext.name.clone(),
+            ExternalFunction {
+                library: ext.library,
+                symbol: ext.symbol,
+                params: ext.params,
+                return_type: ext.return_typ,
             },
         );
     }
@@ -59,6 +71,17 @@ pub fn interpreter_run_repl() -> Result<(), InterPreterError> {
                     body: function.body,
                     params: function.params,
                     return_type: function.return_typ,
+                },
+            );
+        }
+        for ext in program.external_functions {
+            runner.external_functions.insert(
+                ext.name.clone(),
+                ExternalFunction {
+                    library: ext.library,
+                    symbol: ext.symbol,
+                    params: ext.params,
+                    return_type: ext.return_typ,
                 },
             );
         }

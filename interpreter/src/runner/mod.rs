@@ -6,7 +6,7 @@ mod runner;
 mod tests;
 use parser::ast::Expr as ParserExpr;
 use parser::{
-    ast::{FunctionDef, Statement},
+    ast::{FunctionDef, Parameter, Statement},
     shared_ast::Type,
 };
 use validator::ast::{Ast, Expr};
@@ -42,12 +42,21 @@ pub struct UnionType {
     methods: Vec<Method>,
 }
 
+#[derive(Debug, Clone)]
+pub struct ExternalFunction {
+    pub library: String,
+    pub symbol: String,
+    pub params: Vec<Parameter>,
+    pub return_type: Type,
+}
+
 #[derive(Debug)]
 pub struct Runner {
     variables: HashMap<String, Variable>,
     structdefs: HashMap<String, StructDef>,
     pub functions: HashMap<String, Function>,
     uniontypes: HashMap<String, UnionType>,
+    pub external_functions: HashMap<String, ExternalFunction>,
     current_return: Expr,
 }
 
@@ -58,6 +67,7 @@ impl Runner {
             structdefs: HashMap::new(),
             functions: HashMap::new(),
             uniontypes: HashMap::new(),
+            external_functions: HashMap::new(),
             current_return: Expr::Void,
         }
     }

@@ -114,6 +114,13 @@ pub enum Statement {
         params: Vec<Parameter>,
         body: Vec<Statement>,
     },
+    ExternalFunctionDef {
+        name: String,
+        return_typ: Type,
+        params: Vec<Parameter>,
+        library: String,
+        symbol: String,
+    },
     StructDef {
         name: String,
         fields: Vec<(String, Type, Option<Expr>)>,

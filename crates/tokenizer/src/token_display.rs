@@ -34,6 +34,7 @@ impl fmt::Display for Token {
             Token::Zig => write!(f, "zig"),
             Token::Match => write!(f, "match"),
             Token::Arrow => write!(f, "->"),
+            Token::At => write!(f, "@"),
             Token::Loop => write!(f, "loop"),
             Token::Break => write!(f, "break"),
             Token::Print => write!(f, "print"),

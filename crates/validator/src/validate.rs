@@ -112,6 +112,7 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
         | Statement::StructDef { .. }
         | Statement::UnionType { .. }
         | Statement::Match { .. }
-        | Statement::Loop { .. } => Ok(Ast::Expr(ValidatorExpr::Void)),
+        | Statement::Loop { .. }
+        | Statement::ExternalFunctionDef { .. } => Ok(Ast::Expr(ValidatorExpr::Void)),
     }
 }

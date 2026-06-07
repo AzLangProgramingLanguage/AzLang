@@ -6,7 +6,7 @@ mod helper;
 mod tests;
 pub mod validate;
 use crate::{
-    ast::{Function, Program},
+    ast::{ExternalFunctionDef, Function, Program},
     errors::ValidatorError,
     validate::validate_statement,
 };
@@ -88,11 +88,34 @@ impl Validator {
         let mut program = Program {
             functions: vec![],
             expressions: vec![],
+            external_functions: vec![],
         };
         self.variables.push(HashMap::new());
         self.function_decl(&ast);
         for stmt in ast {
             match stmt {
+                Statement::ExternalFunctionDef {
+                    name,
+                    return_typ,
+                    params,
+                    library,
+                    symbol,
+                } => {
+                    self.functions.insert(
+                        name.clone(),
+                        FunctionInfo {
+                            return_type: return_typ.clone(),
+                            parameters: params.clone(),
+                        },
+                    );
+                    program.external_functions.push(ExternalFunctionDef {
+                        name,
+                        params,
+                        return_typ,
+                        library,
+                        symbol,
+                    });
+                }
                 Statement::FunctionDef {
                     name,
                     return_typ,

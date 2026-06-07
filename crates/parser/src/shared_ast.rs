@@ -1,5 +1,4 @@
-use core::fmt;
-use std::{borrow::Cow, fmt::Display};
+use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BuiltInFunction {
