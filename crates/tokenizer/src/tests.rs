@@ -1,12 +1,18 @@
+use std::f64::consts::PI;
+
 use crate::{
-    tokens::Token,
+    Lexer,
     errors::LexerError,
     iterator::{SourceSpan, Tokens},
-    Lexer,
+    tokens::Token,
 };
 
 fn tokenize(input: &str) -> Vec<Token> {
-    Lexer::new(input).tokenize().unwrap().map(|x| x.token).collect()
+    Lexer::new(input)
+        .tokenize()
+        .unwrap()
+        .map(|x| x.token)
+        .collect()
 }
 
 fn tokenize_err(input: &str) -> LexerError {
@@ -14,7 +20,11 @@ fn tokenize_err(input: &str) -> LexerError {
 }
 
 fn tokenize_spanned(input: &str) -> Vec<(Token, SourceSpan)> {
-    Lexer::new(input).tokenize().unwrap().map(|x| (x.token, x.span)).collect()
+    Lexer::new(input)
+        .tokenize()
+        .unwrap()
+        .map(|x| (x.token, x.span))
+        .collect()
 }
 
 // ── Single character tokens ──
@@ -144,7 +154,7 @@ fn test_zero() {
 
 #[test]
 fn test_float() {
-    assert_eq!(tokenize("3.14"), vec![Token::Float(3.14)]);
+    assert_eq!(tokenize("3.14"), vec![Token::Float(PI)]);
 }
 
 #[test]
@@ -174,7 +184,7 @@ fn test_number_leading_zero_error() {
 #[test]
 fn test_number_followed_by_alpha_error() {
     match tokenize_err("123abc") {
-        LexerError::NumberAndAlpha => {},
+        LexerError::NumberAndAlpha => {}
         other => panic!("Expected NumberAndAlpha, got {:?}", other),
     }
 }
@@ -188,12 +198,18 @@ fn test_string_empty() {
 
 #[test]
 fn test_string_simple() {
-    assert_eq!(tokenize("\"hello\""), vec![Token::StringLiteral("hello".into())]);
+    assert_eq!(
+        tokenize("\"hello\""),
+        vec![Token::StringLiteral("hello".into())]
+    );
 }
 
 #[test]
 fn test_string_with_spaces() {
-    assert_eq!(tokenize("\"hello world\""), vec![Token::StringLiteral("hello world".into())]);
+    assert_eq!(
+        tokenize("\"hello world\""),
+        vec![Token::StringLiteral("hello world".into())]
+    );
 }
 
 #[test]
@@ -335,7 +351,14 @@ fn test_keyword_and() {
 // Note: "və_ya" can't be a single token because `_` is consumed as Underscore separately
 #[test]
 fn test_keyword_or_underscore_split() {
-    assert_eq!(tokenize("və_ya"), vec![Token::And, Token::Underscore, Token::Identifier("ya".into())]);
+    assert_eq!(
+        tokenize("və_ya"),
+        vec![
+            Token::And,
+            Token::Underscore,
+            Token::Identifier("ya".into())
+        ]
+    );
 }
 
 #[test]
@@ -511,12 +534,18 @@ fn test_identifier_simple() {
 
 #[test]
 fn test_identifier_with_unicode() {
-    assert_eq!(tokenize("mənimDəyişənim"), vec![Token::Identifier("mənimDəyişənim".into())]);
+    assert_eq!(
+        tokenize("mənimDəyişənim"),
+        vec![Token::Identifier("mənimDəyişənim".into())]
+    );
 }
 
 #[test]
 fn test_identifier_mixed() {
-    assert_eq!(tokenize("fooBar123"), vec![Token::Identifier("fooBar123".into())]);
+    assert_eq!(
+        tokenize("fooBar123"),
+        vec![Token::Identifier("fooBar123".into())]
+    );
 }
 
 // ── Template strings ──
@@ -524,33 +553,36 @@ fn test_identifier_mixed() {
 #[test]
 fn test_template_simple() {
     let tokens = tokenize("`hello`");
-    assert_eq!(tokens, vec![
-        Token::Backtick,
-        Token::StringLiteral("hello".into()),
-        Token::Backtick,
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Backtick,
+            Token::StringLiteral("hello".into()),
+            Token::Backtick,
+        ]
+    );
 }
 
 #[test]
 fn test_template_empty() {
     let tokens = tokenize("``");
-    assert_eq!(tokens, vec![
-        Token::Backtick,
-        Token::Backtick,
-    ]);
+    assert_eq!(tokens, vec![Token::Backtick, Token::Backtick,]);
 }
 
 #[test]
 fn test_template_with_interpolation() {
     let tokens = tokenize("`hello ${name}`");
-    assert_eq!(tokens, vec![
-        Token::Backtick,
-        Token::StringLiteral("hello ".into()),
-        Token::InterpolationStart,
-        Token::Identifier("name".into()),
-        Token::InterpolationEnd,
-        Token::Backtick,
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Backtick,
+            Token::StringLiteral("hello ".into()),
+            Token::InterpolationStart,
+            Token::Identifier("name".into()),
+            Token::InterpolationEnd,
+            Token::Backtick,
+        ]
+    );
 }
 
 #[test]
@@ -573,46 +605,55 @@ fn test_template_interpolation_at_start_errors() {
 #[test]
 fn test_indent_simple() {
     let tokens = tokenize("a\n    b");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("b".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Identifier("a".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("b".into()),
+        ]
+    );
 }
 
 #[test]
 fn test_indent_dedent() {
     let tokens = tokenize("a\n    b\nc");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("b".into()),
-        Token::Newline,
-        Token::Dedent,
-        Token::Identifier("c".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Identifier("a".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("b".into()),
+            Token::Newline,
+            Token::Dedent,
+            Token::Identifier("c".into()),
+        ]
+    );
 }
 
 #[test]
 fn test_multiple_indent_levels() {
     let tokens = tokenize("a\n    b\n        c");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("b".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("c".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Identifier("a".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("b".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("c".into()),
+        ]
+    );
 }
 
 #[test]
 fn test_indent_wrong_size() {
     match tokenize_err("a\n   b") {
-        LexerError::InCorrectSpaceSize(_) => {},
+        LexerError::InCorrectSpaceSize(_) => {}
         other => panic!("Expected InCorrectSpaceSize, got {:?}", other),
     }
 }
@@ -620,18 +661,21 @@ fn test_indent_wrong_size() {
 #[test]
 fn test_dedent_multiple_levels() {
     let tokens = tokenize("a\n    b\n        c\n    d");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("b".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("c".into()),
-        Token::Newline,
-        Token::Dedent,
-        Token::Identifier("d".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Identifier("a".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("b".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("c".into()),
+            Token::Newline,
+            Token::Dedent,
+            Token::Identifier("d".into()),
+        ]
+    );
 }
 
 // ── Comments ──
@@ -639,27 +683,25 @@ fn test_dedent_multiple_levels() {
 #[test]
 fn test_comment_simple() {
     let tokens = tokenize("a /* comment */ b");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Identifier("b".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![Token::Identifier("a".into()), Token::Identifier("b".into()),]
+    );
 }
 
 #[test]
 fn test_comment_multiline() {
     let tokens = tokenize("a /* multi\nline */ b");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Identifier("b".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![Token::Identifier("a".into()), Token::Identifier("b".into()),]
+    );
 }
 
 #[test]
 fn test_comment_at_end() {
     let tokens = tokenize("a /* comment");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-    ]);
+    assert_eq!(tokens, vec![Token::Identifier("a".into()),]);
 }
 
 // ── Composite expressions ──
@@ -667,65 +709,80 @@ fn test_comment_at_end() {
 #[test]
 fn test_simple_expression() {
     let tokens = tokenize("dəyişən a = 42");
-    assert_eq!(tokens, vec![
-        Token::MutableDecl,
-        Token::Identifier("a".into()),
-        Token::Assign,
-        Token::Number(42),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::MutableDecl,
+            Token::Identifier("a".into()),
+            Token::Assign,
+            Token::Number(42),
+        ]
+    );
 }
 
 #[test]
 fn test_function_call() {
     let tokens = tokenize("Çap(\"salam\")");
-    assert_eq!(tokens, vec![
-        Token::Print,
-        Token::LParen,
-        Token::StringLiteral("salam".into()),
-        Token::RParen,
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Print,
+            Token::LParen,
+            Token::StringLiteral("salam".into()),
+            Token::RParen,
+        ]
+    );
 }
 
 #[test]
 fn test_arithmetic_expression() {
     let tokens = tokenize("1 + 2 * 3");
-    assert_eq!(tokens, vec![
-        Token::Number(1),
-        Token::Add,
-        Token::Number(2),
-        Token::Multiply,
-        Token::Number(3),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Number(1),
+            Token::Add,
+            Token::Number(2),
+            Token::Multiply,
+            Token::Number(3),
+        ]
+    );
 }
 
 #[test]
 fn test_comparison_chain() {
     let tokens = tokenize("a == b != c");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Equal,
-        Token::Identifier("b".into()),
-        Token::NotEqual,
-        Token::Identifier("c".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Identifier("a".into()),
+            Token::Equal,
+            Token::Identifier("b".into()),
+            Token::NotEqual,
+            Token::Identifier("c".into()),
+        ]
+    );
 }
 
 #[test]
 fn test_if_statement() {
     let input = "əgər a == b\n    Çap(\"bərabər\")";
     let tokens = tokenize(input);
-    assert_eq!(tokens, vec![
-        Token::Conditional,
-        Token::Identifier("a".into()),
-        Token::Equal,
-        Token::Identifier("b".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Print,
-        Token::LParen,
-        Token::StringLiteral("bərabər".into()),
-        Token::RParen,
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Conditional,
+            Token::Identifier("a".into()),
+            Token::Equal,
+            Token::Identifier("b".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Print,
+            Token::LParen,
+            Token::StringLiteral("bərabər".into()),
+            Token::RParen,
+        ]
+    );
 }
 
 // ── Edge cases ──
@@ -745,16 +802,16 @@ fn test_only_newlines() {
 #[test]
 fn test_spaces_ignored_between_tokens() {
     let tokens = tokenize("a   b");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Identifier("b".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![Token::Identifier("a".into()), Token::Identifier("b".into()),]
+    );
 }
 
 #[test]
 fn test_unexpected_operator() {
     match tokenize_err("^") {
-        LexerError::UnexpectedToken(_, '^') => {},
+        LexerError::UnexpectedToken(_, '^') => {}
         other => panic!("Expected UnexpectedToken('^'), got {:?}", other),
     }
 }
@@ -799,40 +856,68 @@ fn test_span_newline_increments_line() {
 #[test]
 fn test_tokens_iterator() {
     let mut tokens = Tokens::default();
-    let span = SourceSpan { start: 1, end: 1, line: 1 };
+    let span = SourceSpan {
+        start: 1,
+        end: 1,
+        line: 1,
+    };
     tokens.push(Token::Number(1), span.clone());
     tokens.push(Token::Add, span.clone());
     tokens.push(Token::Number(2), span.clone());
     let collected: Vec<Token> = tokens.into_iter().map(|x| x.token).collect();
-    assert_eq!(collected, vec![Token::Number(1), Token::Add, Token::Number(2)]);
+    assert_eq!(
+        collected,
+        vec![Token::Number(1), Token::Add, Token::Number(2)]
+    );
 }
 
 #[test]
 fn test_tokens_peek() {
     let mut tokens = Tokens::default();
-    let span = SourceSpan { start: 1, end: 1, line: 1 };
+    let span = SourceSpan {
+        start: 1,
+        end: 1,
+        line: 1,
+    };
     tokens.push(Token::Number(42), span.clone());
-    assert_eq!(tokens.peek(), Some(&crate::iterator::SpannedToken {
-        token: Token::Number(42),
-        span: span.clone(),
-    }));
+    assert_eq!(
+        tokens.peek(),
+        Some(&crate::iterator::SpannedToken {
+            token: Token::Number(42),
+            span: span.clone(),
+        })
+    );
 }
 
 #[test]
 fn test_tokens_peek_nth() {
     let mut tokens = Tokens::default();
-    let span = SourceSpan { start: 1, end: 1, line: 1 };
+    let span = SourceSpan {
+        start: 1,
+        end: 1,
+        line: 1,
+    };
     tokens.push(Token::Number(1), span.clone());
     tokens.push(Token::Number(2), span.clone());
-    assert_eq!(tokens.peek_nth(0).map(|x| &x.token), Some(&Token::Number(1)));
-    assert_eq!(tokens.peek_nth(1).map(|x| &x.token), Some(&Token::Number(2)));
+    assert_eq!(
+        tokens.peek_nth(0).map(|x| &x.token),
+        Some(&Token::Number(1))
+    );
+    assert_eq!(
+        tokens.peek_nth(1).map(|x| &x.token),
+        Some(&Token::Number(2))
+    );
     assert_eq!(tokens.peek_nth(2), None);
 }
 
 #[test]
 fn test_tokens_push_front() {
     let mut tokens = Tokens::default();
-    let span = SourceSpan { start: 1, end: 1, line: 1 };
+    let span = SourceSpan {
+        start: 1,
+        end: 1,
+        line: 1,
+    };
     tokens.push(Token::Number(2), span.clone());
     tokens.push_front(crate::iterator::SpannedToken {
         token: Token::Number(1),
@@ -853,7 +938,11 @@ fn test_tokens_empty_peek() {
 #[test]
 fn test_error_display_unexpected_token() {
     let err = LexerError::UnexpectedToken(
-        SourceSpan { start: 5, end: 5, line: 3 },
+        SourceSpan {
+            start: 5,
+            end: 5,
+            line: 3,
+        },
         '#',
     );
     let msg = format!("{}", err);
@@ -864,7 +953,11 @@ fn test_error_display_unexpected_token() {
 #[test]
 fn test_error_display_unclosed_string() {
     let err = LexerError::UnClosedString(
-        SourceSpan { start: 1, end: 5, line: 1 },
+        SourceSpan {
+            start: 1,
+            end: 5,
+            line: 1,
+        },
         "hello".into(),
     );
     let msg = format!("{}", err);
@@ -895,9 +988,11 @@ fn test_error_display_double_dot() {
 
 #[test]
 fn test_error_display_incorrect_space() {
-    let err = LexerError::InCorrectSpaceSize(
-        SourceSpan { start: 1, end: 1, line: 1 },
-    );
+    let err = LexerError::InCorrectSpaceSize(SourceSpan {
+        start: 1,
+        end: 1,
+        line: 1,
+    });
     let msg = format!("{}", err);
     assert!(msg.contains("Uyğunsuz boşluq var."));
 }
@@ -905,7 +1000,11 @@ fn test_error_display_incorrect_space() {
 #[test]
 fn test_error_display_unknown_operator() {
     let err = LexerError::UnknownOperator(
-        SourceSpan { start: 1, end: 1, line: 1 },
+        SourceSpan {
+            start: 1,
+            end: 1,
+            line: 1,
+        },
         "^^".into(),
     );
     let msg = format!("{}", err);
@@ -932,7 +1031,7 @@ fn test_token_display_number() {
 
 #[test]
 fn test_token_display_float() {
-    assert_eq!(format!("{}", Token::Float(3.14)), "3.14");
+    assert_eq!(format!("{}", Token::Float(PI)), "3.14");
 }
 
 #[test]
@@ -1028,7 +1127,11 @@ fn test_token_display_types() {
 
 #[test]
 fn test_source_span_display() {
-    let span = SourceSpan { start: 5, end: 7, line: 3 };
+    let span = SourceSpan {
+        start: 5,
+        end: 7,
+        line: 3,
+    };
     assert_eq!(format!("{}", span), "Sətir 3, sütun 5");
 }
 
@@ -1055,34 +1158,40 @@ fn test_complex_expression() {
     let mut lexer = Lexer::new("(1 + 2) * 3");
     let tokens = lexer.tokenize().unwrap();
     let collected: Vec<Token> = tokens.into_iter().map(|x| x.token).collect();
-    assert_eq!(collected, vec![
-        Token::LParen,
-        Token::Number(1),
-        Token::Add,
-        Token::Number(2),
-        Token::RParen,
-        Token::Multiply,
-        Token::Number(3),
-    ]);
+    assert_eq!(
+        collected,
+        vec![
+            Token::LParen,
+            Token::Number(1),
+            Token::Add,
+            Token::Number(2),
+            Token::RParen,
+            Token::Multiply,
+            Token::Number(3),
+        ]
+    );
 }
 
 #[test]
 fn test_double_dedent() {
     let input = "a\n    b\n        c\nd";
     let tokens = tokenize(input);
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("b".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("c".into()),
-        Token::Newline,
-        Token::Dedent,
-        Token::Dedent,
-        Token::Identifier("d".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Identifier("a".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("b".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("c".into()),
+            Token::Newline,
+            Token::Dedent,
+            Token::Dedent,
+            Token::Identifier("d".into()),
+        ]
+    );
 }
 
 #[test]
@@ -1097,34 +1206,40 @@ fn test_string_with_special_chars() {
 fn test_multiple_statements_with_indent() {
     let input = "dəyişən x = 5\n    əgər x > 0\n        Çap(\"müsbət\")";
     let tokens = tokenize(input);
-    assert_eq!(tokens, vec![
-        Token::MutableDecl,
-        Token::Identifier("x".into()),
-        Token::Assign,
-        Token::Number(5),
-        Token::Newline,
-        Token::Indent,
-        Token::Conditional,
-        Token::Identifier("x".into()),
-        Token::Greater,
-        Token::Number(0),
-        Token::Newline,
-        Token::Indent,
-        Token::Print,
-        Token::LParen,
-        Token::StringLiteral("müsbət".into()),
-        Token::RParen,
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::MutableDecl,
+            Token::Identifier("x".into()),
+            Token::Assign,
+            Token::Number(5),
+            Token::Newline,
+            Token::Indent,
+            Token::Conditional,
+            Token::Identifier("x".into()),
+            Token::Greater,
+            Token::Number(0),
+            Token::Newline,
+            Token::Indent,
+            Token::Print,
+            Token::LParen,
+            Token::StringLiteral("müsbət".into()),
+            Token::RParen,
+        ]
+    );
 }
 
 #[test]
 fn test_template_dollar_without_brace() {
     let tokens = tokenize("`$`");
-    assert_eq!(tokens, vec![
-        Token::Backtick,
-        Token::StringLiteral("$".into()),
-        Token::Backtick,
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Backtick,
+            Token::StringLiteral("$".into()),
+            Token::Backtick,
+        ]
+    );
 }
 
 // `${` at start of template isn't handled correctly; this documents current behavior
@@ -1136,7 +1251,7 @@ fn test_template_consecutive_interpolations_error() {
 #[test]
 fn test_number_then_alpha_edge() {
     match tokenize_err("42foo") {
-        LexerError::NumberAndAlpha => {},
+        LexerError::NumberAndAlpha => {}
         other => panic!("Expected NumberAndAlpha, got {:?}", other),
     }
 }
@@ -1144,7 +1259,7 @@ fn test_number_then_alpha_edge() {
 #[test]
 fn test_identifier_starting_with_number_not_possible() {
     match tokenize_err("123abc") {
-        LexerError::NumberAndAlpha => {},
+        LexerError::NumberAndAlpha => {}
         other => panic!("Expected NumberAndAlpha, got {:?}", other),
     }
 }
@@ -1159,16 +1274,19 @@ fn test_span_after_comment() {
 #[test]
 fn test_large_indent_multiline() {
     let tokens = tokenize("a\n    b\n        c\n            d");
-    assert_eq!(tokens, vec![
-        Token::Identifier("a".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("b".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("c".into()),
-        Token::Newline,
-        Token::Indent,
-        Token::Identifier("d".into()),
-    ]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Identifier("a".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("b".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("c".into()),
+            Token::Newline,
+            Token::Indent,
+            Token::Identifier("d".into()),
+        ]
+    );
 }
