@@ -1,4 +1,7 @@
-use std::ffi::{CStr, CString};
+use std::{
+    any::{self, Any},
+    ffi::{CStr, CString},
+};
 
 use libloading::{Library, Symbol};
 use parser::shared_ast::Type;
@@ -24,12 +27,8 @@ pub fn function_call(
             if let Some(function) = ctx.functions.get(&name).cloned() {
                 for (index, param) in function.params.iter().enumerate() {
                     let variable = get_primitive_value(ctx, args[index].clone(), None);
-                    ctx.variables.insert(
-                        param.name.clone(),
-                        Variable {
-                            value: variable,
-                        },
-                    );
+                    ctx.variables
+                        .insert(param.name.clone(), Variable { value: variable });
                 }
                 for stmt in function.body.clone() {
                     match stmt {
@@ -64,32 +63,28 @@ fn call_external_fn(ext: &ExternalFunction, args: &[Value]) -> Value {
 
     match (param_count, void_ret) {
         (0, true) => {
-            let f: Symbol<unsafe extern "C" fn()> =
-                unsafe { lib.get(symbol_bytes) }
-                    .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
+            let f: Symbol<unsafe extern "C" fn()> = unsafe { lib.get(symbol_bytes) }
+                .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
             unsafe { f() };
             Value::Void
         }
         (0, false) => {
-            let f: Symbol<unsafe extern "C" fn() -> i64> =
-                unsafe { lib.get(symbol_bytes) }
-                    .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
+            let f: Symbol<unsafe extern "C" fn() -> i64> = unsafe { lib.get(symbol_bytes) }
+                .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
             Value::Number(unsafe { f() })
         }
         (1, true) => {
             let param_type = &ext.params[0].typ;
             match param_type {
                 Type::Integer | Type::Natural | Type::BigInteger | Type::LowInteger => {
-                    let f: Symbol<unsafe extern "C" fn(i64)> =
-                        unsafe { lib.get(symbol_bytes) }
-                            .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
+                    let f: Symbol<unsafe extern "C" fn(i64)> = unsafe { lib.get(symbol_bytes) }
+                        .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
                     unsafe { f(args[0].as_number()) };
                     Value::Void
                 }
                 Type::Float => {
-                    let f: Symbol<unsafe extern "C" fn(f64)> =
-                        unsafe { lib.get(symbol_bytes) }
-                            .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
+                    let f: Symbol<unsafe extern "C" fn(f64)> = unsafe { lib.get(symbol_bytes) }
+                        .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
                     unsafe { f(args[0].as_float()) };
                     Value::Void
                 }
@@ -102,12 +97,12 @@ fn call_external_fn(ext: &ExternalFunction, args: &[Value]) -> Value {
                     Value::Void
                 }
                 Type::Bool => {
-                    let f: Symbol<unsafe extern "C" fn(u8)> =
-                        unsafe { lib.get(symbol_bytes) }
-                            .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
+                    let f: Symbol<unsafe extern "C" fn(u8)> = unsafe { lib.get(symbol_bytes) }
+                        .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
                     unsafe { f(args[0].as_bool() as u8) };
                     Value::Void
                 }
+
                 _ => panic!("Unsupported FFI param type: {:?}", param_type),
             }
         }
@@ -127,9 +122,10 @@ fn call_external_fn(ext: &ExternalFunction, args: &[Value]) -> Value {
                     Value::Float(unsafe { f(args[0].as_float()) })
                 }
                 Type::String(_) => {
-                    let f: Symbol<unsafe extern "C" fn(*const std::ffi::c_char) -> *const std::ffi::c_char> =
-                        unsafe { lib.get(symbol_bytes) }
-                            .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
+                    let f: Symbol<
+                        unsafe extern "C" fn(*const std::ffi::c_char) -> *const std::ffi::c_char,
+                    > = unsafe { lib.get(symbol_bytes) }
+                        .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
                     let cstr = CString::new(args[0].as_string()).unwrap();
                     let ret = unsafe { f(cstr.as_ptr()) };
                     let ret_str = unsafe { CStr::from_ptr(ret).to_string_lossy().into_owned() };
@@ -142,8 +138,10 @@ fn call_external_fn(ext: &ExternalFunction, args: &[Value]) -> Value {
             let t0 = &ext.params[0].typ;
             let t1 = &ext.params[1].typ;
             match (t0, t1) {
-                (Type::Integer | Type::Natural | Type::BigInteger | Type::LowInteger,
-                 Type::Integer | Type::Natural | Type::BigInteger | Type::LowInteger) => {
+                (
+                    Type::Integer | Type::Natural | Type::BigInteger | Type::LowInteger,
+                    Type::Integer | Type::Natural | Type::BigInteger | Type::LowInteger,
+                ) => {
                     let f: Symbol<unsafe extern "C" fn(i64, i64)> =
                         unsafe { lib.get(symbol_bytes) }
                             .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
@@ -151,9 +149,10 @@ fn call_external_fn(ext: &ExternalFunction, args: &[Value]) -> Value {
                     Value::Void
                 }
                 (Type::String(_), Type::String(_)) => {
-                    let f: Symbol<unsafe extern "C" fn(*const std::ffi::c_char, *const std::ffi::c_char)> =
-                        unsafe { lib.get(symbol_bytes) }
-                            .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
+                    let f: Symbol<
+                        unsafe extern "C" fn(*const std::ffi::c_char, *const std::ffi::c_char),
+                    > = unsafe { lib.get(symbol_bytes) }
+                        .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
                     let cstr0 = CString::new(args[0].as_string()).unwrap();
                     let cstr1 = CString::new(args[1].as_string()).unwrap();
                     unsafe { f(cstr0.as_ptr(), cstr1.as_ptr()) };

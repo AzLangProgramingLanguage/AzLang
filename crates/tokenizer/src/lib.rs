@@ -121,7 +121,7 @@ impl<'a> Lexer<'a> {
     fn read_word(&mut self) -> Result<Token, LexerError> {
         let mut str = String::new();
         while let Some(ch) = self.chars.peek() {
-            if ch.is_alphanumeric() {
+            if ch.is_alphanumeric() || *ch == '_' {
                 self.end += 1;
                 str.push(*ch);
                 self.chars.next();
@@ -268,16 +268,14 @@ impl<'a> Lexer<'a> {
             '&' if self.chars.peek() == Some(&'=') => Ok(Token::DoubleAnd),
             '&' => Ok(Token::And),
             '|' => Ok(Token::Or),
-            _ => {
-                return Err(LexerError::UnexpectedToken(
-                    SourceSpan {
-                        line: self.line,
-                        end: self.end,
-                        start: self.start,
-                    },
-                    ch,
-                ));
-            }
+            _ => Err(LexerError::UnexpectedToken(
+                SourceSpan {
+                    line: self.line,
+                    end: self.end,
+                    start: self.start,
+                },
+                ch,
+            )),
         }
     }
     fn commentline(&mut self) -> Result<Token, LexerError> {

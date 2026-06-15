@@ -17,6 +17,15 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
     let validator = validator::Validator::default();
     let result = validator.validate(parsed_program)?;
     let mut runner = Runner::new();
+
+    // Resolve the directory of the source file so that relative library paths
+    // (e.g. "printlib.so" declared inside sdk/data_structures.az) are found
+    // next to the .az file rather than requiring a system-wide install.
+    let source_dir = std::path::Path::new(path)
+        .parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+
     for function in result.1.functions {
         runner.functions.insert(
             function.name,
@@ -28,10 +37,22 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
         );
     }
     for ext in result.1.external_functions {
+        // If the library path is relative, resolve it against the source file's dir.
+        let library_path = {
+            let p = std::path::Path::new(&ext.library);
+            if p.is_absolute() {
+                ext.library.clone()
+            } else {
+                source_dir
+                    .join(p)
+                    .to_string_lossy()
+                    .into_owned()
+            }
+        };
         runner.external_functions.insert(
             ext.name.clone(),
             ExternalFunction {
-                library: ext.library,
+                library: library_path,
                 symbol: ext.symbol,
                 params: ext.params,
                 return_type: ext.return_typ,

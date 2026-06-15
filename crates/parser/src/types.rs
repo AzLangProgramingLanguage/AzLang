@@ -2,13 +2,12 @@ use crate::{
     errors::ParserError,
     shared_ast::{StringEnum, Type},
 };
-use std::borrow::Cow;
 use tokenizer::{
     iterator::{SpannedToken, Tokens},
     tokens::Token,
 };
 
-pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type, ParserError> {
+pub fn parse_type(tokens: &mut Tokens) -> Result<Type, ParserError> {
     let token = match tokens.next() {
         Some(token) => token,
         None => return Err(ParserError::UnexpectedEOF),
@@ -31,6 +30,7 @@ pub fn parse_type<'a>(tokens: &mut Tokens) -> Result<Type, ParserError> {
         Token::CharType => Type::Char,
         Token::Void => Type::Void,
         Token::FloatType => Type::Float,
+        Token::AnyType => Type::Any,
         Token::Array => {
             match tokens.next() {
                 Some(SpannedToken {

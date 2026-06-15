@@ -1,5 +1,6 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
+    AnyType,
     MutableDecl,
     ConstantDecl,
     FunctionDef,

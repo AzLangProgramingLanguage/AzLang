@@ -1,23 +1,27 @@
 const std = @import("std");
 
-const Value = union(enum) {
-    String: []const u8,
-    Number: u8,
-};
+pub export fn printValue_int(n: i64) void {
+    std.debug.print("{d}\n", .{n});
+}
+pub export fn printValue_float(n: f64) void {
+    std.debug.print("{d}\n", .{n});
+}
 
-fn printValue(a: Value) void {
-    switch (a) {
-        .String => |str| std.debug.print("{s}\n", .{str}),
-        .Number => |num| std.debug.print("{d}\n", .{num}),
+pub export fn printValue_str(s: [*:0]const u8) void {
+    std.debug.print("{s}\n", .{s});
+}
+
+pub export fn printValue_bool(b: u8) void {
+    if (b != 0) {
+        std.debug.print("doğru\n", .{});
+    } else {
+        std.debug.print("yanlış\n", .{});
     }
 }
 
-test "hello" {
-    const v1 = Value{ .Number = 5 };
-    const v2 = Value{ .String = "Salam" };
+test "test" {
+    const x: i32 = 42;
+    const T = @TypeOf(x);
 
-    printValue(v1);
-    printValue(v2);
-
-    try std.testing.expectEqual(@as(u8, 5), 5);
+    std.debug.print("Type is: {}\n", .{T}); // Prints "Type is: i32"
 }

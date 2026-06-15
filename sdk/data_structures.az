@@ -1,3 +1,16 @@
-@external("printlib.so", "printValue")
-funksiya print(): heçnə
+@external("printlib.so", "printValue_int")
+funksiya print_ədəd(sabit ədəd n): heçnə
 
+@external("printlib.so","printValue_str")
+funksiya print_yazı(sabit yazı str): heçnə
+
+
+
+@external("printlib.so","printValue_float")
+funksiya print_kəsr(sabit yazı f): heçnə
+
+
+
+print_ədəd(1)
+print_yazı("Salam")
+print_kəsr(6.1)

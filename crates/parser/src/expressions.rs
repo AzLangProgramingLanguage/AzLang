@@ -29,16 +29,6 @@ pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Vec<Statement>, Par
                 continue;
             }
 
-            // SpannedToken {
-            //     token: Token::FunctionDef,
-            //     ..
-            // } => {
-            //     let (name, function) = parse_function_def(tokens)?;
-            //     if ast.functions.get(&name).is_some() {
-            //         return Err(ParserError::FunctionAlreadyAsigned(name));
-            //     }
-            //     ast.functions.insert(name, function);
-            // }
             SpannedToken {
                 token: Token::StringLiteral(_),
                 ..

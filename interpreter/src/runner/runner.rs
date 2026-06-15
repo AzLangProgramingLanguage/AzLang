@@ -182,19 +182,10 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Ast) {
             Expr::Return(v) => {
                 ctx.current_return = *v;
             }
-            Expr::BuiltInCall {
-                function,
-                args,
-                return_type,
-            } => {
-                let args_values: Vec<Value> = args
-                    .iter()
-                    .map(|x| get_primitive_value(ctx, x.clone(), None))
-                    .collect();
 
-                builthin_call_runner(function, args_values, return_type);
+            other => {
+                get_primitive_value(ctx, other, None);
             }
-            other => todo!("{other:?} not yet implemented "),
         },
     }
 }

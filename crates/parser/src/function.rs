@@ -18,13 +18,11 @@ pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, Par
             token: Token::Identifier(ref s),
             ..
         }) if s == "external" => {}
-        Some(SpannedToken {
-            token: other, ..
-        }) => {
+        Some(SpannedToken { token: other, .. }) => {
             return Err(ParserError::ExpectedToken(
                 Token::Identifier("external".into()),
                 other,
-            ))
+            ));
         }
         None => return Err(ParserError::UnexpectedEOF),
     }
@@ -34,13 +32,11 @@ pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, Par
             token: Token::StringLiteral(s),
             ..
         }) => s,
-        Some(SpannedToken {
-            token: other, ..
-        }) => {
+        Some(SpannedToken { token: other, .. }) => {
             return Err(ParserError::ExpectedToken(
                 Token::StringLiteral(String::new()),
                 other,
-            ))
+            ));
         }
         None => return Err(ParserError::UnexpectedEOF),
     };
@@ -50,18 +46,16 @@ pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, Par
             token: Token::StringLiteral(s),
             ..
         }) => s,
-        Some(SpannedToken {
-            token: other, ..
-        }) => {
+        Some(SpannedToken { token: other, .. }) => {
             return Err(ParserError::ExpectedToken(
                 Token::StringLiteral(String::new()),
                 other,
-            ))
+            ));
         }
         None => return Err(ParserError::UnexpectedEOF),
     };
     expect_token(tokens, Token::RParen)?;
-
+    expect_token(tokens, Token::Newline)?;
     expect_token(tokens, Token::FunctionDef)?;
 
     let name = match tokens.next() {
@@ -132,7 +126,8 @@ pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, Par
     expect_token(tokens, Token::Newline)?;
 
     if let Some(SpannedToken {
-        token: Token::Indent, ..
+        token: Token::Indent,
+        ..
     }) = tokens.peek()
     {
         tokens.next();
