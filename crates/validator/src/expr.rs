@@ -86,6 +86,34 @@ pub fn validate_expr(
                 }
             };
 
+            let func_info = ctx.functions.get(&func_name).unwrap();
+            let params = &func_info.parameters;
+
+            if args.len() != params.len() {
+                return Err(ValidatorError::InvalidArgumentCount {
+                    name: func_name.clone(),
+                    expected: params.len(),
+                    found: args.len(),
+                });
+            }
+
+            for (arg, param) in args.iter().zip(params.iter()) {
+                let arg_type = get_type(arg, ctx)?;
+                let expected = &param.typ;
+                match (expected, &arg_type) {
+                    (Type::Any, _) | (_, Type::Any) => {}
+                    (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {}
+                    (exp, found) if exp != found => {
+                        return Err(ValidatorError::InvalidArgumentType {
+                            name: func_name.clone(),
+                            expected: exp.to_string(),
+                            found: found.to_string(),
+                        });
+                    }
+                    _ => {}
+                }
+            }
+
             let new_name = ValidatorExpr::VariableRef {
                 name: func_name,
                 symbol: Symbol {

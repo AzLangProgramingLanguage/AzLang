@@ -53,6 +53,20 @@ impl Validator {
                         },
                     );
                 }
+                Statement::ExternalFunctionDef {
+                    name,
+                    return_typ,
+                    params,
+                    ..
+                } => {
+                    self.functions.insert(
+                        name.clone(),
+                        FunctionInfo {
+                            return_type: return_typ.clone(),
+                            parameters: params.clone(),
+                        },
+                    );
+                }
                 _ => continue,
             }
         }

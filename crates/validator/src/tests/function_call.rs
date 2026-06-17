@@ -107,7 +107,9 @@ fn test_function_call_return_type_in_result() {
             args: vec![],
         }),
     ];
-    let (_validator, program) = Validator::default().validate(stmts).expect("should validate");
+    let (_validator, program) = Validator::default()
+        .validate(stmts)
+        .expect("should validate");
     let returned_type = match &program.expressions[0] {
         Ast::Expr(ValidatorExpr::Call { returned_type, .. }) => returned_type,
         other => panic!("expected Call, got {other:?}"),
@@ -128,10 +130,251 @@ fn test_function_call_return_type_bool() {
             args: vec![],
         }),
     ];
-    let (_validator, program) = Validator::default().validate(stmts).expect("should validate");
+    let (_validator, program) = Validator::default()
+        .validate(stmts)
+        .expect("should validate");
     let returned_type = match &program.expressions[0] {
         Ast::Expr(ValidatorExpr::Call { returned_type, .. }) => returned_type,
         other => panic!("expected Call, got {other:?}"),
     };
     assert_eq!(*returned_type, Type::Bool);
+}
+
+#[test]
+fn test_function_call_wrong_arg_count_too_few() {
+    let stmts = vec![
+        make_func(
+            "add",
+            Type::Integer,
+            vec![
+                Parameter {
+                    name: "a".to_string(),
+                    typ: Type::Integer,
+                    is_pointer: false,
+                },
+                Parameter {
+                    name: "b".to_string(),
+                    typ: Type::Integer,
+                    is_pointer: false,
+                },
+            ],
+            vec![],
+        ),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: "add".to_string(),
+                symbol: None,
+            }),
+            args: vec![Expr::Number(1)],
+        }),
+    ];
+    let result = Validator::default().validate(stmts);
+    assert_matches!(
+        result,
+        Err(ValidatorError::InvalidArgumentCount { .. })
+    );
+}
+
+#[test]
+fn test_function_call_wrong_arg_count_too_many() {
+    let stmts = vec![
+        make_func(
+            "foo",
+            Type::Void,
+            vec![Parameter {
+                name: "a".to_string(),
+                typ: Type::Integer,
+                is_pointer: false,
+            }],
+            vec![],
+        ),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: "foo".to_string(),
+                symbol: None,
+            }),
+            args: vec![Expr::Number(1), Expr::Number(2), Expr::Number(3)],
+        }),
+    ];
+    let result = Validator::default().validate(stmts);
+    assert_matches!(
+        result,
+        Err(ValidatorError::InvalidArgumentCount { .. })
+    );
+}
+
+#[test]
+fn test_function_call_wrong_arg_type() {
+    let stmts = vec![
+        make_func(
+            "foo",
+            Type::Void,
+            vec![Parameter {
+                name: "a".to_string(),
+                typ: Type::Integer,
+                is_pointer: false,
+            }],
+            vec![],
+        ),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: "foo".to_string(),
+                symbol: None,
+            }),
+            args: vec![Expr::String("hello".to_string())],
+        }),
+    ];
+    let result = Validator::default().validate(stmts);
+    assert_matches!(
+        result,
+        Err(ValidatorError::InvalidArgumentType { .. })
+    );
+}
+
+#[test]
+fn test_function_call_multiple_args_type_check() {
+    let stmts = vec![
+        make_func(
+            "add",
+            Type::Integer,
+            vec![
+                Parameter {
+                    name: "a".to_string(),
+                    typ: Type::Integer,
+                    is_pointer: false,
+                },
+                Parameter {
+                    name: "b".to_string(),
+                    typ: Type::Integer,
+                    is_pointer: false,
+                },
+            ],
+            vec![],
+        ),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: "add".to_string(),
+                symbol: None,
+            }),
+            args: vec![Expr::Number(1), Expr::String("wrong".to_string())],
+        }),
+    ];
+    let result = Validator::default().validate(stmts);
+    assert_matches!(
+        result,
+        Err(ValidatorError::InvalidArgumentType { .. })
+    );
+}
+
+fn make_external_func(
+    name: &str,
+    return_typ: Type,
+    params: Vec<Parameter>,
+    library: &str,
+    symbol: &str,
+) -> Statement {
+    Statement::ExternalFunctionDef {
+        name: name.to_string(),
+        return_typ,
+        params,
+        library: library.to_string(),
+        symbol: symbol.to_string(),
+    }
+}
+
+#[test]
+fn test_external_function_call_success() {
+    let stmts = vec![
+        make_external_func("add", Type::Integer, vec![Parameter {
+            name: "a".to_string(),
+            typ: Type::Integer,
+            is_pointer: false,
+        }], "c", "add"),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: "add".to_string(),
+                symbol: None,
+            }),
+            args: vec![Expr::Number(42)],
+        }),
+    ];
+    let result = Validator::default().validate(stmts);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_external_function_call_wrong_arg_count() {
+    let stmts = vec![
+        make_external_func("foo", Type::Void, vec![
+            Parameter {
+                name: "a".to_string(),
+                typ: Type::Integer,
+                is_pointer: false,
+            },
+            Parameter {
+                name: "b".to_string(),
+                typ: Type::Integer,
+                is_pointer: false,
+            },
+        ], "c", "foo"),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: "foo".to_string(),
+                symbol: None,
+            }),
+            args: vec![Expr::Number(1)],
+        }),
+    ];
+    let result = Validator::default().validate(stmts);
+    assert_matches!(
+        result,
+        Err(ValidatorError::InvalidArgumentCount { .. })
+    );
+}
+
+#[test]
+fn test_external_function_call_wrong_arg_type() {
+    let stmts = vec![
+        make_external_func("print_int", Type::Void, vec![Parameter {
+            name: "x".to_string(),
+            typ: Type::Integer,
+            is_pointer: false,
+        }], "c", "print_int"),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: "print_int".to_string(),
+                symbol: None,
+            }),
+            args: vec![Expr::String("hello".to_string())],
+        }),
+    ];
+    let result = Validator::default().validate(stmts);
+    assert_matches!(
+        result,
+        Err(ValidatorError::InvalidArgumentType { .. })
+    );
+}
+
+#[test]
+fn test_external_function_call_no_args() {
+    let stmts = vec![
+        make_external_func("get_time", Type::Integer, vec![], "c", "time"),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: "get_time".to_string(),
+                symbol: None,
+            }),
+            args: vec![],
+        }),
+    ];
+    let result = Validator::default().validate(stmts);
+    assert!(result.is_ok());
 }
