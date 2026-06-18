@@ -1,7 +1,7 @@
 use file_system::errors::FileSystemError;
 use parser::errors::ParserError;
 use validator::errors::ValidatorError;
-
+#[derive(Debug)]
 pub enum CompilerError {
     BuildError,
     IO(FileSystemError),

@@ -11,7 +11,7 @@ use crate::errors::CompilerError;
         .join("dependencies")
         .join(if cfg!(windows) { "zig.exe" } else { "zig" })
 } */
-fn get_zig_path() -> &'static str {
+pub fn get_zig_path() -> &'static str {
     "zig"
 }
 const BLUE: &str = "\x1b[94m";
