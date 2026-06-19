@@ -42,27 +42,14 @@ fn bin_create_dir() -> Result<PathBuf, FileSystemError> {
         fs::create_dir(bin_path)?;
     }
     let zig_path = get_zig_path();
-    // dbg!(
-    //     Command::new(zig_path)
-    //         .arg("init")
-    //         .current_dir("./bin")
-    //         .get_current_dir()
-    // );
-    let output = Command::new("ls")
-        .arg("-la")
-        .current_dir("./bin") // Sets the working directory
-        .output()
-        .expect("Failed to execute command");
-
-    println!("{}", String::from_utf8_lossy(&output.stdout));
-    assert!(false);
+    Command::new(zig_path).arg("init").current_dir("./bin");
     let deps_src = Path::new("./dependencies");
     let deps_dest = bin_path.join("dependencies");
     if deps_src.exists() {
         copy_dir_all(deps_src, &deps_dest)?;
     }
 
-    Ok(bin_path.join("main.zig"))
+    Ok(bin_path.join("src/main.zig"))
 }
 
 fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), FileSystemError> {

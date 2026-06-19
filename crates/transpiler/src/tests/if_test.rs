@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
 
-    use crate::{TranspileContext, builtin::print, transpile::transpile_stmt};
+    use crate::{TranspileContext, transpile::transpile_stmt};
     use parser::{
         ast::{Expr, IF, Operation, Statement, Symbol, TemplateChunk},
         shared_ast::Type,

@@ -1,1 +1,1 @@
-Çap(`Salam ${1312} `)
+sabit yazı msg = `Salam ${1312}`

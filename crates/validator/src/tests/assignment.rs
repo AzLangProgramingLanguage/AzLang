@@ -24,16 +24,6 @@ fn assign(name: &str, value: Expr) -> Statement {
         value: Box::new(value),
     }
 }
-fn print_variable(name: &str) -> Statement {
-    Statement::Expr(Expr::BuiltInCall {
-        function: parser::shared_ast::BuiltInFunction::Print,
-        args: vec![Expr::VariableRef {
-            name: name.to_string(),
-            symbol: None,
-        }],
-    })
-}
-
 // ─── Tests ──────────────────────────────────────────────────────────────────
 
 #[test]
@@ -43,7 +33,6 @@ fn test_assignment_success() {
         .validate(vec![
             decl("x", Type::Integer, true, Expr::Number(1)),
             assign("x", Expr::Number(2)),
-            print_variable("x"),
         ])
         .expect("valid program should not fail");
 

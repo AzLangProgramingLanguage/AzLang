@@ -34,31 +34,6 @@ pub fn get_expr_type(expr: &Expr) -> Type {
             }
         },
 
-        // Expr::Call {
-        //     target,
-        //     name,
-        //     args,
-        //     returned_type,
-        // } => {
-        //     if let Some(typ) = returned_type {
-        //         typ.clone()
-        //     } else {
-        //         Type::Any
-        //     }
-        // }
-        // Expr::VariableRef { name: _, symbol } => symbol.as_ref().unwrap().typ.clone(),
-        // Expr::BuiltInCall {
-        //     function: _,
-        //     args: _,
-        //     return_type,
-        // } => return_type.clone(),
-        //
-        // Expr::BinaryOp {
-        //     left,
-        //     op,
-        //     right,
-        //     return_type,
-        // } => return_type.clone(),
         Expr::Index {
             target: _,
             index: _,

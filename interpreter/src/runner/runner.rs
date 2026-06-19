@@ -3,11 +3,11 @@ use std::fmt::Display;
 
 use super::Runner;
 use crate::runner::{
-    Variable, binary_op::binary_op_runner, builtin::builthin_call_runner,
+    Variable, binary_op::binary_op_runner,
     function_call::function_call, helpers::run_body,
 };
 
-use parser::shared_ast::{BuiltInFunction, Type};
+use parser::shared_ast::Type;
 use validator::ast::TemplateChunk;
 use validator::ast::{Ast, Expr};
 type Statement = Ast;
@@ -108,30 +108,6 @@ pub fn get_primitive_value(ctx: &mut Runner, expr: Expr, cast_typ: Option<Type>)
             args,
             returned_type,
         } => function_call(ctx, target, name, args, Some(returned_type)),
-        Expr::BuiltInCall {
-            function,
-            args,
-            return_type: _,
-        } => match function {
-            BuiltInFunction::Len => match args.first() {
-                Some(current_expr) => {
-                    let value = get_primitive_value(ctx, current_expr.clone(), cast_typ);
-                    match value {
-                        Value::List(s) => Value::Number(s.len() as i64),
-                        Value::String(s) => Value::Number(s.len() as i64),
-                        _ => Value::Number(0),
-                    }
-                }
-                _ => Value::Void, // Some(Expr::List(s)) => Value::Number(s.len() as i64),
-                                  // Some(Expr::String(s)) => Value::Number(s.len() as i64),
-                                  // _ => {
-                                  //     println!("{function:?}  {:?} ", args);
-                                  //     Value::Number(0)
-                                  // }
-            },
-
-            _ => Value::Void,
-        },
         other => panic!("{other:#?} Invalid expression"),
     }
 }

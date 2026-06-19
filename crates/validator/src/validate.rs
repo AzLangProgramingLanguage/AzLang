@@ -1,8 +1,8 @@
 use std::{collections::HashMap, rc::Rc};
 
 use parser::{
-    ast::{Expr::BuiltInCall, Statement, Symbol},
-    shared_ast::{BuiltInFunction, StringEnum, Type},
+    ast::{Statement, Symbol},
+    shared_ast::{StringEnum, Type},
 };
 type ValidatorExpr = crate::ast::Expr;
 use crate::{

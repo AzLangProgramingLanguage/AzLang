@@ -1,7 +1,6 @@
 pub mod assign;
 pub mod ast;
 pub mod binary_op;
-pub mod builtin;
 pub mod condition;
 pub mod decl;
 pub mod function;

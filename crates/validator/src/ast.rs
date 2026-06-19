@@ -1,6 +1,6 @@
 use parser::{
     ast::{Operation, Parameter, Symbol},
-    shared_ast::{BuiltInFunction, Type},
+    shared_ast::Type,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -69,11 +69,6 @@ pub enum Expr {
         name: Box<Expr>,
         args: Vec<Expr>,
         returned_type: Type,
-    },
-    BuiltInCall {
-        function: BuiltInFunction,
-        args: Vec<Expr>,
-        return_type: Type,
     },
 }
 

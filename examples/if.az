@@ -1,6 +1,6 @@
 əgər 1!=1
-    Çap("Salam")
+    sabit ədəd x = 1
 yoxsa 2!=3
-    Çap(2)
+    sabit ədəd x = 2
 əks
-    Çap(3)
+    sabit ədəd x = 3

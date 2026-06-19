@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use crate::{
     ast::{Expr, Operation, Statement},
     binary_op::{parse_expression, parse_statement},
-    builtin::parse_builtin,
     errors::ParserError,
     function::parse_function_def,
     identifier::parse_identifier,
@@ -100,84 +99,7 @@ pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             ..
         } => Ok(Expr::Continue),
 
-        SpannedToken {
-            token: Token::Print,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Input,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Len, ..
-        }
-        | SpannedToken {
-            token: Token::NumberFn,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Sum, ..
-        }
-        | SpannedToken {
-            token: Token::RangeFn,
-            ..
-        }
-        | SpannedToken {
-            token: Token::LastWord,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Sqrt, ..
-        }
-        | SpannedToken {
-            token: Token::Timer,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Max, ..
-        }
-        | SpannedToken {
-            token: Token::StrUpper,
-            ..
-        }
-        | SpannedToken {
-            token: Token::StrLower,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Min, ..
-        }
-        | SpannedToken {
-            token: Token::Zig, ..
-        }
-        | SpannedToken {
-            token: Token::Mod, ..
-        }
-        | SpannedToken {
-            token: Token::Trim, ..
-        }
-        | SpannedToken {
-            token: Token::StrReverse,
-            ..
-        }
-        | SpannedToken {
-            token: Token::ConvertString,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Round,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Floor,
-            ..
-        }
-        | SpannedToken {
-            token: Token::Ceil, ..
-        } => {
-            let result = parse_builtin(token, tokens)?;
-            Ok(result)
-        }
+
         SpannedToken {
             token: Token::Backtick,
             ..

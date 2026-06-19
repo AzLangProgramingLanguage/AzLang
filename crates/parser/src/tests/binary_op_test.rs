@@ -2,7 +2,7 @@
 use crate::{
     ast::{Expr, Operation, Statement},
     binary_op::{parse_expression, parse_statement},
-    shared_ast::{BuiltInFunction, Type},
+    shared_ast::Type,
     tests::{TestResult, create_tokens},
 };
 use tokenizer::tokens::Token;

@@ -1,4 +1,4 @@
-use crate::shared_ast::{BuiltInFunction, Type};
+use crate::shared_ast::Type;
 use core::fmt;
 use std::{
     collections::HashMap,
@@ -182,10 +182,6 @@ pub enum Expr {
     },
     TemplateString(Vec<TemplateChunk>),
 
-    BuiltInCall {
-        function: BuiltInFunction,
-        args: Vec<Expr>,
-    },
     Call {
         target: Option<Box<Expr>>,
         name: Box<Expr>,

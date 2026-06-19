@@ -1,4 +1,4 @@
-use std::fmt::{self, write};
+use std::fmt;
 
 use crate::tokens::Token;
 impl fmt::Display for Token {
@@ -27,24 +27,16 @@ impl fmt::Display for Token {
             Token::Else => write!(f, "else"),
             Token::Import => write!(f, "import"),
             Token::This => write!(f, "this"),
-            Token::Timer => write!(f, "timer"),
-            Token::Sqrt => write!(f, "sqrt"),
             Token::End => write!(f, "end"),
             Token::ElseIf => write!(f, "else if"),
             Token::Drop => write!(f, "drop"),
-            Token::Zig => write!(f, "zig"),
             Token::Match => write!(f, "match"),
             Token::Arrow => write!(f, "->"),
             Token::At => write!(f, "@"),
             Token::Loop => write!(f, "loop"),
             Token::Break => write!(f, "break"),
-            Token::Print => write!(f, "print"),
-            Token::ConvertString => write!(f, "convert string"),
-            Token::Allocator => write!(f, "allocator"),
             Token::Continue => write!(f, "continue"),
-            Token::Round => write!(f, "round"),
-            Token::Floor => write!(f, "floor"),
-            Token::Ceil => write!(f, "ceil"),
+
             Token::Method => write!(f, "method"),
             Token::True => write!(f, "true"),
             Token::False => write!(f, "false"),
@@ -61,9 +53,7 @@ impl fmt::Display for Token {
             Token::Or => write!(f, "or"),
             Token::DoubleAnd => write!(f, "&&"),
             Token::DoubleOr => write!(f, "||"),
-            Token::NumberFn => write!(f, "number"),
-            Token::RangeFn => write!(f, "range"),
-            Token::Input => write!(f, "input"),
+
             Token::IntegerType => write!(f, "integer"),
             Token::NaturalType => write!(f, "natural"),
             Token::StringType => write!(f, "string"),
@@ -87,16 +77,7 @@ impl fmt::Display for Token {
             Token::Conditional => write!(f, "conditional"),
             Token::Underscore => write!(f, "_"),
             Token::Void => write!(f, "void"),
-            Token::Max => write!(f, "max"),
-            Token::Min => write!(f, "min"),
-            Token::Trim => write!(f, "trim"),
-            Token::Mod => write!(f, "mod"),
-            Token::Len => write!(f, "len"),
-            Token::StrUpper => write!(f, "str upper"),
-            Token::StrLower => write!(f, "str lower"),
-            Token::StrReverse => write!(f, "str reverse"),
-            Token::LastWord => write!(f, "last word"),
-            Token::Sum => write!(f, "sum"),
+
             Token::Dot => write!(f, "."),
             Token::Add => write!(f, "+"),
             Token::Multiply => write!(f, "*"),

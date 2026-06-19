@@ -3,6 +3,66 @@ use std::{
     ffi::{CStr, CString},
 };
 
+#[repr(C)]
+union ValueData {
+    int: i64,
+    float: f64,
+    string: *const std::ffi::c_char,
+    bool: u8,
+}
+
+#[repr(C)]
+struct ValueType {
+    tag: u8,
+    data: ValueData,
+}
+
+fn value_to_value_type(val: &Value) -> (ValueType, Option<CString>) {
+    match val {
+        Value::Number(n) => (
+            ValueType {
+                tag: 1,
+                data: ValueData { int: *n },
+            },
+            None,
+        ),
+        Value::Float(f) => (
+            ValueType {
+                tag: 2,
+                data: ValueData { float: *f },
+            },
+            None,
+        ),
+        Value::String(s) => {
+            let cstr = CString::new(s.as_str()).unwrap();
+            let ptr = cstr.as_ptr();
+            (
+                ValueType {
+                    tag: 3,
+                    data: ValueData { string: ptr },
+                },
+                Some(cstr),
+            )
+        }
+        Value::Bool(b) => (
+            ValueType {
+                tag: 4,
+                data: ValueData {
+                    bool: if *b { 1 } else { 0 },
+                },
+            },
+            None,
+        ),
+        _ => (
+            ValueType {
+                tag: 0,
+                data: ValueData { int: 0 },
+            },
+            None,
+        ),
+    }
+}
+
 use libloading::{Library, Symbol};
 use parser::shared_ast::Type;
 
@@ -100,6 +160,16 @@ fn call_external_fn(ext: &ExternalFunction, args: &[Value]) -> Value {
                     let f: Symbol<unsafe extern "C" fn(u8)> = unsafe { lib.get(symbol_bytes) }
                         .unwrap_or_else(|e| panic!("Symbol '{}' not found: {}", ext.symbol, e));
                     unsafe { f(args[0].as_bool() as u8) };
+                    Value::Void
+                }
+                Type::Any => {
+                    let (value_type, _cstring) = value_to_value_type(&args[0]);
+                    let f: Symbol<unsafe extern "C" fn(*const ValueType)> =
+                        unsafe { lib.get(symbol_bytes) }
+                            .unwrap_or_else(|e| {
+                                panic!("Symbol '{}' not found: {}", ext.symbol, e)
+                            });
+                    unsafe { f(&value_type) };
                     Value::Void
                 }
 

@@ -1,4 +1,4 @@
 funksiya square(sabit ədəd x): ədəd
     qaytar x*x
 
-Çap(square(2))
+sabit ədəd result = square(2)

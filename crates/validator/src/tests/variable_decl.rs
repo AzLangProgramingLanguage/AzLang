@@ -47,29 +47,4 @@ fn test_variable_decl_already_declared() {
     assert_eq!(result, Err(ValidatorError::AlreadyDecl("x".to_string())))
 }
 
-#[test]
-fn test_mutable_variable_never_changed() {
-    let validator = Validator::default();
-    let program = vec![
-        Statement::Decl {
-            name: "y".to_string(),
-            typ: Rc::new(Type::Integer),
-            is_mutable: true,
-            value: Box::new(Expr::Number(5)),
-        },
-        Statement::Expr(Expr::BuiltInCall {
-            function: parser::shared_ast::BuiltInFunction::Print,
-            args: vec![Expr::VariableRef {
-                name: "y".to_string(),
-                symbol: None,
-            }],
-        }),
-    ];
-    let result = validator.validate(program);
-    assert_eq!(
-        result,
-        Err(ValidatorError::NeverChangedMuttableVariable(
-            "y".to_string()
-        ))
-    )
-}
+

@@ -304,11 +304,6 @@ fn test_keyword_continue() {
 }
 
 #[test]
-fn test_keyword_trim() {
-    assert_eq!(tokenize("YazıQırx"), vec![Token::Trim]);
-}
-
-#[test]
 fn test_keyword_loop() {
     assert_eq!(tokenize("gəz"), vec![Token::Loop]);
 }
@@ -383,96 +378,6 @@ fn test_keyword_void() {
 }
 
 #[test]
-fn test_keyword_print() {
-    assert_eq!(tokenize("Çap"), vec![Token::Print]);
-}
-
-#[test]
-fn test_keyword_input() {
-    assert_eq!(tokenize("Giriş"), vec![Token::Input]);
-}
-
-#[test]
-fn test_keyword_max() {
-    assert_eq!(tokenize("Maksimum"), vec![Token::Max]);
-}
-
-#[test]
-fn test_keyword_min() {
-    assert_eq!(tokenize("Minimum"), vec![Token::Min]);
-}
-
-#[test]
-fn test_keyword_str_upper() {
-    assert_eq!(tokenize("YazıBöyüt"), vec![Token::StrUpper]);
-}
-
-#[test]
-fn test_keyword_timer() {
-    assert_eq!(tokenize("VaxtAl"), vec![Token::Timer]);
-}
-
-#[test]
-fn test_keyword_mod() {
-    assert_eq!(tokenize("Modul"), vec![Token::Mod]);
-}
-
-#[test]
-fn test_keyword_number_fn() {
-    assert_eq!(tokenize("ƏdədəÇevir"), vec![Token::NumberFn]);
-}
-
-#[test]
-fn test_keyword_sum() {
-    assert_eq!(tokenize("Cəm"), vec![Token::Sum]);
-}
-
-#[test]
-fn test_keyword_round() {
-    assert_eq!(tokenize("Yuvarlaqlaşdır"), vec![Token::Round]);
-}
-
-#[test]
-fn test_keyword_floor() {
-    assert_eq!(tokenize("AşağıYuvarlaqlaşdır"), vec![Token::Floor]);
-}
-
-#[test]
-fn test_keyword_ceil() {
-    assert_eq!(tokenize("YuxarıYuvarlaqlaşdır"), vec![Token::Ceil]);
-}
-
-#[test]
-fn test_keyword_len() {
-    assert_eq!(tokenize("Uzunluq"), vec![Token::Len]);
-}
-
-#[test]
-fn test_keyword_last_word() {
-    assert_eq!(tokenize("Sonsöz"), vec![Token::LastWord]);
-}
-
-#[test]
-fn test_keyword_str_reverse() {
-    assert_eq!(tokenize("YazıTərs"), vec![Token::StrReverse]);
-}
-
-#[test]
-fn test_keyword_convert_string() {
-    assert_eq!(tokenize("YazıyaÇevir"), vec![Token::ConvertString]);
-}
-
-#[test]
-fn test_keyword_sqrt() {
-    assert_eq!(tokenize("Kök"), vec![Token::Sqrt]);
-}
-
-#[test]
-fn test_keyword_range_fn() {
-    assert_eq!(tokenize("aralıq"), vec![Token::RangeFn]);
-}
-
-#[test]
 fn test_keyword_enum() {
     assert_eq!(tokenize("növ"), vec![Token::Enum]);
 }
@@ -483,11 +388,6 @@ fn test_keyword_method() {
 }
 
 #[test]
-fn test_keyword_zig() {
-    assert_eq!(tokenize("Zig"), vec![Token::Zig]);
-}
-
-#[test]
 fn test_keyword_import() {
     assert_eq!(tokenize("ƏlavəEt"), vec![Token::Import]);
 }
@@ -495,16 +395,6 @@ fn test_keyword_import() {
 #[test]
 fn test_keyword_type() {
     assert_eq!(tokenize("tip"), vec![Token::Type]);
-}
-
-#[test]
-fn test_keyword_allocator() {
-    assert_eq!(tokenize("YaddaşAl"), vec![Token::Allocator]);
-}
-
-#[test]
-fn test_keyword_str_lower() {
-    assert_eq!(tokenize("YazıKiçilt"), vec![Token::StrLower]);
 }
 
 #[test]
@@ -721,20 +611,6 @@ fn test_simple_expression() {
 }
 
 #[test]
-fn test_function_call() {
-    let tokens = tokenize("Çap(\"salam\")");
-    assert_eq!(
-        tokens,
-        vec![
-            Token::Print,
-            Token::LParen,
-            Token::StringLiteral("salam".into()),
-            Token::RParen,
-        ]
-    );
-}
-
-#[test]
 fn test_arithmetic_expression() {
     let tokens = tokenize("1 + 2 * 3");
     assert_eq!(
@@ -763,29 +639,6 @@ fn test_comparison_chain() {
         ]
     );
 }
-
-#[test]
-fn test_if_statement() {
-    let input = "əgər a == b\n    Çap(\"bərabər\")";
-    let tokens = tokenize(input);
-    assert_eq!(
-        tokens,
-        vec![
-            Token::Conditional,
-            Token::Identifier("a".into()),
-            Token::Equal,
-            Token::Identifier("b".into()),
-            Token::Newline,
-            Token::Indent,
-            Token::Print,
-            Token::LParen,
-            Token::StringLiteral("bərabər".into()),
-            Token::RParen,
-        ]
-    );
-}
-
-// ── Edge cases ──
 
 #[test]
 fn test_empty_input() {
@@ -1096,7 +949,6 @@ fn test_token_display_keywords() {
     assert_eq!(format!("{}", Token::Continue), "continue");
     assert_eq!(format!("{}", Token::True), "true");
     assert_eq!(format!("{}", Token::False), "false");
-    assert_eq!(format!("{}", Token::Print), "print");
 }
 
 #[test]
@@ -1199,33 +1051,6 @@ fn test_string_with_special_chars() {
     assert_eq!(
         tokenize("\"a!@#$%^&*()\""),
         vec![Token::StringLiteral("a!@#$%^&*()".into())]
-    );
-}
-
-#[test]
-fn test_multiple_statements_with_indent() {
-    let input = "dəyişən x = 5\n    əgər x > 0\n        Çap(\"müsbət\")";
-    let tokens = tokenize(input);
-    assert_eq!(
-        tokens,
-        vec![
-            Token::MutableDecl,
-            Token::Identifier("x".into()),
-            Token::Assign,
-            Token::Number(5),
-            Token::Newline,
-            Token::Indent,
-            Token::Conditional,
-            Token::Identifier("x".into()),
-            Token::Greater,
-            Token::Number(0),
-            Token::Newline,
-            Token::Indent,
-            Token::Print,
-            Token::LParen,
-            Token::StringLiteral("müsbət".into()),
-            Token::RParen,
-        ]
     );
 }
 

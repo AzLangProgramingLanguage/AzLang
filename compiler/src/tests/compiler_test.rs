@@ -3,7 +3,8 @@ use transpiler::TranspileContext;
 
 #[test]
 fn compiler_variable_test() {
-    let sdk = file_system::read_file("../examples/float.az").expect("Fayl oxunamadı");
+    const PATH: &str = "../examples/float.az";
+    let sdk = file_system::read_file(PATH).expect("Fayl oxunamadı");
 
     let parsed_program = parser(sdk).expect("Parse oluna bilinmedi ");
 
@@ -22,7 +23,7 @@ fn compiler_variable_test() {
         std::process::exit(err.code());
     });
 
-    build(output_zig.to_str().unwrap(), "../examples/float.az").expect("Build oluna bilinmedi");
+    build(output_zig.to_str().unwrap(), PATH).expect("Build oluna bilinmedi");
 }
 #[test]
 fn compiler_binary_op_test() {

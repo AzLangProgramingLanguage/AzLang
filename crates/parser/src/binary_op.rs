@@ -82,7 +82,7 @@ fn parse_binary_op_with_precedence(
                     return Err(ParserError::RParenNotFound(Token::Eof));
                 }
                 _ => {
-                    args.push(parse_single_expr(tokens)?);
+                    args.push(parse_expression(tokens)?);
                 }
             }
         }

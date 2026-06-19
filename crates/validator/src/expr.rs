@@ -1,7 +1,7 @@
 use parser::{
     ast::Symbol,
     binary_op,
-    shared_ast::{BuiltInFunction, StringEnum, Type},
+    shared_ast::{StringEnum, Type},
 };
 
 use crate::{
@@ -134,43 +134,6 @@ pub fn validate_expr(
                 name: Box::new(new_name),
                 args: validated_args,
                 returned_type: return_type,
-            })
-        }
-        ParserExpr::BuiltInCall { function, args } => {
-            let mut validated_args = Vec::new();
-            for arg in args {
-                validated_args.push(validate_expr(arg, ctx)?);
-            }
-
-            let return_type = match &function {
-                BuiltInFunction::Print => Type::Void,
-                BuiltInFunction::Input => Type::String(StringEnum::DynamicString),
-                BuiltInFunction::Len => Type::Natural,
-                BuiltInFunction::Number => Type::Integer,
-                BuiltInFunction::Sum => Type::Integer,
-                BuiltInFunction::Range => Type::Array(Box::new(Type::Integer)),
-                BuiltInFunction::LastWord => Type::Void,
-                BuiltInFunction::Timer => Type::Integer,
-                BuiltInFunction::Max => Type::Integer,
-                BuiltInFunction::Zig => Type::Void,
-                BuiltInFunction::StrLower
-                | BuiltInFunction::StrUpper
-                | BuiltInFunction::Trim
-                | BuiltInFunction::StrReverse
-                | BuiltInFunction::ConvertString => Type::String(StringEnum::DynamicString),
-                BuiltInFunction::Allocator => Type::Void,
-                BuiltInFunction::Min => Type::Integer,
-                BuiltInFunction::Sqrt => Type::Float,
-                BuiltInFunction::Mod => Type::Integer,
-                BuiltInFunction::Ceil => Type::Integer,
-                BuiltInFunction::Floor => Type::Integer,
-                BuiltInFunction::Round => Type::Integer,
-            };
-
-            Ok(ValidatorExpr::BuiltInCall {
-                function,
-                args: validated_args,
-                return_type,
             })
         }
         ParserExpr::UnaryOp { op, expr } => {

@@ -10,7 +10,6 @@ pub enum ParserError {
     UnexpectedEOF,
     NotUserDirectValue,
     MethodNameNotFound(Token),
-    UnsupportedBuiltInFunction(Token),
     ExpectedToken(Token, Token),
     LoopVarNameNotFound(Token),
     StructNameNotFound(Token),
@@ -50,9 +49,6 @@ impl Display for ParserError {
                     f,
                     "Metod və ya sahə adı gözlənilirdi amma bu tapıldı: '{token}'"
                 )
-            }
-            ParserError::UnsupportedBuiltInFunction(token) => {
-                write!(f, "Dəstəklənməyən funksiya: '{token}'")
             }
             ParserError::ExpectedToken(expected, found) => {
                 write!(f, "Gözlənilirdi '{expected}', tapıldı '{found}'")

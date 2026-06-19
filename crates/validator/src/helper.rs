@@ -5,7 +5,7 @@ use parser::{
         Expr::{self, VariableRef},
         Operation, Statement,
     },
-    shared_ast::{BuiltInFunction, StringEnum, Type},
+    shared_ast::{StringEnum, Type},
 };
 
 use crate::{Validator, ast::Ast, errors::ValidatorError, validate::validate_statement};
@@ -58,30 +58,6 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
             Err(ValidatorError::UndefinedVariable(name.clone()))
         }
         Expr::StructInit { name, .. } => Err(ValidatorError::UnknownStruct(name.clone())),
-        Expr::BuiltInCall { function, .. } => match function {
-            BuiltInFunction::Print => Ok(Type::Void),
-            BuiltInFunction::Input => Ok(Type::String(StringEnum::DynamicString)),
-            BuiltInFunction::Len => Ok(Type::Natural),
-            BuiltInFunction::Number => Ok(Type::Integer),
-            BuiltInFunction::Sum => Ok(Type::Integer),
-            BuiltInFunction::Range => Ok(Type::Array(Box::new(Type::Integer))),
-            BuiltInFunction::LastWord => Ok(Type::Void),
-            BuiltInFunction::Timer => Ok(Type::Integer),
-            BuiltInFunction::Max => Ok(Type::Integer),
-            BuiltInFunction::Zig => Ok(Type::Void),
-            BuiltInFunction::StrLower
-            | BuiltInFunction::StrUpper
-            | BuiltInFunction::Trim
-            | BuiltInFunction::StrReverse
-            | BuiltInFunction::ConvertString => Ok(Type::String(StringEnum::DynamicString)),
-            BuiltInFunction::Allocator => Ok(Type::Void),
-            BuiltInFunction::Min => Ok(Type::Integer),
-            BuiltInFunction::Sqrt => Ok(Type::Float),
-            BuiltInFunction::Mod => Ok(Type::Integer),
-            BuiltInFunction::Ceil => Ok(Type::Integer),
-            BuiltInFunction::Floor => Ok(Type::Integer),
-            BuiltInFunction::Round => Ok(Type::Integer),
-        },
         Expr::Return(e) => get_type(e, ctx),
         Expr::Call { name, .. } => match &**name {
             VariableRef { name, symbol } => {

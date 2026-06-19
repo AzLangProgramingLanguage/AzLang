@@ -78,7 +78,7 @@ pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, Par
                 if matches!(tok.token, Token::MutableDecl | Token::ConstantDecl) {
                     tokens.next();
                 }
-                let param_type = parse_type(tokens)?;
+                let param_type = param_typ(tokens, is_mutable)?;
                 let param_name = match tokens.next() {
                     Some(SpannedToken {
                         token: Token::Identifier(s),
@@ -180,7 +180,8 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError>
                 if matches!(tok.token, Token::MutableDecl | Token::ConstantDecl) {
                     tokens.next();
                 }
-                let param_type = parse_type(tokens)?;
+                let param_typ = param_typ(tokens, is_mutable)?;
+
                 let param_name = match tokens.next() {
                     Some(SpannedToken {
                         token: Token::Identifier(s),
@@ -192,7 +193,7 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError>
                 };
                 params.push(Parameter {
                     name: param_name,
-                    typ: param_type,
+                    typ: param_typ,
                     is_pointer: is_mutable,
                 });
                 match tokens.peek() {
@@ -253,4 +254,14 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError>
         body,
         params,
     })
+}
+fn param_typ(tokens: &mut Tokens, is_mutable: bool) -> Result<Type, ParserError> {
+    let mut param_type = parse_type(tokens)?;
+    match (&param_type, &is_mutable) {
+        (Type::String(S), false) => {
+            param_type = Type::String(crate::shared_ast::StringEnum::LiteralConstString);
+        }
+        _ => {}
+    }
+    Ok(param_type)
 }

@@ -1,9 +1,5 @@
-Çap(2*2)
-Çap(2+2)
-Çap(2-2+1)
-Çap(2/2)
-Çap(2+2/2)
-
-
-funksiya Çap(sabit yazi str): heçnə
-
+sabit ədəd a = 2*2
+sabit ədəd b = 2+2
+sabit ədəd c = 2-2+1
+sabit kəsr d = 2/2
+sabit ədəd e = 2+2/2

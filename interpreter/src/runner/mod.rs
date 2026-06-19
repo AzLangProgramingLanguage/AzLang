@@ -1,5 +1,4 @@
 use std::{collections::HashMap, rc::Rc};
-mod builtin;
 pub mod function_call;
 mod helpers;
 mod runner;
