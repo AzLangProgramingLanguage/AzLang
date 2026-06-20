@@ -3,7 +3,7 @@ mod tests {
     use std::rc::Rc;
 
     use parser::{
-        ast::{Expr, Statement},
+        ast::{Atom, Expr, Statement},
         shared_ast::{StringEnum, Type},
     };
 
@@ -13,13 +13,13 @@ mod tests {
     fn variable_decl_num_test() {
         let mut ctx = TranspileContext::default();
         let var_statement = Statement::Decl {
-            name: 'a'.to_string(),
+            name: Atom::from("a"),
             typ: Rc::new(Type::Natural),
             is_mutable: true,
             value: Box::new(Expr::Number(1)),
         };
         let const_statement = Statement::Decl {
-            name: 'a'.to_string(),
+            name: Atom::from("a"),
             typ: Rc::new(Type::Natural),
             is_mutable: false,
             value: Box::new(Expr::Number(1)),
@@ -38,16 +38,16 @@ mod tests {
     fn variable_decl_str_test() {
         let mut ctx = TranspileContext::default();
         let var_statement = Statement::Decl {
-            name: 'a'.to_string(),
+            name: Atom::from("a"),
             typ: Rc::new(Type::String(StringEnum::LiteralString)),
             is_mutable: true,
-            value: Box::new(Expr::String("Salam".to_string())),
+            value: Box::new(Expr::String(Atom::from("Salam"))),
         };
         let const_statement = Statement::Decl {
-            name: 'a'.to_string(),
+            name: Atom::from("a"),
             typ: Rc::new(Type::String(StringEnum::LiteralConstString)),
             is_mutable: false,
-            value: Box::new(Expr::String("S".to_string())),
+            value: Box::new(Expr::String(Atom::from("S"))),
         };
 
         assert_eq!(

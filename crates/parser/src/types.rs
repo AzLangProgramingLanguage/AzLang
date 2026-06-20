@@ -1,4 +1,5 @@
 use crate::{
+    ast::Atom,
     errors::ParserError,
     shared_ast::{StringEnum, Type},
 };
@@ -14,7 +15,7 @@ pub fn parse_type(tokens: &mut Tokens) -> Result<Type, ParserError> {
     };
 
     let typ = match token.token {
-        Token::Identifier(name) => Type::User(name),
+        Token::Identifier(name) => Type::User(Atom::from(name)),
         Token::IntegerType => Type::Integer,
         Token::BigIntegerType => Type::BigInteger,
         Token::LowIntegerType => Type::LowInteger,

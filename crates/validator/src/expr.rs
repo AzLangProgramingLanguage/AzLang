@@ -19,7 +19,7 @@ pub fn validate_expr(
 ) -> Result<ValidatorExpr, ValidatorError> {
     let return_type = get_type(&expr, ctx)?;
     match expr {
-        ParserExpr::String(s) => Ok(ValidatorExpr::String(s)),
+        ParserExpr::String(s) => Ok(ValidatorExpr::String(s.to_string())),
         ParserExpr::Number(n) => Ok(ValidatorExpr::Number(n)),
         ParserExpr::Float(f) => Ok(ValidatorExpr::Float(f)),
         ParserExpr::Bool(b) => Ok(ValidatorExpr::Bool(b)),
@@ -49,10 +49,10 @@ pub fn validate_expr(
             Ok(ValidatorExpr::Return(Box::new(validated)))
         }
         ParserExpr::VariableRef { name, symbol } => {
-            let s = ctx.lookup_variable_mut_with_err(&name)?;
+            let s = ctx.lookup_variable_mut_with_err(name.as_ref())?;
             s.is_used = true;
             Ok(ValidatorExpr::VariableRef {
-                name,
+                name: name.to_string(),
                 symbol: s.clone(),
             })
         }
@@ -73,11 +73,11 @@ pub fn validate_expr(
                 .map(Box::new);
 
             let func_name = match *name {
-                ParserExpr::VariableRef { name: nam, .. } => {
+                ParserExpr::VariableRef { name: ref nam, .. } => {
                     ctx.functions
-                        .get(&nam)
-                        .ok_or_else(|| ValidatorError::FunctionNotFound(nam.clone()))?;
-                    nam
+                        .get(nam.as_ref())
+                        .ok_or_else(|| ValidatorError::FunctionNotFound(nam.to_string()))?;
+                    nam.to_string()
                 }
                 _ => {
                     return Err(ValidatorError::FunctionNotFound(format!(

@@ -1,7 +1,7 @@
-use std::{borrow::Cow, rc::Rc};
+use std::rc::Rc;
 
 use crate::{
-    ast::Statement,
+    ast::{Atom, Expr, Statement},
     binary_op::parse_expression,
     errors::ParserError,
     helpers::expect_token,
@@ -12,8 +12,6 @@ use tokenizer::{
     iterator::{SpannedToken, Tokens},
     tokens::Token,
 };
-
-use crate::ast::Expr;
 
 pub fn parse_decl(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, ParserError> {
     tokens.next();
@@ -41,7 +39,7 @@ pub fn parse_decl(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, Pa
     }
 
     Ok(Statement::Decl {
-        name: name.into(),
+        name: Atom::from(name),
         typ: Rc::new(data_typ),
         value: Box::new(value),
         is_mutable,

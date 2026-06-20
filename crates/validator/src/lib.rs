@@ -46,7 +46,7 @@ impl Validator {
                     body,
                 } => {
                     self.functions.insert(
-                        name.clone(),
+                        name.to_string(),
                         FunctionInfo {
                             return_type: return_typ.clone(),
                             parameters: params.clone(),
@@ -60,7 +60,7 @@ impl Validator {
                     ..
                 } => {
                     self.functions.insert(
-                        name.clone(),
+                        name.to_string(),
                         FunctionInfo {
                             return_type: return_typ.clone(),
                             parameters: params.clone(),
@@ -116,18 +116,18 @@ impl Validator {
                     symbol,
                 } => {
                     self.functions.insert(
-                        name.clone(),
+                        name.to_string(),
                         FunctionInfo {
                             return_type: return_typ.clone(),
                             parameters: params.clone(),
                         },
                     );
                     program.external_functions.push(ExternalFunctionDef {
-                        name,
+                        name: name.to_string(),
                         params,
                         return_typ,
-                        library,
-                        symbol,
+                        library: library.to_string(),
+                        symbol: symbol.to_string(),
                     });
                 }
                 Statement::FunctionDef {
@@ -140,7 +140,7 @@ impl Validator {
                     self.variables.push(HashMap::new());
                     for param in &params {
                         self.declare_variable(
-                            param.name.clone(),
+                            param.name.to_string(),
                             Symbol {
                                 typ: param.typ.clone(),
                                 is_mutable: param.is_pointer,
@@ -154,7 +154,7 @@ impl Validator {
                     }
                     self.variables.pop();
                     program.functions.push(Function {
-                        name,
+                        name: name.to_string(),
                         body: validated_body,
                         params,
                         return_typ,

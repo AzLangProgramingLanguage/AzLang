@@ -2,7 +2,7 @@
 use crate::{Validator, errors::ValidatorError};
 use parser::{
     ast::{
-        Expr,
+        Atom, Expr,
         Statement::{self},
         Symbol,
     },
@@ -14,7 +14,7 @@ use std::{collections::HashMap, rc::Rc};
 fn test_variable_decl() {
     let validator = Validator::default();
     let program = vec![Statement::Decl {
-        name: "x".to_string(),
+        name: Atom::from("x"),
         typ: Rc::new(Type::Integer),
         is_mutable: false,
         value: Box::new(Expr::Number(1)),
@@ -31,13 +31,13 @@ fn test_variable_decl_already_declared() {
     let validator = Validator::default();
     let program = vec![
         Statement::Decl {
-            name: "x".to_string(),
+            name: Atom::from("x"),
             typ: Rc::new(Type::Integer),
             is_mutable: false,
             value: Box::new(Expr::Number(1)),
         },
         Statement::Decl {
-            name: "x".to_string(),
+            name: Atom::from("x"),
             typ: Rc::new(Type::Integer),
             is_mutable: false,
             value: Box::new(Expr::Number(2)),

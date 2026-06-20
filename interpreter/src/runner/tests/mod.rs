@@ -78,7 +78,7 @@ mod tests {
             "Hello".to_string(),
             Function {
                 params: vec![parser::ast::Parameter {
-                    name: "a".to_string(),
+                    name: parser::ast::Atom::from("a"),
                     typ: Type::Integer,
                     is_pointer: false,
                 }],

@@ -2,7 +2,7 @@
 use std::rc::Rc;
 
 use crate::{
-    ast::{Expr, FunctionDef, Parameter, Statement},
+    ast::{Atom, Expr, Parameter, Statement},
     binary_op::parse_statement,
     shared_ast::Type,
     tests::create_tokens,
@@ -52,18 +52,18 @@ fn test_parse_function_def() {
             && *return_typ == Type::Integer
             && params.len() == 2
             && params[0] == Parameter {
-                name: "a".to_string(),
+                name: Atom::from("a"),
                 typ: Type::Integer,
                 is_pointer: false,
             }
             && params[1] == Parameter {
-                name: "b".to_string(),
+                name: Atom::from("b"),
                 typ: Type::Integer,
                 is_pointer: true,
             }
             && body.len() == 1
             && body[0] == Statement::Decl {
-                name: "x".to_string(),
+                name: Atom::from("x"),
                 typ: Rc::new(Type::Integer),
                 is_mutable: false,
                 value: Box::new(Expr::Number(42)),

@@ -20,12 +20,12 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
             is_mutable,
             value,
         } => {
-            if ctx.lookup_variable(&name).is_some() {
+            if ctx.lookup_variable(name.as_ref()).is_some() {
                 return Err(ValidatorError::AlreadyDecl(name.to_string()));
             }
 
             let mut inferred = get_type(&value, ctx)?;
-            inferred = reconcile_type(typ, inferred, &name)?;
+            inferred = reconcile_type(typ, inferred, name.as_ref())?;
 
             ctx.declare_variable(
                 name.to_string(),
@@ -39,7 +39,7 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
             let val = validate_expr(*value, ctx)?;
 
             Ok(Ast::Decl {
-                name,
+                name: name.to_string(),
                 typ: inferred,
                 is_mutable,
                 value: Box::new(val),
@@ -47,10 +47,10 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
         }
         Statement::Assignment { name, value } => {
             let inferred = get_type(&value, ctx)?;
-            let symbol = ctx.lookup_variable_mut_with_err(&name)?;
+            let symbol = ctx.lookup_variable_mut_with_err(name.as_ref())?;
             symbol.is_changed = true;
             if !symbol.is_mutable {
-                return Err(ValidatorError::AssignmentToImmutableVariable(name));
+                return Err(ValidatorError::AssignmentToImmutableVariable(name.to_string()));
             }
 
             type_checking(symbol.typ.clone(), inferred)?;
@@ -58,7 +58,7 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
             let val = validate_expr(*value, ctx)?;
 
             Ok(Ast::Assignment {
-                name,
+                name: name.to_string(),
                 value: Box::new(val),
             })
         }

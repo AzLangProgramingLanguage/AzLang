@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expr, Symbol},
+    ast::{Atom, Expr, Symbol},
     binary_op::parse_expression,
     errors::ParserError,
     expressions::parse_single_expr,
@@ -66,7 +66,7 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
             expect_token(tokens, Token::ListEnd)?;
             Ok(Expr::Index {
                 target: Box::new(Expr::VariableRef {
-                    name: s,
+                    name: Atom::from(s.clone()),
                     symbol: None,
                 }),
                 index: Box::new(index),
@@ -74,7 +74,7 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
             })
         }
         _ => Ok(Expr::VariableRef {
-            name: s,
+            name: Atom::from(s),
             symbol: None,
         }),
     }

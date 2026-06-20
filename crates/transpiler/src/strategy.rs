@@ -50,7 +50,7 @@ fn transpile_string_nonprimitive<'a>(
         transpile_expr(value.clone(), ctx)
     )
 }
-fn transpile_string_primitive(name: String, is_mutable: bool, value: &String) -> String {
+fn transpile_string_primitive(name: String, is_mutable: bool, value: &str) -> String {
     format!(
         "{} {name}: []const u8 = \"{value}\" ",
         is_mutable_symbol(is_mutable)

@@ -1,10 +1,11 @@
 use std::fmt::Display;
+use crate::ast::Atom;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     String(StringEnum),
     Array(Box<Type>),
-    User(String),
+    User(Atom),
     Integer,
     Natural,
     BigInteger,

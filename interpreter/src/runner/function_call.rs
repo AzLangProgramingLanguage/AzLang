@@ -88,7 +88,7 @@ pub fn function_call(
                 for (index, param) in function.params.iter().enumerate() {
                     let variable = get_primitive_value(ctx, args[index].clone(), None);
                     ctx.variables
-                        .insert(param.name.clone(), Variable { value: variable });
+                        .insert(param.name.to_string(), Variable { value: variable });
                 }
                 for stmt in function.body.clone() {
                     match stmt {

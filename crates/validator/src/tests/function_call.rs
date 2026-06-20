@@ -1,6 +1,6 @@
 use crate::{Validator, ast::Ast, ast::Expr as ValidatorExpr, errors::ValidatorError};
 use parser::{
-    ast::{Expr, Parameter, Statement},
+    ast::{Atom, Expr, Parameter, Statement},
     shared_ast::Type,
 };
 use std::assert_matches;
@@ -12,7 +12,7 @@ fn make_func(
     body: Vec<Statement>,
 ) -> Statement {
     Statement::FunctionDef {
-        name: name.to_string(),
+        name: Atom::from(name),
         return_typ,
         params,
         body,
@@ -26,7 +26,7 @@ fn test_function_call_success() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "foo".to_string(),
+                name: Atom::from("foo"),
                 symbol: None,
             }),
             args: vec![],
@@ -44,12 +44,12 @@ fn test_function_call_with_args() {
             Type::Integer,
             vec![
                 Parameter {
-                    name: "a".to_string(),
+                    name: Atom::from("a"),
                     typ: Type::Integer,
                     is_pointer: false,
                 },
                 Parameter {
-                    name: "b".to_string(),
+                    name: Atom::from("b"),
                     typ: Type::Integer,
                     is_pointer: false,
                 },
@@ -59,7 +59,7 @@ fn test_function_call_with_args() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "add".to_string(),
+                name: Atom::from("add"),
                 symbol: None,
             }),
             args: vec![Expr::Number(1), Expr::Number(2)],
@@ -74,7 +74,7 @@ fn test_function_call_not_found() {
     let stmts = vec![Statement::Expr(Expr::Call {
         target: None,
         name: Box::new(Expr::VariableRef {
-            name: "nonexistent".to_string(),
+            name: Atom::from("nonexistent"),
             symbol: None,
         }),
         args: vec![],
@@ -101,7 +101,7 @@ fn test_function_call_return_type_in_result() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "foo".to_string(),
+                name: Atom::from("foo"),
                 symbol: None,
             }),
             args: vec![],
@@ -124,7 +124,7 @@ fn test_function_call_return_type_bool() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "is_valid".to_string(),
+                name: Atom::from("is_valid"),
                 symbol: None,
             }),
             args: vec![],
@@ -148,12 +148,12 @@ fn test_function_call_wrong_arg_count_too_few() {
             Type::Integer,
             vec![
                 Parameter {
-                    name: "a".to_string(),
+                    name: Atom::from("a"),
                     typ: Type::Integer,
                     is_pointer: false,
                 },
                 Parameter {
-                    name: "b".to_string(),
+                    name: Atom::from("b"),
                     typ: Type::Integer,
                     is_pointer: false,
                 },
@@ -163,7 +163,7 @@ fn test_function_call_wrong_arg_count_too_few() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "add".to_string(),
+                name: Atom::from("add"),
                 symbol: None,
             }),
             args: vec![Expr::Number(1)],
@@ -183,7 +183,7 @@ fn test_function_call_wrong_arg_count_too_many() {
             "foo",
             Type::Void,
             vec![Parameter {
-                name: "a".to_string(),
+                name: Atom::from("a"),
                 typ: Type::Integer,
                 is_pointer: false,
             }],
@@ -192,7 +192,7 @@ fn test_function_call_wrong_arg_count_too_many() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "foo".to_string(),
+                name: Atom::from("foo"),
                 symbol: None,
             }),
             args: vec![Expr::Number(1), Expr::Number(2), Expr::Number(3)],
@@ -212,7 +212,7 @@ fn test_function_call_wrong_arg_type() {
             "foo",
             Type::Void,
             vec![Parameter {
-                name: "a".to_string(),
+                name: Atom::from("a"),
                 typ: Type::Integer,
                 is_pointer: false,
             }],
@@ -221,10 +221,10 @@ fn test_function_call_wrong_arg_type() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "foo".to_string(),
+                name: Atom::from("foo"),
                 symbol: None,
             }),
-            args: vec![Expr::String("hello".to_string())],
+            args: vec![Expr::String(Atom::from("hello"))],
         }),
     ];
     let result = Validator::default().validate(stmts);
@@ -242,12 +242,12 @@ fn test_function_call_multiple_args_type_check() {
             Type::Integer,
             vec![
                 Parameter {
-                    name: "a".to_string(),
+                    name: Atom::from("a"),
                     typ: Type::Integer,
                     is_pointer: false,
                 },
                 Parameter {
-                    name: "b".to_string(),
+                    name: Atom::from("b"),
                     typ: Type::Integer,
                     is_pointer: false,
                 },
@@ -257,10 +257,10 @@ fn test_function_call_multiple_args_type_check() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "add".to_string(),
+                name: Atom::from("add"),
                 symbol: None,
             }),
-            args: vec![Expr::Number(1), Expr::String("wrong".to_string())],
+            args: vec![Expr::Number(1), Expr::String(Atom::from("wrong"))],
         }),
     ];
     let result = Validator::default().validate(stmts);
@@ -278,11 +278,11 @@ fn make_external_func(
     symbol: &str,
 ) -> Statement {
     Statement::ExternalFunctionDef {
-        name: name.to_string(),
+        name: Atom::from(name),
         return_typ,
         params,
-        library: library.to_string(),
-        symbol: symbol.to_string(),
+        library: Atom::from(library),
+        symbol: Atom::from(symbol),
     }
 }
 
@@ -290,14 +290,14 @@ fn make_external_func(
 fn test_external_function_call_success() {
     let stmts = vec![
         make_external_func("add", Type::Integer, vec![Parameter {
-            name: "a".to_string(),
+            name: Atom::from("a"),
             typ: Type::Integer,
             is_pointer: false,
         }], "c", "add"),
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "add".to_string(),
+                name: Atom::from("add"),
                 symbol: None,
             }),
             args: vec![Expr::Number(42)],
@@ -312,12 +312,12 @@ fn test_external_function_call_wrong_arg_count() {
     let stmts = vec![
         make_external_func("foo", Type::Void, vec![
             Parameter {
-                name: "a".to_string(),
+                name: Atom::from("a"),
                 typ: Type::Integer,
                 is_pointer: false,
             },
             Parameter {
-                name: "b".to_string(),
+                name: Atom::from("b"),
                 typ: Type::Integer,
                 is_pointer: false,
             },
@@ -325,7 +325,7 @@ fn test_external_function_call_wrong_arg_count() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "foo".to_string(),
+                name: Atom::from("foo"),
                 symbol: None,
             }),
             args: vec![Expr::Number(1)],
@@ -342,17 +342,17 @@ fn test_external_function_call_wrong_arg_count() {
 fn test_external_function_call_wrong_arg_type() {
     let stmts = vec![
         make_external_func("print_int", Type::Void, vec![Parameter {
-            name: "x".to_string(),
+            name: Atom::from("x"),
             typ: Type::Integer,
             is_pointer: false,
         }], "c", "print_int"),
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "print_int".to_string(),
+                name: Atom::from("print_int"),
                 symbol: None,
             }),
-            args: vec![Expr::String("hello".to_string())],
+            args: vec![Expr::String(Atom::from("hello"))],
         }),
     ];
     let result = Validator::default().validate(stmts);
@@ -369,7 +369,7 @@ fn test_external_function_call_no_args() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                name: "get_time".to_string(),
+                name: Atom::from("get_time"),
                 symbol: None,
             }),
             args: vec![],

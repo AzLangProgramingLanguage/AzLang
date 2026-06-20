@@ -1,6 +1,6 @@
 use crate::Validator;
 use parser::{
-    ast::{Expr, Parameter, Statement},
+    ast::{Atom, Expr, Parameter, Statement},
     shared_ast::Type,
 };
 use std::rc::Rc;
@@ -12,7 +12,7 @@ fn make_func(
     body: Vec<Statement>,
 ) -> Statement {
     Statement::FunctionDef {
-        name: name.to_string(),
+        name: Atom::from(name),
         return_typ,
         params,
         body,
@@ -21,7 +21,7 @@ fn make_func(
 
 fn make_decl(name: &str, typ: Type, is_mutable: bool, value: Expr) -> Statement {
     Statement::Decl {
-        name: name.to_string(),
+        name: Atom::from(name),
         typ: Rc::new(typ),
         is_mutable,
         value: Box::new(value),
@@ -96,7 +96,7 @@ fn test_function_decl_return_type_float() {
 fn test_function_decl_parameters_single() {
     let mut validator = Validator::default();
     let params = vec![Parameter {
-        name: "x".to_string(),
+        name: Atom::from("x"),
         typ: Type::Integer,
         is_pointer: false,
     }];
@@ -106,7 +106,7 @@ fn test_function_decl_parameters_single() {
 
     let info = validator.functions.get("f").expect("f should be registered");
     assert_eq!(info.parameters.len(), 1);
-    assert_eq!(info.parameters[0].name, "x");
+    assert_eq!(info.parameters[0].name, Atom::from("x"));
     assert_eq!(info.parameters[0].typ, Type::Integer);
 }
 
@@ -115,17 +115,17 @@ fn test_function_decl_parameters_multiple() {
     let mut validator = Validator::default();
     let params = vec![
         Parameter {
-            name: "a".to_string(),
+            name: Atom::from("a"),
             typ: Type::Integer,
             is_pointer: false,
         },
         Parameter {
-            name: "b".to_string(),
+            name: Atom::from("b"),
             typ: Type::String(parser::shared_ast::StringEnum::DynamicString),
             is_pointer: false,
         },
         Parameter {
-            name: "c".to_string(),
+            name: Atom::from("c"),
             typ: Type::Bool,
             is_pointer: false,
         },
@@ -136,11 +136,11 @@ fn test_function_decl_parameters_multiple() {
 
     let info = validator.functions.get("multi").expect("multi should be registered");
     assert_eq!(info.parameters.len(), 3);
-    assert_eq!(info.parameters[0].name, "a");
+    assert_eq!(info.parameters[0].name, Atom::from("a"));
     assert_eq!(info.parameters[0].typ, Type::Integer);
-    assert_eq!(info.parameters[1].name, "b");
+    assert_eq!(info.parameters[1].name, Atom::from("b"));
     assert_eq!(info.parameters[1].typ, Type::String(parser::shared_ast::StringEnum::DynamicString));
-    assert_eq!(info.parameters[2].name, "c");
+    assert_eq!(info.parameters[2].name, Atom::from("c"));
     assert_eq!(info.parameters[2].typ, Type::Bool);
 }
 
@@ -148,7 +148,7 @@ fn test_function_decl_parameters_multiple() {
 fn test_function_decl_parameter_pointer_flag() {
     let mut validator = Validator::default();
     let params = vec![Parameter {
-        name: "ptr".to_string(),
+        name: Atom::from("ptr"),
         typ: Type::Integer,
         is_pointer: true,
     }];

@@ -49,22 +49,22 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
             if let Some(s) = symbol {
                 return Ok(s.typ.clone());
             }
-            if let Some(s) = ctx.lookup_variable(name) {
+            if let Some(s) = ctx.lookup_variable(name.as_ref()) {
                 return Ok(s.typ.clone());
             }
-            if ctx.functions.contains_key(name) {
+            if ctx.functions.contains_key(name.as_ref()) {
                 return Ok(Type::Function);
             }
-            Err(ValidatorError::UndefinedVariable(name.clone()))
+            Err(ValidatorError::UndefinedVariable(name.to_string()))
         }
-        Expr::StructInit { name, .. } => Err(ValidatorError::UnknownStruct(name.clone())),
+        Expr::StructInit { name, .. } => Err(ValidatorError::UnknownStruct(name.to_string())),
         Expr::Return(e) => get_type(e, ctx),
         Expr::Call { name, .. } => match &**name {
             VariableRef { name, symbol } => {
-                if let Some(func) = ctx.functions.get(name) {
+                if let Some(func) = ctx.functions.get(name.as_ref()) {
                     Ok(func.return_type.clone())
                 } else {
-                    Err(ValidatorError::FunctionNotFound(name.clone()))
+                    Err(ValidatorError::FunctionNotFound(name.to_string()))
                 }
             }
             _ => Err(ValidatorError::InvalidFunctionCall(format!(" {name:?}"))),

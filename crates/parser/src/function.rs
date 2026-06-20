@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expr, FunctionDef, Parameter, Statement},
+    ast::{Atom, Expr, Parameter, Statement},
     binary_op::parse_statement,
     errors::ParserError,
     helpers::expect_token,
@@ -89,7 +89,7 @@ pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, Par
                     }
                 };
                 params.push(Parameter {
-                    name: param_name,
+                    name: Atom::from(param_name),
                     typ: param_type,
                     is_pointer: is_mutable,
                 });
@@ -125,35 +125,12 @@ pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, Par
     let return_type = parse_type(tokens)?;
     expect_token(tokens, Token::Newline)?;
 
-    if let Some(SpannedToken {
-        token: Token::Indent,
-        ..
-    }) = tokens.peek()
-    {
-        tokens.next();
-        while let Some(tok) = tokens.peek() {
-            match tok.token {
-                Token::Dedent => {
-                    tokens.next();
-                    break;
-                }
-                Token::Newline => {
-                    tokens.next();
-                }
-                Token::Eof => break,
-                _ => {
-                    tokens.next();
-                }
-            }
-        }
-    }
-
     Ok(Statement::ExternalFunctionDef {
-        name,
+        name: Atom::from(name),
         return_typ: return_type,
         params,
-        library,
-        symbol,
+        library: Atom::from(library),
+        symbol: Atom::from(symbol),
     })
 }
 
@@ -192,7 +169,7 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError>
                     }
                 };
                 params.push(Parameter {
-                    name: param_name,
+                    name: Atom::from(param_name),
                     typ: param_typ,
                     is_pointer: is_mutable,
                 });
@@ -249,7 +226,7 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError>
         }
     }
     Ok(Statement::FunctionDef {
-        name,
+        name: Atom::from(name),
         return_typ: return_type,
         body,
         params,

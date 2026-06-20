@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{validate::validate_statement, Validator, errors::ValidatorError};
 use parser::{
-    ast::{Expr, Statement, Symbol},
+    ast::{Atom, Expr, Statement, Symbol},
     shared_ast::Type,
 };
 use std::assert_matches;
@@ -10,7 +10,7 @@ use std::assert_matches;
 
 fn assign(name: &str, value: Expr) -> Statement {
     Statement::Assignment {
-        name: name.to_string(),
+        name: Atom::from(name),
         value: Box::new(value),
     }
 }
@@ -80,7 +80,7 @@ fn test_assignment_type_mismatch() {
     );
 
     let result = validate_statement(
-        assign("x", Expr::String("salam".to_string())),
+        assign("x", Expr::String(Atom::from("salam"))),
         &mut validator,
     );
     assert_matches!(result, Err(ValidatorError::AssignmentTypeMismatch { .. }));

@@ -5,10 +5,11 @@ use std::{
     fmt::{Display, write},
     rc::Rc,
 };
+pub use string_cache::DefaultAtom as Atom;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MethodType {
-    pub name: String,
+    pub name: Atom,
     pub params: Vec<Parameter>,
     pub body: Vec<Expr>,
     pub return_type: Option<Type>,
@@ -99,41 +100,41 @@ pub struct FunctionDef {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Statement {
     EnumDecl {
-        name: String,
-        variants: Vec<String>,
+        name: Atom,
+        variants: Vec<Atom>,
     },
     Decl {
-        name: String,
+        name: Atom,
         typ: Rc<Type>,
         is_mutable: bool,
         value: Box<Expr>,
     },
     FunctionDef {
-        name: String,
+        name: Atom,
         return_typ: Type,
         params: Vec<Parameter>,
         body: Vec<Statement>,
     },
     ExternalFunctionDef {
-        name: String,
+        name: Atom,
         return_typ: Type,
         params: Vec<Parameter>,
-        library: String,
-        symbol: String,
+        library: Atom,
+        symbol: Atom,
     },
     StructDef {
-        name: String,
-        fields: Vec<(String, Type, Option<Expr>)>,
+        name: Atom,
+        fields: Vec<(Atom, Type, Option<Expr>)>,
         methods: Vec<MethodType>,
     },
 
     UnionType {
-        name: String,
-        fields: Vec<(String, Type)>,
+        name: Atom,
+        fields: Vec<(Atom, Type)>,
         methods: Vec<MethodType>,
     },
     Assignment {
-        name: String,
+        name: Atom,
         value: Box<Expr>,
     },
     Match {
@@ -146,7 +147,7 @@ pub enum Statement {
         other: Option<Else>,
     },
     Loop {
-        var_name: String,
+        var_name: Atom,
         iterable: Box<Expr>,
         body: Vec<Expr>,
     },
@@ -159,7 +160,7 @@ pub enum Expr {
     Void,
     Return(Box<Expr>),
     Time(std::time::Instant),
-    String(String),
+    String(Atom),
     Bool(bool),
     Number(i64),
     Char(char),
@@ -177,7 +178,7 @@ pub enum Expr {
 
     Float(f64),
     VariableRef {
-        name: String,
+        name: Atom,
         symbol: Option<Symbol>,
     },
     TemplateString(Vec<TemplateChunk>),
@@ -189,8 +190,8 @@ pub enum Expr {
     },
 
     StructInit {
-        name: String,
-        args: Vec<(String, Expr)>,
+        name: Atom,
+        args: Vec<(Atom, Expr)>,
     },
 
     BinaryOp {
@@ -229,7 +230,7 @@ pub enum TemplateChunk {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Parameter {
-    pub name: String,
+    pub name: Atom,
     pub typ: Type,
     pub is_pointer: bool,
 }

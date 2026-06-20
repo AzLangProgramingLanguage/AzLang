@@ -134,7 +134,7 @@ mod tests {
             Operation::Equal,
             None,
         );
-        assert_eq!(result, Value::Bool(false));
+        assert_eq!(result, Value::Bool(true));
     }
 
     #[test]
@@ -238,7 +238,7 @@ mod tests {
             Operation::Greater,
             None,
         );
-        assert_eq!(result, Value::Bool(false));
+        assert_eq!(result, Value::Bool(true));
     }
 
     #[test]

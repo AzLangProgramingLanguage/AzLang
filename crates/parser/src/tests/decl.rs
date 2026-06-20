@@ -3,7 +3,7 @@ use std::rc::Rc;
 use tokenizer::tokens::Token;
 
 use crate::{
-    ast::{Expr, Statement},
+    ast::{Atom, Expr, Statement},
     binary_op::parse_statement,
     shared_ast::{StringEnum, Type},
     tests::create_tokens,
@@ -49,20 +49,20 @@ fn test_parse_string_decl() {
     assert_eq!(
         result2,
         Statement::Decl {
-            name: "y".to_string(),
+            name: Atom::from("y"),
             typ: Rc::new(Type::String(StringEnum::LiteralString)),
             is_mutable: true,
-            value: Box::new(Expr::String("Salam".to_string()))
+            value: Box::new(Expr::String(Atom::from("Salam")))
         }
     );
 
     assert_eq!(
         result,
         Statement::Decl {
-            name: "y".to_string(),
+            name: Atom::from("y"),
             typ: Rc::new(Type::String(StringEnum::LiteralConstString)),
             is_mutable: false,
-            value: Box::new(Expr::String("Salam".to_string()))
+            value: Box::new(Expr::String(Atom::from("Salam")))
         }
     )
 }

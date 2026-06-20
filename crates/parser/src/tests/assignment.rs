@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::assign::parse_assign;
-    use crate::ast::{Expr, Operation, Statement};
+    use crate::ast::{Atom, Expr, Operation, Statement};
     use crate::binary_op::parse_statement;
     use crate::decl::parse_decl;
     use crate::shared_ast::{StringEnum, Type};
@@ -21,7 +21,7 @@ mod tests {
         assert_eq!(
             result,
             Statement::Assignment {
-                name: "x".to_string(),
+                name: Atom::from("x"),
                 value: Box::new(Expr::Number(42))
             }
         );
@@ -42,7 +42,7 @@ mod tests {
         assert_eq!(
             result,
             Statement::Decl {
-                name: "a".to_string(),
+                name: Atom::from("a"),
                 typ: Rc::new(Type::String(StringEnum::DynamicString)),
                 is_mutable: false,
                 value: Box::new(Expr::Float(2.1)),
@@ -61,7 +61,7 @@ mod tests {
         assert_eq!(
             result,
             Statement::Assignment {
-                name: "c".to_string(),
+                name: Atom::from("c"),
                 value: Box::new(Expr::Float(2.1))
             }
         );
@@ -87,7 +87,7 @@ mod tests {
         assert_eq!(
             result,
             Statement::Assignment {
-                name: "sum".to_string(),
+                name: Atom::from("sum"),
                 value: Box::new(Expr::BinaryOp {
                     left: Box::new(Expr::Number(10)),
                     right: Box::new(Expr::Number(20)),

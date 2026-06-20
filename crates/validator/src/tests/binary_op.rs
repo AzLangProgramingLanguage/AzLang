@@ -1,7 +1,7 @@
 #[cfg(test)]
 use crate::Validator;
 use parser::{
-    ast::{Expr, Operation, Statement},
+    ast::{Atom, Expr, Operation, Statement},
     shared_ast::{StringEnum, Type},
 };
 #[test]
@@ -29,8 +29,8 @@ fn test_binary_op_add_integers() {
 #[test]
 fn test_binary_op_add_strings() {
     let stmt = Statement::Expr(Expr::BinaryOp {
-        left: Box::new(Expr::String("Salam".to_string())),
-        right: Box::new(Expr::String("Yupiter".to_string())),
+        left: Box::new(Expr::String(Atom::from("Salam"))),
+        right: Box::new(Expr::String(Atom::from("Yupiter"))),
         op: Operation::Add,
     });
     let (_validator, program) = Validator::default()
