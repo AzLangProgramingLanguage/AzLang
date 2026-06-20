@@ -240,4 +240,43 @@ mod tests {
         );
         assert_eq!(result, Value::Bool(false));
     }
+
+    #[test]
+    fn binary_op_add_string() {
+        let mut runner = Runner::new();
+        let result = binary_op_runner(
+            &mut runner,
+            Value::String("Hello".to_string()),
+            Value::String("World".to_string()),
+            Operation::Add,
+            Some(Type::String(parser::shared_ast::StringEnum::DynamicString)),
+        );
+        assert_eq!(result, Value::String("HelloWorld".to_string()));
+    }
+
+    #[test]
+    fn binary_op_add_string_with_space() {
+        let mut runner = Runner::new();
+        let result = binary_op_runner(
+            &mut runner,
+            Value::String("Hello ".to_string()),
+            Value::String("World".to_string()),
+            Operation::Add,
+            Some(Type::String(parser::shared_ast::StringEnum::DynamicString)),
+        );
+        assert_eq!(result, Value::String("Hello World".to_string()));
+    }
+
+    #[test]
+    fn binary_op_add_empty_string() {
+        let mut runner = Runner::new();
+        let result = binary_op_runner(
+            &mut runner,
+            Value::String("".to_string()),
+            Value::String("test".to_string()),
+            Operation::Add,
+            Some(Type::String(parser::shared_ast::StringEnum::DynamicString)),
+        );
+        assert_eq!(result, Value::String("test".to_string()));
+    }
 }

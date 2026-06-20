@@ -102,7 +102,10 @@ pub fn validate_expr(
                 let expected = &param.typ;
                 match (expected, &arg_type) {
                     (Type::Any, _) | (_, Type::Any) => {}
-                    (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {}
+                    (
+                        Type::String(StringEnum::LiteralConstString),
+                        Type::String(StringEnum::LiteralString),
+                    ) => {}
                     (exp, found) if exp != found => {
                         return Err(ValidatorError::InvalidArgumentType {
                             name: func_name.clone(),

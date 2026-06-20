@@ -15,6 +15,8 @@ pub fn binary_op_runner(
                 let left = left.as_number();
                 let right = right.as_number();
                 Value::Number(left + right)
+            } else if matches!(cast_type, Some(Type::String(_))) {
+                Value::String(format!("{}{}", left, right))
             } else {
                 let left = left.as_float();
                 let right = right.as_float();

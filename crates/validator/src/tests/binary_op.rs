@@ -2,7 +2,7 @@
 use crate::Validator;
 use parser::{
     ast::{Expr, Operation, Statement},
-    shared_ast::Type,
+    shared_ast::{StringEnum, Type},
 };
 #[test]
 fn test_binary_op_add_integers() {
@@ -23,6 +23,28 @@ fn test_binary_op_add_integers() {
             right: Box::new(crate::ast::Expr::Number(3)),
             op: Operation::Add,
             return_type: Type::Integer,
+        })
+    );
+}
+#[test]
+fn test_binary_op_add_strings() {
+    let stmt = Statement::Expr(Expr::BinaryOp {
+        left: Box::new(Expr::String("Salam".to_string())),
+        right: Box::new(Expr::String("Yupiter".to_string())),
+        op: Operation::Add,
+    });
+    let (_validator, program) = Validator::default()
+        .validate(vec![stmt])
+        .expect("valid program should not fail");
+
+    assert_eq!(program.expressions.len(), 1);
+    assert_eq!(
+        program.expressions[0],
+        crate::ast::Ast::Expr(crate::ast::Expr::BinaryOp {
+            left: Box::new(crate::ast::Expr::String(String::from("Salam"))),
+            right: Box::new(crate::ast::Expr::String(String::from("Yupiter"))),
+            op: Operation::Add,
+            return_type: Type::String(StringEnum::DynamicString),
         })
     );
 }

@@ -1,13 +1,18 @@
 use core::fmt;
-use std::fmt::{Display, write};
+use std::fmt::Display;
 
-use parser::shared_ast::Type;
+use parser::{ast::Operation, shared_ast::Type};
 
 #[derive(Debug, PartialEq)]
 pub enum ValidatorError {
     UnknownType(String),
     InvalidFunctionCall(String),
     AlreadyDecl(String),
+    InvalidOperation {
+        op: Operation,
+        left: Type,
+        right: Type,
+    },
     DeclTypeMismatch {
         name: String,
         expected: String,
@@ -64,6 +69,12 @@ impl Display for ValidatorError {
         match self {
             ValidatorError::UnknownType(string) => write!(f, "Gözlənilməyən token '{string}'"),
             ValidatorError::InvalidFunctionCall(found) => write!(f, "{found} bir funksiya deyil."),
+            ValidatorError::InvalidOperation { op, left, right } => {
+                write!(
+                    f,
+                    "'{op}' əməliyyatı '{left}' və '{right}' tipləri üzərində icra edilə bilməz."
+                )
+            }
             ValidatorError::FunctionNameType(name) => write!(f, "'{name}' tipi funksiya deyil.  "),
             ValidatorError::AlreadyDecl(string) => write!(f, "'{string}' Dəyəri onsuzda var.  "),
             ValidatorError::DeclTypeMismatch {

@@ -72,43 +72,30 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
         Expr::BinaryOp { left, right, op } => {
             let left_type = get_type(left, ctx)?;
             let right_type = get_type(right, ctx)?;
+
             match *op {
+                // ── Müqayisə əməliyyatları ────────────────────────────────────────
                 Operation::Equal
                 | Operation::NotEqual
                 | Operation::Less
                 | Operation::LessEqual
                 | Operation::Greater
                 | Operation::GreaterEqual => Ok(Type::Bool),
+
+                // ── Məntiqi əməliyyatlar ──────────────────────────────────────────
                 Operation::And | Operation::Or => {
-                    if left_type != Type::Bool {
-                        return Err(ValidatorError::TypeMismatch {
-                            expected: Type::Bool,
-                            found: left_type,
-                        });
-                    }
-                    if right_type != Type::Bool {
-                        return Err(ValidatorError::TypeMismatch {
-                            expected: Type::Bool,
-                            found: right_type,
-                        });
-                    }
+                    expect_type(Type::Bool, &left_type)?;
+                    expect_type(Type::Bool, &right_type)?;
                     Ok(Type::Bool)
                 }
+
+                // ── Riyazi əməliyyatlar ───────────────────────────────────────────
                 Operation::Add
                 | Operation::Subtract
                 | Operation::Multiply
                 | Operation::Divide
-                | Operation::Modulo => match (left_type, right_type) {
-                    (Type::Integer, Type::Integer) => Ok(Type::Integer),
-                    (Type::Natural, Type::Natural) => Ok(Type::Natural),
-                    (Type::Float, Type::Float) => Ok(Type::Float),
-                    (Type::Integer, Type::Float) => Ok(Type::Float),
-                    (Type::Float, Type::Integer) => Ok(Type::Float),
-                    (l, r) => Err(ValidatorError::TypeMismatch {
-                        expected: l,
-                        found: r,
-                    }),
-                },
+                | Operation::Modulo => resolve_arithmetic_type(&left_type, &right_type, *op),
+
                 _ => Err(ValidatorError::UnknownType(format!(
                     "unknown binary op {op:?}"
                 ))),
@@ -166,5 +153,51 @@ pub fn reconcile_type(typ: Rc<Type>, inferred: Type, name: &str) -> Result<Type,
             found: expected.to_string(),
         }),
         other => Ok(other.0.clone()),
+    }
+}
+fn resolve_arithmetic_type(
+    left: &Type,
+    right: &Type,
+    op: Operation,
+) -> Result<Type, ValidatorError> {
+    match (left, right) {
+        // String birləşməsi yalnız Add üçün
+        (Type::String(_), Type::String(_)) if op == Operation::Add => {
+            Ok(Type::String(StringEnum::DynamicString))
+        }
+
+        // String-ə digər riyazi əməliyyatlar qadağandır
+        (Type::String(_), _) | (_, Type::String(_)) => Err(ValidatorError::InvalidOperation {
+            op,
+            left: left.clone(),
+            right: right.clone(),
+        }),
+
+        // Eyni tiplər
+        (Type::Integer, Type::Integer) => Ok(Type::Integer),
+        (Type::Natural, Type::Natural) => Ok(Type::Natural),
+        (Type::Float, Type::Float) => Ok(Type::Float),
+
+        // Float + Integer qarışığı → Float
+        (Type::Float, Type::Integer) | (Type::Integer, Type::Float) => Ok(Type::Float),
+
+        // Hər şey digər hal — tip uyğunsuzluğu
+        (l, r) => Err(ValidatorError::TypeMismatch {
+            expected: l.clone(),
+            found: r.clone(),
+        }),
+    }
+}
+
+/// Tipin gözlənilən tipə uyğun olmasını yoxlayır.
+#[inline]
+fn expect_type(expected: Type, found: &Type) -> Result<(), ValidatorError> {
+    if *found != expected {
+        Err(ValidatorError::TypeMismatch {
+            expected,
+            found: found.clone(),
+        })
+    } else {
+        Ok(())
     }
 }
