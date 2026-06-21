@@ -4,6 +4,7 @@ pub fn tokenize_word(word: &str) -> Token {
     match word.parse::<i64>() {
         Ok(n) => Token::Number(n),
         Err(_) => match word {
+            "olduqca" => Token::While,
             "dəyişən" => Token::MutableDecl,
             "sabit" => Token::ConstantDecl,
             "əgər" => Token::Conditional,

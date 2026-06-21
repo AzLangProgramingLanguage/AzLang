@@ -9,6 +9,7 @@ pub mod identifier;
 pub mod list;
 pub mod literal_parse;
 pub mod r#loop;
+pub mod r#while_loop;
 pub mod template;
 pub mod types;
 

@@ -154,7 +154,7 @@ fn test_zero() {
 
 #[test]
 fn test_float() {
-    assert_eq!(tokenize("3.14"), vec![Token::Float(PI)]);
+    assert_eq!(tokenize("3.15"), vec![Token::Float(3.15)]);
 }
 
 #[test]
@@ -884,7 +884,7 @@ fn test_token_display_number() {
 
 #[test]
 fn test_token_display_float() {
-    assert_eq!(format!("{}", Token::Float(PI)), "3.14");
+    assert_eq!(format!("{}", Token::Float(3.15)), "3.15");
 }
 
 #[test]

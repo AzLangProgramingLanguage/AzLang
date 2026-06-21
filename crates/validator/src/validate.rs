@@ -103,6 +103,24 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
                 other: validated_other,
             })
         }
+        Statement::While { condition, body } => {
+            let condition_type = get_type(&condition, ctx)?;
+            if condition_type != Type::Bool {
+                return Err(ValidatorError::TypeMismatch {
+                    expected: Type::Bool,
+                    found: condition_type,
+                });
+            }
+            let condition = validate_expr(*condition, ctx)?;
+            let mut validated_body = Vec::new();
+            for stmt in body {
+                validated_body.push(validate_statement(stmt, ctx)?);
+            }
+            Ok(Ast::While {
+                condition: Box::new(condition),
+                body: validated_body,
+            })
+        }
         Statement::Expr(expr) => {
             let expr = validate_expr(expr, ctx)?;
             Ok(Ast::Expr(expr))

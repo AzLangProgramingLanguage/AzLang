@@ -3,8 +3,7 @@ use std::fmt::Display;
 
 use super::Runner;
 use crate::runner::{
-    Variable, binary_op::binary_op_runner,
-    function_call::function_call, helpers::run_body,
+    Variable, binary_op::binary_op_runner, function_call::function_call, helpers::run_body,
 };
 
 use parser::shared_ast::Type;
@@ -121,14 +120,8 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Ast) {
             value,
         } => {
             let new_value: Value = get_primitive_value(ctx, *value, Some(typ.clone()));
-            ctx.variables.insert(
-                name.to_string(),
-                Variable {
-                    value: new_value,
-                    // typ,
-                    // is_mutable,
-                },
-            );
+            ctx.variables
+                .insert(name.to_string(), Variable { value: new_value });
         }
         Statement::Condition { main, elif, other } => {
             if matches!(
@@ -149,6 +142,27 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Ast) {
                 run_body(ctx, other.body);
             }
         }
+        Statement::While { condition, body } => {
+            'while_loop: loop {
+                if !matches!(
+                    get_primitive_value(ctx, *condition.clone(), None),
+                    Value::Bool(true)
+                ) {
+                    break;
+                }
+                for stmt in body.clone() {
+                    runner_interpretator(ctx, stmt);
+                    if ctx.should_break {
+                        ctx.should_break = false;
+                        break 'while_loop;
+                    }
+                    if ctx.should_continue {
+                        ctx.should_continue = false;
+                        continue 'while_loop;
+                    }
+                }
+            }
+        }
         Statement::Assignment { name, value, .. } => {
             let new_value: Value = get_primitive_value(ctx, *value, None);
             let var = ctx.variables.get_mut(&name).unwrap();
@@ -158,7 +172,12 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Ast) {
             Expr::Return(v) => {
                 ctx.current_return = *v;
             }
-
+            Expr::Break => {
+                ctx.should_break = true;
+            }
+            Expr::Continue => {
+                ctx.should_continue = true;
+            }
             other => {
                 get_primitive_value(ctx, other, None);
             }

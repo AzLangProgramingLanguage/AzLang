@@ -5,6 +5,7 @@ impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Token::AnyType => write!(f, "hərşey"),
+            Token::While => write!(f, "olduqca"),
             Token::Identifier(name) => write!(f, "{}", name),
             Token::Number(num) => write!(f, "{}", num),
             Token::Float(num) => write!(f, "{}", num),

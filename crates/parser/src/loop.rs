@@ -9,7 +9,7 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_loop<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
+pub fn parse_loop(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     let iterable = parse_single_expr(tokens)?;
 
     expect_token(tokens, Token::In)?;

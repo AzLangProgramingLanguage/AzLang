@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod binary_op;
+#[cfg(test)]
+mod while_loop;
 mod tests {
     use parser::ast::Symbol;
     use validator::ast::{Ast, Expr};

@@ -10,7 +10,7 @@ use crate::{
     helpers::expect_token,
 };
 
-fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
+pub fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
     let mut block = Vec::new();
     let mut indent = 0;
 

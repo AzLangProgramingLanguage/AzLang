@@ -24,3 +24,4 @@ mod decl;
 mod enum_test;
 mod function_call;
 mod function_decl;
+mod while_loop;

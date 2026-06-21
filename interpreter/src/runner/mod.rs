@@ -57,6 +57,8 @@ pub struct Runner {
     uniontypes: HashMap<String, UnionType>,
     pub external_functions: HashMap<String, ExternalFunction>,
     current_return: Expr,
+    pub should_break: bool,
+    pub should_continue: bool,
 }
 
 impl Runner {
@@ -68,6 +70,8 @@ impl Runner {
             uniontypes: HashMap::new(),
             external_functions: HashMap::new(),
             current_return: Expr::Void,
+            should_break: false,
+            should_continue: false,
         }
     }
 

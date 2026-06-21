@@ -1,13 +1,9 @@
-use std::collections::HashMap;
-
 use crate::{
     ast::{Expr, Operation, Statement},
     binary_op::{parse_expression, parse_statement},
     errors::ParserError,
-    function::parse_function_def,
     identifier::parse_identifier,
     literal_parse::literals_parse,
-    shared_ast::Type,
     template::parse_template_string_expr,
 };
 use tokenizer::{
@@ -98,7 +94,6 @@ pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             token: Token::Continue,
             ..
         } => Ok(Expr::Continue),
-
 
         SpannedToken {
             token: Token::Backtick,

@@ -146,6 +146,10 @@ pub enum Statement {
         elif: Vec<IF>,
         other: Option<Else>,
     },
+    While {
+        condition: Box<Expr>,
+        body: Vec<Statement>,
+    },
     Loop {
         var_name: Atom,
         iterable: Box<Expr>,

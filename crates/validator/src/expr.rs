@@ -167,11 +167,11 @@ pub fn validate_expr(
                 return_type: target_type,
             })
         }
+        ParserExpr::Break => Ok(ValidatorExpr::Break),
+        ParserExpr::Continue => Ok(ValidatorExpr::Continue),
         ParserExpr::DynamicString(_)
         | ParserExpr::Time(_)
         | ParserExpr::Comment(_)
-        | ParserExpr::StructInit { .. }
-        | ParserExpr::Break
-        | ParserExpr::Continue => Ok(ValidatorExpr::Void),
+        | ParserExpr::StructInit { .. } => Ok(ValidatorExpr::Void),
     }
 }

@@ -53,6 +53,8 @@ pub enum Expr {
     TemplateString(Vec<TemplateChunk>),
     List(Vec<Expr>),
     Void,
+    Break,
+    Continue,
     Return(Box<Expr>),
     VariableRef {
         name: String,
@@ -88,6 +90,10 @@ pub enum Ast {
         main: IF,
         elif: Vec<IF>,
         other: Option<Else>,
+    },
+    While {
+        condition: Box<Expr>,
+        body: Vec<Ast>,
     },
     Expr(Expr),
 }

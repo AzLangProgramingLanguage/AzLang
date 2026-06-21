@@ -4,6 +4,7 @@ pub enum Token {
     MutableDecl,
     ConstantDecl,
     FunctionDef,
+    While,
     Conditional,
     Underscore,
     Void,
