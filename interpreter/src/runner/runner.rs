@@ -142,27 +142,25 @@ pub fn runner_interpretator(ctx: &mut Runner, stmt: Ast) {
                 run_body(ctx, other.body);
             }
         }
-        Statement::While { condition, body } => {
-            'while_loop: loop {
-                if !matches!(
-                    get_primitive_value(ctx, *condition.clone(), None),
-                    Value::Bool(true)
-                ) {
-                    break;
+        Statement::While { condition, body } => 'while_loop: loop {
+            if !matches!(
+                get_primitive_value(ctx, *condition.clone(), None),
+                Value::Bool(true)
+            ) {
+                break;
+            }
+            for stmt in body.clone() {
+                runner_interpretator(ctx, stmt);
+                if ctx.should_break {
+                    ctx.should_break = false;
+                    break 'while_loop;
                 }
-                for stmt in body.clone() {
-                    runner_interpretator(ctx, stmt);
-                    if ctx.should_break {
-                        ctx.should_break = false;
-                        break 'while_loop;
-                    }
-                    if ctx.should_continue {
-                        ctx.should_continue = false;
-                        continue 'while_loop;
-                    }
+                if ctx.should_continue {
+                    ctx.should_continue = false;
+                    continue 'while_loop;
                 }
             }
-        }
+        },
         Statement::Assignment { name, value, .. } => {
             let new_value: Value = get_primitive_value(ctx, *value, None);
             let var = ctx.variables.get_mut(&name).unwrap();

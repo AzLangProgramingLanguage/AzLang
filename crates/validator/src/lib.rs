@@ -1,5 +1,6 @@
 use std::{collections::HashMap, vec};
 pub mod ast;
+pub mod decl;
 pub mod errors;
 pub mod expr;
 mod helper;

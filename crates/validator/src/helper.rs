@@ -15,7 +15,7 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
         Expr::TemplateString(_) => Ok(Type::String(StringEnum::DynamicString)),
         Expr::UnaryOp { op, expr } => {
             get_type(expr, ctx)?;
-            match &*op {
+            match *op {
                 Operation::Subtract => Ok(Type::Integer),
                 Operation::Not => Ok(Type::Bool),
                 _ => Err(ValidatorError::UnknownType(format!("unary op {op:?}"))),
@@ -26,7 +26,7 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
         Expr::String(_) => Ok(Type::String(StringEnum::LiteralString)),
         Expr::List(items) => {
             if items.is_empty() {
-                return Err(ValidatorError::UnknownType("empty list".to_string()));
+                return Ok(Type::Array(Box::new(Type::Any)));
             }
             let item_type = get_type(&items[0], ctx)?;
             for item in &items[1..] {
@@ -139,20 +139,32 @@ pub fn type_checking(left: Type, right: Type) -> Result<(), ValidatorError> {
         _ => Ok(()),
     }
 }
-pub fn reconcile_type(typ: Rc<Type>, inferred: Type, name: &str) -> Result<Type, ValidatorError> {
+pub fn reconcile_type(
+    typ: Rc<Type>,
+    inferred: &mut Type,
+    name: &str,
+) -> Result<(), ValidatorError> {
     match (&*typ, &inferred) {
-        (Type::Any, _) => Ok(inferred),
-        (other, Type::Any) => Ok(other.clone()),
+        (Type::Any, _) => Ok(()),
+        (other, Type::Any) => {
+            *inferred = other.clone();
+            Ok(())
+        }
         (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {
-            Ok(Type::String(StringEnum::LiteralConstString))
+            *inferred = Type::String(StringEnum::LiteralConstString);
+            Ok(())
+        }
+        (Type::Natural, Type::Integer) => {
+            *inferred = Type::Integer;
+            Ok(())
         }
 
-        (expected, other) if inferred != *other => Err(ValidatorError::DeclTypeMismatch {
+        (expected, other) if *expected == **other => Ok(()),
+        other => Err(ValidatorError::DeclTypeMismatch {
             name: name.to_string(),
-            expected: inferred.to_string(),
-            found: expected.to_string(),
+            expected: other.0.to_string(),
+            found: other.1.to_string(),
         }),
-        other => Ok(other.0.clone()),
     }
 }
 fn resolve_arithmetic_type(
