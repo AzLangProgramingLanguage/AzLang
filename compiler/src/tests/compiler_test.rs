@@ -1,11 +1,12 @@
+use core::panic;
+
 use crate::{bin_create_dir, builder::build, parser};
 use transpiler::TranspileContext;
 
 #[test]
 fn compiler_variable_test() {
     const PATH: &str = "../examples/float.az";
-    let sdk = file_system::read_file(PATH).expect("Fayl oxunamadı");
-
+    let sdk = file_system::read_file(PATH)?;
     let parsed_program = parser(sdk).expect("Parse oluna bilinmedi ");
 
     let validator = validator::Validator::default();
@@ -18,10 +19,7 @@ fn compiler_variable_test() {
 
     let output_zig = bin_create_dir().expect("Folder yaradılamadı");
 
-    file_system::write_file(&output_zig, &code).unwrap_or_else(|err| {
-        println!("\x1b[31m[Kiçik Bacı]:\x1b[0m {}", err.kind);
-        std::process::exit(err.code());
-    });
+    file_system::write_file(&output_zig, &code)?;
 
     build(output_zig.to_str().unwrap(), PATH).expect("Build oluna bilinmedi");
 }

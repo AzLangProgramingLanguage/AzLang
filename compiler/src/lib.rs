@@ -21,19 +21,16 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let parsed_program = parser(sdk)?;
 
     let validator = validator::Validator::default();
-    let result = validator.validate(parsed_program)?;
-
-    let mut ctx = transpiler::TranspileContext::default();
-    let code = ctx.transpile();
+    let (context, program) = validator.validate(parsed_program)?;
 
     let output_zig = bin_create_dir()?;
+    let mut ctx = transpiler::TranspileContext::default();
+    let code = ctx.transpile();
+    //
+    //
+    file_system::write_file(&output_zig, &code)?;
 
-    file_system::write_file(&output_zig, &code).unwrap_or_else(|err| {
-        println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", err.kind);
-        std::process::exit(err.code());
-    });
-
-    build(output_zig.to_str().unwrap(), path)?;
+    // build(output_zig.to_str().unwrap(), path)?;
     Ok(())
 }
 fn bin_create_dir() -> Result<PathBuf, FileSystemError> {

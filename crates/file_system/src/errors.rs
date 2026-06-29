@@ -1,16 +1,20 @@
 use core::fmt;
 use std::{fmt::Display, io};
-#[derive(Debug)]
 pub enum FileSystemKind {
     IOError(io::Error),
     UnsupportedFile,
     FileNotFound,
 }
-#[derive(Debug)]
 pub struct FileSystemError {
     pub kind: FileSystemKind,
     pub file: String,
 }
+impl Display for FileSystemError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[Kod {}] {}: {}", self.code(), self.kind, self.file)
+    }
+}
+
 impl FileSystemError {
     pub fn code(&self) -> i32 {
         match self.kind {
