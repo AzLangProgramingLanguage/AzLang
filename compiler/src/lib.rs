@@ -7,7 +7,7 @@ use crate::{
     errors::CompilerError,
 };
 use std::{
-    fs,
+    env, fs,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -34,12 +34,23 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     Ok(())
 }
 fn bin_create_dir() -> Result<PathBuf, FileSystemError> {
-    let bin_path = Path::new("./bin");
+    let global;
+    if let Some(path) = env::current_dir()?.to_str() {
+        global = format!("{path}/bin");
+    } else {
+        global = String::from("/bin");
+    }
+    let bin_path = Path::new(&global);
     if !bin_path.exists() {
-        fs::create_dir(bin_path)?;
+        fs::create_dir(bin_path)?; //TODO: Burada Create Olunmama ehtimalı var onuda Error handling
+        //et.
     }
     let zig_path = get_zig_path();
-    Command::new(zig_path).arg("init").current_dir("./bin");
+    Command::new(zig_path)
+        .arg("inits")
+        .current_dir(bin_path)
+        .output()?;
+    //TODO: Burada Status Code görə Error Handling Et.
     let deps_src = Path::new("./dependencies");
     let deps_dest = bin_path.join("dependencies");
     if deps_src.exists() {

@@ -1,10 +1,12 @@
 use core::fmt;
 use std::{fmt::Display, io};
+#[derive(Debug)]
 pub enum FileSystemKind {
     IOError(io::Error),
     UnsupportedFile,
     FileNotFound,
 }
+#[derive(Debug)]
 pub struct FileSystemError {
     pub kind: FileSystemKind,
     pub file: String,

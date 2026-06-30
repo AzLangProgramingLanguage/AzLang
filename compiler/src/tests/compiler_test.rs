@@ -1,27 +1,27 @@
 use core::panic;
 
-use crate::{bin_create_dir, builder::build, parser};
+use crate::{bin_create_dir, builder::build, errors::CompilerError, parser};
 use transpiler::TranspileContext;
 
 #[test]
-fn compiler_variable_test() {
+fn compiler_variable_test() -> Result<(), CompilerError> {
     const PATH: &str = "../examples/float.az";
     let sdk = file_system::read_file(PATH)?;
-    let parsed_program = parser(sdk).expect("Parse oluna bilinmedi ");
+
+    let parsed_program = parser(sdk)?;
 
     let validator = validator::Validator::default();
-    let result = validator
-        .validate(parsed_program)
-        .expect("Parse oluna bilinmedi");
+    let result = validator.validate(parsed_program)?;
 
     let mut ctx = transpiler::TranspileContext::default();
     let code = ctx.transpile();
 
-    let output_zig = bin_create_dir().expect("Folder yaradılamadı");
+    let output_zig = bin_create_dir()?;
 
     file_system::write_file(&output_zig, &code)?;
 
-    build(output_zig.to_str().unwrap(), PATH).expect("Build oluna bilinmedi");
+    build(output_zig.to_str().unwrap(), PATH)?;
+    Ok(())
 }
 #[test]
 fn compiler_binary_op_test() {
