@@ -1,5 +1,6 @@
 use std::fs;
 use std::io;
+use std::io::ErrorKind;
 use std::path::PathBuf;
 
 use crate::errors::FileSystemError;
@@ -28,6 +29,22 @@ pub fn read_file(path: &str) -> Result<String, FileSystemError> {
         },
     }
 }
+pub fn copy_file(path: &str, move_path: &str) -> Result<(), FileSystemError> {
+    match fs::copy(path, move_path) {
+        Ok(_) => Ok(()),
+        Err(e) => match e.kind() {
+            io::ErrorKind::NotFound => Err(FileSystemError {
+                kind: FileSystemKind::FileNotFound,
+                file: path.to_string(),
+            }),
+            _ => Err(FileSystemError {
+                kind: FileSystemKind::UnsupportedFile, //TODO: Menasız Error Mesajı
+                file: path.to_string(),
+            }),
+        },
+    }
+}
+
 pub fn write_file(path: &PathBuf, content: &String) -> Result<(), FileSystemError> {
     let write = fs::write(path, content);
     match write {

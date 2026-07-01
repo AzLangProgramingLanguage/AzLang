@@ -1,12 +1,14 @@
-use parser::{
-    ast::{Expr, FunctionDef, Symbol},
-    shared_ast::Type,
-};
-use std::collections::{HashMap, HashSet};
 use crate::{
     helper::{is_semicolon_needed, map_typ},
     transpile::transpile_stmt,
 };
+use parser::{
+    ast::{Expr, FunctionDef, Symbol},
+    shared_ast::Type,
+};
+use validator::ast::Program;
+
+use std::collections::{HashMap, HashSet};
 pub mod helper;
 mod tests;
 pub mod transpile;
@@ -50,7 +52,7 @@ impl TranspileContext {
         }
     }
 
-    pub fn transpile(&mut self) -> String {
+    pub fn transpile(&mut self, program: Program) -> String {
         let body = String::new();
 
         format!(
@@ -80,4 +82,3 @@ impl TranspileContext {
         // format!("{imports} pub fn main() !void {{{body}}}")
     }
 }
-

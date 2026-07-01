@@ -5,6 +5,7 @@ use transpiler::TranspileContext;
 
 #[test]
 fn compiler_variable_test() -> Result<(), CompilerError> {
+    //FIX:  Test Düzgün Yazılmalıdır.
     const PATH: &str = "../examples/float.az";
     let sdk = file_system::read_file(PATH)?;
 
