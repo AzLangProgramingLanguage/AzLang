@@ -70,3 +70,93 @@ fn test_parse_function_def() {
             }
     );
 }
+
+#[test]
+fn test_parse_external_func_with_link() {
+    let mut tokens = create_tokens(vec![
+        Token::At,
+        Token::Identifier("link".to_string()),
+        Token::LParen,
+        Token::StringLiteral("printlib".to_string()),
+        Token::RParen,
+        Token::Newline,
+        Token::At,
+        Token::Identifier("external".to_string()),
+        Token::LParen,
+        Token::StringLiteral("../build/printlib.so".to_string()),
+        Token::Comma,
+        Token::StringLiteral("printValue".to_string()),
+        Token::RParen,
+        Token::Newline,
+        Token::FunctionDef,
+        Token::Identifier("print".to_string()),
+        Token::LParen,
+        Token::ConstantDecl,
+        Token::AnyType,
+        Token::Identifier("val".to_string()),
+        Token::RParen,
+        Token::Colon,
+        Token::Void,
+        Token::Newline,
+    ]);
+
+    let result = parse_statement(&mut tokens).expect("External function with @link parse edilmədi");
+
+    assert_matches!(
+        result,
+        Statement::ExternalFunctionDef {
+            ref name,
+            ref library,
+            ref symbol,
+            ref link_name,
+            ..
+        }
+        if
+            name == "print"
+            && library == "../build/printlib.so"
+            && symbol == "printValue"
+            && link_name == &Some(Atom::from("printlib"))
+    );
+}
+
+#[test]
+fn test_parse_external_func_without_link() {
+    let mut tokens = create_tokens(vec![
+        Token::At,
+        Token::Identifier("external".to_string()),
+        Token::LParen,
+        Token::StringLiteral("../build/printlib.so".to_string()),
+        Token::Comma,
+        Token::StringLiteral("printValue".to_string()),
+        Token::RParen,
+        Token::Newline,
+        Token::FunctionDef,
+        Token::Identifier("print".to_string()),
+        Token::LParen,
+        Token::ConstantDecl,
+        Token::AnyType,
+        Token::Identifier("val".to_string()),
+        Token::RParen,
+        Token::Colon,
+        Token::Void,
+        Token::Newline,
+    ]);
+
+    let result = parse_statement(&mut tokens).expect("External function without @link parse edilmədi");
+
+    assert_matches!(
+        result,
+        Statement::ExternalFunctionDef {
+            ref name,
+            ref library,
+            ref symbol,
+            ref link_name,
+            ..
+        }
+        if
+            name == "print"
+            && library == "../build/printlib.so"
+            && symbol == "printValue"
+            && link_name.is_none()
+    );
+}

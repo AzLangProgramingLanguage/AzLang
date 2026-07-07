@@ -283,6 +283,7 @@ fn make_external_func(
         params,
         library: Atom::from(library),
         symbol: Atom::from(symbol),
+        link_name: None,
     }
 }
 
@@ -377,4 +378,62 @@ fn test_external_function_call_no_args() {
     ];
     let result = Validator::default().validate(stmts);
     assert!(result.is_ok());
+}
+
+#[test]
+fn test_external_func_link_name_passed_through() {
+    let stmts = vec![
+        Statement::ExternalFunctionDef {
+            name: Atom::from("print"),
+            return_typ: Type::Void,
+            params: vec![Parameter {
+                name: Atom::from("val"),
+                typ: Type::Any,
+                is_pointer: false,
+            }],
+            library: Atom::from("../build/printlib.so"),
+            symbol: Atom::from("printValue"),
+            link_name: Some(Atom::from("printlib")),
+        },
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: Atom::from("print"),
+                symbol: None,
+            }),
+            args: vec![Expr::Number(42)],
+        }),
+    ];
+    let (_validator, program) = Validator::default()
+        .validate(stmts)
+        .expect("should validate with link_name");
+    assert_eq!(program.external_functions.len(), 1);
+    assert_eq!(
+        program.external_functions[0].link_name,
+        Some("printlib".to_string())
+    );
+}
+
+#[test]
+fn test_external_func_link_name_none_when_omitted() {
+    let stmts = vec![
+        make_external_func("print", Type::Void, vec![Parameter {
+            name: Atom::from("val"),
+            typ: Type::Any,
+            is_pointer: false,
+        }], "../build/printlib.so", "printValue"),
+        Statement::Expr(Expr::Call {
+            target: None,
+            name: Box::new(Expr::VariableRef {
+                name: Atom::from("print"),
+                symbol: None,
+            }),
+            args: vec![Expr::Number(42)],
+        }),
+    ];
+    let (_validator, program) = Validator::default()
+        .validate(stmts)
+        .expect("should validate without link_name");
+    assert_eq!(program.external_functions.len(), 1);
+    assert!(program.external_functions[0].link_name.is_none());
 }

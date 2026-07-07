@@ -4,7 +4,7 @@ use crate::condition::parse_if_expr;
 use crate::decl::parse_decl;
 use crate::errors::ParserError;
 use crate::expressions::parse_single_expr;
-use crate::function::{parse_external_function_def, parse_function_def};
+use crate::function::{parse_external_function_def, parse_function_def, parse_link_directive};
 use crate::r#loop::parse_loop;
 use crate::r#while_loop::parse_while_loop;
 use tokenizer::iterator::{SpannedToken, Tokens};
@@ -24,7 +24,22 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
         }
         Some(SpannedToken {
             token: Token::At, ..
-        }) => parse_external_function_def(tokens),
+        }) => {
+            match tokens.peek_nth(1).map(|t| &t.token) {
+                Some(Token::Identifier(s)) if s == "link" => {
+                    tokens.next();
+                    let link_name = parse_link_directive(tokens)?;
+                    match tokens.peek().map(|t| &t.token) {
+                        Some(Token::At) => parse_external_function_def(tokens, Some(link_name)),
+                        _ => Err(ParserError::ExpectedToken(
+                            Token::At,
+                            tokens.peek().map(|t| t.token.clone()).unwrap_or(Token::Eof),
+                        )),
+                    }
+                }
+                _ => parse_external_function_def(tokens, None),
+            }
+        }
 
         Some(SpannedToken {
             token: Token::While,

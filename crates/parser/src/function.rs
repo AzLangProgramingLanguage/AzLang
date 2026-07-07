@@ -11,7 +11,43 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError> {
+pub fn parse_link_directive(tokens: &mut Tokens) -> Result<Atom, ParserError> {
+    match tokens.next() {
+        Some(SpannedToken {
+            token: Token::Identifier(ref s),
+            ..
+        }) if s == "link" => {}
+        Some(SpannedToken { token: other, .. }) => {
+            return Err(ParserError::ExpectedToken(
+                Token::Identifier("link".into()),
+                other,
+            ));
+        }
+        None => return Err(ParserError::UnexpectedEOF),
+    }
+    expect_token(tokens, Token::LParen)?;
+    let lib_name = match tokens.next() {
+        Some(SpannedToken {
+            token: Token::StringLiteral(s),
+            ..
+        }) => s,
+        Some(SpannedToken { token: other, .. }) => {
+            return Err(ParserError::ExpectedToken(
+                Token::StringLiteral(String::new()),
+                other,
+            ));
+        }
+        None => return Err(ParserError::UnexpectedEOF),
+    };
+    expect_token(tokens, Token::RParen)?;
+    expect_token(tokens, Token::Newline)?;
+    Ok(Atom::from(lib_name))
+}
+
+pub fn parse_external_function_def(
+    tokens: &mut Tokens,
+    link_name: Option<Atom>,
+) -> Result<Statement, ParserError> {
     tokens.next();
     match tokens.next() {
         Some(SpannedToken {
@@ -131,6 +167,7 @@ pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, Par
         params,
         library: Atom::from(library),
         symbol: Atom::from(symbol),
+        link_name,
     })
 }
 

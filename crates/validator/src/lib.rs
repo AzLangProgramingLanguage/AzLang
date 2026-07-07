@@ -115,6 +115,7 @@ impl Validator {
                     params,
                     library,
                     symbol,
+                    link_name,
                 } => {
                     self.functions.insert(
                         name.to_string(),
@@ -129,6 +130,7 @@ impl Validator {
                         return_typ,
                         library: library.to_string(),
                         symbol: symbol.to_string(),
+                        link_name: link_name.map(|s| s.to_string()),
                     });
                 }
                 Statement::FunctionDef {

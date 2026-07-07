@@ -121,6 +121,7 @@ pub enum Statement {
         params: Vec<Parameter>,
         library: Atom,
         symbol: Atom,
+        link_name: Option<Atom>,
     },
     StructDef {
         name: Atom,
