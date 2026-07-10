@@ -5,23 +5,23 @@ use transpiler::TranspileContext;
 
 #[test]
 fn compiler_variable_test() -> Result<(), CompilerError> {
-    //FIX:  Test Düzgün Yazılmalıdır.
     const PATH: &str = "../examples/float.az";
     let sdk = file_system::read_file(PATH)?;
 
     let parsed_program = parser(sdk)?;
 
     let validator = validator::Validator::default();
-    let result = validator.validate(parsed_program)?;
-
-    let mut ctx = transpiler::TranspileContext::default();
-    let code = ctx.transpile();
+    let (context, program) = validator.validate(parsed_program)?;
 
     let output_zig = bin_create_dir()?;
 
-    file_system::write_file(&output_zig, &code)?;
+    let mut ctx = transpiler::TranspileContext::default();
 
-    build(output_zig.to_str().unwrap(), PATH)?;
+    let code = ctx.transpile(program);
+    file_system::write_file(&output_zig.join("./src/main.zig"), &code)?;
+
+    build(output_zig)?;
+
     Ok(())
 }
 #[test]

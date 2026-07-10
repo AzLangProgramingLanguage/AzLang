@@ -45,7 +45,7 @@ pub fn copy_file(path: &str, move_path: &str) -> Result<(), FileSystemError> {
     }
 }
 
-pub fn write_file(path: &PathBuf, content: &String) -> Result<(), FileSystemError> {
+pub fn write_file(path: &PathBuf, content: String) -> Result<(), FileSystemError> {
     let write = fs::write(path, content);
     match write {
         Ok(_) => Ok(()),

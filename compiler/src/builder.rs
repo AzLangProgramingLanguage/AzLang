@@ -1,5 +1,5 @@
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use crate::errors::CompilerError;
@@ -22,15 +22,11 @@ const WHITE: &str = "\x1b[97m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
 
-pub fn build(zig_file: &str, output_file: &str) -> Result<(), CompilerError> {
-    let parent_dir = Path::new(output_file)
-        .parent()
-        .unwrap_or_else(|| Path::new("."));
-
-    let output_path = parent_dir.join(format!(
-        "program.{}",
+pub fn build(source: PathBuf) -> Result<(), CompilerError> {
+    let output_path = source.join(format!(
+        "zig-out/bin/bin{}",
         if cfg!(target_os = "windows") {
-            "exe"
+            ".exe"
         } else {
             ""
         }
@@ -38,10 +34,9 @@ pub fn build(zig_file: &str, output_file: &str) -> Result<(), CompilerError> {
 
     let zig_path = get_zig_path();
     let compile_status = Command::new(zig_path)
-        .arg("build-exe")
-        .arg(zig_file)
-        .arg(format!("-femit-bin={}", output_path.to_str().unwrap()))
-        .arg("-lc")
+        .arg("build")
+        .arg("run")
+        .current_dir(source)
         .status();
     match compile_status {
         Ok(status) => {
@@ -75,6 +70,9 @@ pub fn build(zig_file: &str, output_file: &str) -> Result<(), CompilerError> {
                 Err(CompilerError::BuildError)
             }
         }
-        Err(_) => Err(CompilerError::BuildError),
+        Err(e) => {
+            println!("{e}");
+            Err(CompilerError::BuildError)
+        }
     }
 }

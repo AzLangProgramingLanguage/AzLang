@@ -30,8 +30,10 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let mut ctx = transpiler::TranspileContext::default();
 
     let code = ctx.transpile(program);
-    file_system::write_file(&output_zig, &code)?;
+    let buildfile = ctx.transpile_build();
+    file_system::write_file(&output_zig.join("./src/main.zig"), code)?;
+    file_system::write_file(&output_zig.join("./build.zig"), buildfile)?;
 
-    build(output_zig.to_str().unwrap(), path)?;
+    build(output_zig)?;
     Ok(())
 }
