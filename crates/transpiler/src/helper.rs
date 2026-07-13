@@ -1,13 +1,15 @@
 use parser::{
-    ast::{Expr, Operation, Statement},
+    ast::Operation,
     shared_ast::{StringEnum, Type},
 };
+use validator::ast::{Ast, Expr};
 
 use crate::{TranspileContext, transpile::transpile_stmt};
 
 pub fn map_typ(typ: &Type) -> &'static str {
     match typ {
         Type::Natural => "i64",
+        Type::Integer => "i64",
         Type::String(typ) => match typ {
             StringEnum::DynamicString => "[]u8",
             StringEnum::LiteralString => "[]u8",
@@ -25,20 +27,7 @@ pub fn get_expr_type(expr: &Expr) -> Type {
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
-        Expr::UnaryOp { op, expr: _ } => match *op {
-            Operation::Not => Type::Bool,
-            Operation::Subtract => Type::Integer,
-            Operation::Add => Type::Natural,
-            other => {
-                panic!("get_expr_type de bilinmeyen unaryOp tipi geldi {other:#?} ")
-            }
-        },
 
-        Expr::Index {
-            target: _,
-            index: _,
-            target_type,
-        } => target_type.clone(),
         Expr::List(items) => {
             if items.is_empty() {
                 return Type::Array(Box::new(Type::Any));
@@ -120,8 +109,8 @@ pub fn get_format_str_from_type(t: &Type) -> &'static str {
 //     }
 // }
 //
-pub fn is_semicolon_needed(stmt: &Statement) -> bool {
-    matches!(stmt, Statement::Expr(..) | Statement::Decl { .. })
+pub fn is_semicolon_needed(stmt: &Ast) -> bool {
+    matches!(stmt, Ast::Expr(..) | Ast::Decl { .. })
 }
 //
 pub fn is_primite_value(expr: &Expr) -> bool {
@@ -132,12 +121,11 @@ pub fn is_primite_value(expr: &Expr) -> bool {
             | Expr::Bool(_)
             | Expr::Char(_)
             | Expr::String(_)
-            | Expr::UnaryOp { .. }
             | Expr::List(..)
     )
 }
 //
-pub fn transpile_body(body: Vec<Statement>, ctx: &mut TranspileContext) -> String {
+pub fn transpile_body(body: Vec<Ast>, ctx: &mut TranspileContext) -> String {
     body.into_iter()
         .map(|stmt| {
             let mut s = String::new();

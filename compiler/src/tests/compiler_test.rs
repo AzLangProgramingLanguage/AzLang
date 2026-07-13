@@ -18,7 +18,7 @@ fn compiler_variable_test() -> Result<(), CompilerError> {
     let mut ctx = transpiler::TranspileContext::default();
 
     let code = ctx.transpile(program);
-    file_system::write_file(&output_zig.join("./src/main.zig"), &code)?;
+    file_system::write_file(&output_zig.join("./src/main.zig"), code)?;
 
     build(output_zig)?;
 

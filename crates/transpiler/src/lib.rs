@@ -2,36 +2,64 @@ use crate::{
     helper::{is_semicolon_needed, map_typ},
     transpile::transpile_stmt,
 };
-use parser::{
-    ast::{Expr, FunctionDef, Symbol},
-    shared_ast::Type,
-};
-use validator::ast::Program;
+
+use parser::{ast::FunctionDef, shared_ast::Type};
+use validator::ast::{Expr, Program};
 
 use std::collections::{HashMap, HashSet};
 pub mod helper;
 mod tests;
 pub mod transpile;
-pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext) -> String {
+
+use std::fmt::Write; // 'write!' makrosunun buferə birbaşa yazması üçün mütləq lazımdır
+
+pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext, buf: &mut String) {
     match expr {
-        Expr::String(s) => format!("\"{s}\""),
-        Expr::Float(f) => format!("{f}"),
-        Expr::Number(num) => num.to_string(),
-        Expr::Bool(bool) => {
-            if bool {
-                return String::from("true");
+        Expr::String(s) => {
+            write!(buf, "\"{s}\"");
+        }
+        Expr::Float(f) => {
+            write!(buf, "{f}");
+        }
+        Expr::Number(num) => {
+            write!(buf, "{num}");
+        }
+        Expr::Bool(b) => {
+            if b {
+                buf.push_str("true");
+            } else {
+                buf.push_str("false");
             }
-            String::from("false")
+        }
+        Expr::Call {
+            name,
+            args,
+            target,
+            returned_type,
+        } => {
+            transpile_expr(*name, ctx, buf);
+            buf.push('(');
+            for (i, a) in args.into_iter().enumerate() {
+                if i > 0 {
+                    buf.push_str(", ");
+                }
+                transpile_expr(a, ctx, buf);
+            }
+            buf.push(')');
+        }
+        Expr::VariableRef { name, .. } => {
+            buf.push_str(&name);
         }
         Expr::List(exprs) => {
-            let mut result = format!("[{}]{} {{", exprs.len(), map_typ(&Type::Natural));
-            for expr in exprs {
-                result.push_str(&transpile_expr(expr, ctx));
-                result.push(',');
+            write!(buf, "[{}]{} {{", exprs.len(), map_typ(&Type::Natural)).unwrap();
+
+            for (i, expr) in exprs.into_iter().enumerate() {
+                if i > 0 {
+                    buf.push_str(", ");
+                }
+                transpile_expr(expr, ctx, buf);
             }
-            result.pop();
-            result.push('}');
-            result
+            buf.push('}');
         }
         other => panic!("Buraya çatmamalıydı. Burası hele hazır deyil {other:?}"),
     }
@@ -98,23 +126,23 @@ pub fn build(b: *std.Build) void {
     }
 
     pub fn transpile(&mut self, program: Program) -> String {
-        let body = String::new();
+        let mut body = String::new();
+
+        for stmt in program.expressions {
+            if is_semicolon_needed(&stmt) {
+                body.push_str(&transpile_stmt(stmt, self));
+                body.push(';');
+            } else {
+                body.push_str(&transpile_stmt(stmt, self));
+            }
+        }
 
         format!(
             "pub fn main() void {{
 {body}
 }} "
         )
-        // let mut body = String::new();
-        //
-        // for stmt in program.expressions {
-        //     if is_semicolon_needed(&stmt) {
-        //         body.push_str(&transpile_stmt(stmt, self));
-        //         body.push(';');
-        //     } else {
-        //         body.push_str(&transpile_stmt(stmt, self));
-        //     }
-        // }
+
         // let mut imports = self
         //     .imports
         //     .iter()
