@@ -1,3 +1,2 @@
-pub mod function_def;
-pub mod struct_def;
+pub mod external_functions_def;
 pub mod union_def;

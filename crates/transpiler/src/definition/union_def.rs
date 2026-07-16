@@ -8,7 +8,7 @@ pub fn transpile_union_def<'a>(
     name: String,
     fields: Vec<(String, Type)>,
     methods: Vec<MethodType>,
-    ctx: &mut TranspileContext<'a>,
+    ctx: &mut TranspileContext,
 ) -> String {
     /* let old_union = ctx.current_union.clone();
 

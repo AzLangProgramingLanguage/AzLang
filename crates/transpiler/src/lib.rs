@@ -1,7 +1,9 @@
 use crate::{
+    definition::external_functions_def::transpile_external_functions,
     helper::{is_semicolon_needed, map_typ},
     transpile::transpile_stmt,
 };
+pub mod definition;
 
 use parser::{ast::FunctionDef, shared_ast::Type};
 use validator::ast::{Expr, Program};
@@ -11,18 +13,18 @@ pub mod helper;
 mod tests;
 pub mod transpile;
 
-use std::fmt::Write; // 'write!' makrosunun buferə birbaşa yazması üçün mütləq lazımdır
+use std::fmt::Write;
 
 pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext, buf: &mut String) {
     match expr {
         Expr::String(s) => {
-            write!(buf, "\"{s}\"");
+            write!(buf, "\"{s}\"").unwrap();
         }
         Expr::Float(f) => {
-            write!(buf, "{f}");
+            write!(buf, "{f}").unwrap();
         }
         Expr::Number(num) => {
-            write!(buf, "{num}");
+            write!(buf, "{num}").unwrap();
         }
         Expr::Bool(b) => {
             if b {
@@ -67,7 +69,9 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext, buf: &mut String) 
 
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext {
+    pub has_external_any: bool,
     pub imports: HashSet<String>,
+    pub externalfunctionspath: HashSet<String>,
     pub functions: HashMap<String, FunctionDef>,
 }
 impl TranspileContext {
@@ -127,7 +131,11 @@ pub fn build(b: *std.Build) void {
 
     pub fn transpile(&mut self, program: Program) -> String {
         let mut body = String::new();
+        let mut externalfunctions = String::new();
 
+        for pat in program.external_functions {
+            transpile_external_functions(pat, &mut externalfunctions);
+        }
         for stmt in program.expressions {
             if is_semicolon_needed(&stmt) {
                 body.push_str(&transpile_stmt(stmt, self));
@@ -138,7 +146,10 @@ pub fn build(b: *std.Build) void {
         }
 
         format!(
-            "pub fn main() void {{
+            "
+
+        {externalfunctions}
+pub fn main() void {{
 {body}
 }} "
         )
