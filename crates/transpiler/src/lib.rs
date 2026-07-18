@@ -134,7 +134,7 @@ pub fn build(b: *std.Build) void {
         let mut externalfunctions = String::new();
 
         for pat in program.external_functions {
-            transpile_external_functions(pat, &mut externalfunctions);
+            transpile_external_functions(self, pat, &mut externalfunctions);
         }
         for stmt in program.expressions {
             if is_semicolon_needed(&stmt) {
@@ -144,25 +144,38 @@ pub fn build(b: *std.Build) void {
                 body.push_str(&transpile_stmt(stmt, self));
             }
         }
+        let ifanytype = match self.has_external_any {
+            true => {
+                r#"const ValueTag = enum(u8) {
+    void = 0,
+    int = 1,
+    float = 2,
+    string = 3,
+    bool = 4,
+};
+
+const ValueData = extern union {
+    int: i64,
+    float: f64,
+    string: [*:0]const u8,
+    bool: u8,
+};
+
+const ValueType = extern struct {
+    tag: ValueTag,
+    data: ValueData,
+};"#
+            }
+            false => "",
+        };
 
         format!(
             "
-
+{ifanytype}
         {externalfunctions}
 pub fn main() void {{
 {body}
 }} "
         )
-
-        // let mut imports = self
-        //     .imports
-        //     .iter()
-        //     .map(|s| s.as_str())
-        //     .collect::<Vec<_>>()
-        //     .join(";");
-        // if !self.imports.is_empty() {
-        //     imports.push(';');
-        // }
-        // format!("{imports} pub fn main() !void {{{body}}}")
     }
 }

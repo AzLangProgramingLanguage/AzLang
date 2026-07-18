@@ -1,4 +1,5 @@
 use tokenizer::iterator::{SourceSpan, Tokens};
+mod object;
 
 use tokenizer::tokens::Token;
 
