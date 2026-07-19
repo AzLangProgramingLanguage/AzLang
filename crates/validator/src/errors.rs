@@ -72,7 +72,8 @@ impl Display for ValidatorError {
             ValidatorError::InvalidOperation { op, left, right } => {
                 write!(
                     f,
-                    "'{op}' əməliyyatı '{left}' və '{right}' tipləri üzərində icra edilə bilməz."
+                    "'{}' əməliyyatı '{left}' və '{right}' tipləri üzərində icra edilə bilməz.",
+                    op.as_str()
                 )
             }
             ValidatorError::FunctionNameType(name) => write!(f, "'{name}' tipi funksiya deyil.  "),

@@ -32,51 +32,24 @@ pub enum Operation {
     And,
     Or,
 }
-impl Display for Operation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Operation {
+    #[inline]
+    pub const fn as_str(self) -> &'static str {
         match self {
-            Operation::Add => {
-                write!(f, "+")
-            }
-            Operation::Subtract => {
-                write!(f, "-")
-            }
-            Operation::Multiply => {
-                write!(f, "*")
-            }
-            Operation::Divide => {
-                write!(f, "/")
-            }
-            Operation::Equal => {
-                write!(f, "==")
-            }
-            Operation::Not => {
-                write!(f, "!")
-            }
-            Operation::NotEqual => {
-                write!(f, "!=")
-            }
-            Operation::And => {
-                write!(f, "&&")
-            }
-            Operation::Or => {
-                write!(f, "||")
-            }
-            Operation::Greater => {
-                write!(f, ">")
-            }
-            Operation::GreaterEqual => {
-                write!(f, ">=")
-            }
-            Operation::LessEqual => {
-                write!(f, "<=")
-            }
-            Operation::Less => {
-                write!(f, "<")
-            }
-            Operation::Modulo => {
-                write!(f, "%")
-            }
+            Operation::Add => "+",
+            Operation::Subtract => "-",
+            Operation::Multiply => "*",
+            Operation::Divide => "/",
+            Operation::Modulo => "%",
+            Operation::Not => "!",
+            Operation::Equal => "==",
+            Operation::NotEqual => "!=",
+            Operation::Greater => ">",
+            Operation::GreaterEqual => ">=",
+            Operation::Less => "<",
+            Operation::LessEqual => "<=",
+            Operation::And => "&&",
+            Operation::Or => "||",
         }
     }
 }

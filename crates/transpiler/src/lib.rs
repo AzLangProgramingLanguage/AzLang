@@ -1,5 +1,6 @@
 use crate::{
     definition::external_functions_def::transpile_external_functions,
+    function_call::transpile_function_call,
     helper::{is_semicolon_needed, map_typ},
     transpile::transpile_stmt,
 };
@@ -8,6 +9,7 @@ pub mod definition;
 use parser::{ast::FunctionDef, shared_ast::Type};
 use validator::ast::{Expr, Program};
 
+mod function_call;
 use std::collections::{HashMap, HashSet};
 pub mod helper;
 mod tests;
@@ -33,21 +35,8 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext, buf: &mut String) 
                 buf.push_str("false");
             }
         }
-        Expr::Call {
-            name,
-            args,
-            target,
-            returned_type,
-        } => {
-            transpile_expr(*name, ctx, buf);
-            buf.push('(');
-            for (i, a) in args.into_iter().enumerate() {
-                if i > 0 {
-                    buf.push_str(", ");
-                }
-                transpile_expr(a, ctx, buf);
-            }
-            buf.push(')');
+        Expr::Call { name, args, .. } => {
+            transpile_function_call(buf, ctx, *name, args);
         }
         Expr::VariableRef { name, .. } => {
             buf.push_str(&name);
@@ -62,6 +51,13 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext, buf: &mut String) 
                 transpile_expr(expr, ctx, buf);
             }
             buf.push('}');
+        }
+        Expr::BinaryOp {
+            left, right, op, ..
+        } => {
+            transpile_expr(*left, ctx, buf);
+            buf.push_str(op.as_str());
+            transpile_expr(*right, ctx, buf);
         }
         other => panic!("Buraya çatmamalıydı. Burası hele hazır deyil {other:?}"),
     }
@@ -126,14 +122,14 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mod_tests.step);
     test_step.dependOn(&run_exe_tests.step);
 }"#
-        .to_string()
+        .to_string() //TODO: Use Format Bro
     }
 
     pub fn transpile(&mut self, program: Program) -> String {
         let mut body = String::new();
         let mut externalfunctions = String::new();
 
-        for pat in program.external_functions {
+        for pat in &program.external_functions {
             transpile_external_functions(self, pat, &mut externalfunctions);
         }
         for stmt in program.expressions {

@@ -1,34 +1,31 @@
-use parser::{ast::Expr, shared_ast::Type};
-
-use crate::{TranspileContext, transpile::transpile_expr};
+use crate::{TranspileContext, transpile_expr};
+use parser::shared_ast::Type;
+use std::fmt::Write;
+use validator::ast::Expr;
 
 pub fn transpile_function_call(
+    buf: &mut String,
     ctx: &mut TranspileContext,
-    target: Option<Box<Expr>>,
-    name: Box<Expr>,
+    name: Expr,
     args: Vec<Expr>,
-    returned_type: Option<Type>,
-) -> String {
-    let name = transpile_expr(*name, ctx);
-    let mut args_code = String::new();
-    for arg in args {
-        match &arg {
-            Expr::VariableRef { name, symbol } => {
-                args_code.push('&');
-            }
-            _ => {}
-        }
-        args_code.push_str(&transpile_expr(arg, ctx));
-        args_code.push(',');
-    }
-    args_code.pop();
+) {
+    transpile_expr(name, ctx, buf);
+    buf.push('(');
 
-    if let Some(function) = ctx.functions.get(&name) {
-        if function.is_used_try {
-            return format!("try {name}({args_code})");
-        } else {
-            return format!("{name}({args_code})");
+    for (i, arg) in args.into_iter().enumerate() {
+        if i > 0 {
+            buf.push(',');
+        }
+        match arg {
+            Expr::VariableRef { name, .. } => {
+                buf.push('&');
+                buf.push_str(&name);
+            }
+
+            other => {
+                transpile_expr(other, ctx, buf);
+            }
         }
     }
-    format!("{name}({args_code})")
+    buf.push(')');
 }
