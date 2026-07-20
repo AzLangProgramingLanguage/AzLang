@@ -2,15 +2,22 @@ use parser::{ast::Parameter, shared_ast::Type};
 use std::fmt::Write;
 use validator::ast::ExternalFunctionDef;
 
-use crate::TranspileContext;
+use crate::{FunctionInfo, TranspileContext};
 pub fn transpile_external_functions(
     ctx: &mut TranspileContext,
-    externalfn: &ExternalFunctionDef,
+    externalfn: ExternalFunctionDef,
     buff: &mut String,
 ) {
-    write!(buff, "extern fn {}", externalfn.name).unwrap();
+    write!(buff, "extern fn {}", &externalfn.name).unwrap();
     transpile_params_for_external_functions(ctx, &externalfn.params, buff);
     write!(buff, " {};", c_type_formatter(ctx, &externalfn.return_typ)).unwrap();
+    ctx.functions.insert(
+        externalfn.name,
+        FunctionInfo {
+            params: externalfn.params,
+            return_typ: externalfn.return_typ,
+        },
+    );
 }
 fn transpile_params_for_external_functions(
     ctx: &mut TranspileContext,

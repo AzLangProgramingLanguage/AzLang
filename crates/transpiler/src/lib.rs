@@ -1,16 +1,24 @@
 use crate::{
-    definition::external_functions_def::transpile_external_functions,
+    definition::{
+        external_functions_def::transpile_external_functions, function_def::transpile_function_def,
+    },
     function_call::transpile_function_call,
     helper::{is_semicolon_needed, map_typ},
     transpile::transpile_stmt,
 };
 pub mod definition;
 
-use parser::{ast::FunctionDef, shared_ast::Type};
+use parser::{
+    ast::{FunctionDef, Parameter},
+    shared_ast::Type,
+};
 use validator::ast::{Expr, Program};
 
 mod function_call;
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::BuildHasher,
+};
 pub mod helper;
 mod tests;
 pub mod transpile;
@@ -62,13 +70,18 @@ pub fn transpile_expr(expr: Expr, ctx: &mut TranspileContext, buf: &mut String) 
         other => panic!("Buraya çatmamalıydı. Burası hele hazır deyil {other:?}"),
     }
 }
+#[derive(Clone, Debug)]
+pub struct FunctionInfo {
+    params: Vec<Parameter>,
+    return_typ: Type,
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct TranspileContext {
     pub has_external_any: bool,
     pub imports: HashSet<String>,
     pub externalfunctionspath: HashSet<String>,
-    pub functions: HashMap<String, FunctionDef>,
+    pub functions: HashMap<String, FunctionInfo>,
 }
 impl TranspileContext {
     pub fn add_import(&mut self, import: &str) -> Option<String> {
@@ -127,10 +140,13 @@ pub fn build(b: *std.Build) void {
 
     pub fn transpile(&mut self, program: Program) -> String {
         let mut body = String::new();
-        let mut externalfunctions = String::new();
+        let mut functions = String::new();
 
-        for pat in &program.external_functions {
-            transpile_external_functions(self, pat, &mut externalfunctions);
+        for pat in program.external_functions {
+            transpile_external_functions(self, pat, &mut functions);
+        }
+        for func in program.functions {
+            transpile_function_def(self, func, &mut functions);
         }
         for stmt in program.expressions {
             if is_semicolon_needed(&stmt) {
@@ -140,6 +156,7 @@ pub fn build(b: *std.Build) void {
                 body.push_str(&transpile_stmt(stmt, self));
             }
         }
+        // self.functions = program.functions[0];
         let ifanytype = match self.has_external_any {
             true => {
                 r#"const ValueTag = enum(u8) {
@@ -168,7 +185,7 @@ const ValueType = extern struct {
         format!(
             "
 {ifanytype}
-        {externalfunctions}
+        {functions}
 pub fn main() void {{
 {body}
 }} "
