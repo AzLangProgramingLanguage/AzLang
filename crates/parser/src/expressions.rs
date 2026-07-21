@@ -115,14 +115,14 @@ pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         } => {
             let expr = parse_single_expr(tokens)?;
             match expr {
-                Expr::Number(i) => Ok(Expr::Number(-1 * i)),
-                Expr::Float(f) => Ok(Expr::Float(-1.0 * f)),
+                Expr::Number(i) => Ok(Expr::Number(-i)),
+                Expr::Float(f) => Ok(Expr::Float(-f)),
                 Expr::VariableRef { name, symbol } => Ok(Expr::BinaryOp {
                     left: Box::new(Expr::Number(-1)),
                     right: Box::new(Expr::VariableRef { name, symbol }),
                     op: crate::ast::Operation::Multiply,
                 }),
-                _ => return Err(ParserError::UnexpectedEOF),
+                _ => Err(ParserError::UnexpectedEOF),
             }
         }
         SpannedToken {
@@ -135,12 +135,6 @@ pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             })
         }
 
-        other => {
-            panic!("{other:#?}");
-            return Err(ParserError::UnexpectedToken(
-                other.span.clone(),
-                other.token.clone(),
-            ));
-        }
+        other => Err(ParserError::UnexpectedToken(other.span, other.token)),
     }
 }

@@ -5,7 +5,6 @@ use crate::{
     binary_op::{parse_expression, parse_statement},
     tests::create_tokens,
 };
-use std::rc::Rc;
 use tokenizer::tokens::Token;
 
 #[test]
@@ -23,7 +22,7 @@ fn test_parse_function_call_no_args() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![]
@@ -47,7 +46,7 @@ fn test_parse_function_call_single_arg() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![Expr::Number(5)]
@@ -75,7 +74,7 @@ fn test_parse_function_call_multiple_args() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![Expr::Number(1), Expr::Number(2), Expr::Number(3)]
@@ -99,7 +98,7 @@ fn test_parse_function_call_string_arg() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![Expr::String(Atom::from("hello"))]
@@ -123,7 +122,7 @@ fn test_parse_function_call_bool_arg() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![Expr::Bool(true)]
@@ -147,11 +146,11 @@ fn test_parse_function_call_variable_arg() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![Expr::VariableRef {
-                    name: Atom::from("y"),
+                name: Atom::from("y"),
                 symbol: None
             }]
         })
@@ -174,7 +173,7 @@ fn test_parse_function_call_float_arg() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![Expr::Float(PI)]
@@ -204,7 +203,7 @@ fn test_parse_function_call_mixed_args() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![
@@ -236,7 +235,7 @@ fn test_parse_function_call_expression_direct() {
         Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("foo"),
+                name: Atom::from("foo"),
                 symbol: None
             }),
             args: vec![Expr::Number(42)]
@@ -261,7 +260,7 @@ fn test_parse_function_call_neg_arg() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![Expr::Number(-5)]
@@ -286,7 +285,7 @@ fn test_parse_function_call_not_arg() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("x"),
+                name: Atom::from("x"),
                 symbol: None
             }),
             args: vec![Expr::UnaryOp {
@@ -318,7 +317,7 @@ fn test_parse_function_call_two_args_expression() {
         Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("add"),
+                name: Atom::from("add"),
                 symbol: None
             }),
             args: vec![Expr::Number(10), Expr::Number(20)]
@@ -342,7 +341,7 @@ fn test_parse_function_call_false_arg() {
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
-                    name: Atom::from("f"),
+                name: Atom::from("f"),
                 symbol: None
             }),
             args: vec![Expr::Bool(false)]

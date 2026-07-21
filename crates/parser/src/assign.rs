@@ -1,13 +1,10 @@
 use crate::{
-    ast::{Atom, Expr, Statement},
+    ast::{Atom, Statement},
     binary_op::parse_expression,
     errors::ParserError,
     helpers::expect_token,
 };
-use tokenizer::{
-    iterator::{SpannedToken, Tokens},
-    tokens::Token,
-};
+use tokenizer::{iterator::Tokens, tokens::Token};
 
 pub fn parse_assign(tokens: &mut Tokens, s: String) -> Result<Statement, ParserError> {
     tokens.next();

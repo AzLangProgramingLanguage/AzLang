@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, Expr, Statement},
+    ast::{Atom, Statement},
     errors::ParserError,
     expressions::parse_single_expr,
     helpers::expect_token,

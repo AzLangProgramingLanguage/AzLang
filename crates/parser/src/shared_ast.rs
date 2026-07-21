@@ -1,5 +1,5 @@
-use std::fmt::Display;
 use crate::ast::Atom;
+use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {

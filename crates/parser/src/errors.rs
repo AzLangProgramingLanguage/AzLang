@@ -1,7 +1,7 @@
 use core::fmt;
 use std::{fmt::Display, rc::Rc};
 
-use tokenizer::{Lexer, errors::LexerError, iterator::SourceSpan, tokens::Token};
+use tokenizer::{errors::LexerError, iterator::SourceSpan, tokens::Token};
 
 #[derive(Debug)]
 pub enum ParserError {
