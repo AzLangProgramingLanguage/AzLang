@@ -1,26 +1,16 @@
-use core::panic;
-
-use crate::{bin_create_dir, builder::build, errors::CompilerError, parser};
+use crate::{errors::CompilerError, parser};
 use transpiler::TranspileContext;
 
 #[test]
 fn compiler_variable_test() -> Result<(), CompilerError> {
-    const PATH: &str = "../examples/float.az";
-    let sdk = file_system::read_file(PATH)?;
-
-    let parsed_program = parser(sdk)?;
+    let parsed_program = parser("sabit kəsr a = 5.1\na".to_string())?;
 
     let validator = validator::Validator::default();
-    let (context, program) = validator.validate(parsed_program)?;
+    let (_, program) = validator.validate(parsed_program)?;
 
-    let output_zig = bin_create_dir()?;
-
-    let mut ctx = transpiler::TranspileContext::default();
-
+    let mut ctx = TranspileContext::default();
     let code = ctx.transpile(program);
-    file_system::write_file(&output_zig.join("./src/main.zig"), code)?;
-
-    build(output_zig)?;
+    assert!(code.contains("const a: f64 = 5.1;"));
 
     Ok(())
 }
@@ -32,11 +22,7 @@ fn compiler_binary_op_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
-
-    let mut validator = validator::Validator::default();
-
-    let varr = validator.validate(program);
+    let _ = parsed_program.unwrap();
     //
     // let mut ctx = TranspileContext::default();
     // assert_eq!(
@@ -54,7 +40,7 @@ fn compiler_float_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
+    let _ = parsed_program.unwrap();
 
     // let mut validator = validator::Validator::new();
     //
@@ -76,7 +62,7 @@ fn compiler_print_string_interpolation_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
+    let _ = parsed_program.unwrap();
 }
 #[test]
 fn compiler_condition_test() {
@@ -86,7 +72,7 @@ fn compiler_condition_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
+    let _ = parsed_program.unwrap();
 }
 #[test]
 fn compiler_function_test() {
@@ -96,7 +82,7 @@ fn compiler_function_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
+    let _ = parsed_program.unwrap();
 }
 // #[test]
 // pub fn compiler_array() {
