@@ -1,10 +1,5 @@
 use crate::shared_ast::Type;
-use core::fmt;
-use std::{
-    collections::HashMap,
-    fmt::{Display, write},
-    rc::Rc,
-};
+use std::{fmt::Display, rc::Rc};
 pub use string_cache::DefaultAtom as Atom;
 
 #[derive(Debug, Clone, PartialEq)]

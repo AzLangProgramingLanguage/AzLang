@@ -1,4 +1,3 @@
-#[cfg(test)]
 use std::rc::Rc;
 
 use crate::{
@@ -7,7 +6,6 @@ use crate::{
     shared_ast::Type,
     tests::create_tokens,
 };
-use std::assert_matches;
 use tokenizer::tokens::Token;
 
 #[test]
@@ -39,35 +37,41 @@ fn test_parse_function_def() {
 
     let result = parse_statement(&mut tokens).expect("Function declaration parse edilmədi");
 
-    assert_matches!(
-        result,
-        Statement::FunctionDef {
-            ref name,
-            ref return_typ,
-            ref params,
-            ref body,
-        }
-        if
-            name == "topla"
-            && *return_typ == Type::Integer
-            && params.len() == 2
-            && params[0] == Parameter {
+    let Statement::FunctionDef {
+        name,
+        return_typ,
+        params,
+        body,
+    } = result
+    else {
+        panic!("FunctionDef statement gözlənilirdi");
+    };
+
+    assert_eq!(name, Atom::from("topla"));
+    assert_eq!(return_typ, Type::Integer);
+    assert_eq!(
+        params,
+        vec![
+            Parameter {
                 name: Atom::from("a"),
                 typ: Type::Integer,
                 is_pointer: false,
-            }
-            && params[1] == Parameter {
+            },
+            Parameter {
                 name: Atom::from("b"),
                 typ: Type::Integer,
                 is_pointer: true,
-            }
-            && body.len() == 1
-            && body[0] == Statement::Decl {
-                name: Atom::from("x"),
-                typ: Rc::new(Type::Integer),
-                is_mutable: false,
-                value: Box::new(Expr::Number(42)),
-            }
+            },
+        ]
+    );
+    assert_eq!(
+        body,
+        vec![Statement::Decl {
+            name: Atom::from("x"),
+            typ: Rc::new(Type::Integer),
+            is_mutable: false,
+            value: Box::new(Expr::Number(42)),
+        }]
     );
 }
 
@@ -102,21 +106,21 @@ fn test_parse_external_func_with_link() {
 
     let result = parse_statement(&mut tokens).expect("External function with @link parse edilmədi");
 
-    assert_matches!(
-        result,
-        Statement::ExternalFunctionDef {
-            ref name,
-            ref library,
-            ref symbol,
-            ref link_name,
-            ..
-        }
-        if
-            name == "print"
-            && library == "../build/printlib.so"
-            && symbol == "printValue"
-            && link_name == &Some(Atom::from("printlib"))
-    );
+    let Statement::ExternalFunctionDef {
+        name,
+        library,
+        symbol,
+        link_name,
+        ..
+    } = result
+    else {
+        panic!("ExternalFunctionDef statement gözlənilirdi");
+    };
+
+    assert_eq!(name, Atom::from("print"));
+    assert_eq!(library, Atom::from("../build/printlib.so"));
+    assert_eq!(symbol, Atom::from("printValue"));
+    assert_eq!(link_name, Some(Atom::from("printlib")));
 }
 
 #[test]
@@ -142,21 +146,22 @@ fn test_parse_external_func_without_link() {
         Token::Newline,
     ]);
 
-    let result = parse_statement(&mut tokens).expect("External function without @link parse edilmədi");
+    let result =
+        parse_statement(&mut tokens).expect("External function without @link parse edilmədi");
 
-    assert_matches!(
-        result,
-        Statement::ExternalFunctionDef {
-            ref name,
-            ref library,
-            ref symbol,
-            ref link_name,
-            ..
-        }
-        if
-            name == "print"
-            && library == "../build/printlib.so"
-            && symbol == "printValue"
-            && link_name.is_none()
-    );
+    let Statement::ExternalFunctionDef {
+        name,
+        library,
+        symbol,
+        link_name,
+        ..
+    } = result
+    else {
+        panic!("ExternalFunctionDef statement gözlənilirdi");
+    };
+
+    assert_eq!(name, Atom::from("print"));
+    assert_eq!(library, Atom::from("../build/printlib.so"));
+    assert_eq!(symbol, Atom::from("printValue"));
+    assert!(link_name.is_none());
 }

@@ -3,32 +3,22 @@ pub mod ast;
 pub mod binary_op;
 pub mod condition;
 pub mod decl;
+pub mod errors;
+mod expressions;
 pub mod function;
 pub mod helpers;
 pub mod identifier;
 pub mod list;
 pub mod literal_parse;
 pub mod r#loop;
-pub mod r#while_loop;
+pub mod shared_ast;
 pub mod template;
 pub mod types;
+pub mod r#while_loop;
 
-pub mod errors;
-mod expressions;
-/*
-
-
-pub mod r#match;
-pub mod method; */
-pub mod shared_ast;
-/* pub mod struct_init;
-pub mod structs; */
-/*
- */
+#[cfg(test)]
 mod tests;
 
-/*
- *//* pub mod union; */
 use crate::{ast::Statement, errors::ParserError, expressions::parse_expression_block};
 
 pub fn parser(sdk: String) -> Result<Vec<Statement>, ParserError> {

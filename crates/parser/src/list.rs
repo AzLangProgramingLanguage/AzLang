@@ -11,21 +11,21 @@ pub fn parse_list(tokens: &mut Tokens) -> Result<Expr, ParserError> {
         match tokens.peek() {
             Some(SpannedToken {
                 token: Token::ListEnd,
-                span,
+                ..
             }) => {
                 tokens.next();
                 break;
             }
             Some(SpannedToken {
                 token: Token::Comma,
-                span,
+                ..
             }) => {
                 tokens.next();
             }
 
-            Some(other) => {
-                let elemen = parse_expression(tokens)?;
-                elements.push(elemen);
+            Some(_) => {
+                let element = parse_expression(tokens)?;
+                elements.push(element);
             }
             None => {
                 return Err(ParserError::UnexpectedEOF);

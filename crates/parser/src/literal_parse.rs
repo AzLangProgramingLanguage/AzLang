@@ -4,10 +4,7 @@ use tokenizer::{
     tokens::Token,
 };
 
-use crate::{
-    ast::Expr, errors::ParserError, expressions::parse_single_expr, list::parse_list,
-    shared_ast::Type,
-};
+use crate::{ast::Expr, errors::ParserError, list::parse_list};
 
 pub fn literals_parse(token: SpannedToken, tokens: &mut Tokens) -> Result<Expr, ParserError> {
     match token.token {
@@ -17,56 +14,4 @@ pub fn literals_parse(token: SpannedToken, tokens: &mut Tokens) -> Result<Expr, 
         Token::ListStart => parse_list(tokens),
         _ => Err(ParserError::UnexpectedToken(token.span, token.token)),
     }
-
-    /*     while let Some(Token::Dot) = tokens.peek() {
-           tokens.next();
-
-           let field_or_method = match tokens.next() {
-               Some(Token::Identifier(name)) => (*name).as_str(),
-               None => {
-                   return Err(ParserError::UnexpectedEOF);
-               }
-               Some(other) => {
-                   return Err(ParserError::MethodNameNotFound(other.clone()));
-               }
-           };
-
-           match tokens.peek() {
-               Some(Token::LParen) => {
-                   tokens.next();
-                   let mut args = Vec::new();
-
-                   while let Some(token) = tokens.peek() {
-                       match token {
-                           Token::RParen => {
-                               tokens.next();
-                               break;
-                           }
-                           Token::Comma => {
-                               tokens.next();
-                           }
-                           _ => {
-                               let arg = parse_single_expr(tokens)?;
-                               args.push(arg);
-                           }
-                       }
-                   }
-
-                   expr = Expr::Call {
-                       target: Some(Box::new(expr)),
-                       name: field_or_method,
-                       args,
-                       returned_type: None,
-                   };
-               }
-               _ => {
-                   expr = Expr::Index {
-                       target: Box::new(expr),
-                       index: Box::new(Expr::String(field_or_method)),
-                       target_type: Type::Any,
-                   };
-               }
-           }
-       }
-    */
 }

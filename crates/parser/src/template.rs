@@ -6,10 +6,9 @@ use tokenizer::{
 
 use crate::ast::{Expr, TemplateChunk};
 
-pub fn parse_template_string_expr<'a>(tokens: &mut Tokens) -> Result<Expr, ParserError> {
+pub fn parse_template_string_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let mut chunks = Vec::new();
-    loop {
-        let Some(token) = tokens.next() else { break };
+    while let Some(token) = tokens.next() {
         match token {
             SpannedToken {
                 token: Token::StringLiteral(s),

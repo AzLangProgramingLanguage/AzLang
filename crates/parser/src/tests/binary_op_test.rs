@@ -1,8 +1,6 @@
-#[cfg(test)]
 use crate::{
-    ast::{Expr, Operation, Statement},
-    binary_op::{parse_expression, parse_statement},
-    shared_ast::Type,
+    ast::{Expr, Operation},
+    binary_op::parse_expression,
     tests::{TestResult, create_tokens},
 };
 use tokenizer::tokens::Token;

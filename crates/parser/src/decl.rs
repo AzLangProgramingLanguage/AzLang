@@ -46,7 +46,7 @@ pub fn parse_decl(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, Pa
     })
 }
 
-pub fn is_primite_value_to_type<'a>(expr: &Expr, is_mutable: bool) -> Type {
+pub fn is_primite_value_to_type(expr: &Expr, is_mutable: bool) -> Type {
     match expr {
         Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,

@@ -10,7 +10,7 @@ use crate::{
     helpers::expect_token,
 };
 
-pub fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
+pub fn parse_block(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
     let mut block = Vec::new();
     let mut indent = 0;
 
@@ -39,7 +39,7 @@ pub fn parse_block<'a>(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserErro
     Ok(block)
 }
 
-pub fn parse_if_expr<'a>(tokens: &mut Tokens) -> Result<Statement, ParserError> {
+pub fn parse_if_expr(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     tokens.next();
     let condition = parse_expression(tokens)?;
     expect_token(tokens, Token::Newline)?;

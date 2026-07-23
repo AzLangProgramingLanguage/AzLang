@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, Expr, Parameter, Statement},
+    ast::{Atom, Parameter, Statement},
     binary_op::parse_statement,
     errors::ParserError,
     helpers::expect_token,
@@ -271,11 +271,8 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError>
 }
 fn param_typ(tokens: &mut Tokens, is_mutable: bool) -> Result<Type, ParserError> {
     let mut param_type = parse_type(tokens)?;
-    match (&param_type, &is_mutable) {
-        (Type::String(S), false) => {
-            param_type = Type::String(crate::shared_ast::StringEnum::LiteralConstString);
-        }
-        _ => {}
+    if matches!(param_type, Type::String(_)) && !is_mutable {
+        param_type = Type::String(crate::shared_ast::StringEnum::LiteralConstString);
     }
     Ok(param_type)
 }
