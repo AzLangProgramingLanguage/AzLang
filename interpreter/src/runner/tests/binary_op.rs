@@ -7,6 +7,10 @@ mod tests {
     use parser::ast::Operation;
     use parser::shared_ast::Type;
 
+    fn run_operation(left: Value, right: Value, op: Operation, cast_type: Option<Type>) -> Value {
+        binary_op_runner(&mut Runner::new(), left, right, op, cast_type)
+    }
+
     #[test]
     fn binary_op_add_integer() {
         let mut runner = Runner::new();
@@ -151,16 +155,9 @@ mod tests {
     }
 
     #[test]
-    fn binary_op_default_case() {
-        let mut runner = Runner::new();
-        let result = binary_op_runner(
-            &mut runner,
-            Value::Number(1),
-            Value::Number(2),
-            Operation::And,
-            None,
-        );
-        assert_eq!(result, Value::Bool(false));
+    #[should_panic(expected = "Invalid operands for And")]
+    fn binary_op_rejects_invalid_logical_operands() {
+        run_operation(Value::Number(1), Value::Number(2), Operation::And, None);
     }
 
     #[test]
@@ -278,5 +275,118 @@ mod tests {
             Some(Type::String(parser::shared_ast::StringEnum::DynamicString)),
         );
         assert_eq!(result, Value::String("test".to_string()));
+    }
+
+    #[test]
+    fn unary_not_negates_booleans() {
+        assert_eq!(
+            run_operation(Value::Void, Value::Bool(true), Operation::Not, None),
+            Value::Bool(false)
+        );
+        assert_eq!(
+            run_operation(Value::Void, Value::Bool(false), Operation::Not, None),
+            Value::Bool(true)
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid operand for Not")]
+    fn unary_not_rejects_non_boolean_values() {
+        run_operation(Value::Void, Value::Number(1), Operation::Not, None);
+    }
+
+    #[test]
+    fn equality_supports_runtime_values() {
+        let values = [
+            Value::Float(1.5),
+            Value::String("azlang".to_string()),
+            Value::Bool(true),
+            Value::Char('a'),
+            Value::List(vec![Value::Number(1), Value::Number(2)]),
+        ];
+
+        for value in values {
+            assert_eq!(
+                run_operation(value.clone(), value, Operation::Equal, None),
+                Value::Bool(true)
+            );
+        }
+    }
+
+    #[test]
+    fn equality_compares_integer_and_float_values() {
+        assert_eq!(
+            run_operation(Value::Number(2), Value::Float(2.0), Operation::Equal, None,),
+            Value::Bool(true)
+        );
+        assert_eq!(
+            run_operation(
+                Value::Float(2.0),
+                Value::Number(3),
+                Operation::NotEqual,
+                None,
+            ),
+            Value::Bool(true)
+        );
+    }
+
+    #[test]
+    fn comparisons_follow_value_ordering() {
+        let cases = [
+            (Value::Number(2), Value::Float(2.5), Operation::Less),
+            (Value::Float(3.0), Value::Number(3), Operation::GreaterEqual),
+            (
+                Value::String("b".to_string()),
+                Value::String("a".to_string()),
+                Operation::Greater,
+            ),
+            (Value::Bool(false), Value::Bool(true), Operation::Less),
+            (Value::Char('a'), Value::Char('b'), Operation::LessEqual),
+            (
+                Value::List(vec![Value::Number(1), Value::Number(2)]),
+                Value::List(vec![Value::Number(1), Value::Number(3)]),
+                Operation::Less,
+            ),
+        ];
+
+        for (left, right, op) in cases {
+            assert_eq!(run_operation(left, right, op, None), Value::Bool(true));
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid operands for Less")]
+    fn comparisons_reject_incompatible_values() {
+        run_operation(
+            Value::Number(1),
+            Value::String("1".to_string()),
+            Operation::Less,
+            None,
+        );
+    }
+
+    #[test]
+    fn logical_operations_use_boolean_values() {
+        assert_eq!(
+            run_operation(Value::Bool(true), Value::Bool(false), Operation::And, None,),
+            Value::Bool(false)
+        );
+        assert_eq!(
+            run_operation(Value::Bool(true), Value::Bool(false), Operation::Or, None,),
+            Value::Bool(true)
+        );
+    }
+
+    #[test]
+    fn mixed_numeric_arithmetic_uses_float_promotion() {
+        assert_eq!(
+            run_operation(
+                Value::Number(2),
+                Value::Float(0.5),
+                Operation::Add,
+                Some(Type::Float),
+            ),
+            Value::Float(2.5)
+        );
     }
 }

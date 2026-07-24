@@ -57,6 +57,7 @@ impl Value {
     pub fn as_float(&self) -> f64 {
         match self {
             Value::Float(f) => *f,
+            Value::Number(n) => *n as f64,
             _ => 0.0,
         }
     }
