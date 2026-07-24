@@ -5,13 +5,9 @@ use std::{
 };
 
 use file_system::errors::FileSystemError;
-use validator::ast::ExternalFunctionDef;
 
 use crate::builder::get_zig_path;
 
-pub fn extract_external_libraries(externalfns: &Vec<ExternalFunctionDef>) {
-    for exfn in externalfns {}
-}
 pub fn bin_create_dir() -> Result<PathBuf, FileSystemError> {
     let global;
     if let Some(path) = env::current_dir()?.to_str() {

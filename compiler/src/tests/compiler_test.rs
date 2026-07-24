@@ -22,11 +22,7 @@ fn compiler_binary_op_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
-
-    let mut validator = validator::Validator::default();
-
-    let varr = validator.validate(program);
+    let _ = parsed_program.unwrap();
     //
     // let mut ctx = TranspileContext::default();
     // assert_eq!(
@@ -44,7 +40,7 @@ fn compiler_float_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
+    let _ = parsed_program.unwrap();
 
     // let mut validator = validator::Validator::new();
     //
@@ -66,7 +62,7 @@ fn compiler_print_string_interpolation_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
+    let _ = parsed_program.unwrap();
 }
 #[test]
 fn compiler_condition_test() {
@@ -76,7 +72,7 @@ fn compiler_condition_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
+    let _ = parsed_program.unwrap();
 }
 #[test]
 fn compiler_function_test() {
@@ -86,7 +82,7 @@ fn compiler_function_test() {
     let parsed_program = parser(sdk.unwrap());
     assert!(parsed_program.is_ok());
 
-    let mut program = parsed_program.unwrap();
+    let _ = parsed_program.unwrap();
 }
 // #[test]
 // pub fn compiler_array() {

@@ -1,20 +1,10 @@
 // mod cleaner;
-use file_system::errors::FileSystemError;
 use parser::parser;
-use validator::ast::ExternalFunctionDef;
 mod helpers;
-use crate::{
-    builder::{build, get_zig_path},
-    errors::CompilerError,
-    helpers::bin_create_dir,
-};
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use crate::{builder::build, errors::CompilerError, helpers::bin_create_dir};
 mod builder;
 mod errors;
+#[cfg(test)]
 mod tests;
 
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
@@ -23,7 +13,7 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let parsed_program = parser(sdk)?;
 
     let validator = validator::Validator::default();
-    let (context, program) = validator.validate(parsed_program)?;
+    let (_, program) = validator.validate(parsed_program)?;
 
     let output_zig = bin_create_dir()?;
 
