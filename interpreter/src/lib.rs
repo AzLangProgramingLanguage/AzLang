@@ -18,9 +18,6 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
     let result = validator.validate(parsed_program)?;
     let mut runner = Runner::new();
 
-    // Resolve the directory of the source file so that relative library paths
-    // (e.g. "printlib.so" declared inside sdk/data_structures.az) are found
-    // next to the .az file rather than requiring a system-wide install.
     let source_dir = std::path::Path::new(path)
         .parent()
         .map(|p| p.to_path_buf())
@@ -43,10 +40,7 @@ pub fn interpreter_file(path: &str) -> Result<(), InterPreterError> {
             if p.is_absolute() {
                 ext.library.clone()
             } else {
-                source_dir
-                    .join(p)
-                    .to_string_lossy()
-                    .into_owned()
+                source_dir.join(p).to_string_lossy().into_owned()
             }
         };
         runner.external_functions.insert(

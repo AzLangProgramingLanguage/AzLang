@@ -1,5 +1,6 @@
 use cli::{Commands, cli};
 use compiler::compiler;
+use std::io::Write;
 fn main() {
     let command = cli().command;
     match command {

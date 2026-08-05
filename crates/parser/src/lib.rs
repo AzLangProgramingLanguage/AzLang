@@ -23,6 +23,7 @@ use crate::{ast::Statement, errors::ParserError, expressions::parse_expression_b
 
 pub fn parser(sdk: String) -> Result<Vec<Statement>, ParserError> {
     let mut lexer = tokenizer::Lexer::new(&sdk);
+
     let mut tokens = lexer.tokenize()?;
     let ast = parse_expression_block(&mut tokens)?;
     Ok(ast)

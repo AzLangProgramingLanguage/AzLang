@@ -1,4 +1,3 @@
-// mod cleaner;
 use parser::parser;
 mod helpers;
 use crate::{builder::build, errors::CompilerError, helpers::bin_create_dir};

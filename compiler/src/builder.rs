@@ -40,25 +40,25 @@ pub fn build(source: PathBuf) -> Result<(), CompilerError> {
     match compile_status {
         Ok(status) => {
             if status.success() {
-                println!("🚀 Yığım tamamlandı. Proqram istifadə üçün hazırdır:\n");
+                println!("Yığım tamamlandı. Proqram istifadə üçün hazırdır:\n");
                 println!("\n{BLUE}=============================== {RESET}");
-                println!("{GREEN}{BOLD}🚀 Azlang Build Complete! ✔{RESET}");
+                println!("{GREEN}{BOLD}Azlang Build Complete!{RESET}");
                 println!("{BLUE}=============================== {RESET}");
                 println!("{WHITE}Program uğurla yığıldı və hazırdır:{RESET}");
 
                 match output_path.canonicalize() {
                     Ok(abs) => println!(
-                        "{BLUE}📁 Output File:{RESET} {YELLOW}{BOLD}{}{RESET}",
+                        "{BLUE}Output File:{RESET} {YELLOW}{BOLD}{}{RESET}",
                         abs.display()
                     ),
                     Err(_) => println!(
-                        "{BLUE}📁 Output File:{RESET} {YELLOW}{BOLD}{}{RESET}",
+                        "{BLUE}Output File:{RESET} {YELLOW}{BOLD}{}{RESET}",
                         output_path.display()
                     ),
                 }
 
                 println!("{BLUE}=============================== {RESET}");
-                println!("{MAGENTA}{BOLD}🔥 Run it with:{RESET}");
+                println!("{MAGENTA}{BOLD}Run it with:{RESET}");
                 println!(
                     "{MAGENTA}   →{RESET} {YELLOW}{BOLD}{}{RESET}",
                     output_path.display()

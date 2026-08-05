@@ -54,6 +54,7 @@ pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Vec<Statement>, Par
 
 pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
+    println!("{token:?}");
     match token {
         SpannedToken {
             token: Token::StringLiteral(_),

@@ -343,17 +343,9 @@ fn test_keyword_and() {
     assert_eq!(tokenize("və"), vec![Token::And]);
 }
 
-// Note: "və_ya" can't be a single token because `_` is consumed as Underscore separately
 #[test]
 fn test_keyword_or_underscore_split() {
-    assert_eq!(
-        tokenize("və_ya"),
-        vec![
-            Token::And,
-            Token::Underscore,
-            Token::Identifier("ya".into())
-        ]
-    );
+    assert_eq!(tokenize("və_ya"), vec![Token::Or]);
 }
 
 #[test]

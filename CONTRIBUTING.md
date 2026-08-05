@@ -1,7 +1,7 @@
 # Contributing to AzLang
 Thank you for your interest in contributing to **AzLang**! This document provides an overview of the project architecture, dependency flow, and guidelines for contributing to the development of this programming language.
 ---
-## 🏗️ Project Architecture
+## Project Architecture
 AzLang is built using a modular **Rust Workspace** approach. This allows the core logic to be shared between the interpreter and the compiler, ensuring consistency across different execution modes.
 ### Core Components
 - **`crates/cli`**: Handles command-line argument parsing via `clap`. Does **not** depend on the interpreter or compiler — the main binary wires them together.
@@ -18,7 +18,7 @@ AzLang is built using a modular **Rust Workspace** approach. This allows the cor
 > **Design principle:** Large modules (`interpreter`, `compiler`) do not depend on low-level crates like `tokenizer` directly. All source processing is initiated through `parser`, which owns the full pipeline from raw source to AST.
 
 ---
-## 🔄 Dependency Flow
+## Dependency Flow
 The following diagram illustrates how the different modules of AzLang interact with one another. Understanding this flow is crucial before making changes to the core logic.
 ```mermaid
 graph TD
@@ -68,18 +68,18 @@ graph TD
 ```
 
 ---
-# 🚀 Pull Request Template
-## 📝 Description
+# Pull Request Template
+## Description
 Please provide a brief summary of the changes and which issue is fixed. Include relevant motivation and context.
 Fixes # (issue number)
-## 🛠️ Type of Change
+## Type of Change
 Please check the options that are relevant:
-- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
-- [ ] ✨ New feature (non-breaking change which adds functionality)
-- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] 📖 Documentation update
-- [ ] ⚡ Performance optimization
-## 🎯 Impacted Modules
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+- [ ] Performance optimization
+## Impacted Modules
 Which parts of the **AzLang** dependency flow does this PR affect?
 - [ ] `crates/tokenizer`
 - [ ] `crates/parser`
@@ -91,12 +91,12 @@ Which parts of the **AzLang** dependency flow does this PR affect?
 - [ ] `compiler`
 - [ ] `crates/cli`
 - [ ] Other: __________
-## 🧪 How Has This Been Tested?
+## How Has This Been Tested?
 Please describe the tests that you ran to verify your changes.
 - [ ] Unit tests in the specific crate.
 - [ ] Integration tests in `crates/tests`.
 - [ ] Manual verification with an `.az` (or relevant extension) script.
-## ✅ Checklist
+## Checklist
 - [ ] My code follows the **Rust 2024 Edition** coding standards.
 - [ ] I have performed a self-review of my own code.
 - [ ] I have commented my code, particularly in hard-to-understand areas.

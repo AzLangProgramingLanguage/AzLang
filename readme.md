@@ -1,4 +1,4 @@
-# 🦅 AzLang
+# AzLang
 
 > **Python-un sadəliyi**, **Rust-un performansı**, və **TypeScript-in type-safety gücü** ilə hazırlanmış minimalist, güclü və oxunaqlı proqramlaşdırma dili.
 
@@ -10,7 +10,7 @@
 
 ---
 
-## 🎯 Məqsədimiz
+## Məqsədimiz
 
 **AzLang**, yeni başlayanlardan peşəkar tərtibatçılara qədər hər kəs üçün **əlçatan**, **anlaşılan** və **performanslı** kodlama imkanları yaradır.
 
@@ -18,17 +18,17 @@ Biz yeni bir proqramlaşdırma dili təqdim etmirik. Məqsədimiz — **təhlük
 
 ---
 
-## ✨ Xüsusiyyətlər
+## Xüsusiyyətlər
 
-- 🧠 **Təbii sintaksis** – Kod yazmaq insan dili qədər aydın olur
-- 🛡️ **Type-Safety** – Tip yoxlamaları avtomatik aparılır, lakin zəruri hallarda əl ilə də göstərilir
-- ⚡ **Performans** – Rust-vari optimallaşdırıla bilən transpiler çıxışı
-- 🧪 **Statik analiz** – Tip analiz sistemi daxildə qurulub
-- 🧬 **Transpiler hazırdır** – Lakin bəzi funksiyalar hələ tamamlanmayıb (mətn/siyahı funksiyaları)
+- **Təbii sintaksis** – Kod yazmaq insan dili qədər aydın olur
+- **Type-Safety** – Tip yoxlamaları avtomatik aparılır, lakin zəruri hallarda əl ilə də göstərilir
+- **Performans** – Rust-vari optimallaşdırıla bilən transpiler çıxışı
+- **Statik analiz** – Tip analiz sistemi daxildə qurulub
+- **Transpiler hazırdır** – Lakin bəzi funksiyalar hələ tamamlanmayıb (mətn/siyahı funksiyaları)
 
 ---
 
-## 🧠 Tip Sistemi
+## Tip Sistemi
 
 AzLang-in tip sistemi tamamilə avtomatik tip çıxarımı (type inference) ilə işləyir. Tip yazmaq optional olsa da:
 
@@ -38,41 +38,41 @@ AzLang-in tip sistemi tamamilə avtomatik tip çıxarımı (type inference) ilə
 
 ---
 
-## 👥 İcma və Töhfələr
+## İcma və Töhfələr
 
 Bu layihə açıq mənbəlidir. Hər bir yardım və fikir dəyərlidir:
 
-    ✨ Yeni sintaksis təklifləri
+    Yeni sintaksis təklifləri
 
-    🧪 Bug reportlar
+    Bug reportlar
 
-    📄 Sənədləşmə dəstəyi
+    Sənədləşmə dəstəyi
 
-    💻 Kod töhfəsi (Pull Request-lər açıqdır!)
-
----
-
-## 🛣️ Yol Xəritəsi
-
-    ✅ Sintaksis Dizaynı
-
-    ✅ AST və Parser
-
-    ✅ Tip Analizi
-
-    ✅ Transpiler
-
-    ✅ Funksiyonallıq
-
-    ✅ Optimallasdırma
-
-    ❌ Web IDE və playground
-
-    ✅ Rəsmi sənədlər və tutorial 📘
+    Kod töhfəsi (Pull Request-lər açıqdır!)
 
 ---
 
-## 🔤 Sintaksisə Baxış
+## Yol Xəritəsi
+
+    Sintaksis Dizaynı
+
+    AST və Parser
+
+    Tip Analizi
+
+    Transpiler
+
+    Funksiyonallıq
+
+    Optimallasdırma
+
+    Web IDE və playground
+
+    Rəsmi sənədlər və tutorial
+
+---
+
+## Sintaksisə Baxış
 
 ```azlang
 

@@ -21,44 +21,71 @@ pub fn transpile_function_call(
             buf.push(',');
         }
         if function.params[i].typ == Type::Any {
-            match &arg {
+            buf.push('&');
+            let mut val = String::new();
+
+            match arg {
                 Expr::String(s) => {
-                    write!(buf, "ValueType{{ .str = {s}  }}");
+                    write!(buf, "ValueType{{ .tag=ValueTag.str, .data = {s}  }}").unwrap();
                 }
                 Expr::Number(i) => {
-                    write!(buf, "ValueType{{ .int = {i}  }}");
+                    write!(buf, "ValueType{{ .tag=ValueTag.int,.data = {i}  }}").unwrap();
                 }
                 Expr::Float(f) => {
-                    write!(buf, "ValueType{{ .float = {f}  }}");
+                    write!(buf, "ValueType{{ .tag=ValueTag.float,.data = {f}  }}").unwrap();
                 }
                 Expr::Bool(b) => {
-                    write!(buf, "ValueType{{ .bool = {b}  }}");
+                    write!(buf, "ValueType{{ .tag=ValueTag.bool, .data = {b}  }}").unwrap();
                 }
-                Expr::VariableRef { name, symbol } => match &symbol.typ {
-                    Type::Integer => {
-                        write!(buf, "ValueType{{ .int = {name}  }}");
-                    }
-                    Type::Float => {
-                        write!(buf, "ValueType{{ .float = {name}  }}");
-                    }
-                    Type::String(strenum) => {
-                        write!(buf, "ValueType{{ .str = {name}  }}");
-                    }
-                    _ => panic!("Burası hele hazir deyil"),
-                },
-                _ => panic!("Burası hele hazır deyil"),
+                Expr::VariableRef { name, symbol } => {
+                    transpile_type(symbol.typ, buf, name);
+                }
+                Expr::BinaryOp {
+                    left,
+                    right,
+                    op,
+                    return_type,
+                } => {
+                    transpile_expr(
+                        Expr::BinaryOp {
+                            left,
+                            right,
+                            op,
+                            return_type: return_type.clone(),
+                        },
+                        ctx,
+                        &mut val,
+                    );
+                    transpile_type(return_type, buf, val);
+                }
+                other => panic!("Burası hele hazır deyil {other:?}"),
             }
-        }
-        match arg {
-            Expr::VariableRef { name, .. } => {
-                buf.push('&');
-                buf.push_str(&name);
-            }
+        } else {
+            match arg {
+                Expr::VariableRef { name, .. } => {
+                    buf.push('&');
+                    buf.push_str(&name);
+                }
 
-            other => {
-                transpile_expr(other, ctx, buf);
+                other => {
+                    transpile_expr(other, ctx, buf);
+                }
             }
         }
     }
     buf.push(')');
+}
+fn transpile_type(typ: Type, buf: &mut String, val: String) {
+    match typ {
+        Type::Integer => {
+            write!(buf, "ValueType{{ .tag=ValueTag.int,.data = {val}  }}").unwrap();
+        }
+        Type::Float => {
+            write!(buf, "ValueType{{ .tag=ValueTag.float, .data={val}  }}").unwrap();
+        }
+        Type::String(strenum) => {
+            write!(buf, "ValueType{{ .tag=ValueTag.str, .data = {val}  }}").unwrap();
+        }
+        other => panic!("Burası hele hazir deyil {other}"),
+    }
 }

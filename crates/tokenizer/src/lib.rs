@@ -16,6 +16,7 @@ pub enum LexerMode {
     Normal,
     Template,
 }
+#[derive(Debug)]
 pub struct Lexer<'a> {
     chars: Peekable<Chars<'a>>,
     is_line_start: bool,
