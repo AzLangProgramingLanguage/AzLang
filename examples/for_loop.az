@@ -1,3 +1,3 @@
-sabit siyahı<ədəd> a = [1,2,3]
-gəz a içində b
-    Çap(b)
+const list<int> a = [1,2,3]
+loop a in b
+    print(b)

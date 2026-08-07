@@ -1,8 +1,7 @@
 [workspace]
 members = [
     "crates/cli",
-    "interpreter",
-    "compiler", 
+    "compiler",
 ]
 
 [package]
@@ -10,9 +9,6 @@ name = "AzLang"
 version = "0.1.1"
 edition = "2024"
 
-
-
 [dependencies]
 cli = { path = "./crates/cli"}
-interpreter = { path = "./interpreter"}
 compiler = { path = "./compiler"}

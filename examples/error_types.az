@@ -1,5 +1,5 @@
-sabit natural a =  "Salam"
+const natural a =  "Hello"
 
-funksiya add(a: ədəd, b: ədəd): yazı
-    qaytar a + b
-Çap(add(1,2))
+func add(a: int, b: int): str
+    return a + b
+print(add(1,2))

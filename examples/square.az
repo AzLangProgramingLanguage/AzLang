@@ -1,4 +1,4 @@
-funksiya square(sabit ədəd x): ədəd
-    qaytar x*x
+func square(const int x): int
+    return x*x
 
-sabit ədəd result = square(2)
+const int result = square(2)

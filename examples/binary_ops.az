@@ -1,5 +1,5 @@
-sabit ədəd a = 2*2
-sabit ədəd b = 2+2
-sabit ədəd c = 2-2+1
-sabit kəsr d = 2/2
-sabit ədəd e = 2+2/2
+const int a = 2*2
+const int b = 2+2
+const int c = 2-2+1
+const float d = 2/2
+const int e = 2+2/2

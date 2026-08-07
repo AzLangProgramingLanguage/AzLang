@@ -1,7 +1,7 @@
-funksiya salamVer(sabit yazı ad): yazı
-    qaytar `Salam, ${ad}`
+func salamVer(const str ad): str
+    return `Hello, ${ad}`
 
-funksiya generator(): çağrılan
-    qaytar salamVer
+func generator(): callable
+    return salamVer
 
-Çap(generator()("Əli"))
+print(generator()("Əli"))

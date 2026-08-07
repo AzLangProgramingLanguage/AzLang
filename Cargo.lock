@@ -8,7 +8,6 @@ version = "0.1.1"
 dependencies = [
  "cli",
  "compiler",
- "interpreter",
 ]
 
 [[package]]
@@ -133,7 +132,6 @@ dependencies = [
  "file_system",
  "logging",
  "parser",
- "transpiler",
  "validator",
 ]
 
@@ -154,17 +152,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
-name = "interpreter"
-version = "0.1.0"
-dependencies = [
- "file_system",
- "libloading",
- "logging",
- "parser",
- "validator",
-]
-
-[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -175,16 +162,6 @@ name = "libc"
 version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
-
-[[package]]
-name = "libloading"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "754ca22de805bb5744484a5b151a9e1a8e837d5dc232c2d7d8c2e3492edc8b60"
-dependencies = [
- "cfg-if",
- "windows-link",
-]
 
 [[package]]
 name = "lock_api"
@@ -389,14 +366,6 @@ name = "tokenizer"
 version = "0.1.0"
 dependencies = [
  "logging",
-]
-
-[[package]]
-name = "transpiler"
-version = "0.1.0"
-dependencies = [
- "parser",
- "validator",
 ]
 
 [[package]]

@@ -31,9 +31,9 @@ jobs:
         id: validator
         run: cargo test --package validator --verbose
 
-      - name: Run transpiler tests
-        id: transpiler
-        run: cargo test --package transpiler --verbose
+      - name: Run tokenizer tests
+        id: tokenizer
+        run: cargo test --package tokenizer --verbose
 
       - name: Run compiler tests
         id: compiler

@@ -240,123 +240,122 @@ fn test_string_unclosed_newline() {
 
 #[test]
 fn test_keyword_mutable_decl() {
-    assert_eq!(tokenize("dəyişən"), vec![Token::MutableDecl]);
+    assert_eq!(tokenize("var"), vec![Token::MutableDecl]);
 }
 
 #[test]
 fn test_keyword_constant_decl() {
-    assert_eq!(tokenize("sabit"), vec![Token::ConstantDecl]);
+    assert_eq!(tokenize("const"), vec![Token::ConstantDecl]);
 }
 
 #[test]
 fn test_keyword_conditional() {
-    assert_eq!(tokenize("əgər"), vec![Token::Conditional]);
+    assert_eq!(tokenize("if"), vec![Token::Conditional]);
 }
 
 #[test]
 fn test_keyword_else_if() {
-    assert_eq!(tokenize("yoxsa"), vec![Token::ElseIf]);
+    assert_eq!(tokenize("elif"), vec![Token::ElseIf]);
 }
 
 #[test]
 fn test_keyword_else() {
-    assert_eq!(tokenize("əks"), vec![Token::Else]);
+    assert_eq!(tokenize("else"), vec![Token::Else]);
 }
 
 #[test]
 fn test_keyword_function_def() {
-    assert_eq!(tokenize("funksiya"), vec![Token::FunctionDef]);
+    assert_eq!(tokenize("func"), vec![Token::FunctionDef]);
 }
 
 #[test]
 fn test_keyword_function_type() {
-    assert_eq!(tokenize("çağrılan"), vec![Token::FnType]);
+    assert_eq!(tokenize("callable"), vec![Token::FnType]);
 }
 
 #[test]
 fn test_keyword_array() {
-    assert_eq!(tokenize("siyahı"), vec![Token::Array]);
+    assert_eq!(tokenize("list"), vec![Token::Array]);
 }
 
 #[test]
 fn test_keyword_object() {
-    assert_eq!(tokenize("Obyekt"), vec![Token::Object]);
+    assert_eq!(tokenize("object"), vec![Token::Object]);
 }
 
 #[test]
 fn test_keyword_this() {
-    assert_eq!(tokenize("öz"), vec![Token::This]);
+    assert_eq!(tokenize("self"), vec![Token::This]);
 }
 
 #[test]
 fn test_keyword_match() {
-    assert_eq!(tokenize("uyğun"), vec![Token::Match]);
+    assert_eq!(tokenize("match"), vec![Token::Match]);
 }
 
 #[test]
 fn test_keyword_break() {
-    assert_eq!(tokenize("dayan"), vec![Token::Break]);
+    assert_eq!(tokenize("break"), vec![Token::Break]);
 }
 
 #[test]
 fn test_keyword_continue() {
-    assert_eq!(tokenize("davam"), vec![Token::Continue]);
+    assert_eq!(tokenize("continue"), vec![Token::Continue]);
 }
 
 #[test]
 fn test_keyword_loop() {
-    assert_eq!(tokenize("gəz"), vec![Token::Loop]);
+    assert_eq!(tokenize("loop"), vec![Token::Loop]);
 }
 
 #[test]
 fn test_keyword_end() {
-    assert_eq!(tokenize("son"), vec![Token::End]);
+    assert_eq!(tokenize("end"), vec![Token::End]);
 }
 
 #[test]
 fn test_keyword_return_() {
-    assert_eq!(tokenize("qaytar"), vec![Token::Return]);
+    assert_eq!(tokenize("return"), vec![Token::Return]);
 }
 
 #[test]
 fn test_keyword_drop() {
-    assert_eq!(tokenize("çıx"), vec![Token::Drop]);
+    assert_eq!(tokenize("drop"), vec![Token::Drop]);
 }
 
 #[test]
 fn test_keyword_true() {
-    assert_eq!(tokenize("doğru"), vec![Token::True]);
+    assert_eq!(tokenize("true"), vec![Token::True]);
 }
 
 #[test]
 fn test_keyword_false() {
-    assert_eq!(tokenize("yanlış"), vec![Token::False]);
+    assert_eq!(tokenize("false"), vec![Token::False]);
 }
 
 #[test]
 fn test_keyword_in() {
-    assert_eq!(tokenize("içində"), vec![Token::In]);
+    assert_eq!(tokenize("in"), vec![Token::In]);
 }
 
 #[test]
 fn test_keyword_and() {
-    assert_eq!(tokenize("və"), vec![Token::And]);
+    assert_eq!(tokenize("and"), vec![Token::And]);
 }
 
 #[test]
-fn test_keyword_or_underscore_split() {
-    assert_eq!(tokenize("və_ya"), vec![Token::Or]);
+fn test_keyword_or() {
+    assert_eq!(tokenize("or"), vec![Token::Or]);
 }
 
 #[test]
 fn test_keyword_integer_type() {
-    assert_eq!(tokenize("ədəd"), vec![Token::IntegerType]);
-    assert_eq!(tokenize("tam"), vec![Token::IntegerType]);
+    assert_eq!(tokenize("int"), vec![Token::IntegerType]);
 }
 
 #[test]
 fn test_keyword_string_type() {
-    assert_eq!(tokenize("yazı"), vec![Token::StringType]);
+    assert_eq!(tokenize("str"), vec![Token::StringType]);
 }
 
 #[test]
@@ -366,45 +365,45 @@ fn test_keyword_natural_type() {
 
 #[test]
 fn test_keyword_void() {
-    assert_eq!(tokenize("heçnə"), vec![Token::Void]);
+    assert_eq!(tokenize("void"), vec![Token::Void]);
 }
 
 #[test]
 fn test_keyword_enum() {
-    assert_eq!(tokenize("növ"), vec![Token::Enum]);
+    assert_eq!(tokenize("enum"), vec![Token::Enum]);
 }
 
 #[test]
 fn test_keyword_method() {
-    assert_eq!(tokenize("metod"), vec![Token::Method]);
+    assert_eq!(tokenize("method"), vec![Token::Method]);
 }
 
 #[test]
 fn test_keyword_import() {
-    assert_eq!(tokenize("ƏlavəEt"), vec![Token::Import]);
+    assert_eq!(tokenize("import"), vec![Token::Import]);
 }
 
 #[test]
 fn test_keyword_type() {
-    assert_eq!(tokenize("tip"), vec![Token::Type]);
+    assert_eq!(tokenize("type"), vec![Token::Type]);
 }
 
 #[test]
 fn test_keyword_zig_types() {
-    assert_eq!(tokenize("zigsabityazı"), vec![Token::ZigConstString]);
-    assert_eq!(tokenize("ziginteger"), vec![Token::ZigInteger]);
-    assert_eq!(tokenize("zigyazı"), vec![Token::ZigString]);
-    assert_eq!(tokenize("zigsabitsiyahı"), vec![Token::ZigConstArray]);
-    assert_eq!(tokenize("zigsiyahı"), vec![Token::ZigArray]);
+    assert_eq!(tokenize("zigconststring"), vec![Token::ZigConstString]);
+    assert_eq!(tokenize("zigint"), vec![Token::ZigInteger]);
+    assert_eq!(tokenize("zigstr"), vec![Token::ZigString]);
+    assert_eq!(tokenize("zigconstlist"), vec![Token::ZigConstArray]);
+    assert_eq!(tokenize("ziglist"), vec![Token::ZigArray]);
     assert_eq!(tokenize("zigfloat"), vec![Token::ZigFloat]);
 }
 
 #[test]
 fn test_keyword_other_types() {
-    assert_eq!(tokenize("işarə"), vec![Token::CharType]);
-    // Note: "böyük_ədəd" and "kiçik_ədəd" split on `_`
-    assert_eq!(tokenize("kəsr"), vec![Token::FloatType]);
-    assert_eq!(tokenize("qərar"), vec![Token::BoolType]);
+    assert_eq!(tokenize("char"), vec![Token::CharType]);
+    // Note: "bigint" and "tinyint" split on `_`
+    assert_eq!(tokenize("float"), vec![Token::FloatType]);
+    assert_eq!(tokenize("bool"), vec![Token::BoolType]);
 }
 
 // ── Identifiers ──
@@ -590,7 +589,7 @@ fn test_comment_at_end() {
 
 #[test]
 fn test_simple_expression() {
-    let tokens = tokenize("dəyişən a = 42");
+    let tokens = tokenize("var a = 42");
     assert_eq!(
         tokens,
         vec![
@@ -964,7 +963,7 @@ fn test_token_display_types() {
     assert_eq!(format!("{}", Token::BoolType), "bool");
     assert_eq!(format!("{}", Token::CharType), "char");
     assert_eq!(format!("{}", Token::Void), "void");
-    assert_eq!(format!("{}", Token::FnType), "funskiya tipi");
+    assert_eq!(format!("{}", Token::FnType), "callable");
 }
 
 // ── SourceSpan Display ──

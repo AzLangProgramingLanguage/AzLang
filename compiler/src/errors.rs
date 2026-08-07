@@ -3,7 +3,6 @@ use parser::errors::ParserError;
 use validator::errors::ValidatorError;
 #[derive(Debug)]
 pub enum CompilerError {
-    BuildError,
     IO(FileSystemError),
     Parser(ParserError),
     Validator(ValidatorError),
@@ -12,19 +11,15 @@ impl CompilerError {
     pub fn display(&self) {
         match self {
             CompilerError::IO(e) => {
-                println!("\x1b[1;31m[Böyük Qardaş]:\x1b[0m {} ", e);
+                println!("\x1b[1;31m[Big Brother]:\x1b[0m {} ", e);
             }
-            CompilerError::BuildError => {
-                println!("\x1b[1;35m[Kiçik Bacı Tərcüməçi]:\x1b[0m Build zamanı bir xəta baş verdi")
-            }
-            CompilerError::Parser(e) => println!("\x1b[31m[Böyük Qardaş]:\x1b[0m {}", e),
-            CompilerError::Validator(e) => println!("\x1b[33m[Dəmir Əmi Validator]:\x1b[0m {}", e),
+            CompilerError::Parser(e) => println!("\x1b[31m[Big Brother]:\x1b[0m {}", e),
+            CompilerError::Validator(e) => println!("\x1b[33m[Validator]:\x1b[0m {}", e),
         }
     }
     pub fn code(&self) -> i32 {
         match self {
             CompilerError::IO(e) => e.code(),
-            CompilerError::BuildError => 30,
             CompilerError::Parser(_) => 34,
             CompilerError::Validator(_) => 35,
         }

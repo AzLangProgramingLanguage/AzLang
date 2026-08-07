@@ -1,2 +1,2 @@
-sabit yazı b = "Salam"
-Çap(b)
+const str b = "Salam"
+print(b)

@@ -1,2 +1,2 @@
-dəyişən kəsr a = 5.1
+var float a = 5.1
 a = a+2.0+1

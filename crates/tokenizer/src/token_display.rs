@@ -4,8 +4,8 @@ use crate::tokens::Token;
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Token::AnyType => write!(f, "hərşey"),
-            Token::While => write!(f, "olduqca"),
+            Token::AnyType => write!(f, "any"),
+            Token::While => write!(f, "while"),
             Token::Identifier(name) => write!(f, "{}", name),
             Token::Number(num) => write!(f, "{}", num),
             Token::Float(num) => write!(f, "{}", num),
@@ -67,7 +67,7 @@ impl fmt::Display for Token {
             Token::ZigString => write!(f, "zig string"),
             Token::CharType => write!(f, "char"),
             Token::BoolType => write!(f, "bool"),
-            Token::FnType => write!(f, "funskiya tipi"),
+            Token::FnType => write!(f, "callable"),
             Token::FloatType => write!(f, "float"),
             Token::ZigFloat => write!(f, "zig float"),
             Token::BigIntegerType => write!(f, "big integer"),

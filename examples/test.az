@@ -1,2 +1,1 @@
-sabit yazı a = "Salam"
-
+const str a = "Salam"

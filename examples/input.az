@@ -1,3 +1,3 @@
-sabit yazı a = Giriş("A deyeri: ")
-sabit yazı c  = a
-Çap(c)
+const str a = input("A deyeri: ")
+const str c  = a
+print(c)

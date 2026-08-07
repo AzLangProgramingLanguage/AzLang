@@ -1,6 +1,6 @@
 # AzLang
 
-> **Python-un sadəliyi**, **Rust-un performansı**, və **TypeScript-in type-safety gücü** ilə hazırlanmış minimalist, güclü və oxunaqlı proqramlaşdırma dili.
+> A minimal, powerful and readable programming language that blends **Python's simplicity**, **Rust's performance**, and **TypeScript's type-safety**.
 
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-blue.svg" alt="build">
@@ -10,80 +10,83 @@
 
 ---
 
-## Məqsədimiz
+## Our Mission
 
-**AzLang**, yeni başlayanlardan peşəkar tərtibatçılara qədər hər kəs üçün **əlçatan**, **anlaşılan** və **performanslı** kodlama imkanları yaradır.
+**AzLang** provides an approachable, understandable and performant coding experience for everyone — from beginners to professional developers.
 
-Biz yeni bir proqramlaşdırma dili təqdim etmirik. Məqsədimiz — **təhlükəsiz**, **bəsit**, **oxunaqlı** və **tərcümə edilə bilən** bir dil arxitekturası təqdim etməkdir.
-
----
-
-## Xüsusiyyətlər
-
-- **Təbii sintaksis** – Kod yazmaq insan dili qədər aydın olur
-- **Type-Safety** – Tip yoxlamaları avtomatik aparılır, lakin zəruri hallarda əl ilə də göstərilir
-- **Performans** – Rust-vari optimallaşdırıla bilən transpiler çıxışı
-- **Statik analiz** – Tip analiz sistemi daxildə qurulub
-- **Transpiler hazırdır** – Lakin bəzi funksiyalar hələ tamamlanmayıb (mətn/siyahı funksiyaları)
+AzLang is a **compiled** language. The source is parsed into an AST, semantically validated, and then lowered through a dedicated backend. There is no runtime interpreter for `.az` scripts.
 
 ---
 
-## Tip Sistemi
+## Features
 
-AzLang-in tip sistemi tamamilə avtomatik tip çıxarımı (type inference) ilə işləyir. Tip yazmaq optional olsa da:
-
-    növ (enum), Obyekt və bəzi spesifik hallar üçün tip yazmaq məcburidir.
-
-    Bu, həm oxunaqlılığı, həm də təhlükəsizliyi qoruyur.
-
----
-
-## İcma və Töhfələr
-
-Bu layihə açıq mənbəlidir. Hər bir yardım və fikir dəyərlidir:
-
-    Yeni sintaksis təklifləri
-
-    Bug reportlar
-
-    Sənədləşmə dəstəyi
-
-    Kod töhfəsi (Pull Request-lər açıqdır!)
+- **Natural syntax** — Code reads as clearly as a human language
+- **Type-Safety** — Type checking is performed automatically, and optional explicit annotations are supported where needed
+- **Static analysis** — A built-in type analysis pipeline validates programs before code generation
+- **Compiler-based** — Source is compiled to a native executable; no runtime interpreter
 
 ---
 
-## Yol Xəritəsi
+## Type System
 
-    Sintaksis Dizaynı
+AzLang's type system relies on automatic type inference. Annotations are optional, though they are required for certain cases such as enums and objects.
 
-    AST və Parser
-
-    Tip Analizi
-
-    Transpiler
-
-    Funksiyonallıq
-
-    Optimallasdırma
-
-    Web IDE və playground
-
-    Rəsmi sənədlər və tutorial
+```
+enum, object and a few specific constructs require an explicit type.
+```
 
 ---
 
-## Sintaksisə Baxış
+## Community and Contributions
+
+This project is open source. Any help or idea is valuable:
+
+- New syntax proposals
+- Bug reports
+- Documentation support
+- Code contributions (pull requests are welcome!)
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture and contribution guidelines.
+
+---
+
+## Roadmap
+
+- Syntax design
+- AST and parser
+- Type analysis
+- Backend / code generation
+- Optimization
+- Standard library
+- Web IDE and playground
+- Official documentation and tutorials
+
+---
+
+## Syntax Overview
 
 ```azlang
-
-dəyişən a = 5
+const int a = 5
 a = 2
 
-sabit yazı b = "Salam"
-Çap(`b dəyəri: ${b}`)
+const str b = "Hi"
 
+func add(a: int, b: int): int
+    return a + b
 
-funksiya add(a: ədəd, b: ədəd): ədəd
-    qaytar a + b
+print(add(1, 2))
+```
 
-Çap(add(1, 2))
+---
+
+## Building
+
+```bash
+cargo build --release
+```
+
+## Dependencies
+
+- [QBE](https://c9x.me/compile/) — afterburner backend / intermediate representation compiler
+- **Linux** — `binutils` (assembler) and `ld.lld` (linker)
+- **Windows** — an assembler (e.g. MASM or NASM) and `lld.link` (linker)

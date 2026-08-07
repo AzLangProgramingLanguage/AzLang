@@ -1,6 +1,6 @@
-əgər 1!=1
-    sabit ədəd x = 1
-yoxsa 2!=3
-    sabit ədəd x = 2
-əks
-    sabit ədəd x = 3
+if 1!=1
+    const int x = 1
+elif 2!=3
+    const int x = 2
+else
+    const int x = 3

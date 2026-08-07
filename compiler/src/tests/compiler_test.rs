@@ -1,18 +1,5 @@
 use crate::{errors::CompilerError, parser};
-use transpiler::TranspileContext;
 
-#[test]
-fn compiler_variable_test() -> Result<(), CompilerError> {
-    let parsed_program = parser("sabit kəsr a = 5.1\na".to_string())?;
-
-    let validator = validator::Validator::default();
-    let (_, program) = validator.validate(parsed_program)?;
-
-    let mut ctx = TranspileContext::default();
-    let code = ctx.transpile(program);
-    assert!(code.contains("const a: f64 = 5.1;"));
-    Ok(())
-}
 #[test]
 fn compiler_binary_op_test() {
     let sdk = file_system::read_file("../examples/binary_ops.az");
