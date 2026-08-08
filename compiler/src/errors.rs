@@ -1,11 +1,29 @@
+use std::fmt::Display;
+
 use file_system::errors::FileSystemError;
 use parser::errors::ParserError;
 use validator::errors::ValidatorError;
+
+#[derive(Debug, PartialEq)]
+pub enum BackendError {
+    Qbe,
+    Asembly,
+}
+impl Display for BackendError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BackendError::Qbe => writeln!(f, "QBE doesn't installed"),
+            BackendError::Asembly => writeln!(f, "binutils doesn't installed"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum CompilerError {
     IO(FileSystemError),
     Parser(ParserError),
     Validator(ValidatorError),
+    Backend(BackendError),
 }
 impl CompilerError {
     pub fn display(&self) {
@@ -15,6 +33,7 @@ impl CompilerError {
             }
             CompilerError::Parser(e) => println!("\x1b[31m[Big Brother]:\x1b[0m {}", e),
             CompilerError::Validator(e) => println!("\x1b[33m[Validator]:\x1b[0m {}", e),
+            CompilerError::Backend(e) => println!("\x1b[34m[Compiler]:\x1b[0m {}", e),
         }
     }
     pub fn code(&self) -> i32 {
@@ -22,6 +41,7 @@ impl CompilerError {
             CompilerError::IO(e) => e.code(),
             CompilerError::Parser(_) => 34,
             CompilerError::Validator(_) => 35,
+            CompilerError::Backend(_) => 36,
         }
     }
 }
@@ -42,3 +62,7 @@ impl From<ParserError> for CompilerError {
         CompilerError::Parser(e)
     }
 }
+
+
+
+
