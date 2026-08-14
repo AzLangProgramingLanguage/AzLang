@@ -7,13 +7,13 @@ use validator::errors::ValidatorError;
 #[derive(Debug, PartialEq)]
 pub enum BackendError {
     Qbe,
-    Asembly,
+    BinUtils,
 }
 impl Display for BackendError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             BackendError::Qbe => writeln!(f, "QBE doesn't installed"),
-            BackendError::Asembly => writeln!(f, "binutils doesn't installed"),
+            BackendError::BinUtils => writeln!(f, "binutils doesn't installed"),
         }
     }
 }
@@ -62,7 +62,3 @@ impl From<ParserError> for CompilerError {
         CompilerError::Parser(e)
     }
 }
-
-
-
-
