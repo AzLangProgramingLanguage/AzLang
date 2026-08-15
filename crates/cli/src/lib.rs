@@ -17,6 +17,7 @@ pub enum Commands {
         /// E.g: output/output
         binary: String,
     },
+    Version {},
 }
 
 pub fn cli() -> Cli {

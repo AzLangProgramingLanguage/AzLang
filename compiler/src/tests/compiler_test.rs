@@ -1,12 +1,23 @@
 use std::{path::PathBuf, process::Command};
 
-use crate::{errors::CompilerError, libc_checker, parser};
+use which::which;
+
+use crate::{
+    errors::{BackendError, CompilerError},
+    libc_checker, parser,
+};
 /*
 *
 *  I change my mind,  github actions will not test this code.
 *
 * */
-
+#[test]
+fn dependencies_test() -> Result<(), CompilerError> {
+    which("qbe").map_err(|_| CompilerError::Backend(BackendError::Qbe))?;
+    which("as").map_err(|_| CompilerError::Backend(BackendError::BinUtils))?;
+    which("ld").map_err(|_| CompilerError::Backend(BackendError::BinUtils))?;
+    Ok(())
+}
 #[test]
 fn compiler_output_file() -> Result<(), CompilerError> {
     let linker = libc_checker::libc_link_checker().expect("Error");
@@ -38,7 +49,7 @@ data $fmt = { b \"One and one make %d!\n\", b 0 }
     Command::new("as")
         .args(["main.s", "-o", "main.o"])
         .status()
-        .expect("Error");
+        .expect("Assembler  can't compile to object ");
     Command::new(linker)
         .args([
             "-dynamic-linker",

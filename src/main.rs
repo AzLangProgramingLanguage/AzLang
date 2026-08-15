@@ -10,5 +10,8 @@ fn main() {
                 std::process::exit(err.code());
             });
         }
+        Commands::Version {} => {
+            println!("Version: 0.0.2");
+        }
     }
 }
