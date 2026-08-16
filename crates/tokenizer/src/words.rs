@@ -28,16 +28,10 @@ pub fn tokenize_word(word: &str) -> Token {
         "int" => Token::IntegerType,
         "any" => Token::AnyType,
         "str" => Token::StringType,
-        "zigconststring" => Token::ZigConstString,
         "natural" => Token::NaturalType,
-        "zigint" => Token::ZigInteger,
-        "zigstr" => Token::ZigString,
-        "zigconstlist" => Token::ZigConstArray,
-        "ziglist" => Token::ZigArray,
         "char" => Token::CharType,
         "bigint" => Token::BigIntegerType,
         "tinyint" => Token::LowIntegerType,
-        "zigfloat" => Token::ZigFloat,
         "float" => Token::FloatType,
         "bool" => Token::BoolType,
         "void" => Token::Void,
@@ -45,6 +39,8 @@ pub fn tokenize_word(word: &str) -> Token {
         "method" => Token::Method,
         "import" => Token::Import,
         "type" => Token::Type,
+        "exit" => Token::Exit,
         other => Token::Identifier(other.to_string()),
     }
 }
+

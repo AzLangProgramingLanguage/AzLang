@@ -93,6 +93,7 @@ impl fmt::Display for Token {
             Token::LessEqual => write!(f, "<="),
             Token::Assign => write!(f, "="),
             Token::Not => write!(f, "!"),
+            Token::Exit => write!(f, "exit"),
         }
     }
 }

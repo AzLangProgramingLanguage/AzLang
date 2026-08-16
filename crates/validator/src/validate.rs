@@ -6,8 +6,9 @@ use parser::{
 };
 type ValidatorExpr = crate::ast::Expr;
 use crate::{
-    decl, Validator,
+    Validator,
     ast::{self, Ast, Else, Function, IF},
+    decl,
     errors::ValidatorError,
     expr::validate_expr,
     helper::{get_type, type_checking},
@@ -79,6 +80,12 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
                 elif: validated_elif,
                 other: validated_other,
             })
+        }
+        Statement::Exit(e) => {
+            let typ = get_type(&e, ctx)?;
+            type_checking(typ, Type::Integer)?;
+            let expr = validate_expr(e, ctx)?;
+            Ok(Ast::Exit(expr))
         }
         Statement::While { condition, body } => {
             let condition_type = get_type(&condition, ctx)?;

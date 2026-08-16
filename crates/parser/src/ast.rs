@@ -67,6 +67,7 @@ pub struct FunctionDef {
 }
 #[derive(Debug, Clone, PartialEq)]
 pub enum Statement {
+    Exit(Expr),
     EnumDecl {
         name: Atom,
         variants: Vec<Atom>,

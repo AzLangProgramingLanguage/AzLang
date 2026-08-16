@@ -83,6 +83,7 @@ pub enum Ast {
         is_mutable: bool,
         value: Box<Expr>,
     },
+    Exit(Expr),
     Assignment {
         name: String,
         value: Box<Expr>,
@@ -96,5 +97,6 @@ pub enum Ast {
         condition: Box<Expr>,
         body: Vec<Ast>,
     },
+
     Expr(Expr),
 }
