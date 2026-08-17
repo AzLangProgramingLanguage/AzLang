@@ -8,4 +8,6 @@ file_system = { path = "../crates/file_system" }
 logging = { path = "../crates/logging" }
 parser = { path = "../crates/parser" }
 validator = { path = "../crates/validator" }
+
+transpiler = { path = "../crates/transpiler" }
 which = "8.0.5"

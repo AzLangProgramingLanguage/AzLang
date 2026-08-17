@@ -43,7 +43,8 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
             token: Token::Exit,
             span,
         }) => {
-            return Ok(Statement::Exit(parse_expression(tokens)?));
+            tokens.next();
+            Ok(Statement::Exit(parse_expression(tokens)?))
         }
 
         Some(SpannedToken {

@@ -132,6 +132,7 @@ dependencies = [
  "file_system",
  "logging",
  "parser",
+ "transpiler",
  "validator",
  "which",
 ]
@@ -367,6 +368,13 @@ name = "tokenizer"
 version = "0.1.0"
 dependencies = [
  "logging",
+]
+
+[[package]]
+name = "transpiler"
+version = "0.1.0"
+dependencies = [
+ "validator",
 ]
 
 [[package]]
