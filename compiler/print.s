@@ -2,12 +2,12 @@
 .global print
 .text
 print:
-  mov rax, 1
-  mov rdi, 1
-  lea rsi, hello_string
+  mov r15,rdi
+
+  mov rax, 1 
+  mov rdi,  1
+  lea rsi, [r15]
   mov rdx, 14
   syscall
   ret
-.data
-hello_string:
-        .asciz  "Hello, world!\n"
+

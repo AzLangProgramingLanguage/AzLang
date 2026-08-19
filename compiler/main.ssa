@@ -1,5 +1,6 @@
 export function w $main() {
 @start
-        call $print()
-        ret 0
+        call $print(l $str)
+        ret
 }
+data $str = { b "hello world\n", b 0 }
