@@ -16,8 +16,6 @@ pub struct ExternalFunctionDef {
     pub params: Vec<Parameter>,
     pub return_typ: Type,
     pub library: String,
-    pub symbol: String,
-    pub link_name: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

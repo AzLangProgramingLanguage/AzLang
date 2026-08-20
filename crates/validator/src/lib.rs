@@ -34,6 +34,7 @@ pub struct MethodInfo {
 pub struct Validator {
     pub functions: HashMap<String, FunctionInfo>,
     pub variables: Vec<HashMap<String, Symbol>>,
+    pub link_files: Vec<String>,
 }
 
 impl Validator {
@@ -58,8 +59,9 @@ impl Validator {
                     name,
                     return_typ,
                     params,
-                    ..
+                    library,
                 } => {
+                    self.link_files.push(library.to_string());
                     self.functions.insert(
                         name.to_string(),
                         FunctionInfo {
@@ -114,8 +116,6 @@ impl Validator {
                     return_typ,
                     params,
                     library,
-                    symbol,
-                    link_name,
                 } => {
                     self.functions.insert(
                         name.to_string(),
@@ -129,8 +129,6 @@ impl Validator {
                         params,
                         return_typ,
                         library: library.to_string(),
-                        symbol: symbol.to_string(),
-                        link_name: link_name.map(|s| s.to_string()),
                     });
                 }
                 Statement::FunctionDef {

@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::assign::parse_assign;
 use crate::ast::{Expr, Operation, Statement};
 use crate::condition::parse_if_expr;
@@ -25,28 +27,18 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
         }
         Some(SpannedToken {
             token: Token::At, ..
-        }) => match tokens.peek_nth(1).map(|t| &t.token) {
-            Some(Token::Identifier(s)) if s == "link" => {
-                tokens.next();
-                let link_name = parse_link_directive(tokens)?;
-                match tokens.peek().map(|t| &t.token) {
-                    Some(Token::At) => parse_external_function_def(tokens, Some(link_name)),
-                    _ => Err(ParserError::ExpectedToken(
-                        Token::At,
-                        tokens.peek().map(|t| t.token.clone()).unwrap_or(Token::Eof),
-                    )),
-                }
-            }
-            _ => parse_external_function_def(tokens, None),
-        },
-        Some(SpannedToken {
-            token: Token::Exit,
-            span,
         }) => {
-            tokens.next();
-            Ok(Statement::Exit(parse_expression(tokens)?))
+            if let Some(SpannedToken {
+                token: Token::Identifier(s),
+                ..
+            }) = tokens.nth(1)
+                && s == "link".to_string()
+            {
+                return parse_external_function_def(tokens);
+            }
+            Err(ParserError::UnexpectedEOF)
         }
-
+        // }) => ,
         Some(SpannedToken {
             token: Token::While,
             ..

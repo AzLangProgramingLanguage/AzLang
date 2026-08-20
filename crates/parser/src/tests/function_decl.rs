@@ -88,8 +88,6 @@ fn test_parse_external_func_with_link() {
         Token::Identifier("external".to_string()),
         Token::LParen,
         Token::StringLiteral("../build/printlib.so".to_string()),
-        Token::Comma,
-        Token::StringLiteral("printValue".to_string()),
         Token::RParen,
         Token::Newline,
         Token::FunctionDef,
@@ -106,21 +104,12 @@ fn test_parse_external_func_with_link() {
 
     let result = parse_statement(&mut tokens).expect("External function with @link parse edilmədi");
 
-    let Statement::ExternalFunctionDef {
-        name,
-        library,
-        symbol,
-        link_name,
-        ..
-    } = result
-    else {
+    let Statement::ExternalFunctionDef { name, library, .. } = result else {
         panic!("ExternalFunctionDef statement gözlənilirdi");
     };
 
     assert_eq!(name, Atom::from("print"));
     assert_eq!(library, Atom::from("../build/printlib.so"));
-    assert_eq!(symbol, Atom::from("printValue"));
-    assert_eq!(link_name, Some(Atom::from("printlib")));
 }
 
 #[test]
@@ -130,8 +119,6 @@ fn test_parse_external_func_without_link() {
         Token::Identifier("external".to_string()),
         Token::LParen,
         Token::StringLiteral("../build/printlib.so".to_string()),
-        Token::Comma,
-        Token::StringLiteral("printValue".to_string()),
         Token::RParen,
         Token::Newline,
         Token::FunctionDef,
@@ -149,19 +136,10 @@ fn test_parse_external_func_without_link() {
     let result =
         parse_statement(&mut tokens).expect("External function without @link parse edilmədi");
 
-    let Statement::ExternalFunctionDef {
-        name,
-        library,
-        symbol,
-        link_name,
-        ..
-    } = result
-    else {
+    let Statement::ExternalFunctionDef { name, library, .. } = result else {
         panic!("ExternalFunctionDef statement gözlənilirdi");
     };
 
     assert_eq!(name, Atom::from("print"));
     assert_eq!(library, Atom::from("../build/printlib.so"));
-    assert_eq!(symbol, Atom::from("printValue"));
-    assert!(link_name.is_none());
 }

@@ -44,24 +44,7 @@ pub fn parse_link_directive(tokens: &mut Tokens) -> Result<Atom, ParserError> {
     Ok(Atom::from(lib_name))
 }
 
-pub fn parse_external_function_def(
-    tokens: &mut Tokens,
-    link_name: Option<Atom>,
-) -> Result<Statement, ParserError> {
-    tokens.next();
-    match tokens.next() {
-        Some(SpannedToken {
-            token: Token::Identifier(ref s),
-            ..
-        }) if s == "external" => {}
-        Some(SpannedToken { token: other, .. }) => {
-            return Err(ParserError::ExpectedToken(
-                Token::Identifier("external".into()),
-                other,
-            ));
-        }
-        None => return Err(ParserError::UnexpectedEOF),
-    }
+pub fn parse_external_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     expect_token(tokens, Token::LParen)?;
     let library = match tokens.next() {
         Some(SpannedToken {
@@ -76,20 +59,7 @@ pub fn parse_external_function_def(
         }
         None => return Err(ParserError::UnexpectedEOF),
     };
-    expect_token(tokens, Token::Comma)?;
-    let symbol = match tokens.next() {
-        Some(SpannedToken {
-            token: Token::StringLiteral(s),
-            ..
-        }) => s,
-        Some(SpannedToken { token: other, .. }) => {
-            return Err(ParserError::ExpectedToken(
-                Token::StringLiteral(String::new()),
-                other,
-            ));
-        }
-        None => return Err(ParserError::UnexpectedEOF),
-    };
+
     expect_token(tokens, Token::RParen)?;
     expect_token(tokens, Token::Newline)?;
     expect_token(tokens, Token::FunctionDef)?;
@@ -166,8 +136,6 @@ pub fn parse_external_function_def(
         return_typ: return_type,
         params,
         library: Atom::from(library),
-        symbol: Atom::from(symbol),
-        link_name,
     })
 }
 

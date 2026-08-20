@@ -5,7 +5,8 @@ pub fn transpile_program(program: Program) -> String {
         "
 export function w $main() {{               
     @start 
-ret 0
+        call $exit(w 0)
+        ret
     }}
 "
     )

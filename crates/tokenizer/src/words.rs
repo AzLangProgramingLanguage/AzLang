@@ -39,8 +39,6 @@ pub fn tokenize_word(word: &str) -> Token {
         "method" => Token::Method,
         "import" => Token::Import,
         "type" => Token::Type,
-        "exit" => Token::Exit,
         other => Token::Identifier(other.to_string()),
     }
 }
-

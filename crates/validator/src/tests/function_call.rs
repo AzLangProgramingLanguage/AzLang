@@ -170,10 +170,7 @@ fn test_function_call_wrong_arg_count_too_few() {
         }),
     ];
     let result = Validator::default().validate(stmts);
-    assert_matches!(
-        result,
-        Err(ValidatorError::InvalidArgumentCount { .. })
-    );
+    assert_matches!(result, Err(ValidatorError::InvalidArgumentCount { .. }));
 }
 
 #[test]
@@ -199,10 +196,7 @@ fn test_function_call_wrong_arg_count_too_many() {
         }),
     ];
     let result = Validator::default().validate(stmts);
-    assert_matches!(
-        result,
-        Err(ValidatorError::InvalidArgumentCount { .. })
-    );
+    assert_matches!(result, Err(ValidatorError::InvalidArgumentCount { .. }));
 }
 
 #[test]
@@ -228,10 +222,7 @@ fn test_function_call_wrong_arg_type() {
         }),
     ];
     let result = Validator::default().validate(stmts);
-    assert_matches!(
-        result,
-        Err(ValidatorError::InvalidArgumentType { .. })
-    );
+    assert_matches!(result, Err(ValidatorError::InvalidArgumentType { .. }));
 }
 
 #[test]
@@ -264,10 +255,7 @@ fn test_function_call_multiple_args_type_check() {
         }),
     ];
     let result = Validator::default().validate(stmts);
-    assert_matches!(
-        result,
-        Err(ValidatorError::InvalidArgumentType { .. })
-    );
+    assert_matches!(result, Err(ValidatorError::InvalidArgumentType { .. }));
 }
 
 fn make_external_func(
@@ -282,19 +270,23 @@ fn make_external_func(
         return_typ,
         params,
         library: Atom::from(library),
-        symbol: Atom::from(symbol),
-        link_name: None,
     }
 }
 
 #[test]
 fn test_external_function_call_success() {
     let stmts = vec![
-        make_external_func("add", Type::Integer, vec![Parameter {
-            name: Atom::from("a"),
-            typ: Type::Integer,
-            is_pointer: false,
-        }], "c", "add"),
+        make_external_func(
+            "add",
+            Type::Integer,
+            vec![Parameter {
+                name: Atom::from("a"),
+                typ: Type::Integer,
+                is_pointer: false,
+            }],
+            "c",
+            "add",
+        ),
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
@@ -311,18 +303,24 @@ fn test_external_function_call_success() {
 #[test]
 fn test_external_function_call_wrong_arg_count() {
     let stmts = vec![
-        make_external_func("foo", Type::Void, vec![
-            Parameter {
-                name: Atom::from("a"),
-                typ: Type::Integer,
-                is_pointer: false,
-            },
-            Parameter {
-                name: Atom::from("b"),
-                typ: Type::Integer,
-                is_pointer: false,
-            },
-        ], "c", "foo"),
+        make_external_func(
+            "foo",
+            Type::Void,
+            vec![
+                Parameter {
+                    name: Atom::from("a"),
+                    typ: Type::Integer,
+                    is_pointer: false,
+                },
+                Parameter {
+                    name: Atom::from("b"),
+                    typ: Type::Integer,
+                    is_pointer: false,
+                },
+            ],
+            "c",
+            "foo",
+        ),
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
@@ -333,20 +331,23 @@ fn test_external_function_call_wrong_arg_count() {
         }),
     ];
     let result = Validator::default().validate(stmts);
-    assert_matches!(
-        result,
-        Err(ValidatorError::InvalidArgumentCount { .. })
-    );
+    assert_matches!(result, Err(ValidatorError::InvalidArgumentCount { .. }));
 }
 
 #[test]
 fn test_external_function_call_wrong_arg_type() {
     let stmts = vec![
-        make_external_func("print_int", Type::Void, vec![Parameter {
-            name: Atom::from("x"),
-            typ: Type::Integer,
-            is_pointer: false,
-        }], "c", "print_int"),
+        make_external_func(
+            "print_int",
+            Type::Void,
+            vec![Parameter {
+                name: Atom::from("x"),
+                typ: Type::Integer,
+                is_pointer: false,
+            }],
+            "c",
+            "print_int",
+        ),
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
@@ -357,10 +358,7 @@ fn test_external_function_call_wrong_arg_type() {
         }),
     ];
     let result = Validator::default().validate(stmts);
-    assert_matches!(
-        result,
-        Err(ValidatorError::InvalidArgumentType { .. })
-    );
+    assert_matches!(result, Err(ValidatorError::InvalidArgumentType { .. }));
 }
 
 #[test]
@@ -392,8 +390,6 @@ fn test_external_func_link_name_passed_through() {
                 is_pointer: false,
             }],
             library: Atom::from("../build/printlib.so"),
-            symbol: Atom::from("printValue"),
-            link_name: Some(Atom::from("printlib")),
         },
         Statement::Expr(Expr::Call {
             target: None,
@@ -417,11 +413,17 @@ fn test_external_func_link_name_passed_through() {
 #[test]
 fn test_external_func_link_name_none_when_omitted() {
     let stmts = vec![
-        make_external_func("print", Type::Void, vec![Parameter {
-            name: Atom::from("val"),
-            typ: Type::Any,
-            is_pointer: false,
-        }], "../build/printlib.so", "printValue"),
+        make_external_func(
+            "print",
+            Type::Void,
+            vec![Parameter {
+                name: Atom::from("val"),
+                typ: Type::Any,
+                is_pointer: false,
+            }],
+            "../build/printlib.so",
+            "printValue",
+        ),
         Statement::Expr(Expr::Call {
             target: None,
             name: Box::new(Expr::VariableRef {
@@ -435,5 +437,4 @@ fn test_external_func_link_name_none_when_omitted() {
         .validate(stmts)
         .expect("should validate without link_name");
     assert_eq!(program.external_functions.len(), 1);
-    assert!(program.external_functions[0].link_name.is_none());
 }
