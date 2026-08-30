@@ -1,8 +1,7 @@
-data $str0= { b "Hello world", b 0 }
 
 export function w $main() {               
     @start 
-        call $print(l $str0)
+        call $exit(w 50)
         call $exit(w 0)
         ret
     }
