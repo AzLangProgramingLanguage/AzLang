@@ -9,3 +9,4 @@ print:
     mov rdx, 12    
     syscall
     ret
+

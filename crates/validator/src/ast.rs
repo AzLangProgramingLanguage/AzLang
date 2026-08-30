@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use parser::{
     ast::{Operation, Parameter, Symbol},
     shared_ast::Type,
@@ -71,6 +73,18 @@ pub enum Expr {
         args: Vec<Expr>,
         returned_type: Type,
     },
+}
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Expr::Number(n) => write!(f, "{n}"),
+            Expr::String(s) => write!(f, "\"{s}\""),
+            Expr::Bool(b) => write!(f, "{b}"),
+            Expr::Char(c) => write!(f, "'{c}'"),
+            Expr::VariableRef { name, .. } => write!(f, "{name}"),
+            other => write!(f, "{other:?}"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

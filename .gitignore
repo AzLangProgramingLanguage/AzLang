@@ -2,6 +2,9 @@ Cargo.lock
 target/*
 target
 program.
+app
+*.o
+*.so
 bin
 bin/*
 diff.txt

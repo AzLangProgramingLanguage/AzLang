@@ -1,8 +1,1 @@
-const list<int> a = []
-const list<int> b = [1,2]
-print(b)
-
-func isEmpty(const list<int> b): bool
-    return length(b)==0
-
-print(isEmpty(a))
+print("Hello, World")
