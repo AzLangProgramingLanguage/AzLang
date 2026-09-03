@@ -2,64 +2,81 @@ use validator::ast::{
     Ast::{self},
     Expr, Program,
 };
+#[derive(Default)]
+pub struct Transpiler {
+    data: Vec<String>,
+    stack: Vec<String>,
+}
+impl Transpiler {
+    fn push_temp_stack(&mut self, expr: Expr) -> String {
+        match expr {
+            Expr::Number(num) => {
+                self.stack
+                    .push(format!("%num{} =w add 0,{num}", self.stack.len()));
+                format!("w %num{}", self.stack.len() - 1)
+            }
+            Expr::String(str) => {
+                self.data.push(format!(
+                    "data $str{} ={{ b \"{str}\", b 0 }} ",
+                    self.data.len()
+                ));
+                format!("l $str{}", self.data.len() - 1)
+            }
+            Expr::BinaryOp {
+                left,
+                right,
+                op,
+                return_type,
+            } => {
+                self.stack.push(format!(
+                    "%bin{} = w add {},{}",
+                    self.stack.len(),
+                    *left,
+                    *right
+                ));
+                format!("w %bin{}", self.stack.len() - 1)
+            }
 
-pub fn expr_transpiler(stream: &mut String, staticstring: &mut Vec<String>, expr: Expr) {
-    match expr {
-        Expr::Call {
-            target,
-            name,
-            args,
-            returned_type,
-        } => {
+            _ => todo!("there is not complated yet. acutally, i dont know what to do "),
+        }
+    }
+
+    fn expr_transpiler(&mut self, stream: &mut String, expr: Expr) {
+        if let Expr::Call {
+            target, args, name, ..
+        } = expr
+        {
             stream.push_str(&format!("call ${name}("));
 
             for arg in args {
-                expr_transpiler(stream, staticstring, arg);
+                let variable = self.push_temp_stack(arg);
+                stream.push_str(&variable);
             }
             stream.push(')');
-        }
-        Expr::Number(num) => {
-            stream.push_str(&format!("w {num}"));
-        }
-        Expr::String(str) => {
-            staticstring.push(str);
-            stream.push_str(&format!("l $str{}", staticstring.len() - 1));
-        }
-        _ => {}
-    }
-}
-pub fn transpile_program(program: Program) -> String {
-    let mut exprstream = String::new();
-    let mut staticstringdata: Vec<String> = vec![];
-    for ast in program.expressions {
-        match ast {
-            Ast::Expr(expr) => expr_transpiler(&mut exprstream, &mut staticstringdata, expr),
-            _ => {}
+        } else {
+            self.push_temp_stack(expr);
         }
     }
-    let mut data = String::new();
-    for (i, str) in staticstringdata.into_iter().enumerate() {
-        data.push_str(&format!("data $str{i}= {{ b \"{str}\", b 0 }}\n"));
-    }
-    format!(
-        "{data}
-export function w $main() {{               
-    @start 
-        {exprstream}
-        call $exit(w 0)
-        ret
-    }}
-"
-    )
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // #[test]
-    // fn it_works() {
-    //     let result = add(2, 2);
-    //     assert_eq!(result, 4);
-    // }
+    pub fn transpile(&mut self, program: Program) -> String {
+        let mut exprstream = String::new();
+        for ast in program.expressions {
+            match ast {
+                Ast::Expr(expr) => self.expr_transpiler(&mut exprstream, expr),
+                _ => {}
+            }
+        }
+        format!(
+            "{}
+  export function w $main() {{
+             @start
+                 {}
+         {exprstream}
+                 ret
+             }}
+",
+            self.data.join(""),
+            self.stack.join("")
+        )
+    }
 }

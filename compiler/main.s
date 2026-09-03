@@ -1,12 +1,19 @@
+.data
+.balign 8
+str0:
+	.ascii "Hello world"
+	.byte 0
+/* end data */
+
 .text
+.balign 16
 .globl main
 main:
+	endbr64
 	pushq %rbp
 	movq %rsp, %rbp
-	movl $50, %edi
-	callq exit
-	movl $0, %edi
-	callq exit
+	leaq str0(%rip), %rdi
+	callq print
 	leave
 	ret
 .type main, @function

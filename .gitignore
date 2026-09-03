@@ -5,6 +5,7 @@ program.
 app
 *.o
 *.so
+main.s
 bin
 bin/*
 diff.txt
