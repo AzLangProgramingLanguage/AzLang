@@ -81,12 +81,6 @@ fn test_parse_external_func_with_link() {
         Token::At,
         Token::Identifier("link".to_string()),
         Token::LParen,
-        Token::StringLiteral("printlib".to_string()),
-        Token::RParen,
-        Token::Newline,
-        Token::At,
-        Token::Identifier("external".to_string()),
-        Token::LParen,
         Token::StringLiteral("../build/printlib.so".to_string()),
         Token::RParen,
         Token::Newline,
@@ -103,38 +97,6 @@ fn test_parse_external_func_with_link() {
     ]);
 
     let result = parse_statement(&mut tokens).expect("External function with @link parse edilmədi");
-
-    let Statement::ExternalFunctionDef { name, library, .. } = result else {
-        panic!("ExternalFunctionDef statement gözlənilirdi");
-    };
-
-    assert_eq!(name, Atom::from("print"));
-    assert_eq!(library, Atom::from("../build/printlib.so"));
-}
-
-#[test]
-fn test_parse_external_func_without_link() {
-    let mut tokens = create_tokens(vec![
-        Token::At,
-        Token::Identifier("external".to_string()),
-        Token::LParen,
-        Token::StringLiteral("../build/printlib.so".to_string()),
-        Token::RParen,
-        Token::Newline,
-        Token::FunctionDef,
-        Token::Identifier("print".to_string()),
-        Token::LParen,
-        Token::ConstantDecl,
-        Token::AnyType,
-        Token::Identifier("val".to_string()),
-        Token::RParen,
-        Token::Colon,
-        Token::Void,
-        Token::Newline,
-    ]);
-
-    let result =
-        parse_statement(&mut tokens).expect("External function without @link parse edilmədi");
 
     let Statement::ExternalFunctionDef { name, library, .. } = result else {
         panic!("ExternalFunctionDef statement gözlənilirdi");

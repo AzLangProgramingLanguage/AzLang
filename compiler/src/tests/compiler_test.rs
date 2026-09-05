@@ -28,12 +28,12 @@ fn executer() -> std::process::Output {
         .expect("Assembler  can't compile to object ");
 
     Command::new("as")
-        .args(["print.s", "-o", "print.o"])
+        .args(["write.s", "-o", "write.o"])
         .status()
         .expect("Assembler  can't compile to object ");
 
-    Command::new("ld.lld")
-        .args(["starter.o", "main.o", "exit.o", "print.o", "-o", "app"])
+    Command::new("ld")
+        .args(["starter.o", "main.o", "exit.o", "write.o", "-o", "app"])
         .status()
         .expect("Linker Error");
     Command::new("./app").output().expect("Çalışdırılmadı")
@@ -89,9 +89,9 @@ exit(50+20)",
 fn compiler_print_output_file() -> Result<(), CompilerError> {
     let parsed_program = parser(String::from(
         "
-@link(\"../../print.o\")
-func print(const str val): void
-print(\"Hello world\")",
+@link(\"../../write.o\")
+func write(const str val,const int size): void
+write(\"2222\",4)",
     ))?;
 
     let validator = validator::Validator::default();
@@ -102,8 +102,7 @@ print(\"Hello world\")",
     write_file(&main_file, transpiled_code)?;
 
     let output = executer();
-    let mut string: Vec<u8> = b"Hello world".to_vec();
-    string.push(0);
+    let string: Vec<u8> = b"2222".to_vec();
 
     assert_eq!(output.stdout, string);
     assert_eq!(output.status.code(), Some(0));

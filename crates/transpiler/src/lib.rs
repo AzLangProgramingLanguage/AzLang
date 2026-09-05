@@ -47,10 +47,14 @@ impl Transpiler {
         } = expr
         {
             stream.push_str(&format!("call ${name}("));
+            let argslen = args.len();
 
-            for arg in args {
+            for (index, arg) in args.into_iter().enumerate() {
                 let variable = self.push_temp_stack(arg);
                 stream.push_str(&variable);
+                if index < argslen - 1 {
+                    stream.push(',');
+                }
             }
             stream.push(')');
         } else {

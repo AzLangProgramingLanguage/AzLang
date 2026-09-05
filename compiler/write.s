@@ -1,12 +1,13 @@
 .intel_syntax noprefix
-.global print
+.global write 
 .text
 
-print:
+write:
+    mov r10, rsi
     mov rsi, rdi   
     mov rax, 1      
     mov rdi, 1      
-    mov rdx, 12    
+    mov rdx, r10 
     syscall
     ret
 
