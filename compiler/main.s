@@ -1,7 +1,7 @@
 .data
 .balign 8
-str0:
-	.ascii "2222"
+c:
+	.ascii "Hello World"
 	.byte 0
 /* end data */
 
@@ -12,8 +12,9 @@ main:
 	endbr64
 	pushq %rbp
 	movq %rsp, %rbp
-	movl $4, %esi
-	leaq str0(%rip), %rdi
+	movl $11, %edx
+	leaq c(%rip), %rsi
+	movl $1, %edi
 	callq write
 	leave
 	ret

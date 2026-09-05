@@ -1,7 +1,10 @@
-data $str0 ={ b "2222", b 0 } 
+data $c = { b "Hello World", b 0 }
+
   export function w $main() {
              @start
-                 %num0 =w add 0,4
-         call $write(l $str0,w %num0)
+                 %a = w copy 11
+%b = w copy 1
+
+         call $write(w %b,l $c,w %a)
                  ret
              }

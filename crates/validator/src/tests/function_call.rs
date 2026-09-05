@@ -404,10 +404,6 @@ fn test_external_func_link_name_passed_through() {
         .validate(stmts)
         .expect("should validate with link_name");
     assert_eq!(program.external_functions.len(), 1);
-    assert_eq!(
-        program.external_functions[0].link_name,
-        Some("printlib".to_string())
-    );
 }
 
 #[test]

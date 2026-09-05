@@ -1,3 +1,4 @@
+use parser::{self, shared_ast::Type};
 use validator::ast::{
     Ast::{self},
     Expr, Program,
@@ -10,10 +11,20 @@ pub struct Transpiler {
 impl Transpiler {
     fn push_temp_stack(&mut self, expr: Expr) -> String {
         match expr {
+            Expr::VariableRef { name, symbol } => {
+                match symbol.typ {
+                    Type::String(_) => {
+                        return format!("l ${name}");
+                    }
+                    Type::Integer => {
+                        return format!("w %{name}");
+                    }
+                    _ => todo!(),
+                }
+                format!("w %{name}")
+            }
             Expr::Number(num) => {
-                self.stack
-                    .push(format!("%num{} =w add 0,{num}", self.stack.len()));
-                format!("w %num{}", self.stack.len() - 1)
+                format!("l {num}")
             }
             Expr::String(str) => {
                 self.data.push(format!(
@@ -58,7 +69,7 @@ impl Transpiler {
             }
             stream.push(')');
         } else {
-            self.push_temp_stack(expr);
+            stream.push_str(&self.push_temp_stack(expr));
         }
     }
 
@@ -67,6 +78,22 @@ impl Transpiler {
         for ast in program.expressions {
             match ast {
                 Ast::Expr(expr) => self.expr_transpiler(&mut exprstream, expr),
+                Ast::Decl {
+                    name,
+                    typ,
+                    is_mutable,
+                    value,
+                } => match typ {
+                    Type::Integer => {
+                        let mut expr = String::new();
+                        self.stack.push(format!("%{name} = w copy {value}\n"));
+                    }
+                    Type::String(strenum) => {
+                        self.data
+                            .push(format!("data ${name} = {{ b {value}, b 0 }}\n"));
+                    }
+                    _ => todo!(),
+                },
                 _ => {}
             }
         }

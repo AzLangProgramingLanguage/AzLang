@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 validator = { path = "../validator" }
+parser = {path= "../parser"}

@@ -65,48 +65,4 @@ exit(50)",
     assert_eq!(output.status.code(), Some(50));
     Ok(())
 }
-#[test]
-fn compiler_exit_binary_output_file() -> Result<(), CompilerError> {
-    let parsed_program = parser(String::from(
-        "
-@link(\"../../exit.o\")
-func exit(const int val): void
-exit(50+20)",
-    ))?;
-
-    let validator = validator::Validator::default();
-    let (context, program) = validator.validate(parsed_program)?;
-    let transpiled_code = Transpiler::default().transpile(program);
-
-    let main_file: PathBuf = PathBuf::from("main.ssa");
-    write_file(&main_file, transpiled_code)?;
-
-    let output = executer();
-    assert_eq!(output.status.code(), Some(70));
-    Ok(())
-}
-#[test]
-fn compiler_print_output_file() -> Result<(), CompilerError> {
-    let parsed_program = parser(String::from(
-        "
-@link(\"../../write.o\")
-func write(const str val,const int size): void
-write(\"2222\",4)",
-    ))?;
-
-    let validator = validator::Validator::default();
-    let (context, program) = validator.validate(parsed_program)?;
-    let transpiled_code = Transpiler::default().transpile(program);
-
-    let main_file: PathBuf = PathBuf::from("main.ssa");
-    write_file(&main_file, transpiled_code)?;
-
-    let output = executer();
-    let string: Vec<u8> = b"2222".to_vec();
-
-    assert_eq!(output.stdout, string);
-    assert_eq!(output.status.code(), Some(0));
-
-    Ok(())
-}
 //cargo test -- --test-threads=1

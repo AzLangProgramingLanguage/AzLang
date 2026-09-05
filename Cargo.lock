@@ -374,6 +374,7 @@ dependencies = [
 name = "transpiler"
 version = "0.1.0"
 dependencies = [
+ "parser",
  "validator",
 ]
 
