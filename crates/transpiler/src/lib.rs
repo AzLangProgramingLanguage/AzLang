@@ -99,12 +99,14 @@ impl Transpiler {
         }
         format!(
             "{}
-  export function w $main() {{
-             @start
-                 {}
-         {exprstream}
-                 ret
-             }}
+export function w $_start() {{
+@start
+    {}
+                 
+   {exprstream}
+   call $exit(w 0)
+   ret
+}}
 ",
             self.data.join("\n"),
             self.stack.join("")

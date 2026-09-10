@@ -7,10 +7,11 @@ data $str5 ={ b "│ CPU      Intel         │\n", b 0 }
 data $str6 ={ b "│ Memory   5.4/7.49 GB   │\n", b 0 } 
 data $str7 ={ b "│ Uptime   5h 17m        │\n", b 0 } 
 data $str8 ={ b "╰────────────────────────╯\n", b 0 } 
-  export function w $main() {
-             @start
+export function w $_start() {
+@start
+    
                  
-         call $write(l 1,l $str0,l 79)
+   call $write(l 1,l $str0,l 79)
 call $write(l 1,l $str1,l 31)
 call $write(l 1,l $str2,l 79)
 call $write(l 1,l $str3,l 31)
@@ -20,5 +21,6 @@ call $write(l 1,l $str6,l 31)
 call $write(l 1,l $str7,l 31)
 call $write(l 1,l $str8,l 79)
 
-                 ret
-             }
+   call $exit(w 0)
+   ret
+}
