@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-blue.svg" alt="build">
-  <img src="https://img.shields.io/badge/license-GNU-red.svg" alt="license">
+  <img src="https://img.shields.io/badge/license-GPL-red.svg" alt="license">
   <img src="https://img.shields.io/badge/language-AzLang-green.svg" alt="language">
 </p>
 
