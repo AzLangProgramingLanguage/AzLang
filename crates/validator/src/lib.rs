@@ -55,6 +55,9 @@ impl Validator {
                         },
                     );
                 }
+                // Statement::EnumDecl { name, variants } => {
+                // self.variables.last().insert(name.to_string(), variants);
+                // }
                 Statement::ExternalFunctionDef {
                     name,
                     return_typ,

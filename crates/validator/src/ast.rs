@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use parser::{
-    ast::{Operation, Parameter, Symbol},
+    ast::{Atom, Operation, Parameter, Symbol},
     shared_ast::Type,
 };
 
@@ -111,4 +111,8 @@ pub enum Ast {
     },
 
     Expr(Expr),
+    Enum {
+        name: Atom,
+        fields: Vec<Atom>,
+    },
 }
