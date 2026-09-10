@@ -4,6 +4,7 @@ use crate::assign::parse_assign;
 use crate::ast::{Expr, Operation, Statement};
 use crate::condition::parse_if_expr;
 use crate::decl::parse_decl;
+use crate::r#enum::parse_enum_decl;
 use crate::errors::ParserError;
 use crate::expressions::parse_single_expr;
 use crate::function::{parse_external_function_def, parse_function_def, parse_link_directive};
@@ -55,6 +56,9 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
             token: Token::ConstantDecl,
             ..
         }) => parse_decl(tokens, false),
+        Some(SpannedToken {
+            token: Token::Enum, ..
+        }) => parse_enum_decl(tokens),
         Some(SpannedToken {
             token: Token::MutableDecl,
             ..

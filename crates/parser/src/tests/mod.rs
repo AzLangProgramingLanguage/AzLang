@@ -22,6 +22,7 @@ mod assignment;
 mod binary_op_test;
 mod condition;
 mod decl;
+mod r#enum;
 mod function_call;
 mod function_decl;
 mod while_loop;

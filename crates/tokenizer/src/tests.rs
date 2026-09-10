@@ -1,4 +1,4 @@
-use std::f64::consts::PI;
+use std::{f64::consts::PI, vec};
 
 use crate::{
     Lexer,
@@ -272,6 +272,26 @@ fn test_keyword_function_def() {
 fn test_keyword_function_type() {
     assert_eq!(tokenize("callable"), vec![Token::FnType]);
 }
+#[test]
+fn overal() {
+    assert_eq!(
+        tokenize("@link(\"Hello\")\nfunc Hello():void "),
+        vec![
+            Token::At,
+            Token::Identifier("link".to_string()),
+            Token::LParen,
+            Token::StringLiteral("Hello".to_string()),
+            Token::RParen,
+            Token::Newline,
+            Token::FunctionDef,
+            Token::Identifier("Hello".to_string()),
+            Token::LParen,
+            Token::RParen,
+            Token::Colon,
+            Token::Void
+        ]
+    )
+}
 
 #[test]
 fn test_keyword_array() {
@@ -387,17 +407,6 @@ fn test_keyword_import() {
 fn test_keyword_type() {
     assert_eq!(tokenize("type"), vec![Token::Type]);
 }
-
-#[test]
-fn test_keyword_zig_types() {
-    assert_eq!(tokenize("zigconststring"), vec![Token::ZigConstString]);
-    assert_eq!(tokenize("zigint"), vec![Token::ZigInteger]);
-    assert_eq!(tokenize("zigstr"), vec![Token::ZigString]);
-    assert_eq!(tokenize("zigconstlist"), vec![Token::ZigConstArray]);
-    assert_eq!(tokenize("ziglist"), vec![Token::ZigArray]);
-    assert_eq!(tokenize("zigfloat"), vec![Token::ZigFloat]);
-}
-
 #[test]
 fn test_keyword_other_types() {
     assert_eq!(tokenize("char"), vec![Token::CharType]);

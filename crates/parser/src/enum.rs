@@ -1,55 +1,62 @@
 use std::borrow::Cow;
 
-use crate::{ast::Expr, errors::ParserError};
-use peekmore::PeekMoreIterator;
-use tokenizer::tokens::Token;
-
-pub fn parse_enum_decl<'a, I>(tokens: &mut PeekMoreIterator<I>) -> Result<Expr<'a>, ParserError>
-where
-    I: Iterator<Item = &'a Token>,
-{
+use crate::{
+    ast::{Expr, Statement},
+    errors::ParserError,
+    helpers::expect_token,
+};
+use string_cache::{Atom, EmptyStaticAtomSet};
+use tokenizer::{
+    iterator::{SpannedToken, Tokens},
+    tokens::Token,
+};
+pub fn parse_enum_decl(tokens: &mut Tokens) -> Result<Statement, ParserError> {
+    tokens.next();
     let name = match tokens.next() {
-        Some(Token::Identifier(n)) => Cow::Borrowed(n.as_str()),
-        other => {
-            return Err(ParserError::EnumDeclNameNotFound(
-                other.unwrap_or(&Token::Eof).clone(),
+        Some(SpannedToken {
+            token: Token::Identifier(n),
+            ..
+        }) => Atom::from(n),
+        Some(SpannedToken { token, .. }) => {
+            return Err(ParserError::ExpectedToken(
+                Token::Identifier("enumfield".to_string()),
+                token,
             ));
         }
+        None => return Err(ParserError::UnexpectedEOF),
     };
-
-    match tokens.next() {
-        Some(Token::Newline) => {}
-        other => {
-            return Err(ParserError::EnumNewLineNotFound(
-                other.unwrap_or(&Token::Eof).clone(),
-            ));
-        }
+    let mut variants: Vec<Atom<EmptyStaticAtomSet>> = vec![];
+    expect_token(tokens, Token::Newline)?;
+    expect_token(tokens, Token::Indent)?;
+    if let Some(SpannedToken {
+        token: Token::Identifier(n),
+        span,
+    }) = tokens.next()
+    {
+        variants.push(Atom::from(n));
     }
 
-    // --- Variants ---
-    let mut variants = Vec::new();
-
-    loop {
-        match tokens.peek() {
-            Some(Token::Indent) => {
-                tokens.next();
+    while let Some(SpannedToken {
+        token: Token::Newline,
+        ..
+    }) = tokens.next()
+    {
+        match tokens.next() {
+            Some(SpannedToken {
+                token: Token::Identifier(n),
+                ..
+            }) => {
+                variants.push(Atom::from(n));
             }
-            Some(Token::Identifier(var)) => {
-                variants.push(Cow::Borrowed(var.as_str()));
-                tokens.next();
-            }
-            Some(Token::Newline) => {
-                tokens.next();
-            }
-            Some(Token::Dedent) | Some(Token::End) => {
-                tokens.next();
+            Some(SpannedToken {
+                token: Token::Dedent,
+                ..
+            }) => {
                 break;
             }
-            Some(Token::Eof) => break,
-            Some(tok) => return Err(ParserError::UnexpectedToken((*tok).clone())),
-            None => return Err(ParserError::UnexpectedEOF),
+            _ => {}
         }
     }
 
-    Ok(Expr::EnumDecl { name, variants })
+    Ok(Statement::EnumDecl { name, variants })
 }

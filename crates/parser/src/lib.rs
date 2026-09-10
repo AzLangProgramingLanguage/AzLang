@@ -3,6 +3,7 @@ pub mod ast;
 pub mod binary_op;
 pub mod condition;
 pub mod decl;
+pub mod r#enum;
 pub mod errors;
 mod expressions;
 pub mod function;
@@ -21,7 +22,8 @@ mod tests;
 
 use crate::{ast::Statement, errors::ParserError, expressions::parse_expression_block};
 
-pub fn parser(sdk: String) -> Result<Vec<Statement>, ParserError> {
+pub type ParsedProgram = Result<Vec<Statement>, ParserError>;
+pub fn parser(sdk: String) -> ParsedProgram {
     let mut lexer = tokenizer::Lexer::new(&sdk);
 
     let mut tokens = lexer.tokenize()?;

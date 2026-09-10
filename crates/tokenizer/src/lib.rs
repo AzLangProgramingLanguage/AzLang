@@ -72,6 +72,7 @@ impl<'a> Lexer<'a> {
                     },
                 ),
             }
+
             self.start = self.end;
         }
 

@@ -68,6 +68,7 @@ impl Transpiler {
                 }
             }
             stream.push(')');
+            stream.push('\n');
         } else {
             stream.push_str(&self.push_temp_stack(expr));
         }
@@ -85,7 +86,6 @@ impl Transpiler {
                     value,
                 } => match typ {
                     Type::Integer => {
-                        let mut expr = String::new();
                         self.stack.push(format!("%{name} = w copy {value}\n"));
                     }
                     Type::String(strenum) => {
@@ -106,7 +106,7 @@ impl Transpiler {
                  ret
              }}
 ",
-            self.data.join(""),
+            self.data.join("\n"),
             self.stack.join("")
         )
     }
