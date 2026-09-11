@@ -1,4 +1,4 @@
-use std::{collections::HashMap, vec};
+use std::{collections::HashMap, rc::Rc, vec};
 pub mod ast;
 pub mod decl;
 pub mod errors;
@@ -7,12 +7,12 @@ mod helper;
 mod tests;
 pub mod validate;
 use crate::{
-    ast::{ExternalFunctionDef, Function, Program},
+    ast::{Function, Program},
     errors::ValidatorError,
-    validate::validate_statement,
+    validate::{ValidatorExpr, validate_statement},
 };
 use parser::{
-    ast::{Expr, FunctionDef, Parameter, Statement, Symbol},
+    ast::{Atom, Parameter, Statement, Symbol},
     shared_ast::Type,
 };
 
@@ -33,40 +33,50 @@ pub struct MethodInfo {
 #[derive(Debug, Default, PartialEq)]
 pub struct Validator {
     pub functions: HashMap<String, FunctionInfo>,
-    pub variables: Vec<HashMap<String, Symbol>>,
+    pub variables: Vec<HashMap<Atom, Symbol>>,
     pub link_files: Vec<String>,
+    pub enums: HashMap<String, Vec<String>>,
 }
 pub type ValidatedProgram = Result<(Validator, Program), ValidatorError>;
 impl Validator {
-    pub fn function_decl(&mut self, ast: &Vec<Statement>) -> &mut Validator {
+    pub fn function_decl(
+        &mut self,
+        ast: &Vec<Statement>,
+    ) -> Result<&mut Validator, ValidatorError> {
         for stmt in ast {
             match stmt {
                 Statement::FunctionDef {
                     name,
                     return_typ,
                     params,
-                    body,
+                    ..
                 } => {
+                    let namestr = name.to_string();
+                    if let Some(_) = self.functions.get(&namestr) {
+                        return Err(ValidatorError::FunctionAlreadyDefined(namestr));
+                    }
                     self.functions.insert(
-                        name.to_string(),
+                        namestr,
                         FunctionInfo {
                             return_type: return_typ.clone(),
                             parameters: params.clone(),
                         },
                     );
                 }
-                // Statement::EnumDecl { name, variants } => {
-                // self.variables.last().insert(name.to_string(), variants);
-                // }
                 Statement::ExternalFunctionDef {
                     name,
                     return_typ,
                     params,
                     library,
                 } => {
+                    let namestr = name.to_string();
+                    if let Some(_) = self.functions.get(&namestr) {
+                        return Err(ValidatorError::FunctionAlreadyDefined(namestr));
+                    }
+
                     self.link_files.push(library.to_string());
                     self.functions.insert(
-                        name.to_string(),
+                        namestr,
                         FunctionInfo {
                             return_type: return_typ.clone(),
                             parameters: params.clone(),
@@ -76,11 +86,11 @@ impl Validator {
                 _ => continue,
             }
         }
-        self
+        Ok(self)
     }
     pub fn lookup_variable_mut_with_err(
         &mut self,
-        var_name: &str,
+        var_name: &Atom,
     ) -> Result<&mut Symbol, ValidatorError> {
         for stack in self.variables.iter_mut().rev() {
             if let Some(symbol) = stack.get_mut(var_name) {
@@ -89,7 +99,7 @@ impl Validator {
         }
         Err(ValidatorError::UndefinedVariable(var_name.to_string()))
     }
-    pub fn lookup_variable(&self, var_name: &str) -> Option<&Symbol> {
+    pub fn lookup_variable(&self, var_name: &Atom) -> Option<&Symbol> {
         for stack in self.variables.iter().rev() {
             if let Some(symbol) = stack.get(var_name) {
                 return Some(symbol);
@@ -98,7 +108,7 @@ impl Validator {
         None
     }
 
-    pub fn declare_variable(&mut self, var_name: String, symbol: Symbol) {
+    pub fn declare_variable(&mut self, var_name: Atom, symbol: Symbol) {
         if let Some(stack) = self.variables.last_mut() {
             stack.insert(var_name, symbol);
         }
@@ -108,32 +118,11 @@ impl Validator {
         let mut program = Program {
             functions: vec![],
             expressions: vec![],
-            external_functions: vec![],
         };
         self.variables.push(HashMap::new());
-        self.function_decl(&ast);
+        self.function_decl(&ast)?;
         for stmt in ast {
             match stmt {
-                Statement::ExternalFunctionDef {
-                    name,
-                    return_typ,
-                    params,
-                    library,
-                } => {
-                    self.functions.insert(
-                        name.to_string(),
-                        FunctionInfo {
-                            return_type: return_typ.clone(),
-                            parameters: params.clone(),
-                        },
-                    );
-                    program.external_functions.push(ExternalFunctionDef {
-                        name: name.to_string(),
-                        params,
-                        return_typ,
-                        library: library.to_string(),
-                    });
-                }
                 Statement::FunctionDef {
                     name,
                     return_typ,
@@ -142,11 +131,11 @@ impl Validator {
                 } => {
                     let mut validated_body = Vec::new();
                     self.variables.push(HashMap::new());
-                    for param in &params {
+                    for param in params.clone() {
                         self.declare_variable(
-                            param.name.to_string(),
+                            param.name,
                             Symbol {
-                                typ: param.typ.clone(),
+                                typ: param.typ,
                                 is_mutable: param.is_pointer,
                                 is_used: false,
                                 is_changed: false,
@@ -164,6 +153,26 @@ impl Validator {
                         return_typ,
                     });
                 }
+
+                Statement::EnumDecl { name, variants } => {
+                    for (i, v) in variants.into_iter().enumerate() {
+                        self.declare_variable(
+                            v.clone(),
+                            Symbol {
+                                typ: Type::User(name.clone()),
+                                is_used: false,
+                                is_mutable: false,
+                                is_changed: false,
+                            },
+                        );
+                        program.expressions.push(ast::Ast::Decl {
+                            name: v.to_string(),
+                            typ: Type::Natural,
+                            is_mutable: false,
+                            value: Box::new(ValidatorExpr::Number(i as i64)),
+                        });
+                    }
+                }
                 stmt => {
                     program
                         .expressions
@@ -174,11 +183,13 @@ impl Validator {
 
         if let Some(scope) = self.variables.last() {
             for (name, symbol) in scope {
-                if !symbol.is_used {
-                    return Err(ValidatorError::NotUsedVariable(name.clone()));
+                if !symbol.is_used && !matches!(symbol.typ, Type::User(_)) {
+                    return Err(ValidatorError::NotUsedVariable(name.to_string()));
                 }
                 if symbol.is_mutable && !symbol.is_changed {
-                    return Err(ValidatorError::NeverChangedMuttableVariable(name.clone()));
+                    return Err(ValidatorError::NeverChangedMuttableVariable(
+                        name.to_string(),
+                    ));
                 }
             }
         }

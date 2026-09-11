@@ -6,6 +6,7 @@ pub enum Type {
     String(StringEnum),
     Array(Box<Type>),
     User(Atom),
+    Enum(String),
     Integer,
     Natural,
     BigInteger,
@@ -16,11 +17,6 @@ pub enum Type {
     Void,
     Any,
     Float,
-    ZigArray,
-    ZigConstArray,
-    ZigNatural,
-    ZigFloat,
-    ZigInteger,
     Function,
 }
 #[derive(Debug, Clone, PartialEq)]
@@ -43,8 +39,9 @@ impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Type::String(typ) => write!(f, "{}", typ),
-            Type::Array(_) => write!(f, "Siyahı"),
-            Type::User(name) => write!(f, "İstifadəçi({name})"),
+            Type::Array(_) => write!(f, "List"),
+            Type::User(name) => write!(f, "User({name})"),
+            Type::Enum(str) => write!(f, "{str}"),
             Type::Integer => write!(f, "Tam Ədəd"),
             Type::Natural => write!(f, "Natural"),
             Type::BigInteger => write!(f, "Böyük tam ədəd"),
@@ -55,11 +52,6 @@ impl Display for Type {
             Type::Void => write!(f, "Boşluq"),
             Type::Any => write!(f, "Hərşey"),
             Type::Float => write!(f, "Onluq Ədəd"),
-            Type::ZigArray => write!(f, "ZigArray"),
-            Type::ZigConstArray => write!(f, "ZigConstArray"),
-            Type::ZigNatural => write!(f, "ZigNatural"),
-            Type::ZigFloat => write!(f, "ZigFloat"),
-            Type::ZigInteger => write!(f, "ZigInteger"),
             Type::Function => write!(f, "Funksiya"),
         }
     }

@@ -48,8 +48,8 @@ pub fn validate_expr(
             let validated = validate_expr(*e, ctx)?;
             Ok(ValidatorExpr::Return(Box::new(validated)))
         }
-        ParserExpr::VariableRef { name, symbol } => {
-            let s = ctx.lookup_variable_mut_with_err(name.as_ref())?;
+        ParserExpr::VariableRef { name, .. } => {
+            let s = ctx.lookup_variable_mut_with_err(&name)?;
             s.is_used = true;
             Ok(ValidatorExpr::VariableRef {
                 name: name.to_string(),

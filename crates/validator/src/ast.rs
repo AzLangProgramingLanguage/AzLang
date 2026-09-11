@@ -24,7 +24,6 @@ pub struct ExternalFunctionDef {
 pub struct Program {
     pub functions: Vec<Function>,
     pub expressions: Vec<Ast>,
-    pub external_functions: Vec<ExternalFunctionDef>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

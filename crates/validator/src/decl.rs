@@ -20,7 +20,7 @@ pub fn validate_decl(
     value: Expr,
     ctx: &mut Validator,
 ) -> Result<Ast, ValidatorError> {
-    if ctx.lookup_variable(name.as_ref()).is_some() {
+    if ctx.lookup_variable(&name).is_some() {
         return Err(ValidatorError::AlreadyDecl(name.to_string()));
     }
 
@@ -28,7 +28,7 @@ pub fn validate_decl(
     reconcile_type(typ, &mut inferred, name.as_ref())?;
 
     ctx.declare_variable(
-        name.to_string(),
+        name.clone(),
         Symbol {
             typ: inferred.clone(),
             is_used: false,

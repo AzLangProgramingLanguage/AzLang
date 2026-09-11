@@ -19,7 +19,10 @@ impl Transpiler {
                     Type::Integer => {
                         return format!("w %{name}");
                     }
-                    _ => todo!(),
+                    Type::User(_) => {
+                        return format!("w %{name}");
+                    }
+                    other => todo!("{other} is not implemented yet"),
                 }
                 format!("w %{name}")
             }
@@ -47,8 +50,11 @@ impl Transpiler {
                 ));
                 format!("w %bin{}", self.stack.len() - 1)
             }
+            Expr::Void => String::from(""),
 
-            _ => todo!("there is not complated yet. acutally, i dont know what to do "),
+            other => {
+                todo!("{other:?} there is not complated yet. acutally, i dont know what to do ")
+            }
         }
     }
 
@@ -88,11 +94,15 @@ impl Transpiler {
                     Type::Integer => {
                         self.stack.push(format!("%{name} = w copy {value}\n"));
                     }
+                    Type::Natural => {
+                        self.stack.push(format!("%{name} = w copy {value}\n"));
+                    }
+
                     Type::String(strenum) => {
                         self.data
                             .push(format!("data ${name} = {{ b {value}, b 0 }}\n"));
                     }
-                    _ => todo!(),
+                    other => todo!("{other:?} Not implemented yet"),
                 },
                 _ => {}
             }

@@ -9,17 +9,20 @@ data $str7 ={ b "│ Uptime   5h 17m        │\n", b 0 }
 data $str8 ={ b "╰────────────────────────╯\n", b 0 } 
 export function w $_start() {
 @start
-    
+    %Stdin = w copy 0
+%Stdout = w copy 1
+%Stderr = w copy 2
+
                  
-   call $write(l 1,l $str0,l 79)
-call $write(l 1,l $str1,l 31)
-call $write(l 1,l $str2,l 79)
-call $write(l 1,l $str3,l 31)
-call $write(l 1,l $str4,l 31)
-call $write(l 1,l $str5,l 31)
-call $write(l 1,l $str6,l 31)
-call $write(l 1,l $str7,l 31)
-call $write(l 1,l $str8,l 79)
+   call $write(w %Stderr,l $str0,l 79)
+call $write(w %Stdout,l $str1,l 31)
+call $write(w %Stdout,l $str2,l 79)
+call $write(w %Stdout,l $str3,l 31)
+call $write(w %Stdout,l $str4,l 31)
+call $write(w %Stdout,l $str5,l 31)
+call $write(w %Stdout,l $str6,l 31)
+call $write(w %Stdout,l $str7,l 31)
+call $write(w %Stdout,l $str8,l 79)
 
    call $exit(w 0)
    ret

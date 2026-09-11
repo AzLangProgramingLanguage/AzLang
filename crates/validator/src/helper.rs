@@ -49,7 +49,7 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
             if let Some(s) = symbol {
                 return Ok(s.typ.clone());
             }
-            if let Some(s) = ctx.lookup_variable(name.as_ref()) {
+            if let Some(s) = ctx.lookup_variable(name) {
                 return Ok(s.typ.clone());
             }
             if ctx.functions.contains_key(name.as_ref()) {
@@ -74,7 +74,6 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
             let right_type = get_type(right, ctx)?;
 
             match *op {
-                // ── Müqayisə əməliyyatları ────────────────────────────────────────
                 Operation::Equal
                 | Operation::NotEqual
                 | Operation::Less
@@ -82,14 +81,12 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
                 | Operation::Greater
                 | Operation::GreaterEqual => Ok(Type::Bool),
 
-                // ── Məntiqi əməliyyatlar ──────────────────────────────────────────
                 Operation::And | Operation::Or => {
                     expect_type(Type::Bool, &left_type)?;
                     expect_type(Type::Bool, &right_type)?;
                     Ok(Type::Bool)
                 }
 
-                // ── Riyazi əməliyyatlar ───────────────────────────────────────────
                 Operation::Add
                 | Operation::Subtract
                 | Operation::Multiply

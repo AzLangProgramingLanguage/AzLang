@@ -4,7 +4,7 @@ use parser::{
     ast::{Statement, Symbol},
     shared_ast::{StringEnum, Type},
 };
-type ValidatorExpr = crate::ast::Expr;
+pub type ValidatorExpr = crate::ast::Expr;
 use crate::{
     Validator,
     ast::{self, Ast, Else, Function, IF},
@@ -23,7 +23,7 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
         } => decl::validate_decl(name, typ, is_mutable, *value, ctx),
         Statement::Assignment { name, value } => {
             let inferred = get_type(&value, ctx)?;
-            let symbol = ctx.lookup_variable_mut_with_err(name.as_ref())?;
+            let symbol = ctx.lookup_variable_mut_with_err(&name)?;
             symbol.is_changed = true;
             if !symbol.is_mutable {
                 return Err(ValidatorError::AssignmentToImmutableVariable(
@@ -109,8 +109,8 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
             let expr = validate_expr(expr, ctx)?;
             Ok(Ast::Expr(expr))
         }
-        Statement::EnumDecl { .. }
-        | Statement::FunctionDef { .. }
+        Statement::FunctionDef { .. }
+        | Statement::EnumDecl { .. }
         | Statement::StructDef { .. }
         | Statement::UnionType { .. }
         | Statement::Match { .. }
