@@ -1,28 +1,34 @@
-data $str0 ={ b "╭────────────────────────╮\n", b 0 } 
-data $str1 ={ b "│ AzFetch                │\n", b 0 } 
-data $str2 ={ b "├────────────────────────┤\n", b 0 } 
-data $str3 ={ b "│ OS       EndeavourOS   │\n", b 0 } 
-data $str4 ={ b "│ Kernel   7.1.8         │\n", b 0 } 
-data $str5 ={ b "│ CPU      Intel         │\n", b 0 } 
-data $str6 ={ b "│ Memory   5.4/7.49 GB   │\n", b 0 } 
-data $str7 ={ b "│ Uptime   5h 17m        │\n", b 0 } 
-data $str8 ={ b "╰────────────────────────╯\n", b 0 } 
+data $str0 ={ b "/etc/os-release", b 0 } 
+data $str1 ={ b "╭────────────────────────╮\n", b 0 } 
+data $str2 ={ b "│ AzFetch                │\n", b 0 } 
+data $str3 ={ b "├────────────────────────┤\n", b 0 } 
+data $str4 ={ b "│ OS       EndeavourOS   │\n", b 0 } 
+data $str5 ={ b "│ Kernel   7.1.8         │\n", b 0 } 
+data $str6 ={ b "│ CPU      Intel         │\n", b 0 } 
+data $str7 ={ b "│ Memory   5.4/7.49 GB   │\n", b 0 } 
+data $str8 ={ b "│ Uptime   5h 17m        │\n", b 0 } 
+data $str9 ={ b "╰────────────────────────╯\n", b 0 } 
 export function w $_start() {
 @start
     %Stdin = w copy 0
 %Stdout = w copy 1
 %Stderr = w copy 2
+%ReadOnly = w copy 0
+%Write = w copy 1
+%NoCreate = w copy 0
+%Create = w copy 1
 
                  
-   call $write(w %Stderr,l $str0,l 79)
-call $write(w %Stdout,l $str1,l 31)
-call $write(w %Stdout,l $str2,l 79)
-call $write(w %Stdout,l $str3,l 31)
+   call $fopen(l $str0,w %ReadOnly,w %NoCreate)
+call $write(w %Stdout,l $str1,l 79)
+call $write(w %Stdout,l $str2,l 31)
+call $write(w %Stdout,l $str3,l 79)
 call $write(w %Stdout,l $str4,l 31)
 call $write(w %Stdout,l $str5,l 31)
 call $write(w %Stdout,l $str6,l 31)
 call $write(w %Stdout,l $str7,l 31)
-call $write(w %Stdout,l $str8,l 79)
+call $write(w %Stdout,l $str8,l 31)
+call $write(w %Stdout,l $str9,l 79)
 
    call $exit(w 0)
    ret
