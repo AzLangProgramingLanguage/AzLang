@@ -8,7 +8,7 @@ pub fn tokenize_word(word: &str) -> Token {
         "if" => Token::Conditional,
         "elif" => Token::ElseIf,
         "else" => Token::Else,
-        "func" => Token::FunctionDef,
+        "op" => Token::FunctionDef,
         "callable" => Token::FnType,
         "list" => Token::Array,
         "object" => Token::Object,

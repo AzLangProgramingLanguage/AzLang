@@ -18,18 +18,14 @@ export function w $_start() {
 %NoCreate = w copy 0
 %Create = w copy 1
 
-                 
-   call $fopen(l $str0,w %ReadOnly,w %NoCreate)
-call $write(w %Stdout,l $str1,l 79)
-call $write(w %Stdout,l $str2,l 31)
-call $write(w %Stdout,l $str3,l 79)
-call $write(w %Stdout,l $str4,l 31)
-call $write(w %Stdout,l $str5,l 31)
-call $write(w %Stdout,l $str6,l 31)
-call $write(w %Stdout,l $str7,l 31)
-call $write(w %Stdout,l $str8,l 31)
-call $write(w %Stdout,l $str9,l 79)
-
+%condition =w ceqw 2, 3
+jnz %condition, @true, @false
+@true
+    call $write(w %Stdout,l $str1,l 79)
+      call $exit(w 0)
+    ret
+@false
+    call $write(w %Stdout,l $str2,l 31)
    call $exit(w 0)
-   ret
+    ret
 }

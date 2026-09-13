@@ -1,4 +1,5 @@
 use parser::{self, shared_ast::Type};
+use std::io::Write;
 use validator::ast::{
     Ast::{self},
     Expr, Program,
@@ -7,6 +8,8 @@ use validator::ast::{
 pub struct Transpiler {
     data: Vec<String>,
     stack: Vec<String>,
+    labels: Vec<String>,
+    conditions: u64,
 }
 impl Transpiler {
     fn push_temp_stack(&mut self, expr: Expr) -> String {
@@ -85,6 +88,10 @@ impl Transpiler {
         for ast in program.expressions {
             match ast {
                 Ast::Expr(expr) => self.expr_transpiler(&mut exprstream, expr),
+                Ast::Condition { main, elif, other } => {
+                    self.conditions += 1;
+                    exprstream.push_str(&format!("%condition{} = w ceqb 1, 1", self.conditions));
+                }
                 Ast::Decl {
                     name,
                     typ,

@@ -16,10 +16,9 @@ _start:
     mov rdx, 0                      ; Mode: Not creating a file, so 0 is fine
     syscall                         ; Invoke kernel
     
-    ; Check if open failed (negative value means error)
     cmp rax, 0
     jl error_exit
-    mov [fd], rax                   ; Save the returned file descriptor
+    mov [fd], rax
 
     ; 2. READ FROM THE FILE (sys_read)
     mov rax, 0                      ; Syscall ID for sys_read
