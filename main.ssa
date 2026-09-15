@@ -1,16 +1,7 @@
-data $str0 ={ b "/etc/os-release", b 0 } 
-data $str1 ={ b "╭────────────────────────╮\n", b 0 } 
-data $str2 ={ b "│ AzFetch                │\n", b 0 } 
-data $str3 ={ b "├────────────────────────┤\n", b 0 } 
-data $str4 ={ b "│ OS       EndeavourOS   │\n", b 0 } 
-data $str5 ={ b "│ Kernel   7.1.8         │\n", b 0 } 
-data $str6 ={ b "│ CPU      Intel         │\n", b 0 } 
-data $str7 ={ b "│ Memory   5.4/7.49 GB   │\n", b 0 } 
-data $str8 ={ b "│ Uptime   5h 17m        │\n", b 0 } 
-data $str9 ={ b "╰────────────────────────╯\n", b 0 } 
+data $str0 ={ b "Hello World", b 0 } 
 export function w $_start() {
 @start
-    %Stdin = w copy 0
+%Stdin = w copy 0
 %Stdout = w copy 1
 %Stderr = w copy 2
 %ReadOnly = w copy 0
@@ -18,14 +9,8 @@ export function w $_start() {
 %NoCreate = w copy 0
 %Create = w copy 1
 
-%condition =w ceqw 2, 3
-jnz %condition, @true, @false
-@true
-    call $write(w %Stdout,l $str1,l 79)
-      call $exit(w 0)
-    ret
-@false
-    call $write(w %Stdout,l $str2,l 31)
-   call $exit(w 0)
-    ret
+call $write(w %Stdout,l $str0,l 11)
+
+call $exit(w 0)
+ret
 }

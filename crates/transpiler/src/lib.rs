@@ -8,7 +8,7 @@ use validator::ast::{
 pub struct Transpiler {
     data: Vec<String>,
     stack: Vec<String>,
-    labels: Vec<String>,
+    labels: String,
     conditions: u64,
 }
 impl Transpiler {
@@ -82,15 +82,27 @@ impl Transpiler {
             stream.push_str(&self.push_temp_stack(expr));
         }
     }
-
-    pub fn transpile(&mut self, program: Program) -> String {
-        let mut exprstream = String::new();
-        for ast in program.expressions {
+    pub fn transpile_body(&mut self, exprstream: &mut String, body: Vec<Ast>) {
+        for ast in body {
             match ast {
-                Ast::Expr(expr) => self.expr_transpiler(&mut exprstream, expr),
+                Ast::Expr(expr) => self.expr_transpiler(exprstream, expr),
                 Ast::Condition { main, elif, other } => {
                     self.conditions += 1;
-                    exprstream.push_str(&format!("%condition{} = w ceqb 1, 1", self.conditions));
+                    let condition_num = self.conditions;
+                    exprstream.push_str(&format!(
+                        "%Condition{condition_num} = w ceqd 1, 1\njnz %Condition{condition_num}, @true{condition_num}, @false{condition_num}\n"
+                    ));
+                    exprstream.push_str(&format!("@true{condition_num}\n"));
+                    self.transpile_body(exprstream, main.body);
+                    exprstream.push_str(&format!(
+                        "jmp @continue{condition_num}\n@false{condition_num}\n"
+                    ));
+                    if let Some(els) = other {
+                        self.transpile_body(exprstream, els.body);
+                    }
+                    exprstream.push_str(&format!(
+                        "jmp @continue{condition_num}\n@continue{condition_num}\n"
+                    ));
                 }
                 Ast::Decl {
                     name,
@@ -114,19 +126,23 @@ impl Transpiler {
                 _ => {}
             }
         }
+    }
+
+    pub fn transpile(&mut self, program: Program) -> String {
+        let mut exprstream = String::new();
+        self.transpile_body(&mut exprstream, program.expressions);
         format!(
             "{}
 export function w $_start() {{
 @start
-    {}
-                 
-   {exprstream}
-   call $exit(w 0)
-   ret
+{}
+{exprstream}
+call $exit(w 0)
+ret
 }}
 ",
             self.data.join("\n"),
-            self.stack.join("")
+            self.stack.join(""),
         )
     }
 }
