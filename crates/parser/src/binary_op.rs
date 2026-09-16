@@ -9,7 +9,7 @@ use crate::errors::ParserError;
 use crate::expressions::parse_single_expr;
 use crate::function::{parse_external_function_def, parse_function_def, parse_link_directive};
 use crate::helpers::expect_token;
-use crate::r#loop::parse_loop;
+use crate::r#loop::{parse_for_loop, parse_loop};
 use crate::r#while_loop::parse_while_loop;
 use tokenizer::iterator::{SpannedToken, Tokens};
 use tokenizer::tokens::Token;
@@ -50,8 +50,12 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
         }) => parse_function_def(tokens),
 
         Some(SpannedToken {
+            token: Token::For, ..
+        }) => parse_for_loop(tokens),
+        Some(SpannedToken {
             token: Token::Loop, ..
         }) => parse_loop(tokens),
+
         Some(SpannedToken {
             token: Token::ConstantDecl,
             ..

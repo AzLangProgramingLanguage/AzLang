@@ -45,13 +45,67 @@ impl Transpiler {
                 op,
                 return_type,
             } => {
-                self.stack.push(format!(
-                    "%bin{} = w add {},{}",
-                    self.stack.len(),
-                    *left,
-                    *right
-                ));
-                format!("w %bin{}", self.stack.len() - 1)
+                match op {
+                    parser::ast::Operation::Add => self.stack.push(format!(
+                        "%bin{} = w add {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right
+                    )),
+                    parser::ast::Operation::Greater => self.stack.push(format!(
+                        "%bin{} = w cgt {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right
+                    )),
+                    parser::ast::Operation::Not => self.stack.push(format!(
+                        "%bin{} = w ceqw {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right //Bug
+                    )),
+
+                    parser::ast::Operation::Subtract => self.stack.push(format!(
+                        "%bin{} = w sub {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right
+                    )),
+                    parser::ast::Operation::Multiply => self.stack.push(format!(
+                        "%bin{} = w mul {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right
+                    )),
+                    parser::ast::Operation::Divide => self.stack.push(format!(
+                        "%bin{} = w div {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right
+                    )),
+
+                    parser::ast::Operation::Equal => self.stack.push(format!(
+                        "%bin{} = w ceqd {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right
+                    )),
+
+                    parser::ast::Operation::NotEqual => self.stack.push(format!(
+                        "%bin{} = w cnew {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right
+                    )),
+                    parser::ast::Operation::GreaterEqual => self.stack.push(format!(
+                        "%bin{} = w csgew {},{}",
+                        self.stack.len(),
+                        *left,
+                        *right
+                    )),
+                    other => todo!("This is not implemented yet {other:?}"),
+                };
+                format!("%bin{}", self.stack.len() - 1)
             }
             Expr::Void => String::from(""),
 
@@ -89,8 +143,10 @@ impl Transpiler {
                 Ast::Condition { main, elif, other } => {
                     self.conditions += 1;
                     let condition_num = self.conditions;
+                    let mut condition = String::new();
+                    self.expr_transpiler(&mut condition, *main.condition);
                     exprstream.push_str(&format!(
-                        "%Condition{condition_num} = w ceqd 1, 1\njnz %Condition{condition_num}, @true{condition_num}, @false{condition_num}\n"
+                        "jnz {condition}, @true{condition_num}, @false{condition_num}\n"
                     ));
                     exprstream.push_str(&format!("@true{condition_num}\n"));
                     self.transpile_body(exprstream, main.body);
@@ -103,6 +159,9 @@ impl Transpiler {
                     exprstream.push_str(&format!(
                         "jmp @continue{condition_num}\n@continue{condition_num}\n"
                     ));
+                }
+                Ast::Loop { body } => {
+                    exprstream.push_str(&format!("jmp @continue1\n@contine2\n"));
                 }
                 Ast::Decl {
                     name,

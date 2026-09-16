@@ -14,6 +14,7 @@ impl fmt::Display for Token {
             Token::Op(op) => write!(f, "{}", op),
             Token::LParen => write!(f, "("),
             Token::RParen => write!(f, ")"),
+            Token::For => write!(f, "for"),
             Token::LBrace => write!(f, "{{"),
             Token::RBrace => write!(f, "}}"),
             Token::Indent => write!(f, "indent"),

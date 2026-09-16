@@ -119,6 +119,9 @@ pub enum Statement {
         body: Vec<Statement>,
     },
     Loop {
+        body: Vec<Expr>,
+    },
+    ForLoop {
         var_name: Atom,
         iterable: Box<Expr>,
         body: Vec<Expr>,

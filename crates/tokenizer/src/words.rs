@@ -3,6 +3,8 @@ use crate::tokens::Token;
 pub fn tokenize_word(word: &str) -> Token {
     match word {
         "while" => Token::While,
+        "loop" => Token::Loop,
+        "for" => Token::For,
         "var" => Token::MutableDecl,
         "const" => Token::ConstantDecl,
         "if" => Token::Conditional,
@@ -16,7 +18,6 @@ pub fn tokenize_word(word: &str) -> Token {
         "match" => Token::Match,
         "break" => Token::Break,
         "continue" => Token::Continue,
-        "loop" => Token::Loop,
         "end" => Token::End,
         "return" => Token::Return,
         "drop" => Token::Drop,

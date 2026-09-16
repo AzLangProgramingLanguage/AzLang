@@ -94,6 +94,9 @@ pub enum Ast {
         is_mutable: bool,
         value: Box<Expr>,
     },
+    Loop {
+        body: Vec<Ast>,
+    },
     Exit(Expr),
     Assignment {
         name: String,

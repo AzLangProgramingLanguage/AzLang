@@ -109,12 +109,13 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
             let expr = validate_expr(expr, ctx)?;
             Ok(Ast::Expr(expr))
         }
+        Statement::Loop { body } => Ok(Ast::Loop { body: vec![] }),
         Statement::FunctionDef { .. }
         | Statement::EnumDecl { .. }
         | Statement::StructDef { .. }
+        | Statement::ForLoop { .. }
         | Statement::UnionType { .. }
         | Statement::Match { .. }
-        | Statement::Loop { .. }
         | Statement::ExternalFunctionDef { .. } => Ok(Ast::Expr(ValidatorExpr::Void)),
     }
 }
