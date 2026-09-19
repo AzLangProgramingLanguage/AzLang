@@ -13,17 +13,26 @@ pub fn parse_loop(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     tokens.next();
 
     let mut body = vec![];
+
     if let Some(token) = tokens.next()
         && matches!(
             token,
             SpannedToken {
-                token: Token::Indent,
+                token: Token::Newline,
+                ..
+            }
+        )
+        && let Some(newline) = tokens.next()
+        && matches!(
+            newline,
+            SpannedToken {
+                token: Token::Newline,
                 ..
             }
         )
     {
-        while let Some(token) = tokens.next()
-            && matches!(
+        while let Some(token) = tokens.peek()
+            && !matches!(
                 token,
                 SpannedToken {
                     token: Token::Dedent,

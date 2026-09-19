@@ -37,7 +37,7 @@ pub struct Validator {
     pub link_files: Vec<String>,
     pub enums: HashMap<String, Vec<String>>,
 }
-pub type ValidatedProgram = Result<(Validator, Program), ValidatorError>;
+pub type ValidatedProgram = (Validator, Program);
 impl Validator {
     pub fn function_decl(
         &mut self,
@@ -114,7 +114,7 @@ impl Validator {
         }
     }
 
-    pub fn validate(mut self, ast: Vec<Statement>) -> ValidatedProgram {
+    pub fn validate(mut self, ast: Vec<Statement>) -> Result<ValidatedProgram, ValidatorError> {
         let mut program = Program {
             functions: vec![],
             expressions: vec![],

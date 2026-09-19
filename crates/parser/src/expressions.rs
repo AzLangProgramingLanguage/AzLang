@@ -1,4 +1,5 @@
 use crate::{
+    ParsedProgram,
     ast::{Expr, Operation, Statement},
     binary_op::{parse_expression, parse_statement},
     errors::ParserError,
@@ -11,8 +12,8 @@ use tokenizer::{
     tokens::Token,
 };
 
-pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Vec<Statement>, ParserError> {
-    let mut ast: Vec<Statement> = vec![];
+pub fn parse_expression_block(tokens: &mut Tokens) -> Result<ParsedProgram, ParserError> {
+    let mut ast: ParsedProgram = vec![];
 
     while let Some(token) = tokens.peek() {
         match token {
@@ -54,7 +55,6 @@ pub fn parse_expression_block(tokens: &mut Tokens) -> Result<Vec<Statement>, Par
 
 pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
     let token = tokens.next().ok_or(ParserError::UnexpectedEOF)?;
-    println!("{token:?}");
     match token {
         SpannedToken {
             token: Token::StringLiteral(_),

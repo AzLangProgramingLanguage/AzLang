@@ -21,9 +21,8 @@ pub mod r#while_loop;
 mod tests;
 
 use crate::{ast::Statement, errors::ParserError, expressions::parse_expression_block};
-
-pub type ParsedProgram = Result<Vec<Statement>, ParserError>;
-pub fn parser(sdk: String) -> ParsedProgram {
+pub type ParsedProgram = Vec<Statement>;
+pub fn parser(sdk: String) -> Result<ParsedProgram, ParserError> {
     let mut lexer = tokenizer::Lexer::new(&sdk);
 
     let mut tokens = lexer.tokenize()?;

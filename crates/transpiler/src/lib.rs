@@ -161,7 +161,9 @@ impl Transpiler {
                     ));
                 }
                 Ast::Loop { body } => {
-                    exprstream.push_str(&format!("jmp @continue1\n@contine2\n"));
+                    exprstream.push_str(&format!("@loop1\n"));
+                    exprstream.push_str(&String::from("jmp @loop1\n"));
+                    exprstream.push_str(&String::from("@continue2\n"));
                 }
                 Ast::Decl {
                     name,

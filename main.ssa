@@ -1,5 +1,4 @@
-data $str0 ={ b "/etc/os-release", b 0 } 
-data $str1 ={ b "Hello World", b 0 } 
+data $str0 ={ b "Hello World", b 0 } 
 export function w $_start() {
 @start
 %Stdin = w copy 0
@@ -9,17 +8,8 @@ export function w $_start() {
 %Write = w copy 1
 %NoCreate = w copy 0
 %Create = w copy 1
-%bin7 = w ceqd 1,2
-call $fopen(l $str0,w %ReadOnly,w %NoCreate)
-jnz %bin7, @true1, @false1
-@true1
-call $write(w %Stdout,l $str1,l 11)
-jmp @continue1
-@false1
-jmp @continue1
-@continue1
-jmp @continue1
-@contine2
+
+call $write(w %Stdout,l $str0,l 11)
 
 call $exit(w 0)
 ret
