@@ -21,11 +21,15 @@ pub mod r#while_loop;
 mod tests;
 
 use crate::{ast::Statement, errors::ParserError, expressions::parse_expression_block};
-pub type ParsedProgram = Vec<Statement>;
+#[derive(Default)]
+pub struct ParsedProgram {
+    pub modules: Vec<String>,
+    pub ast: Vec<Statement>,
+}
 pub fn parser(sdk: String) -> Result<ParsedProgram, ParserError> {
     let mut lexer = tokenizer::Lexer::new(&sdk);
 
     let mut tokens = lexer.tokenize()?;
-    let ast = parse_expression_block(&mut tokens)?;
-    Ok(ast)
+    let parsed = parse_expression_block(&mut tokens)?;
+    Ok(parsed)
 }

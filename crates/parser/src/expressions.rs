@@ -13,8 +13,7 @@ use tokenizer::{
 };
 
 pub fn parse_expression_block(tokens: &mut Tokens) -> Result<ParsedProgram, ParserError> {
-    let mut ast: ParsedProgram = vec![];
-
+    let mut program = ParsedProgram::default();
     while let Some(token) = tokens.peek() {
         match token {
             SpannedToken {
@@ -40,17 +39,44 @@ pub fn parse_expression_block(tokens: &mut Tokens) -> Result<ParsedProgram, Pars
                 return Err(ParserError::NotUserDirectValue);
             }
             SpannedToken {
+                token: Token::Import,
+                ..
+            } => {
+                tokens.next();
+                match tokens.next() {
+                    Some(SpannedToken {
+                        token: Token::Identifier(s),
+                        ..
+                    }) => {
+                        program.modules.push(s);
+                    }
+                    Some(other) => {
+                        return Err(ParserError::ExpectedToken(
+                            Token::Identifier("library".to_string()),
+                            other.token,
+                        ));
+                    }
+                    None => {
+                        return Err(ParserError::ExpectedToken(
+                            Token::Identifier("library".to_string()),
+                            Token::Eof,
+                        ));
+                    }
+                }
+            }
+
+            SpannedToken {
                 token: Token::Eof, ..
             } => {
                 break;
             }
             _ => {
                 let expr = parse_statement(tokens)?;
-                ast.push(expr);
+                program.ast.push(expr);
             }
         }
     }
-    Ok(ast)
+    Ok(program)
 }
 
 pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {

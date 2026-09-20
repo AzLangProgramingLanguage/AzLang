@@ -1,4 +1,4 @@
-data $str0 ={ b "Hello World", b 0 } 
+
 export function w $_start() {
 @start
 %Stdin = w copy 0
@@ -9,7 +9,6 @@ export function w $_start() {
 %NoCreate = w copy 0
 %Create = w copy 1
 
-call $write(w %Stdout,l $str0,l 11)
 
 call $exit(w 0)
 ret
