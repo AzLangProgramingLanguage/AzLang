@@ -5,6 +5,7 @@ pub enum FileSystemKind {
     IOError(io::Error),
     UnsupportedFile,
     FileNotFound,
+    UnknownProblem,
 }
 #[derive(Debug)]
 pub struct FileSystemError {
@@ -23,6 +24,7 @@ impl FileSystemError {
             FileSystemKind::IOError(_) => 30,
             FileSystemKind::UnsupportedFile => 31,
             FileSystemKind::FileNotFound => 32,
+            FileSystemKind::UnknownProblem => 33,
         }
     }
 }
@@ -44,6 +46,7 @@ impl Display for FileSystemKind {
                 write!(f, "Dəstəklənməyən Fayl, yalnız .az faylları dəstəklənir")
             }
             FileSystemKind::FileNotFound => write!(f, "Fayl tapılmadı"),
+            FileSystemKind::UnknownProblem => write!(f, "We can't read this file"),
         }
     }
 }

@@ -23,7 +23,7 @@ pub fn read_file(path: &str) -> Result<String, FileSystemError> {
                 file: path.to_string(),
             }),
             _ => Err(FileSystemError {
-                kind: FileSystemKind::UnsupportedFile,
+                kind: FileSystemKind::UnknownProblem,
                 file: path.to_string(),
             }),
         },
@@ -38,7 +38,7 @@ pub fn copy_file(path: &str, move_path: &str) -> Result<(), FileSystemError> {
                 file: path.to_string(),
             }),
             _ => Err(FileSystemError {
-                kind: FileSystemKind::UnsupportedFile, //TODO: Menasız Error Mesajı
+                kind: FileSystemKind::UnknownProblem,
                 file: path.to_string(),
             }),
         },
@@ -55,7 +55,7 @@ pub fn write_file(path: &PathBuf, content: String) -> Result<(), FileSystemError
                 file: path.to_string_lossy().to_string(),
             }),
             _ => Err(FileSystemError {
-                kind: FileSystemKind::UnsupportedFile,
+                kind: FileSystemKind::UnknownProblem,
                 file: path.to_string_lossy().to_string(),
             }),
         },
