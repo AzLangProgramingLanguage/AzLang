@@ -1,23 +1,41 @@
-use std::process::Command;
+use std::{ffi::OsString, path::PathBuf, process::Command};
 
 use parser::ParsedProgram;
 use transpiler::Transpiler;
 use validator::{ValidatedProgram, Validator, errors::ValidatorError};
-pub fn executer(static_libs: Vec<String>) -> std::process::Output {
-    Command::new("qbe")
-        .args(["-o", "main.s", "main.ssa"])
-        .status()
-        .expect("Error");
-    Command::new("as")
-        .args(["main.s", "-o", "main.o"])
-        .status()
-        .expect("Error");
+pub fn executer(program_name: PathBuf, static_libs: Vec<String>) -> std::process::Output {
+    let obj = compile_to_obj(program_name);
     Command::new("ld.lld")
         .args(static_libs)
-        .args(["main.o", "-o", "app"])
+        .arg(obj)
+        .args(["-o", "app"])
+        .output()
+        .expect("Linker Error")
+}
+pub fn compile_to_obj(module: PathBuf) -> PathBuf {
+    let mut s = module.to_path_buf();
+    s.set_extension("s");
+
+    let mut il = module.to_path_buf();
+    il.set_extension("il");
+
+    let mut o = module;
+    o.set_extension("o");
+
+    Command::new("qbe")
+        .args(["-o"])
+        .arg(&s)
+        .arg(&il)
         .status()
-        .expect("Linker Error");
-    Command::new("./app").output().expect("Çalışdırılmadı")
+        .expect("Error");
+
+    Command::new("as")
+        .arg(&s)
+        .arg("-o")
+        .arg(&o)
+        .status()
+        .expect("Error");
+    o
 }
 pub struct CompilerPipline<T>(pub T);
 // impl CompilerPipline<ParsedProgram> {

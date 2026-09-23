@@ -180,16 +180,16 @@ impl Validator {
         }
 
         if let Some(scope) = self.variables.last() {
-            for (name, symbol) in scope {
-                if !symbol.is_used && !matches!(symbol.typ, Type::User(_)) {
-                    return Err(ValidatorError::NotUsedVariable(name.to_string()));
-                }
-                if symbol.is_mutable && !symbol.is_changed {
-                    return Err(ValidatorError::NeverChangedMuttableVariable(
-                        name.to_string(),
-                    ));
-                }
-            }
+            // for (name, symbol) in scope {
+            //     if !symbol.is_used && !matches!(symbol.typ, Type::User(_)) {
+            //         return Err(ValidatorError::NotUsedVariable(name.to_string()));
+            //     }
+            //     if symbol.is_mutable && !symbol.is_changed {
+            //         return Err(ValidatorError::NeverChangedMuttableVariable(
+            //             name.to_string(),
+            //         ));
+            //     }
+            // }
         }
 
         Ok((self, program))
