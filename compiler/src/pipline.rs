@@ -3,14 +3,21 @@ use std::{ffi::OsString, path::PathBuf, process::Command};
 use parser::ParsedProgram;
 use transpiler::Transpiler;
 use validator::{ValidatedProgram, Validator, errors::ValidatorError};
-pub fn executer(program_name: PathBuf, static_libs: Vec<String>) -> std::process::Output {
+pub fn executer(program_name: PathBuf, static_libs: Vec<String>) {
     let obj = compile_to_obj(program_name);
-    Command::new("ld.lld")
+    let output = Command::new("ld.lld")
         .args(static_libs)
         .arg(obj)
         .args(["-o", "app"])
         .output()
-        .expect("Linker Error")
+        .expect("Linker Error");
+    if !output.status.success() {
+        eprintln!(
+            "\x1b[31m[Linker Error]:\x1b[0m\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        std::process::exit(output.status.code().unwrap_or(1));
+    }
 }
 pub fn compile_to_obj(module: PathBuf) -> PathBuf {
     let mut s = module.to_path_buf();
@@ -26,15 +33,15 @@ pub fn compile_to_obj(module: PathBuf) -> PathBuf {
         .args(["-o"])
         .arg(&s)
         .arg(&il)
-        .status()
-        .expect("Error");
+        .output()
+        .expect("Problem oldu");
 
     Command::new("as")
-        .arg(&s)
+        .arg(s)
         .arg("-o")
         .arg(&o)
-        .status()
-        .expect("Error");
+        .output()
+        .expect("Problem oldu");
     o
 }
 pub struct CompilerPipline<T>(pub T);

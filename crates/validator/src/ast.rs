@@ -1,9 +1,11 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use parser::{
     ast::{Atom, Operation, Parameter, Symbol},
     shared_ast::Type,
 };
+
+use crate::validate::ValidatorExpr;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
@@ -24,6 +26,7 @@ pub struct ExternalFunctionDef {
 pub struct Program {
     pub functions: Vec<Function>,
     pub expressions: Vec<Ast>,
+    pub variables: HashMap<String, Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc, vec};
+use std::{collections::HashMap, vec};
 pub mod ast;
 pub mod decl;
 pub mod errors;
@@ -36,6 +36,7 @@ pub struct Validator {
     pub variables: Vec<HashMap<Atom, Symbol>>,
     pub link_files: Vec<String>,
     pub enums: HashMap<String, Vec<String>>,
+    pub constvars: HashMap<String, ValidatorExpr>,
 }
 pub type ValidatedProgram<'a> = (&'a mut Validator, Program);
 impl Validator {
@@ -114,10 +115,11 @@ impl Validator {
         }
     }
 
-    pub fn validate(&mut self, ast: Vec<Statement>) -> Result<ValidatedProgram, ValidatorError> {
+    pub fn validate(&mut self, ast: Vec<Statement>) -> Result<Program, ValidatorError> {
         let mut program = Program {
             functions: vec![],
             expressions: vec![],
+            variables: HashMap::new(),
         };
         self.variables.push(HashMap::new());
         self.function_decl(&ast)?;
@@ -165,12 +167,8 @@ impl Validator {
                                 is_changed: false,
                             },
                         );
-                        program.expressions.push(ast::Ast::Decl {
-                            name: v.to_string(),
-                            typ: Type::Natural,
-                            is_mutable: false,
-                            value: Box::new(ValidatorExpr::Number(i as i64)),
-                        });
+                        self.constvars
+                            .insert(v.to_string(), ValidatorExpr::Number(i as i64));
                     }
                 }
                 stmt => {
@@ -179,7 +177,7 @@ impl Validator {
             }
         }
 
-        if let Some(scope) = self.variables.last() {
+        if let Some(_) = self.variables.last() {
             // for (name, symbol) in scope {
             //     if !symbol.is_used && !matches!(symbol.typ, Type::User(_)) {
             //         return Err(ValidatorError::NotUsedVariable(name.to_string()));
@@ -192,6 +190,6 @@ impl Validator {
             // }
         }
 
-        Ok((self, program))
+        Ok(program)
     }
 }

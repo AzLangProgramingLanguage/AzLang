@@ -1,11 +1,12 @@
 use parser::{self, shared_ast::Type};
-use std::io::Write;
+use std::{collections::HashMap, io::Write};
 use validator::ast::{
     Ast::{self},
     Expr, Program,
 };
 #[derive(Default)]
 pub struct Transpiler {
+    variables: HashMap<String, Expr>,
     data: Vec<String>,
     stack: Vec<String>,
     labels: String,
@@ -19,11 +20,16 @@ impl Transpiler {
                     Type::String(_) => {
                         return format!("l ${name}");
                     }
+                    Type::Natural => {
+                        panic!();
+                    }
                     Type::Integer => {
-                        return format!("w %{name}");
+                        return format!("l ${name}");
                     }
                     Type::User(_) => {
-                        return format!("w %{name}");
+                        if let Some(val) = self.variables.get(&name.to_string()) {
+                            return format!("l {}", val);
+                        }
                     }
                     other => todo!("{other} is not implemented yet"),
                 }
@@ -171,13 +177,6 @@ impl Transpiler {
                     is_mutable,
                     value,
                 } => match typ {
-                    Type::Integer => {
-                        self.stack.push(format!("%{name} = w copy {value}\n"));
-                    }
-                    Type::Natural => {
-                        self.stack.push(format!("%{name} = w copy {value}\n"));
-                    }
-
                     Type::String(strenum) => {
                         self.data
                             .push(format!("data ${name} = {{ b {value}, b 0 }}\n"));
@@ -190,6 +189,7 @@ impl Transpiler {
     }
 
     pub fn transpile_start(&mut self, program: Program) -> String {
+        self.variables = program.variables;
         let mut exprstream = String::new();
         self.transpile_body(&mut exprstream, program.expressions);
         format!(
@@ -207,6 +207,7 @@ ret
         )
     }
     pub fn transpile_module(&mut self, module: &str, program: Program) -> String {
+        self.variables = program.variables;
         let mut exprstream = String::new();
         self.transpile_body(&mut exprstream, program.expressions);
         format!(

@@ -1,0 +1,9 @@
+[book]
+title = "The AzLang Programming Language"
+authors = ["Prestgg1"]
+language = "en"
+
+[output.html]
+site-url = "/docs/"
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
