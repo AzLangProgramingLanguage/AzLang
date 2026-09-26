@@ -4,10 +4,20 @@ AzLang ships as a single, self-contained compiler. It has no dependencies: no ru
 
 ---
 
-## Arch Linux
+## Building from Source
 
 ```bash
-sudo pacman -S azlang
+cargo build --release
+```
+
+This generates the `azcli` binary executable.
+
+---
+
+## Arch Linux / Package Manager
+
+```bash
+sudo pacman -S azcli
 ```
 
 That's it.

@@ -44,12 +44,12 @@ as sdk/src/exit.s -o sdk/build/exit.o
 
 ---
 
-## 3. Compiling and Running with AzLang
+## 3. Compiling and Running with AzCLI
 
-Compile `main.az`:
+Compile `main.az` using `azcli`:
 
 ```bash
-AzLang main.az
+azcli build main.az
 ```
 
 The AzLang pipeline will:
