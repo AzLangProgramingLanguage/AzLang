@@ -1,3 +1,0 @@
-const list<int> a = [1,2,3]
-loop a in b
-    print(b)

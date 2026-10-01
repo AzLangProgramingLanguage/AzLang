@@ -1,5 +1,0 @@
-const int a = 2*2
-const int b = 2+2
-const int c = 2-2+1
-const float d = 2/2
-const int e = 2+2/2

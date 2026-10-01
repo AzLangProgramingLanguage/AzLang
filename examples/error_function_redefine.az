@@ -1,4 +1,0 @@
-func salam(): void
-    print("Hello")
-func salam(): void
-    print(1)

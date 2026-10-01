@@ -1,4 +1,0 @@
-func square(const int x): int
-    return x*x
-
-const int result = square(2)

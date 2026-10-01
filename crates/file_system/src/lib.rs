@@ -14,6 +14,7 @@ pub fn read_file(path: &str) -> Result<String, FileSystemError> {
             file: path.to_string(),
         });
     }
+    println!("{path}");
     let read_to_string = fs::read_to_string(path);
     match read_to_string {
         Ok(s) => Ok(s),

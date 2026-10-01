@@ -3,12 +3,10 @@ use std::{ffi::OsString, path::PathBuf, process::Command};
 use parser::ParsedProgram;
 use transpiler::Transpiler;
 use validator::{ValidatedProgram, Validator, errors::ValidatorError};
-pub fn executer(program_name: PathBuf, static_libs: Vec<String>) {
-    let obj = compile_to_obj(program_name);
+pub fn executer(program_name: &str, static_libs: Vec<String>) {
     let output = Command::new("ld.lld")
         .args(static_libs)
-        .arg(obj)
-        .args(["-o", "app"])
+        .args(["-o", program_name])
         .output()
         .expect("Linker Error");
     if !output.status.success() {

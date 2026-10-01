@@ -1,2 +1,0 @@
-const str b = "Salam"
-print(b)

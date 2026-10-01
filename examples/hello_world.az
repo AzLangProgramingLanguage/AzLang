@@ -1,1 +1,2 @@
-const str msg = `Salam ${1312}`
+import lib
+write(Stdout, "Hello Worlde", 12)

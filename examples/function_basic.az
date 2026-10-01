@@ -1,7 +1,0 @@
-func salamVer(const str ad): str
-    return `Hello, ${ad}`
-
-func generator(): callable
-    return salamVer
-
-print(generator()("Əli"))

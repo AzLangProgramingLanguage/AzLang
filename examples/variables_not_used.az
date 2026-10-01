@@ -1,3 +1,0 @@
-const str b = "Salam"
-print(b)
-const str c = "Hello"

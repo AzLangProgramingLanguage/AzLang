@@ -1,3 +1,0 @@
-const str a = input("A deyeri: ")
-const str c  = a
-print(c)
