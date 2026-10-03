@@ -11,6 +11,7 @@ use crate::{
     errors::CompilerError::{self},
     pipline::{compile_to_obj, executer},
 };
+const STANDARTLIB: &str = "sdk/src/lib.az";
 
 pub fn compiler(path: &str) -> Result<(), CompilerError> {
     let file_name = Path::new(path)
@@ -27,6 +28,7 @@ pub fn compile_obj(
     is_start: bool,
     file_name: &str,
 ) -> Result<Validator, CompilerError> {
+    println!("{path}");
     let module_source = file_system::read_file(path)?;
     let parsed = parser(module_source)?;
 
@@ -34,8 +36,11 @@ pub fn compile_obj(
 
     for module in parsed.modules {
         let mut obj_path = PathBuf::from(path);
-
-        obj_path.set_file_name(format!("{module}.az"));
+        if module == "lib" {
+            obj_path = PathBuf::from(STANDARTLIB);
+        } else {
+            obj_path.set_file_name(format!("{module}.az"));
+        }
 
         let compiled_context = compile_obj(
             obj_path

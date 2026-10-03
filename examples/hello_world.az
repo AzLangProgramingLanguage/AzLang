@@ -1,2 +1,2 @@
 import lib
-write(Stdout, "Hello Worlde", 12)
+write(Stdout, "Sample Hello World", 12)
