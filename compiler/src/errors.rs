@@ -6,14 +6,12 @@ use validator::errors::ValidatorError;
 
 #[derive(Debug, PartialEq)]
 pub enum BackendError {
-    Qbe,
-    BinUtils,
+    Fasm,
 }
 impl Display for BackendError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BackendError::Qbe => writeln!(f, "QBE doesn't installed"),
-            BackendError::BinUtils => writeln!(f, "binutils doesn't installed"),
+            BackendError::Fasm => writeln!(f, "fasm doesn't installed"),
         }
     }
 }

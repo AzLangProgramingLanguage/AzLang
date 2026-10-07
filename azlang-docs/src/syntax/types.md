@@ -8,11 +8,11 @@ AzLang provides a focused set of primitive and composite types that map directly
 
 | Type | Description | Machine Mapping |
 |---|---|---|
-| `int` | Standard signed integer | 32-bit / 64-bit word (`w` / `l` in QBE) |
+| `int` | Standard signed integer | 32-bit / 64-bit machine word |
 | `natural` | Unsigned non-negative integer | Unsigned machine word |
-| `bigint` | Large 64-bit integer | 64-bit long (`l`) |
-| `tinyint` | Small 8-bit / 16-bit integer | Byte / Half-word (`b` / `h`) |
-| `float` | Floating-point number | Single / Double IEEE-754 (`s` / `d`) |
+| `bigint` | Large 64-bit integer | 64-bit register |
+| `tinyint` | Small 8-bit / 16-bit integer | Byte / Half-word |
+| `float` | Floating-point number | Single / Double IEEE-754 |
 
 ### Example:
 ```azlang

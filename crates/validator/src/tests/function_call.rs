@@ -107,7 +107,7 @@ fn test_function_call_return_type_in_result() {
             args: vec![],
         }),
     ];
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(stmts)
         .expect("should validate");
     let returned_type = match &program.expressions[0] {
@@ -130,7 +130,7 @@ fn test_function_call_return_type_bool() {
             args: vec![],
         }),
     ];
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(stmts)
         .expect("should validate");
     let returned_type = match &program.expressions[0] {
@@ -400,10 +400,12 @@ fn test_external_func_link_name_passed_through() {
             args: vec![Expr::Number(42)],
         }),
     ];
-    let (_validator, program) = Validator::default()
-        .validate(stmts)
-        .expect("should validate with link_name");
-    assert_eq!(program.external_functions.len(), 1);
+    let mut validator = Validator::default();
+    let _program = validator.validate(stmts).expect("should validate with link");
+    assert_eq!(
+        validator.link_files,
+        vec![("print".to_string(), "../build/printlib.so".to_string())]
+    );
 }
 
 #[test]
@@ -429,8 +431,12 @@ fn test_external_func_link_name_none_when_omitted() {
             args: vec![Expr::Number(42)],
         }),
     ];
-    let (_validator, program) = Validator::default()
+    let mut validator = Validator::default();
+    let _program = validator
         .validate(stmts)
-        .expect("should validate without link_name");
-    assert_eq!(program.external_functions.len(), 1);
+        .expect("should validate without link");
+    assert_eq!(
+        validator.link_files,
+        vec![("print".to_string(), "../build/printlib.so".to_string())]
+    );
 }

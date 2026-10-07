@@ -15,6 +15,7 @@ use crate::{
 fn parse_loop_test() -> Result<(), ParserError> {
     let mut tokens = create_tokens(vec![
         Token::Loop,
+        Token::Newline,
         Token::Indent,
         Token::Identifier("Hello".to_string()),
         Token::LParen,
@@ -23,14 +24,14 @@ fn parse_loop_test() -> Result<(), ParserError> {
     let parseloop = parse_loop(&mut tokens)?;
     assert_eq!(
         Statement::Loop {
-            body: vec![Expr::Call {
+            body: vec![Statement::Expr(Expr::Call {
                 target: None,
                 name: Box::new(Expr::VariableRef {
                     name: Atom::from("Hello"),
                     symbol: None
                 }),
                 args: vec![]
-            }]
+            })]
         },
         parseloop
     );

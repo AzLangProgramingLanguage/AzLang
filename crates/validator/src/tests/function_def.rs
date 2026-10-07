@@ -212,18 +212,21 @@ fn test_function_decl_overwrites_duplicate() {
         make_func("dup", Type::Bool, vec![], vec![]),
     ];
 
-    validator.function_decl(&stmts);
-
-    let info = validator.functions.get("dup").expect("dup should be registered");
-    assert_eq!(info.return_type, Type::Bool);
+    let result = validator.function_decl(&stmts);
+    assert!(matches!(
+        result,
+        Err(crate::errors::ValidatorError::FunctionAlreadyDefined(_))
+    ));
 }
 
 #[test]
 fn test_function_decl_returns_self() {
     let mut validator = Validator::default();
     let stmt = make_func("f", Type::Integer, vec![], vec![]);
-    let result = validator.function_decl(&vec![stmt]);
-    assert_eq!(result as *mut Validator, &mut validator as *mut Validator);
+    let result = validator
+        .function_decl(&vec![stmt])
+        .expect("function_decl should succeed") as *mut Validator;
+    assert_eq!(result, &mut validator as *mut Validator);
 }
 
 #[test]
@@ -268,7 +271,8 @@ fn test_validate_function_def_preserves_functions_in_result() {
         make_func("foo", Type::Integer, vec![], vec![]),
         make_func("bar", Type::Bool, vec![], vec![]),
     ];
-    let (validator, _program) = Validator::default().validate(stmts).expect("should validate");
+    let mut validator = Validator::default();
+    let _program = validator.validate(stmts).expect("should validate");
 
     assert!(validator.functions.contains_key("foo"));
     assert!(validator.functions.contains_key("bar"));
@@ -291,7 +295,8 @@ fn test_validate_function_def_with_complex_return_type() {
         vec![],
         vec![],
     )];
-    let (validator, _program) = Validator::default().validate(stmts).expect("should validate");
+    let mut validator = Validator::default();
+    let _program = validator.validate(stmts).expect("should validate");
 
     let info = validator.functions.get("get_list").unwrap();
     assert_eq!(

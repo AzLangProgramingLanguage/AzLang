@@ -5,6 +5,8 @@ program.
 app
 *.o
 *.so
+*.ssa
+*.asm
 main.s
 *.il
 bin
@@ -14,5 +16,6 @@ zig-cache/
 .zig-cache/
 
 # SDK - tracked as separate submodule
-sdk/
+/sdk/
 .wrangler/
+/azlang-docs/book/

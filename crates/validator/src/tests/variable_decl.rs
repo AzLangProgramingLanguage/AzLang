@@ -29,7 +29,7 @@ fn test_variable_decl_integer() {
     );
     assert!(result.is_ok());
 
-    let sym = validator.lookup_variable("x").unwrap();
+    let sym = validator.lookup_variable(&Atom::from("x")).unwrap();
     assert_eq!(sym.typ, Type::Integer);
     assert!(!sym.is_used);
     assert!(!sym.is_mutable);
@@ -39,7 +39,7 @@ fn test_variable_decl_integer() {
 fn test_variable_decl_already_declared() {
     let mut validator = setup_validator();
     validator.declare_variable(
-        "x".to_string(),
+        Atom::from("x"),
         Symbol {
             typ: Type::Integer,
             is_mutable: false,
@@ -71,7 +71,7 @@ fn test_string_decl_literal() {
     );
     assert!(result.is_ok());
 
-    let sym = validator.lookup_variable("s").unwrap();
+    let sym = validator.lookup_variable(&Atom::from("s")).unwrap();
     assert_eq!(sym.typ, Type::String(StringEnum::LiteralString));
 }
 
@@ -87,7 +87,7 @@ fn test_string_decl_dynamic() {
     );
     assert!(result.is_ok());
 
-    let sym = validator.lookup_variable("s").unwrap();
+    let sym = validator.lookup_variable(&Atom::from("s")).unwrap();
     assert_eq!(sym.typ, Type::String(StringEnum::DynamicString));
 }
 
@@ -115,7 +115,7 @@ fn test_string_decl_type_mismatch_int() {
 fn test_variable_decl_already_declared_string() {
     let mut validator = setup_validator();
     validator.declare_variable(
-        "s".to_string(),
+        Atom::from("s"),
         Symbol {
             typ: Type::String(StringEnum::LiteralString),
             is_mutable: false,
@@ -199,7 +199,7 @@ fn test_decl_any() {
     );
     assert!(result.is_ok());
 
-    let sym = validator.lookup_variable("a").unwrap();
+    let sym = validator.lookup_variable(&Atom::from("a")).unwrap();
     assert_eq!(sym.typ, Type::Integer);
 }
 
@@ -215,7 +215,7 @@ fn test_decl_any_with_string() {
     );
     assert!(result.is_ok());
 
-    let sym = validator.lookup_variable("a").unwrap();
+    let sym = validator.lookup_variable(&Atom::from("a")).unwrap();
     assert_eq!(sym.typ, Type::String(StringEnum::LiteralString));
 }
 
@@ -395,7 +395,7 @@ fn test_array_decl_integer() {
     );
     assert!(result.is_ok());
 
-    let sym = validator.lookup_variable("arr").unwrap();
+    let sym = validator.lookup_variable(&Atom::from("arr")).unwrap();
     assert_eq!(sym.typ, Type::Array(Box::new(Type::Integer)));
 }
 
@@ -411,7 +411,7 @@ fn test_array_decl_empty() {
     );
     assert!(result.is_ok());
 
-    let sym = validator.lookup_variable("arr").unwrap();
+    let sym = validator.lookup_variable(&Atom::from("arr")).unwrap();
     assert_eq!(sym.typ, Type::Array(Box::new(Type::Any)));
 }
 

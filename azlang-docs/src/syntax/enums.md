@@ -36,13 +36,22 @@ During the semantic validation stage, enum variants are registered directly as s
 - `Stdout -> 1`
 - `Stderr -> 2`
 
-During intermediate code generation, any reference to an enum variant is **directly inlined at compile-time as an immediate byte / literal value** directly into the instruction stream or call site:
+During code generation, any reference to an enum variant is **directly inlined at compile-time as an immediate byte / literal value** directly into the instruction stream or call site:
 
-```qbe
-# Emitted Intermediate Representation
-# Notice that no stack allocation or copy instruction is generated.
-# The variant is inlined directly as an immediate literal argument:
-call $write(l 1, l $str0, l 27)
+```asm
+; Emitted assembly
+; Notice that no load from memory or lookup table is generated.
+; The variant is inlined directly as an immediate argument:
+    mov rax, 1
+    push rax
+    lea rax, [main_str0]
+    push rax
+    mov rax, 27
+    push rax
+    pop rdx
+    pop rsi
+    pop rdi
+    call write
 ```
 
 ### Key Architectural Benefits:
@@ -62,10 +71,10 @@ enum FD
     Stdout
     Stderr
 
-@link("./sdk/build/write.o")
+@link("./sdk/src/write.s")
 op write(FD fd, const str val, const int size): void
 
-@link("./sdk/build/exit.o")
+@link("./sdk/src/exit.s")
 op exit(const int val): void
 
 # Stdout is validated as FD type at compile-time, 

@@ -9,7 +9,7 @@ mod tests {
 
     #[test]
     fn test_while_loop_valid_bool_condition() {
-        let validator = Validator::default();
+        let mut validator = Validator::default();
         let program = vec![Statement::While {
             condition: Box::new(Expr::Bool(true)),
             body: vec![Statement::Expr(Expr::Number(1))],
@@ -20,7 +20,7 @@ mod tests {
 
     #[test]
     fn test_while_loop_invalid_condition_type() {
-        let validator = Validator::default();
+        let mut validator = Validator::default();
         let program = vec![Statement::While {
             condition: Box::new(Expr::Number(42)),
             body: vec![],
@@ -34,7 +34,7 @@ mod tests {
 
     #[test]
     fn test_while_loop_body_with_decl() {
-        let validator = Validator::default();
+        let mut validator = Validator::default();
         let program = vec![
             Statement::Decl {
                 name: Atom::from("x"),

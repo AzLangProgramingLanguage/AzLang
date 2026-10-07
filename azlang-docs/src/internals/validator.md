@@ -10,7 +10,7 @@ During semantic validation, the compiler analyzes program declarations to verify
 
 - **Type Safety**: Variable assignments, arithmetic expressions, and function arguments match expected types.
 - **Scope Management**: Variables, constants, and functions are validated within their lexical scopes.
-- **Link Registry**: External function declarations (`@link`) are recorded and prepared for the linker phase.
+- **Link Registry**: External function declarations (`@link`) are recorded as `(operation, source path)` pairs and prepared for assembly emission.
 - **Unused & Mutation Tracking**: Identifies immutable violations and unused bindings at compile-time.
 
 ---

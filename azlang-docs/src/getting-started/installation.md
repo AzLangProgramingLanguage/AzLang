@@ -1,6 +1,6 @@
 # Installation
 
-AzLang ships as a single, self-contained compiler. It has no dependencies: no runtime, no external toolchain, nothing else to install.
+AzLang ships as a single compiler binary. There is no runtime to install, no VM, and no LLVM-sized toolchain — the only external tool the compiler invokes is **fasm**.
 
 ---
 
@@ -14,13 +14,19 @@ This generates the `azcli` binary executable.
 
 ---
 
-## Arch Linux / Package Manager
+## Installing fasm
+
+AzLang emits one `.asm` file per build and hands it to [fasm](https://flatassembler.net/), which assembles and links it into a standalone ELF executable in a single pass.
 
 ```bash
-sudo pacman -S azcli
+# Arch Linux
+sudo pacman -S fasm
+
+# Debian / Ubuntu
+sudo apt install fasm
 ```
 
-That's it.
+For other platforms, download fasm from <https://flatassembler.net/> and put it on your `PATH`.
 
 ---
 

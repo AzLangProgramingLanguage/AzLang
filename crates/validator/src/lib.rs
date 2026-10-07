@@ -34,7 +34,7 @@ pub struct MethodInfo {
 pub struct Validator {
     pub functions: HashMap<String, FunctionInfo>,
     pub variables: Vec<HashMap<Atom, Symbol>>,
-    pub link_files: Vec<String>,
+    pub link_files: Vec<(String, String)>,
     pub enums: HashMap<String, Vec<String>>,
     pub constvars: HashMap<String, ValidatorExpr>,
 }
@@ -75,7 +75,7 @@ impl Validator {
                         return Err(ValidatorError::FunctionAlreadyDefined(namestr));
                     }
 
-                    self.link_files.push(library.to_string());
+                    self.link_files.push((namestr.clone(), library.to_string()));
                     self.functions.insert(
                         namestr,
                         FunctionInfo {

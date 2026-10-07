@@ -8,7 +8,7 @@ AzLang brings this functional minimalist mindset to software engineering:
 ┌───────────────────────────────────────────────────────────────────────────────────┐
 │ AZLANG FIELD DOCTRINE                                                             │
 │                                                                                   │
-│  [Source Code] ──► [Direct AST Lowering] ──► [2.6 KB Bare-Metal Binary]           │
+│  [Source Code] ──► [fasm Assembly Emission] ──► [228-Byte Bare-Metal Binary]      │
 │                                                                                   │
 │  • Self-contained toolchain with zero runtime dependencies.                       │
 │  • Executes anywhere, compiles in microseconds, leaves zero operational footprint.│
@@ -28,8 +28,8 @@ Traditional compiler architectures often assume an infinite logistical tail:
 
 AzLang is designed as a self-contained, field-deployable compiler:
 - **No background daemons**: Compiles directly in one shot.
-- **Direct AST Lowering**: AST nodes lower into a lean intermediate representation (QBE / direct IR) without requiring gigabytes of compiler caches.
-- **Microsecond compilation**: The compiler executable can be dropped onto an environment, parse code, validate semantics, emit intermediate code, and link a binary in milliseconds.
+- **Direct AST Lowering**: AST nodes lower straight into readable fasm assembly without requiring gigabytes of compiler caches.
+- **Microsecond compilation**: The compiler executable can be dropped onto an environment, parse code, validate semantics, emit assembly, and link a binary in milliseconds.
 
 ---
 
@@ -43,7 +43,7 @@ Rather than performing multi-pass combinatorial saturations that bloat compile t
 | Metric | AzLang Engineering Model | Heavy Industrial Toolchains |
 |---|---|---|
 | **Compilation Latency** | Microseconds to milliseconds | Seconds to minutes |
-| **Output Binary Size** | Typically 2.0 KB – 3.0 KB | 5 MB – 50 MB |
+| **Output Binary Size** | Hello world: 228 bytes; ~2 KB for multi-module programs | 5 MB – 50 MB |
 | **Runtime Dependencies** | None (Direct Kernel Syscalls) | libc, libm, libpthread, dynamic runtimes |
 | **Hardware Targets** | Bare metal, microcontrollers, embedded, microservices | Cloud servers, heavy multi-core desktops |
 

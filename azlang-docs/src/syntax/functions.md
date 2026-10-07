@@ -35,17 +35,17 @@ op log_message(const str msg, const int len): void
 
 ## 3. External Operations (`@link` + `op`)
 
-To declare an interface to an external object file, library, or assembly stub, place the `@link` directive above the `op` signature:
+To declare an interface to an external assembly source, place the `@link` directive above the `op` signature:
 
 ```azlang
-@link("./sdk/build/write.o")
+@link("./sdk/src/write.s")
 op write(FD fd, const str val, const int size): void
 
-@link("./sdk/build/exit.o")
+@link("./sdk/src/exit.s")
 op exit(const int val): void
 
-@link("./sdk/build/fopen.o")
+@link("./sdk/src/fopen.s")
 op fopen(const str val, FLAG flag, FMODE mode): File
 ```
 
-When AzLang compiles this file, it registers the external function signature in its symbol table and automatically adds the linked object file to the final linker invocation (`ld.lld`).
+When AzLang compiles this file, it registers the external function signature in its symbol table and, for every operation that is actually called, emits an `include` directive pulling the assembly source into the generated `.asm` — fasm then resolves the symbol statically in the same pass.

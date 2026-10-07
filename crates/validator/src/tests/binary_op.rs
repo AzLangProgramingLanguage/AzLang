@@ -11,7 +11,7 @@ fn test_binary_op_add_integers() {
         right: Box::new(Expr::Number(3)),
         op: Operation::Add,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -33,7 +33,7 @@ fn test_binary_op_add_strings() {
         right: Box::new(Expr::String(Atom::from("Yupiter"))),
         op: Operation::Add,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -56,7 +56,7 @@ fn test_binary_op_subtract_integers() {
         right: Box::new(Expr::Number(4)),
         op: Operation::Subtract,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -78,7 +78,7 @@ fn test_binary_op_multiply_floats() {
         right: Box::new(Expr::Float(3.0)),
         op: Operation::Multiply,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -100,7 +100,7 @@ fn test_binary_op_mixed_int_float() {
         right: Box::new(Expr::Float(2.0)),
         op: Operation::Add,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -122,7 +122,7 @@ fn test_binary_op_divide_integers() {
         right: Box::new(Expr::Number(3)),
         op: Operation::Divide,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -144,7 +144,7 @@ fn test_binary_op_equal_comparison() {
         right: Box::new(Expr::Number(5)),
         op: Operation::Equal,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -166,7 +166,7 @@ fn test_binary_op_not_equal_comparison() {
         right: Box::new(Expr::Number(3)),
         op: Operation::NotEqual,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -188,7 +188,7 @@ fn test_binary_op_greater_comparison() {
         right: Box::new(Expr::Number(5)),
         op: Operation::Greater,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -210,7 +210,7 @@ fn test_binary_op_less_equal_comparison() {
         right: Box::new(Expr::Number(3)),
         op: Operation::LessEqual,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -232,7 +232,7 @@ fn test_binary_op_logical_and() {
         right: Box::new(Expr::Bool(false)),
         op: Operation::And,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -254,7 +254,7 @@ fn test_binary_op_logical_or() {
         right: Box::new(Expr::Bool(false)),
         op: Operation::Or,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 
@@ -276,7 +276,7 @@ fn test_binary_op_modulo() {
         right: Box::new(Expr::Number(3)),
         op: Operation::Modulo,
     });
-    let (_validator, program) = Validator::default()
+    let program = Validator::default()
         .validate(vec![stmt])
         .expect("valid program should not fail");
 

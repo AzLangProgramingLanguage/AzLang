@@ -14,10 +14,10 @@ enum FD
     Stdout
     Stderr
 
-@link("./sdk/build/write.o")
+@link("./sdk/src/write.s")
 op write(FD fd, const str val, const int size): void
 
-@link("./sdk/build/exit.o")
+@link("./sdk/src/exit.s")
 op exit(const int val): void
 
 write(Stdout, "Hello World from AzLang!\n", 25)
@@ -25,26 +25,14 @@ exit(0)
 ```
 
 ### Deconstructing the Code:
-1. `enum FD`: Defines standard file descriptors (`Stdin=0`, `Stdout=1`, `Stderr=2`).
-2. `@link(...)`: Links directly to an object file (`write.o` / `exit.o`) compiled from assembly stubs that perform direct Linux syscalls (`syscall` instruction).
+1. `enum FD`: Defines standard file descriptors (`Stdin=0`, `Stdout=1`, `Stderr=2`). Enum variants are inlined as immediates — no lookup table exists at runtime.
+2. `@link(...)`: Points at a fasm assembly source containing a syscall stub that performs a direct Linux `syscall` instruction. The source is included straight into the generated assembly — there is nothing to pre-compile.
 3. `op write(...)`: Declares a callable operation function signature and parameter types.
-4. `write(...)` & `exit(...)`: Calls the operations natively without libc overhead.
+4. `write(...)` & `exit(...)`: Calls the operations natively without libc overhead. The string length `25` accounts for the `\n` escape, which is resolved to a single newline byte at emission time.
 
 ---
 
-## 2. Compiling the SDK Assembly Stubs
-
-If you are working inside the repository or using the SDK:
-
-```bash
-# Build the assembly syscall objects
-as sdk/src/write.s -o sdk/build/write.o
-as sdk/src/exit.s -o sdk/build/exit.o
-```
-
----
-
-## 3. Compiling and Running with AzCLI
+## 2. Compiling with AzCLI
 
 Compile `main.az` using `azcli`:
 
@@ -55,24 +43,22 @@ azcli build main.az
 The AzLang pipeline will:
 1. Parse `main.az` into an AST.
 2. Validate symbols and types.
-3. Emit QBE Intermediate Language (`main.il`).
-4. Invoke `qbe` to produce `main.s`.
-5. Invoke `as` to produce `main.o`.
-6. Invoke `ld.lld` to link `main.o` together with `write.o` and `exit.o` into the standalone binary `app`.
+3. Emit a single assembly file (`main.asm`) containing the program code, its string data, and `include` directives for `write.s` and `exit.s`.
+4. Invoke `fasm`, which assembles and links that file directly into the standalone binary `main` in one pass.
 
-> The backend tools (`qbe`, `as`, `ld.lld`) are pulled in automatically by the `azlang` package. You never need to install or call them yourself.
+> The only external tool required is **[fasm](https://flatassembler.net/)**. There is no `qbe`, no `as`, no `ld` and no object files.
 
 Run the resulting executable:
 
 ```bash
-./app
+./main
 # Output:
 # Hello World from AzLang!
 ```
 
 Check the binary size:
 ```bash
-ls -lh app
-# Output: ~2.6K
+ls -l main
+# 228 bytes
 ```
-A complete, functional ELF binary in less than 3 kilobytes!
+A complete, functional ELF executable in 228 bytes!

@@ -265,7 +265,7 @@ fn test_keyword_else() {
 
 #[test]
 fn test_keyword_function_def() {
-    assert_eq!(tokenize("func"), vec![Token::FunctionDef]);
+    assert_eq!(tokenize("op"), vec![Token::FunctionDef]);
 }
 
 #[test]
@@ -275,7 +275,7 @@ fn test_keyword_function_type() {
 #[test]
 fn overal() {
     assert_eq!(
-        tokenize("@link(\"Hello\")\nfunc Hello():void "),
+        tokenize("@link(\"Hello\")\nop Hello():void "),
         vec![
             Token::At,
             Token::Identifier("link".to_string()),

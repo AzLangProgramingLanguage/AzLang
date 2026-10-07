@@ -112,11 +112,11 @@ fn parse_binary_op_with_precedence(
                 }
             }
         }
-        return Ok(Expr::Call {
+        left = Expr::Call {
             target: None,
             name: Box::new(left),
             args,
-        });
+        };
     }
     loop {
         let op = match tokens.peek() {

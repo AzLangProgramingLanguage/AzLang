@@ -27,5 +27,5 @@
 # Architecture & Compiler Pipeline
 - [Pipeline: Tokenizer to AST](./internals/frontend.md)
 - [Semantic Validation & Symbol Tables](./internals/validator.md)
-- [QBE Intermediate Representation](./internals/qbe.md)
-- [Direct Assembly & Linking](./internals/assembly_linking.md)
+- [fasm Assembly Emission](./internals/fasm.md)
+- [Single-Pass Assembly & Binary Layout](./internals/direct_assembly.md)

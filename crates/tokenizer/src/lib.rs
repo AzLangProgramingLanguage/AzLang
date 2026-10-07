@@ -263,12 +263,25 @@ impl<'a> Lexer<'a> {
             '%' => Ok(Token::Modulo),
             '>' => Ok(Token::Greater),
             '<' => Ok(Token::Less),
-            '=' if self.chars.next() == Some('=') => Ok(Token::Equal),
+            '=' if self.chars.peek() == Some(&'=') => {
+                self.chars.next();
+                Ok(Token::Equal)
+            }
             '=' => Ok(Token::Assign),
-            '!' if self.chars.next() == Some('=') => Ok(Token::NotEqual),
+            '!' if self.chars.peek() == Some(&'=') => {
+                self.chars.next();
+                Ok(Token::NotEqual)
+            }
             '!' => Ok(Token::Not),
-            '&' if self.chars.peek() == Some(&'=') => Ok(Token::DoubleAnd),
+            '&' if self.chars.peek() == Some(&'&') => {
+                self.chars.next();
+                Ok(Token::And)
+            }
             '&' => Ok(Token::And),
+            '|' if self.chars.peek() == Some(&'|') => {
+                self.chars.next();
+                Ok(Token::Or)
+            }
             '|' => Ok(Token::Or),
             _ => Err(LexerError::UnexpectedToken(
                 SourceSpan {
@@ -332,7 +345,7 @@ impl<'a> Lexer<'a> {
             Some('[') => self.consume(Token::ListStart),
             Some(']') => self.consume(Token::ListEnd),
             Some('=') | Some('/') | Some('*') | Some('%') | Some('^') | Some('>') | Some('<')
-            | Some('+') | Some('-') | Some('!') => self.read_operator(),
+            | Some('+') | Some('-') | Some('!') | Some('&') | Some('|') => self.read_operator(),
             Some('0'..='9') => self.read_number(),
             Some('\'') | Some('"') => self.read_string(),
             Some(_) => self.read_word(),

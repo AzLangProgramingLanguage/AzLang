@@ -32,10 +32,10 @@ enum FD
     Stdout
     Stderr
 
-@link("./sdk/build/exit.o")
+@link("./sdk/src/exit.s")
 op exit(const int val): void
 
-@link("./sdk/build/write.o")
+@link("./sdk/src/write.s")
 op write(FD fd, const str val, const int size): void
 ```
 
@@ -46,4 +46,4 @@ op write(FD fd, const str val, const int size): void
 When an `import` directive is encountered:
 1. The parser resolves the target file in the module search path.
 2. The imported module AST is parsed and analyzed.
-3. Symbol tables are merged or qualified, ensuring all linked `.o` files and symbols are provided to the linker.
+3. Symbol tables are merged or qualified, ensuring every `@link` source needed by the combined program is included exactly once in the emitted assembly.

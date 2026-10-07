@@ -22,7 +22,7 @@ fn test_assignment_success() {
     let mut validator = Validator::default();
     validator.variables.push(HashMap::new());
     validator.declare_variable(
-        "x".to_string(),
+        Atom::from("x"),
         Symbol {
             typ: Type::Integer,
             is_mutable: true,
@@ -38,7 +38,7 @@ fn test_assignment_success() {
         .variables
         .last()
         .expect("variable stack should not be empty")
-        .get("x")
+        .get(&Atom::from("x"))
         .expect("symbol 'x' should exist in scope");
 
     assert!(
@@ -52,7 +52,7 @@ fn test_assignment_to_immutable() {
     let mut validator = Validator::default();
     validator.variables.push(HashMap::new());
     validator.declare_variable(
-        "x".to_string(),
+        Atom::from("x"),
         Symbol {
             typ: Type::Integer,
             is_mutable: false,
@@ -70,7 +70,7 @@ fn test_assignment_type_mismatch() {
     let mut validator = Validator::default();
     validator.variables.push(HashMap::new());
     validator.declare_variable(
-        "x".to_string(),
+        Atom::from("x"),
         Symbol {
             typ: Type::Integer,
             is_mutable: true,

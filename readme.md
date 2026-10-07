@@ -14,7 +14,7 @@
 
 **AzLang** provides an approachable, understandable and performant coding experience for everyone — from beginners to professional developers.
 
-AzLang is a **compiled** language. The source is parsed into an AST, semantically validated, and then lowered through a dedicated backend. There is no runtime interpreter for `.az` scripts.
+AzLang is a **compiled** language. The source is parsed into an AST, semantically validated, lowered to a single fasm assembly file, and assembled into a native executable in one pass. There is no runtime interpreter for `.az` scripts.
 
 ---
 
@@ -71,7 +71,7 @@ a = 2
 
 const str b = "Hi"
 
-func add(a: int, b: int): int
+op add(a: int, b: int): int
     return a + b
 
 print(add(1, 2))
@@ -87,6 +87,5 @@ cargo build --release
 
 ## Dependencies
 
-- [QBE](https://c9x.me/compile/) — afterburner backend / intermediate representation compiler
-- **Linux** — `binutils` (assembler) and `ld.lld` (linker)
-- **Windows** — an assembler (e.g. MASM or NASM) and `lld.link` (linker)
+- [fasm](https://flatassembler.net/) — the flat assembler; AzLang emits one `.asm` file and fasm turns it directly into a standalone ELF executable (assembling and linking in the same pass)
+- **Linux x86_64** — nothing else: no C runtime, no `binutils`, no `ld`, no LLVM/QBE

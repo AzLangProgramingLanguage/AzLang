@@ -1,6 +1,6 @@
 use crate::{
     ast::{Atom, Statement},
-    binary_op::parse_expression,
+    condition::parse_block,
     errors::ParserError,
     expressions::parse_single_expr,
     helpers::expect_token,
@@ -11,38 +11,8 @@ use tokenizer::{
 };
 pub fn parse_loop(tokens: &mut Tokens) -> Result<Statement, ParserError> {
     tokens.next();
-
-    let mut body = vec![];
-
-    if let Some(token) = tokens.next()
-        && matches!(
-            token,
-            SpannedToken {
-                token: Token::Newline,
-                ..
-            }
-        )
-        && let Some(newline) = tokens.next()
-        && matches!(
-            newline,
-            SpannedToken {
-                token: Token::Newline,
-                ..
-            }
-        )
-    {
-        while let Some(token) = tokens.peek()
-            && !matches!(
-                token,
-                SpannedToken {
-                    token: Token::Dedent,
-                    ..
-                }
-            )
-        {
-            body.push(parse_expression(tokens)?);
-        }
-    }
+    expect_token(tokens, Token::Newline)?;
+    let body = parse_block(tokens)?;
     Ok(Statement::Loop { body })
 }
 pub fn parse_for_loop(tokens: &mut Tokens) -> Result<Statement, ParserError> {

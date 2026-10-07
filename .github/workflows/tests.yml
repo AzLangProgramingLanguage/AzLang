@@ -11,12 +11,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install Rust (1.96)
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.96.0
           components: rustfmt, clippy
+
+      - name: Install fasm
+        run: sudo apt-get update && sudo apt-get install -y fasm
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
