@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use file_system::write_file;
 use parser::parser;
@@ -9,7 +12,7 @@ mod pipline;
 
 use crate::{
     errors::CompilerError::{self},
-    pipline::{compile_to_obj, executer},
+    pipline::executer,
 };
 const STANDARTLIB: &str = "sdk/src/lib.az";
 
@@ -20,8 +23,7 @@ pub fn compiler(path: &str) -> Result<(), CompilerError> {
         .expect("Your file name isn't valid. Please write utf-8 standarts");
 
     let context = compile(path, true, &file_name)?;
-    dbg!(context);
-    // executer(file_name, context.link_files);
+    executer(file_name, context.link_files);
     Ok(())
 }
 pub fn compile(path: &str, is_start: bool, file_name: &str) -> Result<Validator, CompilerError> {
@@ -62,11 +64,11 @@ pub fn compile(path: &str, is_start: bool, file_name: &str) -> Result<Validator,
         transpiled_code = transpiler.transpile_module(&file_name, validated_program);
     }
 
-    // let mut path = PathBuf::from(path);
-    // path.set_file_name(file_name);
-    // path.set_extension("il");
+    let mut path = PathBuf::new();
+    path.set_file_name(file_name);
+    path.set_extension("asm");
 
-    // write_file(&path, transpiled_code)?;
+    write_file(&path, transpiled_code)?;
 
     return Ok(validator);
 }

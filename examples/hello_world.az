@@ -1,2 +1,2 @@
-import lib
-write(Stdout, "Sample Hello World", 12)
+/*import lib
+write(Stdout, "Sample Hello World", 12)*/ 

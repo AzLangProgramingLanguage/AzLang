@@ -22,9 +22,9 @@ pub enum Token {
     End,
     Comment(String),
     Drop,
-    Match, // uyğun
-    Arrow, // ->
-    At,    // @
+    Match,
+    Arrow,
+    At,
     Loop,
     Break,
     Continue,
@@ -82,4 +82,5 @@ pub enum Token {
     GreaterEqual,
     Less,
     LessEqual,
+    InlineAsm,
 }

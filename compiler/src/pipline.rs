@@ -1,12 +1,10 @@
-use std::{ffi::OsString, path::PathBuf, process::Command};
+use std::{path::PathBuf, process::Command};
 
-use parser::ParsedProgram;
-use transpiler::Transpiler;
-use validator::{ValidatedProgram, Validator, errors::ValidatorError};
 pub fn executer(program_name: &str, static_libs: Vec<String>) {
-    let output = Command::new("ld.lld")
-        .args(static_libs)
-        .args(["-o", program_name])
+    let asm = format!("{program_name}.asm");
+    let output = Command::new("fasm")
+        .arg(asm)
+        .arg(program_name)
         .output()
         .expect("Linker Error");
     if !output.status.success() {
@@ -17,31 +15,31 @@ pub fn executer(program_name: &str, static_libs: Vec<String>) {
         std::process::exit(output.status.code().unwrap_or(1));
     }
 }
-pub fn compile_to_obj(module: PathBuf) -> PathBuf {
-    let mut s = module.to_path_buf();
-    s.set_extension("s");
+// pub fn compile_to_obj(module: PathBuf) -> PathBuf {
+//     let mut s = module.to_path_buf();
+//     s.set_extension("s");
 
-    let mut il = module.to_path_buf();
-    il.set_extension("il");
+//     let mut il = module.to_path_buf();
+//     il.set_extension("il");
 
-    let mut o = module;
-    o.set_extension("o");
+//     let mut o = module;
+//     o.set_extension("o");
 
-    Command::new("qbe")
-        .args(["-o"])
-        .arg(&s)
-        .arg(&il)
-        .output()
-        .expect("Problem oldu");
+//     Command::new("qbe")
+//         .args(["-o"])
+//         .arg(&s)
+//         .arg(&il)
+//         .output()
+//         .expect("Problem oldu");
 
-    Command::new("as")
-        .arg(s)
-        .arg("-o")
-        .arg(&o)
-        .output()
-        .expect("Problem oldu");
-    o
-}
+//     Command::new("as")
+//         .arg(s)
+//         .arg("-o")
+//         .arg(&o)
+//         .output()
+//         .expect("Problem oldu");
+//     o
+// }
 pub struct CompilerPipline<T>(pub T);
 // impl CompilerPipline<ParsedProgram> {
 //     pub fn validate(self) -> Result<CompilerPipline<ValidatedProgram>, ValidatorError> {
