@@ -189,39 +189,9 @@ impl Transpiler {
     }
 
     pub fn transpile_start(&mut self, program: Program) -> String {
-        self.variables = program.variables;
-        let mut exprstream = String::new();
-        self.transpile_body(&mut exprstream, program.expressions);
-        format!(
-            "{}
-export function w $_start() {{
-@start
-{}
-{exprstream}
-call $exit(w 0)
-ret
-}}
-",
-            self.data.join("\n"),
-            self.stack.join(""),
-        )
+        String::new()
     }
     pub fn transpile_module(&mut self, module: &str, program: Program) -> String {
-        self.variables = program.variables;
-        let mut exprstream = String::new();
-        self.transpile_body(&mut exprstream, program.expressions);
-        format!(
-            "{}
-export function w ${module}() {{
-@start
-{}
-{exprstream}
-call $exit(w 0)
-ret
-}}
-",
-            self.data.join("\n"),
-            self.stack.join(""),
-        )
+        String::new()
     }
 }
