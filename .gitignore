@@ -16,3 +16,10 @@ zig-cache/
 # SDK - tracked as separate submodule
 sdk/
 .wrangler/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# Local build test artifacts
+/lib
+/lib.asm

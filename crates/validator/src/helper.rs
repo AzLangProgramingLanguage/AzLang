@@ -170,27 +170,27 @@ fn resolve_arithmetic_type(
     op: Operation,
 ) -> Result<Type, ValidatorError> {
     match (left, right) {
-        // String birləşməsi yalnız Add üçün
+        // String concatenation is only allowed with Add
         (Type::String(_), Type::String(_)) if op == Operation::Add => {
             Ok(Type::String(StringEnum::DynamicString))
         }
 
-        // String-ə digər riyazi əməliyyatlar qadağandır
+        // Other arithmetic operations on strings are forbidden
         (Type::String(_), _) | (_, Type::String(_)) => Err(ValidatorError::InvalidOperation {
             op,
             left: left.clone(),
             right: right.clone(),
         }),
 
-        // Eyni tiplər
+        // Same types
         (Type::Integer, Type::Integer) => Ok(Type::Integer),
         (Type::Natural, Type::Natural) => Ok(Type::Natural),
         (Type::Float, Type::Float) => Ok(Type::Float),
 
-        // Float + Integer qarışığı → Float
+        // Float + Integer mix → Float
         (Type::Float, Type::Integer) | (Type::Integer, Type::Float) => Ok(Type::Float),
 
-        // Hər şey digər hal — tip uyğunsuzluğu
+        // Everything else — type mismatch
         (l, r) => Err(ValidatorError::TypeMismatch {
             expected: l.clone(),
             found: r.clone(),
@@ -198,7 +198,7 @@ fn resolve_arithmetic_type(
     }
 }
 
-/// Tipin gözlənilən tipə uyğun olmasını yoxlayır.
+/// Checks whether the type matches the expected type.
 #[inline]
 fn expect_type(expected: Type, found: &Type) -> Result<(), ValidatorError> {
     if *found != expected {

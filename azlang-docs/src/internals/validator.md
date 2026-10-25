@@ -10,7 +10,7 @@ During semantic validation, the compiler analyzes program declarations to verify
 
 - **Type Safety**: Variable assignments, arithmetic expressions, and function arguments match expected types.
 - **Scope Management**: Variables, constants, and functions are validated within their lexical scopes.
-- **Link Registry**: External function declarations (`@link`) are recorded and prepared for the linker phase.
+- **Link Registry**: External function declarations (`@link`) are recorded as `(operation, source path)` pairs and prepared for assembly emission.
 - **Unused & Mutation Tracking**: Identifies immutable violations and unused bindings at compile-time.
 
 ---
@@ -19,5 +19,5 @@ During semantic validation, the compiler analyzes program declarations to verify
 
 AzLang resolves static constants and enumerations during validation:
 
-- **Enum Inlining**: Enum variants are assigned zero-based sequential numbers and stored directly in the compiler's constant table.
+- **Enum Inlining**: Enum variants are assigned zero-based sequential numbers and stored directly in the compiler’s constant table.
 - **Zero Runtime Memory**: Any reference to an enum variant is converted directly into an immediate value before code generation. No lookup tables, dynamic allocations, or wrapper structures exist at runtime.

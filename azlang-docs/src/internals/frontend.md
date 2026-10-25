@@ -19,11 +19,11 @@ The tokenizer transforms raw source text into a stream of spanned tokens:
 The parser consumes tokens and builds a strongly-typed Abstract Syntax Tree (AST):
 
 - **Statements**:
-  - Variable declarations (`const` / `var`)
-  - Operations and procedures (`op`)
-  - External system bindings (`@link`)
-  - Enumerations (`enum`)
-  - Conditional branching blocks (`if`, `elif`, `else`)
-  - Loops (`while`, `for`, `loop`)
+    - Variable declarations (`const` / `var`)
+    - Operations and procedures (`op`)
+    - External system bindings (`@link`)
+    - Enumerations (`enum`)
+    - Conditional branching blocks (`if`, `elif`, `else`)
+    - Loops (`while`, `for`, `loop`)
 - **Expressions**:
-  - Binary operations (`+`, `-`, `*`, `/`), comparisons, identifiers, literals, function calls, and template expressions.
+    - Binary operations (`+`, `-`, `*`, `/`), comparisons, identifiers, literals, function calls, and template expressions.

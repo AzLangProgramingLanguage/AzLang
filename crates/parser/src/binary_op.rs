@@ -27,6 +27,14 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
             parse_assign(tokens, s.to_string())
         }
         Some(SpannedToken {
+            token: Token::InlineAsm,
+            ..
+        }) => {
+            tokens.next();
+            let string = parse_expression(tokens)?;
+            Ok(Statement::Asm(string))
+        }
+        Some(SpannedToken {
             token: Token::At, ..
         }) => {
             if let Some(SpannedToken {

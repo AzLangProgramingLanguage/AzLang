@@ -799,7 +799,7 @@ fn test_error_display_unexpected_token() {
         '#',
     );
     let msg = format!("{}", err);
-    assert!(msg.contains("Uyğunluq olmayan token"));
+    assert!(msg.contains("Unexpected token"));
     assert!(msg.contains("#"));
 }
 
@@ -814,7 +814,7 @@ fn test_error_display_unclosed_string() {
         "hello".into(),
     );
     let msg = format!("{}", err);
-    assert!(msg.contains("String düzgün bağlanmayıb"));
+    assert!(msg.contains("String is not properly closed"));
     assert!(msg.contains("hello"));
 }
 
@@ -822,21 +822,21 @@ fn test_error_display_unclosed_string() {
 fn test_error_display_number_and_alpha() {
     let err = LexerError::NumberAndAlpha;
     let msg = format!("{}", err);
-    assert_eq!(msg, "Ədəddən sonra hərf gələ bilməz!");
+    assert_eq!(msg, "A letter cannot follow a number!");
 }
 
 #[test]
 fn test_error_display_variable_cannot_be_number() {
     let err = LexerError::VariableCannotBeNumber;
     let msg = format!("{}", err);
-    assert_eq!(msg, "Başlangıc ədədlə adlandırıla bilməz!");
+    assert_eq!(msg, "A name cannot start with a number!");
 }
 
 #[test]
 fn test_error_display_double_dot() {
     let err = LexerError::DoubleDotNumber;
     let msg = format!("{}", err);
-    assert_eq!(msg, "İki dəfə nöqtə qoya bilməzsiniz");
+    assert_eq!(msg, "You cannot use two consecutive dots");
 }
 
 #[test]
@@ -847,7 +847,7 @@ fn test_error_display_incorrect_space() {
         line: 1,
     });
     let msg = format!("{}", err);
-    assert!(msg.contains("Uyğunsuz boşluq var."));
+    assert!(msg.contains("Invalid space size."));
 }
 
 #[test]
@@ -861,7 +861,7 @@ fn test_error_display_unknown_operator() {
         "^^".into(),
     );
     let msg = format!("{}", err);
-    assert!(msg.contains("Uyğunluq olmayan operator"));
+    assert!(msg.contains("Unexpected operator"));
     assert!(msg.contains("^^"));
 }
 
@@ -984,7 +984,7 @@ fn test_source_span_display() {
         end: 7,
         line: 3,
     };
-    assert_eq!(format!("{}", span), "Sətir 3, sütun 5");
+    assert_eq!(format!("{}", span), "Line 3, column 5");
 }
 
 // ── Float parse error ──
@@ -993,14 +993,14 @@ fn test_source_span_display() {
 fn test_float_unknown_display() {
     let err = LexerError::FloatUnKnow("invalid float".parse::<f64>().unwrap_err());
     let msg = format!("{}", err);
-    assert!(msg.contains("Kəsr tokenizerdə bilinməyən problem oldu"));
+    assert!(msg.contains("Unknown problem while tokenizing float"));
 }
 
 #[test]
 fn test_number_unknown_display() {
     let err = LexerError::NumberUnKnow("not a number".parse::<i64>().unwrap_err());
     let msg = format!("{}", err);
-    assert!(msg.contains("Ədəd tokenizerdə bilinməyən problem oldu"));
+    assert!(msg.contains("Unknown problem while tokenizing number"));
 }
 
 // ── The single existing test pattern ──

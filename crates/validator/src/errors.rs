@@ -6,6 +6,7 @@ use parser::{ast::Operation, shared_ast::Type};
 #[derive(Debug, PartialEq)]
 pub enum ValidatorError {
     UnknownType(String),
+    InlineAsmMustBeString(Type),
     InvalidFunctionCall(String),
     AlreadyDecl(String),
     InvalidOperation {
@@ -67,24 +68,27 @@ pub enum ValidatorError {
 impl Display for ValidatorError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ValidatorError::UnknownType(string) => write!(f, "Gözlənilməyən token '{string}'"),
-            ValidatorError::InvalidFunctionCall(found) => write!(f, "{found} bir funksiya deyil."),
+            ValidatorError::UnknownType(string) => write!(f, "Unexpected token '{string}'"),
+            ValidatorError::InlineAsmMustBeString(typ) => {
+                write!(f, "Inline assembly must be string but found {}", typ)
+            }
+            ValidatorError::InvalidFunctionCall(found) => write!(f, "{found} is not a function."),
             ValidatorError::InvalidOperation { op, left, right } => {
                 write!(
                     f,
-                    "'{}' əməliyyatı '{left}' və '{right}' tipləri üzərində icra edilə bilməz.",
+                    "'{}' operation cannot be performed on '{left}' and '{right}' types.",
                     op.as_str()
                 )
             }
-            ValidatorError::FunctionNameType(name) => write!(f, "'{name}' tipi funksiya deyil.  "),
-            ValidatorError::AlreadyDecl(string) => write!(f, "'{string}' Dəyəri onsuzda var.  "),
+            ValidatorError::FunctionNameType(name) => write!(f, "'{name}' type is not a function.  "),
+            ValidatorError::AlreadyDecl(string) => write!(f, "Value '{string}' already exists.  "),
             ValidatorError::DeclTypeMismatch {
                 name,
                 expected,
                 found,
             } => write!(
                 f,
-                "'{name}' Dəyəri '{expected}' tipində olmalıdır, ancak '{found}' tipində var."
+                "Value '{name}' must be of type '{expected}', but it is of type '{found}'."
             ),
             ValidatorError::InvalidArgumentType {
                 name,
@@ -92,18 +96,18 @@ impl Display for ValidatorError {
                 found,
             } => write!(
                 f,
-                "'{name}' funksiyası '{expected}' tipində argumenti olmalıdır, ancak '{found}' tipində argumenti var."
+                "Argument of function '{name}' must be of type '{expected}', but it is of type '{found}'."
             ),
             ValidatorError::DeclTypeUnknown(string) => {
-                write!(f, "'{string}' Dəyəri tipi bildirilməyib.")
+                write!(f, "Type of value '{string}' is not declared.")
             }
             ValidatorError::AssignmentToImmutableVariable(string) => {
-                write!(f, "'{string}' Dəyəri dəyişən olmalıdır.")
+                write!(f, "Value '{string}' must be mutable.")
             }
             ValidatorError::NeverChangedMuttableVariable(string) => {
                 write!(
                     f,
-                    "'{string}' Dəyəri dəyişən olaraq qeyd edilib amma dəyişdirilməyib."
+                    "Value '{string}' is declared as mutable but is never modified."
                 )
             }
 
@@ -113,13 +117,13 @@ impl Display for ValidatorError {
                 found,
             } => write!(
                 f,
-                "'{name}' Dəyəri '{expected}' tipində olmalıdır, ancak '{found}' tipində yazılıb."
+                "Value '{name}' must be of type '{expected}', but '{found}' was assigned."
             ),
             ValidatorError::UndefinedVariable(string) => {
-                write!(f, "'{string}' Dəyəri bildirilməyib.")
+                write!(f, "Value '{string}' is not declared.")
             }
             ValidatorError::DuplicateUnion(string) => {
-                write!(f, "'{string}' Union tərifi onsuzda var.")
+                write!(f, "Union '{string}' is already defined.")
             }
             ValidatorError::InvalidArgumentCount {
                 name,
@@ -128,41 +132,41 @@ impl Display for ValidatorError {
             } => {
                 write!(
                     f,
-                    "'{name}' funksiyası '{expected}' argumenti olmalıdır, ancak '{found}' argumenti var."
+                    "Function '{name}' must have '{expected}' argument(s), but '{found}' were provided."
                 )
             }
             ValidatorError::TypeMismatch { expected, found } => {
                 write!(
                     f,
-                    "'{expected}' tipində olmalıdır, ancak '{found}' tipində var."
+                    "Must be of type '{expected}', but it is of type '{found}'."
                 )
             }
             ValidatorError::UnknownStruct(string) => {
-                write!(f, "'{string}' Struct tərifi bildirilməyib.")
+                write!(f, "Struct '{string}' is not declared.")
             }
             ValidatorError::DuplicateStruct(string) => {
-                write!(f, "'{string}' Struct tərifi onsuzda var.")
+                write!(f, "Struct '{string}' is already defined.")
             }
             ValidatorError::DuplicateEnum(string) => {
-                write!(f, "'{string}' Enum tərifi onsuzda var.")
+                write!(f, "Enum '{string}' is already defined.")
             }
             ValidatorError::IfConditionTypeUnknown => {
-                write!(f, "Şərt tipi müəyyən edilə bilmədi.")
+                write!(f, "Condition type could not be determined.")
             }
             ValidatorError::IfConditionTypeMismatch(typ) => {
-                write!(f, "Şərt '{typ}' tipində olmalıdır.")
+                write!(f, "Condition must be of type '{typ}'.")
             }
             ValidatorError::LoopIterableTypeNotFound => {
-                write!(f, "Dövr iterable tipi müəyyən edilə bilmədi.")
+                write!(f, "Loop iterable type could not be determined.")
             }
             ValidatorError::LoopRequiresList => {
-                write!(f, "Dövr iterable tipi müəyyən edilə bilmədi.")
+                write!(f, "Loop requires an iterable list.")
             }
             ValidatorError::UnionNotFound(string) => {
-                write!(f, "'{string}' Union tərifi bildirilməyib.")
+                write!(f, "Union '{string}' is not declared.")
             }
             ValidatorError::FunctionNotFound(string) => {
-                write!(f, "'{string}' funksiyası bildirilməyib.")
+                write!(f, "Function '{string}' is not declared.")
             }
             ValidatorError::FunctionArgCountMismatch {
                 name,
@@ -171,28 +175,28 @@ impl Display for ValidatorError {
             } => {
                 write!(
                     f,
-                    "'{name}' funksiyası '{expected}' argumenti olmalıdır, ancak '{found}' argumenti var."
+                    "Function '{name}' must have '{expected}' argument(s), but '{found}' were provided."
                 )
             }
             ValidatorError::IndexTargetTypeNotFound => {
-                write!(f, "Indeks tipi müəyyən edilə bilmədi.")
+                write!(f, "Index type could not be determined.")
             }
             ValidatorError::NestedFunctionDefinition => {
-                write!(f, "Funksiya içərisində funksiya yaradıla bilməz.")
+                write!(f, "Functions cannot be defined inside functions.")
             }
             ValidatorError::FunctionAlreadyDefined(string) => {
-                write!(f, "Funksiya '{string}' onsuzda var.")
+                write!(f, "Function '{string}' already exists.")
             }
             ValidatorError::FunctionReturnTypeErr(string) => {
                 write!(
                     f,
-                    "Funskiyada səhv dəyər qaytarır '{string}' tipində olmalıydı  "
+                    "Function returns an invalid value, it must be of type '{string}'  "
                 )
             }
             ValidatorError::NotUsedVariable(var) => {
                 write!(
                     f,
-                    "'{var}' dəyəri heç istifadə olunmayıb. İstifadə olunmamış dəyəri isə qeyd etməyə eytiyac yoxdur. "
+                    "Value '{var}' is never used. There is no need to declare unused values. "
                 )
             }
         }

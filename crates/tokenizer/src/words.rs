@@ -40,6 +40,7 @@ pub fn tokenize_word(word: &str) -> Token {
         "method" => Token::Method,
         "import" => Token::Import,
         "type" => Token::Type,
+        "inline_asm" => Token::InlineAsm,
         other => Token::Identifier(other.to_string()),
     }
 }

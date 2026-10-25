@@ -19,7 +19,7 @@ fn test_parse_statement_decl() {
         Token::Number(42),
         Token::Newline,
     ]);
-    let result = parse_statement(&mut tokens).expect("decl parse edilmədi");
+    let result = parse_statement(&mut tokens).expect("decl was not parsed");
     assert!(matches!(
         result,
         Statement::Decl {
@@ -44,8 +44,8 @@ fn test_parse_string_decl() {
         Token::Assign,
         Token::StringLiteral("Salam".to_string()),
     ]);
-    let result = parse_statement(&mut tokens).expect("String testdə problem oldu");
-    let result2 = parse_statement(&mut tokens2).expect("String testdə problem oldu");
+    let result = parse_statement(&mut tokens).expect("Problem in String test");
+    let result2 = parse_statement(&mut tokens2).expect("Problem in String test");
     assert_eq!(
         result2,
         Statement::Decl {
@@ -77,7 +77,7 @@ fn test_parse_statement_mutable_decl() {
         Token::Number(10),
         Token::Newline,
     ]);
-    let result = parse_statement(&mut tokens).expect("mutable decl parse edilmədi");
+    let result = parse_statement(&mut tokens).expect("mutable decl was not parsed");
     assert!(matches!(
         result,
         Statement::Decl {

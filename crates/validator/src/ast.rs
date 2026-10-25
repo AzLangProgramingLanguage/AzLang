@@ -94,9 +94,10 @@ pub enum Ast {
     Decl {
         name: String,
         typ: Type,
-        is_mutable: bool,
         value: Box<Expr>,
     },
+    Func {},
+    Asm(Expr),
     Loop {
         body: Vec<Ast>,
     },

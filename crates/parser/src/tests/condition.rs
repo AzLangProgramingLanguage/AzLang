@@ -20,7 +20,7 @@ mod tests {
             Token::Newline,
             Token::Dedent,
         ]);
-        let result = parse_if_expr(&mut tokens).expect("if parse edilmədi");
+        let result = parse_if_expr(&mut tokens).expect("if was not parsed");
 
         if let Statement::Condition { main, elif, other } = result {
             assert_eq!(*main.condition, Expr::Bool(true));
@@ -28,7 +28,7 @@ mod tests {
             assert!(elif.is_empty());
             assert!(other.is_none());
         } else {
-            panic!("Condition statement gözlənilirdi");
+            panic!("Condition statement expected");
         }
     }
 }

@@ -5,6 +5,7 @@ impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Token::AnyType => write!(f, "any"),
+            Token::InlineAsm => write!(f, "inline_asm"),
             Token::While => write!(f, "while"),
             Token::Identifier(name) => write!(f, "{}", name),
             Token::Number(num) => write!(f, "{}", num),

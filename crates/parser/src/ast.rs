@@ -72,6 +72,7 @@ pub enum Statement {
         name: Atom,
         variants: Vec<Atom>,
     },
+    Asm(Expr),
     Decl {
         name: Atom,
         typ: Rc<Type>,

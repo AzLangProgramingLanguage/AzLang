@@ -20,13 +20,13 @@ mod tests {
             Token::Newline,
             Token::Dedent,
         ]);
-        let result = parse_while_loop(&mut tokens).expect("while loop parse edilmədi");
+        let result = parse_while_loop(&mut tokens).expect("while loop was not parsed");
 
         if let Statement::While { condition, body } = result {
             assert_eq!(*condition, Expr::Bool(true));
             assert_eq!(body, vec![expr_stmt(Expr::Number(1))]);
         } else {
-            panic!("While statement gözlənilirdi");
+            panic!("While statement expected");
         }
     }
 
@@ -47,7 +47,7 @@ mod tests {
             Token::Newline,
             Token::Dedent,
         ]);
-        let result = parse_while_loop(&mut tokens).expect("while loop parse edilmədi");
+        let result = parse_while_loop(&mut tokens).expect("while loop was not parsed");
 
         if let Statement::While { condition, body } = result {
             assert_eq!(
@@ -63,7 +63,7 @@ mod tests {
             );
             assert_eq!(body.len(), 1);
         } else {
-            panic!("While statement gözlənilirdi");
+            panic!("While statement expected");
         }
     }
 
@@ -80,7 +80,7 @@ mod tests {
             Token::Newline,
             Token::Dedent,
         ]);
-        let result = parse_while_loop(&mut tokens).expect("while loop parse edilmədi");
+        let result = parse_while_loop(&mut tokens).expect("while loop was not parsed");
 
         if let Statement::While { condition, body } = result {
             assert_eq!(*condition, Expr::Bool(true));
@@ -88,7 +88,7 @@ mod tests {
             assert_eq!(body[0], expr_stmt(Expr::Number(1)));
             assert_eq!(body[1], expr_stmt(Expr::Number(2)));
         } else {
-            panic!("While statement gözlənilirdi");
+            panic!("While statement expected");
         }
     }
 }

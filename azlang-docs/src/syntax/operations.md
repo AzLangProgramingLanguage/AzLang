@@ -17,6 +17,7 @@ AzLang supports the standard arithmetic operations:
 | `%` | Modulo | `a % b` |
 
 ### Example:
+
 ```azlang
 const int a = 10
 const int b = 3
@@ -40,6 +41,7 @@ Comparisons evaluate to a `bool` (`true` or `false`):
 | `<=` | Less than or equal |
 
 ### Example:
+
 ```azlang
 const bool is_equal = (a == b)
 const bool is_positive = (a > 0)
@@ -50,8 +52,9 @@ const bool is_positive = (a > 0)
 ## 3. Logical Operators
 
 AzLang provides natural keywords as well as standard symbol alternatives:
+
 - `and` / `&&` : Logical AND
-- `or` / `||` : Logical OR
+- `or` / `\|\|` : Logical OR
 - `!` : Logical NOT
 
 ```azlang

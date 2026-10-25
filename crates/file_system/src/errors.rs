@@ -43,9 +43,9 @@ impl Display for FileSystemKind {
         match self {
             FileSystemKind::IOError(e) => write!(f, "IO Error: {}", e),
             FileSystemKind::UnsupportedFile => {
-                write!(f, "Dəstəklənməyən Fayl, yalnız .az faylları dəstəklənir")
+                write!(f, "Unsupported file, only .az files are supported")
             }
-            FileSystemKind::FileNotFound => write!(f, "Fayl tapılmadı"),
+            FileSystemKind::FileNotFound => write!(f, "File not found"),
             FileSystemKind::UnknownProblem => write!(f, "We can't read this file"),
         }
     }

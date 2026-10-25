@@ -37,96 +37,81 @@ impl Display for ParserError {
         match self {
             ParserError::LexerError(error) => write!(f, "{}", error),
             ParserError::UnexpectedToken(span, token) => {
-                write!(f, "{span} Gözlənilməyən token '{token}'")
+                write!(f, "{span} Unexpected token '{token}'")
             }
-            ParserError::UnexpectedEOF => write!(f, "Gözlənilməyən EOF"),
+            ParserError::UnexpectedEOF => write!(f, "Unexpected EOF"),
             ParserError::NotUserDirectValue => write!(
                 f,
-                "Bir başa mətn, rəqəm və ya kəsr ədəd istifadə edə bilməzsiniz"
+                "A string, number or float literal cannot be used directly"
             ),
             ParserError::MethodNameNotFound(token) => {
                 write!(
                     f,
-                    "Metod və ya sahə adı gözlənilirdi amma bu tapıldı: '{token}'"
+                    "Method or field name expected but found: '{token}'"
                 )
             }
             ParserError::ExpectedToken(expected, found) => {
-                write!(f, "Gözlənilirdi '{expected}', tapıldı '{found}'")
+                write!(f, "Expected '{expected}', found '{found}'")
             }
             ParserError::LoopVarNameNotFound(token) => {
-                write!(
-                    f,
-                    "Dövr yaradılarkən dəyişən adı gözlənilirdi, tapıldı: '{token}'"
-                )
+                write!(f, "Loop variable name expected, found: '{token}'")
             }
             ParserError::StructNameNotFound(token) => {
-                write!(f, "Struktur adı gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "Struct name expected, found: '{token}'")
             }
             ParserError::ArrayExpected(char, token) => {
-                write!(f, "Siyahı üçün '{char}', gözlənilirdi tapıldı '{token}'")
+                write!(f, "Expected '{char}' for list, found '{token}'")
             }
             ParserError::FunctionNameNotFound(token) => {
-                write!(f, "Funksiya adı gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "Function name expected, found: '{token}'")
             }
             ParserError::ParameterNameNotFound(token) => {
-                write!(f, "Parametr adı gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "Parameter name expected, found: '{token}'")
             }
             ParserError::ParameterNotExpected(token) => {
-                write!(
-                    f,
-                    "Parametrdən sonra ',' və ya ')' gözlənilirdi, tapıldı: '{token}'"
-                )
+                write!(f, "Expected ',' or ')' after parameter, found: '{token}'")
             }
             ParserError::RParenNotFound(token) => {
-                write!(f, "')' gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "')' expected, found: '{token}'")
             }
             ParserError::StructNotExpected(token) => {
-                write!(f, "Struct daxilində gözlənilməz token: '{token}'")
+                write!(f, "Unexpected token inside struct: '{token}'")
             }
             ParserError::BinaryOpLeftNotExpected(string) => {
-                write!(f, "Sol tərəf gözlənilirdi, tapıldı: '{string}'")
+                write!(f, "Left operand expected, found: '{string}'")
             }
             ParserError::StructInitArgSeparatorNotFound => {
-                write!(
-                    f,
-                    "Struct init argümentləri arasında ',' və ya '}}' gözlənilirdi"
-                )
+                write!(f, "Expected ',' or '}}' between struct init arguments")
             }
             ParserError::StructInitArgNotExpected(token) => {
                 write!(
                     f,
-                    "Struct init argümentləri arasında ':' gözlənilirdi, tapıldı: '{token}'"
+                    "Expected ':' between struct init arguments, found: '{token}'"
                 )
             }
             ParserError::DeclNameNotFound(token) => {
-                write!(f, "Dəyişən adı gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "Variable name expected, found: '{token}'")
             }
             ParserError::DeclAssignNotFound(token) => {
-                write!(f, "'=' operatoru gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "'=' operator expected, found: '{token}'")
             }
             ParserError::ObjectTypeNotExpected(token) => {
-                write!(f, "Obyekt tipi gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "Object type expected, found: '{token}'")
             }
             ParserError::ArrayNotClosed(token) => {
-                write!(f, "Siyahı sonuna ']' gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "']' expected at the end of the list, found: '{token}'")
             }
             ParserError::EnumDeclNameNotFound(token) => {
-                write!(
-                    f,
-                    "tip`-dən sonra identifikator gözlənilirdi, tapıldı: '{token}'"
-                )
+                write!(f, "Identifier expected after `type`, found: '{token}'")
             }
             ParserError::EnumNewLineNotFound(token) => {
-                write!(
-                    f,
-                    "Enum tərifindən sonra `newline` gözlənilirdi, tapıldı: '{token}'"
-                )
+                write!(f, "`newline` expected after enum declaration, found: '{token}'")
             }
             ParserError::UnionDeclNameNotFound(token) => {
-                write!(f, "Birləşik tip adı gözlənilirdi, tapıldı: '{token}'")
+                write!(f, "Union type name expected, found: '{token}'")
             }
             ParserError::FunctionAlreadyAsigned(s) => {
-                write!(f, "{s} adlı funksiya onunsuzda var")
+                write!(f, "Function named {s} already exists")
             }
         }
     }

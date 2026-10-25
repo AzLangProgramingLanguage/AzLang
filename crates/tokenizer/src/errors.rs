@@ -24,39 +24,39 @@ impl Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             LexerError::UnexpectedToken(span, token) => {
-                write!(f, "{}, Uyğunluq olmayan token \"{}\"", span, token)
+                write!(f, "{}, Unexpected token \"{}\"", span, token)
             }
             LexerError::UnClosedString(span, str) => {
-                write!(f, "{}, String düzgün bağlanmayıb \"{}\"", span, str)
+                write!(f, "{}, String is not properly closed \"{}\"", span, str)
             }
             LexerError::VariableCannotBeNumber => {
-                write!(f, "Başlangıc ədədlə adlandırıla bilməz!")
+                write!(f, "A name cannot start with a number!")
             }
             LexerError::NumberAndAlpha => {
-                write!(f, "Ədəddən sonra hərf gələ bilməz!")
+                write!(f, "A letter cannot follow a number!")
             }
             LexerError::DoubleDotNumber => {
-                write!(f, "İki dəfə nöqtə qoya bilməzsiniz")
+                write!(f, "You cannot use two consecutive dots")
             }
             LexerError::NumberUnKnow(s) => {
-                write!(f, "Ədəd tokenizerdə bilinməyən problem oldu problem: {s}")
+                write!(f, "Unknown problem while tokenizing number, problem: {s}")
             }
             LexerError::FloatUnKnow(s) => {
-                write!(f, "Kəsr tokenizerdə bilinməyən problem oldu problem: {s}")
+                write!(f, "Unknown problem while tokenizing float, problem: {s}")
             }
             LexerError::CannotStartZeroNumber(span, str) => {
                 write!(
                     f,
-                    "{} Yanlış ədəd formatı \"{}\" . Onluq ədədlərin başlangıcı sıfırla başlaya bilməz.",
+                    "{} Invalid number format \"{}\" . Decimal numbers cannot start with zero.",
                     span, str
                 )
             }
             LexerError::UnknownOperator(span, str) => {
-                write!(f, "{} Uyğunluq olmayan operator \"{}\"", span, str)
+                write!(f, "{} Unexpected operator \"{}\"", span, str)
             }
 
             LexerError::InCorrectSpaceSize(span) => {
-                write!(f, "{} Uyğunsuz boşluq var.", span)
+                write!(f, "{} Invalid space size.", span)
             }
         }
     }

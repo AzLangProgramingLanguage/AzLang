@@ -40,6 +40,15 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
                 value: Box::new(val),
             })
         }
+        Statement::Asm(expr) => {
+            let typ = get_type(&expr, ctx)?;
+            if matches!(typ, Type::String(_)) {
+                let expr = validate_expr(expr, ctx)?;
+                Ok(Ast::Asm(expr))
+            } else {
+                Err(ValidatorError::InlineAsmMustBeString(typ))
+            }
+        }
 
         Statement::Condition { main, elif, other } => {
             let condition = validate_expr(*main.condition, ctx)?;

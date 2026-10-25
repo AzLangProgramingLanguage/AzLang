@@ -35,7 +35,7 @@ fn test_parse_function_def() {
         Token::Dedent,
     ]);
 
-    let result = parse_statement(&mut tokens).expect("Function declaration parse edilmədi");
+    let result = parse_statement(&mut tokens).expect("Function declaration was not parsed");
 
     let Statement::FunctionDef {
         name,
@@ -44,7 +44,7 @@ fn test_parse_function_def() {
         body,
     } = result
     else {
-        panic!("FunctionDef statement gözlənilirdi");
+        panic!("FunctionDef statement expected");
     };
 
     assert_eq!(name, Atom::from("topla"));
@@ -96,10 +96,10 @@ fn test_parse_external_func_with_link() {
         Token::Newline,
     ]);
 
-    let result = parse_statement(&mut tokens).expect("External function with @link parse edilmədi");
+    let result = parse_statement(&mut tokens).expect("External function with @link was not parsed");
 
     let Statement::ExternalFunctionDef { name, library, .. } = result else {
-        panic!("ExternalFunctionDef statement gözlənilirdi");
+        panic!("ExternalFunctionDef statement expected");
     };
 
     assert_eq!(name, Atom::from("print"));

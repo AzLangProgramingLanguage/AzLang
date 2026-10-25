@@ -12,7 +12,7 @@ pub struct SourceSpan {
 }
 impl Display for SourceSpan {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Sətir {}, sütun {}", self.line, self.start)
+        write!(f, "Line {}, column {}", self.line, self.start)
     }
 }
 #[derive(Debug, Clone, PartialEq)]

@@ -8,13 +8,14 @@ AzLang provides a focused set of primitive and composite types that map directly
 
 | Type | Description | Machine Mapping |
 |---|---|---|
-| `int` | Standard signed integer | 32-bit / 64-bit word (`w` / `l` in QBE) |
+| `int` | Standard signed integer | 32-bit / 64-bit machine word |
 | `natural` | Unsigned non-negative integer | Unsigned machine word |
-| `bigint` | Large 64-bit integer | 64-bit long (`l`) |
-| `tinyint` | Small 8-bit / 16-bit integer | Byte / Half-word (`b` / `h`) |
-| `float` | Floating-point number | Single / Double IEEE-754 (`s` / `d`) |
+| `bigint` | Large 64-bit integer | 64-bit register |
+| `tinyint` | Small 8-bit / 16-bit integer | Byte / Half-word |
+| `float` | Floating-point number | Single / Double IEEE-754 |
 
 ### Example:
+
 ```azlang
 const int count = 42
 const bigint big_offset = 1000000000
@@ -53,7 +54,9 @@ const str msg = `Welcome to ${name}`
 ## 4. Compound Types
 
 - `list<T>`: Linear collection of elements of type `T`.
+
 ```azlang
 const list<int> numbers = [1, 2, 3, 4]
 ```
+
 - User-defined types (`enum`, `object`, `type`).

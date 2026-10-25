@@ -41,7 +41,6 @@ pub fn validate_decl(
     Ok(Ast::Decl {
         name: name.to_string(),
         typ: inferred,
-        is_mutable,
         value: Box::new(val),
     })
 }
