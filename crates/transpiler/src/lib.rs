@@ -6,7 +6,7 @@ use validator::ast::{
 };
 #[derive(Default)]
 pub struct Transpiler {
-    variables: HashMap<String, Expr>,
+    variables: Vec<HashMap<String, Expr>>,
     data: Vec<String>,
     stack: Vec<String>,
     labels: String,
@@ -17,9 +17,40 @@ impl Transpiler {
     fn transpile_program(&mut self, expressions: Vec<Ast>) -> String {
         let mut output = String::new();
         for ast in expressions {
-            output.push_str(&self.transpile_ast(ast));
+            match ast {
+                Ast::Asm(expr) => {
+                    let mut asm = self.transpile_expr(expr);
+                    asm.push('\n');
+                    output.push_str(&asm);
+                }
+                Ast::Decl { name, typ, value } => {
+                    self.decl(name, *value);
+                }
+                Ast::Expr(expr) => {
+                    output.push_str(&self.transpile_expr(expr));
+                }
+                _ => todo!(),
+            }
         }
         output
+    }
+
+    fn decl(&mut self, name: String, value: Expr) {
+        if let Some(stack) = self.variables.last_mut() {
+            stack.insert(name, value);
+        } else {
+            let mut hashmap: HashMap<String, Expr> = HashMap::new();
+            hashmap.insert(name, value);
+            self.variables.push(hashmap);
+        }
+    }
+    fn find_variable(&self, name: &String) -> &Expr {
+        for var in self.variables.iter().rev() {
+            if let Some(var) = var.get(name) {
+                return var;
+            }
+        }
+        panic!("There is no any variable")
     }
     fn string(&mut self, var_name: Option<String>, val: String) {
         let variable_name = match var_name {
@@ -31,21 +62,23 @@ impl Transpiler {
     }
     fn transpile_ast(&mut self, ast: Ast) -> String {
         match ast {
-            Ast::Asm(expr) => {
-                let mut asm = self.transpile_expr(expr);
-                asm.push('\n');
-                return asm;
-            }
-
-            Ast::Decl { name, typ, value } => {
-                format!("mov rax, {value}\n")
-            }
             _ => todo!(),
         }
     }
     fn transpile_expr(&mut self, expr: Expr) -> String {
         match expr {
-            Expr::String(s) => s.replace("\\n", "\n"),
+            Expr::String(s) => s.replace("\\n", "\n"), //TODO: You don't Need this
+            Expr::VariableRef { name, symbol } => {
+                self.transpile_expr(self.find_variable(&name).clone())
+            }
+            Expr::Call {
+                target,
+                name,
+                args,
+                returned_type,
+            } => {
+                format!("call {}\n", self.transpile_expr(*name))
+            }
             _ => todo!(),
         }
     }

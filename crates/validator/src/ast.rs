@@ -96,7 +96,6 @@ pub enum Ast {
         typ: Type,
         value: Box<Expr>,
     },
-    Func {},
     Asm(Expr),
     Loop {
         body: Vec<Ast>,
