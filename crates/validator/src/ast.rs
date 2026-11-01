@@ -70,7 +70,6 @@ pub enum Expr {
         return_type: Type,
     },
     Call {
-        target: Option<Box<Expr>>,
         name: Box<Expr>,
         args: Vec<Expr>,
         returned_type: Type,
@@ -96,6 +95,7 @@ pub enum Ast {
         typ: Type,
         value: Box<Expr>,
     },
+    Return(Box<Expr>),
     Asm(Expr),
     Loop {
         body: Vec<Ast>,

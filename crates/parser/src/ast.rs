@@ -72,6 +72,7 @@ pub enum Statement {
         name: Atom,
         variants: Vec<Atom>,
     },
+    Return(Box<Expr>),
     Asm(Expr),
     Decl {
         name: Atom,
@@ -160,7 +161,6 @@ pub enum Expr {
     TemplateString(Vec<TemplateChunk>),
 
     Call {
-        target: Option<Box<Expr>>,
         name: Box<Expr>,
         args: Vec<Expr>,
     },

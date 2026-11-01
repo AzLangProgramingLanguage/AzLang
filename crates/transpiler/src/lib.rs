@@ -17,20 +17,7 @@ impl Transpiler {
     fn transpile_program(&mut self, expressions: Vec<Ast>) -> String {
         let mut output = String::new();
         for ast in expressions {
-            match ast {
-                Ast::Asm(expr) => {
-                    let mut asm = self.transpile_expr(expr);
-                    asm.push('\n');
-                    output.push_str(&asm);
-                }
-                Ast::Decl { name, typ, value } => {
-                    self.decl(name, *value);
-                }
-                Ast::Expr(expr) => {
-                    output.push_str(&self.transpile_expr(expr));
-                }
-                _ => todo!(),
-            }
+            self.transpile_ast(ast, &mut output);
         }
         output
     }
@@ -50,6 +37,7 @@ impl Transpiler {
                 return var;
             }
         }
+        println!("{name}");
         panic!("There is no any variable")
     }
     fn string(&mut self, var_name: Option<String>, val: String) {
@@ -60,26 +48,43 @@ impl Transpiler {
         let datalen = self.data.len();
         self.data.push(format!("{variable_name}{datalen} db '{val}',0\n{variable_name}{datalen}_len = $ - {variable_name}{datalen}"));
     }
-    fn transpile_ast(&mut self, ast: Ast) -> String {
+    fn transpile_ast(&mut self, ast: Ast, output: &mut String) {
         match ast {
+            Ast::Asm(expr) => {
+                let mut asm = self.transpile_expr(expr);
+                asm.push('\n');
+                output.push_str(&asm);
+            }
+            Ast::Decl { name, typ, value } => {
+                self.decl(name, *value);
+            }
+            Ast::Expr(expr) => {
+                output.push_str(&self.transpile_expr(expr));
+            }
             _ => todo!(),
         }
     }
     fn transpile_expr(&mut self, expr: Expr) -> String {
         match expr {
             Expr::String(s) => s.replace("\\n", "\n"), //TODO: You don't Need this
+            Expr::Number(num) => num.to_string(),
             Expr::VariableRef { name, symbol } => {
                 self.transpile_expr(self.find_variable(&name).clone())
             }
             Expr::Call {
-                target,
                 name,
                 args,
                 returned_type,
             } => {
-                format!("call {}\n", self.transpile_expr(*name))
+                format!("call {}\n", *name)
             }
-            _ => todo!(),
+            Expr::Return(expr) => {
+                format!("ret {}\n", self.transpile_expr(*expr))
+            }
+            other => {
+                dbg!(other);
+                todo!();
+            }
         }
     }
     fn transpile_labels(&mut self, functions: Vec<Function>) {
@@ -89,7 +94,8 @@ impl Transpiler {
                 self.labels.push_str(&String::from("ret\n"));
             }
             for b in func.body {
-                let transpiled = self.transpile_ast(b);
+                let mut transpiled = String::new();
+                self.transpile_ast(b, &mut transpiled);
                 self.labels.push_str(&transpiled);
             }
         }

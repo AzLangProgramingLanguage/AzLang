@@ -30,6 +30,7 @@ pub fn parser(sdk: String) -> Result<ParsedProgram, ParserError> {
     let mut lexer = tokenizer::Lexer::new(&sdk);
 
     let mut tokens = lexer.tokenize()?;
+
     let parsed = parse_expression_block(&mut tokens)?;
     Ok(parsed)
 }

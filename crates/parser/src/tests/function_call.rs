@@ -20,7 +20,6 @@ fn test_parse_function_call_no_args() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -44,7 +43,6 @@ fn test_parse_function_call_single_arg() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -72,7 +70,6 @@ fn test_parse_function_call_multiple_args() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -96,7 +93,6 @@ fn test_parse_function_call_string_arg() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -120,7 +116,6 @@ fn test_parse_function_call_bool_arg() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -144,7 +139,6 @@ fn test_parse_function_call_variable_arg() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -171,7 +165,6 @@ fn test_parse_function_call_float_arg() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -201,7 +194,6 @@ fn test_parse_function_call_mixed_args() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -233,7 +225,6 @@ fn test_parse_function_call_expression_direct() {
     assert_eq!(
         result,
         Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("foo"),
                 symbol: None
@@ -258,7 +249,6 @@ fn test_parse_function_call_neg_arg() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -283,7 +273,6 @@ fn test_parse_function_call_not_arg() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("x"),
                 symbol: None
@@ -315,7 +304,6 @@ fn test_parse_function_call_two_args_expression() {
     assert_eq!(
         result,
         Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("add"),
                 symbol: None
@@ -339,7 +327,6 @@ fn test_parse_function_call_false_arg() {
     assert_eq!(
         result,
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("f"),
                 symbol: None

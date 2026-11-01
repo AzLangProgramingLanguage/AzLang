@@ -9,6 +9,8 @@ pub mod validate;
 use crate::{
     ast::{Function, Program},
     errors::ValidatorError,
+    expr::validate_expr,
+    helper::{get_type, type_checking},
     validate::{ValidatorExpr, validate_statement},
 };
 use parser::{
@@ -145,7 +147,14 @@ impl Validator {
                         );
                     }
                     for s in body {
-                        validated_body.push(validate_statement(s, self)?);
+                        if let Statement::Return(ret) = s {
+                            let found_typ = get_type(&*ret, self)?;
+                            type_checking(return_typ.clone(), found_typ)?; //TODO: There is no need clone
+                            validated_body
+                                .push(ast::Ast::Return(Box::new(validate_expr(*ret, self)?)));
+                        } else {
+                            validated_body.push(validate_statement(s, self)?);
+                        }
                     }
                     self.variables.pop();
                     program.functions.push(Function {

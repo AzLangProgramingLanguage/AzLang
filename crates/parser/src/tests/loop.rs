@@ -24,7 +24,6 @@ fn parse_loop_test() -> Result<(), ParserError> {
     assert_eq!(
         Statement::Loop {
             body: vec![Expr::Call {
-                target: None,
                 name: Box::new(Expr::VariableRef {
                     name: Atom::from("Hello"),
                     symbol: None

@@ -20,7 +20,12 @@ fn dependencies_test() -> Result<(), CompilerError> {
 }
 #[test]
 fn compiler_exit_output_file() -> Result<(), CompilerError> {
-    let parsed_program = parser(String::from("const int a = 5"))?;
+    let parsed_program = parser(String::from(
+        "const int a = 5
+op ret(): int
+    return 5
+ret()",
+    ))?;
     let mut validator = Validator::default();
     let mut validated = validator.validate(parsed_program.ast)?;
     let mut transpiler = Transpiler::default();

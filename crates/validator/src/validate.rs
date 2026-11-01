@@ -122,6 +122,7 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
         Statement::FunctionDef { .. }
         | Statement::EnumDecl { .. }
         | Statement::StructDef { .. }
+        | Statement::Return(..)
         | Statement::ForLoop { .. }
         | Statement::UnionType { .. }
         | Statement::Match { .. }

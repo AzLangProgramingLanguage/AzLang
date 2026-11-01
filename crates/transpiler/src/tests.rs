@@ -23,7 +23,6 @@ mod tests {
         assert_eq!(
             context.transpile_start(program),
             "format ELF64 executable\nsegment readable executable\n\nentry main\nmain:
-mov rax, 1
 mov rax, 60\nxor rdi, rdi\nsyscall\n"
         );
     }
@@ -65,6 +64,16 @@ ret
 main:
 mov rax, 60\nxor rdi, rdi\nsyscall\n"
         );
+        let program = Program {
+            variables: HashMap::new(),
+            expressions: vec![],
+            functions: vec![Function {
+                name: String::from("Hello"),
+                body: vec![Ast::Return(Box::new(Expr::Number(5)))],
+                params: vec![],
+                return_typ: Type::Void,
+            }],
+        };
     }
     #[test]
     fn transpile_function_and_call() {
@@ -73,7 +82,6 @@ mov rax, 60\nxor rdi, rdi\nsyscall\n"
         let program = Program {
             variables: HashMap::new(),
             expressions: vec![Ast::Expr(Expr::Call {
-                target: None,
                 name: Box::new(Expr::String("Hello".to_string())),
                 args: vec![],
                 returned_type: Type::Void,

@@ -24,7 +24,6 @@ fn test_function_call_success() {
     let stmts = vec![
         make_func("foo", Type::Integer, vec![], vec![]),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("foo"),
                 symbol: None,
@@ -57,7 +56,6 @@ fn test_function_call_with_args() {
             vec![],
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("add"),
                 symbol: None,
@@ -72,7 +70,6 @@ fn test_function_call_with_args() {
 #[test]
 fn test_function_call_not_found() {
     let stmts = vec![Statement::Expr(Expr::Call {
-        target: None,
         name: Box::new(Expr::VariableRef {
             name: Atom::from("nonexistent"),
             symbol: None,
@@ -86,7 +83,6 @@ fn test_function_call_not_found() {
 #[test]
 fn test_function_call_invalid_name() {
     let stmts = vec![Statement::Expr(Expr::Call {
-        target: None,
         name: Box::new(Expr::Number(42)),
         args: vec![],
     })];
@@ -99,7 +95,6 @@ fn test_function_call_return_type_in_result() {
     let stmts = vec![
         make_func("foo", Type::Integer, vec![], vec![]),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("foo"),
                 symbol: None,
@@ -122,7 +117,6 @@ fn test_function_call_return_type_bool() {
     let stmts = vec![
         make_func("is_valid", Type::Bool, vec![], vec![]),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("is_valid"),
                 symbol: None,
@@ -161,7 +155,6 @@ fn test_function_call_wrong_arg_count_too_few() {
             vec![],
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("add"),
                 symbol: None,
@@ -187,7 +180,6 @@ fn test_function_call_wrong_arg_count_too_many() {
             vec![],
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("foo"),
                 symbol: None,
@@ -213,7 +205,6 @@ fn test_function_call_wrong_arg_type() {
             vec![],
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("foo"),
                 symbol: None,
@@ -246,7 +237,6 @@ fn test_function_call_multiple_args_type_check() {
             vec![],
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("add"),
                 symbol: None,
@@ -288,7 +278,6 @@ fn test_external_function_call_success() {
             "add",
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("add"),
                 symbol: None,
@@ -322,7 +311,6 @@ fn test_external_function_call_wrong_arg_count() {
             "foo",
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("foo"),
                 symbol: None,
@@ -349,7 +337,6 @@ fn test_external_function_call_wrong_arg_type() {
             "print_int",
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("print_int"),
                 symbol: None,
@@ -366,7 +353,6 @@ fn test_external_function_call_no_args() {
     let stmts = vec![
         make_external_func("get_time", Type::Integer, vec![], "c", "time"),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("get_time"),
                 symbol: None,
@@ -392,7 +378,6 @@ fn test_external_func_link_name_passed_through() {
             library: Atom::from("../build/printlib.so"),
         },
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("print"),
                 symbol: None,
@@ -421,7 +406,6 @@ fn test_external_func_link_name_none_when_omitted() {
             "printValue",
         ),
         Statement::Expr(Expr::Call {
-            target: None,
             name: Box::new(Expr::VariableRef {
                 name: Atom::from("print"),
                 symbol: None,

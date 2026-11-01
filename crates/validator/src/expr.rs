@@ -66,12 +66,7 @@ pub fn validate_expr(
                 return_type,
             })
         }
-        ParserExpr::Call { target, name, args } => {
-            let target = target
-                .map(|t| validate_expr(*t, ctx))
-                .transpose()?
-                .map(Box::new);
-
+        ParserExpr::Call { name, args } => {
             let func_name = match *name {
                 ParserExpr::VariableRef { name: ref nam, .. } => {
                     ctx.functions
@@ -133,7 +128,6 @@ pub fn validate_expr(
                 .collect::<Result<Vec<_>, _>>()?;
 
             Ok(ValidatorExpr::Call {
-                target,
                 name: Box::new(new_name),
                 args: validated_args,
                 returned_type: return_type,
