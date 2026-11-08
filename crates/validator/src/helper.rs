@@ -58,7 +58,6 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
             Err(ValidatorError::UndefinedVariable(name.to_string()))
         }
         Expr::StructInit { name, .. } => Err(ValidatorError::UnknownStruct(name.to_string())),
-        Expr::Return(e) => get_type(e, ctx),
         Expr::Call { name, .. } => match &**name {
             VariableRef { name, symbol } => {
                 if let Some(func) = ctx.functions.get(name.as_ref()) {

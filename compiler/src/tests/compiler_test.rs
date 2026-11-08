@@ -26,12 +26,11 @@ op ret(): int
     return 5
 ret()",
     ))?;
-    let mut validator = Validator::default();
-    let mut validated = validator.validate(parsed_program.ast)?;
-    let mut transpiler = Transpiler::default();
-    validated.variables = validator.constvars.clone();
-    let transpiled_code = transpiler.transpile_start(validated);
 
+    let mut validator = Validator::default();
+    let validated = validator.validate(parsed_program.ast)?;
+    let mut transpiler = Transpiler::default();
+    let transpiled_code = transpiler.transpile_start(validated);
     let main_file = PathBuf::from("test.asm");
     write_file(&main_file, transpiled_code)?;
     executer("test", vec![]);

@@ -58,7 +58,6 @@ pub enum Expr {
     Void,
     Break,
     Continue,
-    Return(Box<Expr>),
     VariableRef {
         name: String,
         symbol: Symbol,

@@ -78,9 +78,6 @@ impl Transpiler {
             } => {
                 format!("call {}\n", *name)
             }
-            Expr::Return(expr) => {
-                format!("ret {}\n", self.transpile_expr(*expr))
-            }
             other => {
                 dbg!(other);
                 todo!();

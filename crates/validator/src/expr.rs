@@ -44,10 +44,6 @@ pub fn validate_expr(
                 items.into_iter().map(|x| validate_expr(x, ctx)).collect();
             Ok(ValidatorExpr::List(validated?))
         }
-        ParserExpr::Return(e) => {
-            let validated = validate_expr(*e, ctx)?;
-            Ok(ValidatorExpr::Return(Box::new(validated)))
-        }
         ParserExpr::VariableRef { name, .. } => {
             let s = ctx.lookup_variable_mut_with_err(&name)?;
             s.is_used = true;

@@ -146,6 +146,8 @@ impl Validator {
                             },
                         );
                     }
+
+                    dbg!(&body);
                     for s in body {
                         if let Statement::Return(ret) = s {
                             let found_typ = get_type(&*ret, self)?;

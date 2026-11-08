@@ -110,13 +110,7 @@ pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             token: Token::Comment(s),
             ..
         } => Ok(Expr::Comment(s.clone())),
-        SpannedToken {
-            token: Token::Return,
-            ..
-        } => {
-            let returned_value = parse_expression(tokens)?;
-            Ok(Expr::Return(Box::new(returned_value)))
-        }
+
         SpannedToken {
             token: Token::Continue,
             ..

@@ -135,7 +135,6 @@ pub enum Statement {
 pub enum Expr {
     DynamicString(Rc<String>),
     Void,
-    Return(Box<Expr>),
     Time(std::time::Instant),
     String(Atom),
     Bool(bool),

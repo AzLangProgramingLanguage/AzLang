@@ -22,11 +22,11 @@ pub fn parse_loop(tokens: &mut Tokens) -> Result<Statement, ParserError> {
                 ..
             }
         )
-        && let Some(newline) = tokens.next()
+        && let Some(indent) = tokens.next()
         && matches!(
-            newline,
+            indent,
             SpannedToken {
-                token: Token::Newline,
+                token: Token::Indent,
                 ..
             }
         )

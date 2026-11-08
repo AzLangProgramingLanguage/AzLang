@@ -3,7 +3,8 @@ use std::rc::Rc;
 use crate::{
     ast::{Atom, Expr, Parameter, Statement},
     binary_op::parse_statement,
-    shared_ast::Type,
+    errors::ParserError,
+    shared_ast::{StringEnum, Type},
     tests::create_tokens,
 };
 use tokenizer::tokens::Token;
@@ -73,6 +74,32 @@ fn test_parse_function_def() {
             value: Box::new(Expr::Number(42)),
         }]
     );
+}
+#[test]
+fn test_return_variable() -> Result<(), ParserError> {
+    let mut tokens = create_tokens(vec![
+        Token::FunctionDef,
+        Token::Identifier(String::from("Hello")),
+        Token::LParen,
+        Token::RParen,
+        Token::Colon,
+        Token::StringType,
+        Token::Newline,
+        Token::Indent,
+        Token::Return,
+        Token::Number(5),
+    ]);
+    let expressions = parse_statement(&mut tokens)?;
+    assert_eq!(
+        expressions,
+        Statement::FunctionDef {
+            name: Atom::from("Hello"),
+            return_typ: Type::String(StringEnum::DynamicString),
+            params: vec![],
+            body: vec![Statement::Return(Box::new(Expr::Number(5)))]
+        }
+    );
+    Ok(())
 }
 
 #[test]

@@ -75,6 +75,15 @@ pub fn parse_statement(tokens: &mut Tokens) -> Result<Statement, ParserError> {
             token: Token::MutableDecl,
             ..
         }) => parse_decl(tokens, true),
+
+        Some(SpannedToken {
+            token: Token::Return,
+            ..
+        }) => {
+            tokens.next();
+            let returned_value = parse_expression(tokens)?;
+            Ok(Statement::Return(Box::new(returned_value)))
+        }
         _ => Ok(Statement::Expr(parse_expression(tokens)?)),
     }
 }
