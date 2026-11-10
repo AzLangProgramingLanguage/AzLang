@@ -16,8 +16,8 @@ pub enum ValidatorError {
     },
     DeclTypeMismatch {
         name: String,
-        expected: String,
-        found: String,
+        expected: Type,
+        found: Type,
     },
     DeclTypeUnknown(String),
     AssignmentToImmutableVariable(String),
@@ -80,7 +80,9 @@ impl Display for ValidatorError {
                     op.as_str()
                 )
             }
-            ValidatorError::FunctionNameType(name) => write!(f, "'{name}' type is not a function.  "),
+            ValidatorError::FunctionNameType(name) => {
+                write!(f, "'{name}' type is not a function.  ")
+            }
             ValidatorError::AlreadyDecl(string) => write!(f, "Value '{string}' already exists.  "),
             ValidatorError::DeclTypeMismatch {
                 name,

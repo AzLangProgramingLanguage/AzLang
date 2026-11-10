@@ -62,73 +62,6 @@ pub fn validate_expr(
                 return_type,
             })
         }
-        ParserExpr::Call { name, args } => {
-            let func_name = match *name {
-                ParserExpr::VariableRef { name: ref nam, .. } => {
-                    ctx.functions
-                        .get(nam.as_ref())
-                        .ok_or_else(|| ValidatorError::FunctionNotFound(nam.to_string()))?;
-                    nam.to_string()
-                }
-                _ => {
-                    return Err(ValidatorError::FunctionNotFound(format!(
-                        "{name:?} bu bir funksiya deyil"
-                    )));
-                }
-            };
-
-            let func_info = ctx.functions.get(&func_name).unwrap();
-            let params = &func_info.parameters;
-
-            if args.len() != params.len() {
-                return Err(ValidatorError::InvalidArgumentCount {
-                    name: func_name.clone(),
-                    expected: params.len(),
-                    found: args.len(),
-                });
-            }
-
-            for (arg, param) in args.iter().zip(params.iter()) {
-                let arg_type = get_type(arg, ctx)?;
-                let expected = &param.typ;
-                match (expected, &arg_type) {
-                    (Type::Any, _) | (_, Type::Any) => {}
-                    (
-                        Type::String(StringEnum::LiteralConstString),
-                        Type::String(StringEnum::LiteralString),
-                    ) => {}
-                    (exp, found) if exp != found => {
-                        return Err(ValidatorError::InvalidArgumentType {
-                            name: func_name.clone(),
-                            expected: exp.to_string(),
-                            found: found.to_string(),
-                        });
-                    }
-                    _ => {}
-                }
-            }
-
-            let new_name = ValidatorExpr::VariableRef {
-                name: func_name,
-                symbol: Symbol {
-                    typ: Type::Function,
-                    is_mutable: false,
-                    is_used: false,
-                    is_changed: false,
-                },
-            };
-
-            let validated_args = args
-                .into_iter()
-                .map(|arg| validate_expr(arg, ctx))
-                .collect::<Result<Vec<_>, _>>()?;
-
-            Ok(ValidatorExpr::Call {
-                name: Box::new(new_name),
-                args: validated_args,
-                returned_type: return_type,
-            })
-        }
         ParserExpr::UnaryOp { op, expr } => {
             let expr = validate_expr(*expr, ctx)?;
             let return_type = match &op {
@@ -159,9 +92,6 @@ pub fn validate_expr(
         }
         ParserExpr::Break => Ok(ValidatorExpr::Break),
         ParserExpr::Continue => Ok(ValidatorExpr::Continue),
-        ParserExpr::DynamicString(_)
-        | ParserExpr::Time(_)
-        | ParserExpr::Comment(_)
-        | ParserExpr::StructInit { .. } => Ok(ValidatorExpr::Void),
+        _ => todo!("This is not implemented yet"),
     }
 }

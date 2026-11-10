@@ -67,7 +67,6 @@ pub struct FunctionDef {
 }
 #[derive(Debug, Clone, PartialEq)]
 pub enum Statement {
-    Exit(Expr),
     EnumDecl {
         name: Atom,
         variants: Vec<Atom>,
@@ -76,9 +75,9 @@ pub enum Statement {
     Asm(Expr),
     Decl {
         name: Atom,
-        typ: Rc<Type>,
+        typ: Type,
         is_mutable: bool,
-        value: Box<Expr>,
+        value: Rc<Box<Expr>>,
     },
     FunctionDef {
         name: Atom,
@@ -195,6 +194,7 @@ pub struct Symbol {
     pub is_mutable: bool,
     pub is_used: bool,
     pub is_changed: bool,
+    pub val: Rc<Box<Expr>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

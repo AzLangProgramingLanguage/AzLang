@@ -6,13 +6,7 @@ pub mod expr;
 mod helper;
 mod tests;
 pub mod validate;
-use crate::{
-    ast::{Function, Program},
-    errors::ValidatorError,
-    expr::validate_expr,
-    helper::{get_type, type_checking},
-    validate::{ValidatorExpr, validate_statement},
-};
+use crate::{ast::Program, decl::validate_decl, errors::ValidatorError, validate::ValidatorExpr};
 use parser::{
     ast::{Atom, Parameter, Statement, Symbol},
     shared_ast::Type,
@@ -29,7 +23,6 @@ pub struct MethodInfo {
     pub name: String,
     pub return_type: Option<Type>,
     pub parameters: Vec<Parameter>,
-    pub is_allocator_used: bool,
 }
 
 #[derive(Debug, Default, PartialEq)]
@@ -42,55 +35,6 @@ pub struct Validator {
 }
 pub type ValidatedProgram<'a> = (&'a mut Validator, Program);
 impl Validator {
-    pub fn function_decl(
-        &mut self,
-        ast: &Vec<Statement>,
-    ) -> Result<&mut Validator, ValidatorError> {
-        for stmt in ast {
-            match stmt {
-                Statement::FunctionDef {
-                    name,
-                    return_typ,
-                    params,
-                    ..
-                } => {
-                    let namestr = name.to_string();
-                    if let Some(_) = self.functions.get(&namestr) {
-                        return Err(ValidatorError::FunctionAlreadyDefined(namestr));
-                    }
-                    self.functions.insert(
-                        namestr,
-                        FunctionInfo {
-                            return_type: return_typ.clone(),
-                            parameters: params.clone(),
-                        },
-                    );
-                }
-                Statement::ExternalFunctionDef {
-                    name,
-                    return_typ,
-                    params,
-                    library,
-                } => {
-                    let namestr = name.to_string();
-                    if let Some(_) = self.functions.get(&namestr) {
-                        return Err(ValidatorError::FunctionAlreadyDefined(namestr));
-                    }
-
-                    self.link_files.push(library.to_string());
-                    self.functions.insert(
-                        namestr,
-                        FunctionInfo {
-                            return_type: return_typ.clone(),
-                            parameters: params.clone(),
-                        },
-                    );
-                }
-                _ => continue,
-            }
-        }
-        Ok(self)
-    }
     pub fn lookup_variable_mut_with_err(
         &mut self,
         var_name: &Atom,
@@ -121,69 +65,27 @@ impl Validator {
         let mut program = Program {
             functions: vec![],
             expressions: vec![],
-            variables: HashMap::new(),
+            variables: HashMap::new(), //Double Byte
         };
-        self.variables.push(HashMap::new());
-        self.function_decl(&ast)?;
         for stmt in ast {
             match stmt {
+                Statement::Decl {
+                    name,
+                    typ,
+                    is_mutable,
+                    value,
+                } => {
+                    validate_decl(name, typ, is_mutable, value, self)?;
+                }
                 Statement::FunctionDef {
                     name,
                     return_typ,
                     params,
                     body,
-                } => {
-                    let mut validated_body = Vec::new();
-                    self.variables.push(HashMap::new());
-                    for param in params.clone() {
-                        self.declare_variable(
-                            param.name,
-                            Symbol {
-                                typ: param.typ,
-                                is_mutable: param.is_pointer,
-                                is_used: false,
-                                is_changed: false,
-                            },
-                        );
-                    }
-
-                    dbg!(&body);
-                    for s in body {
-                        if let Statement::Return(ret) = s {
-                            let found_typ = get_type(&*ret, self)?;
-                            type_checking(return_typ.clone(), found_typ)?; //TODO: There is no need clone
-                            validated_body
-                                .push(ast::Ast::Return(Box::new(validate_expr(*ret, self)?)));
-                        } else {
-                            validated_body.push(validate_statement(s, self)?);
-                        }
-                    }
-                    self.variables.pop();
-                    program.functions.push(Function {
-                        name: name.to_string(),
-                        body: validated_body,
-                        params,
-                        return_typ,
-                    });
-                }
-
-                Statement::EnumDecl { name, variants } => {
-                    for (i, v) in variants.into_iter().enumerate() {
-                        self.declare_variable(
-                            v.clone(),
-                            Symbol {
-                                typ: Type::User(name.clone()),
-                                is_used: false,
-                                is_mutable: false,
-                                is_changed: false,
-                            },
-                        );
-                        self.constvars
-                            .insert(v.to_string(), ValidatorExpr::Number(i as i64));
-                    }
-                }
-                stmt => {
-                    program.expressions.push(validate_statement(stmt, self)?);
+                } => {}
+                Statement::Assignment { name, value } => validate_assignment(name, value),
+                other => {
+                    todo!("{other:?} isn't implemented yet")
                 }
             }
         }

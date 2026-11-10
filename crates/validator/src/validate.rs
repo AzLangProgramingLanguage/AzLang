@@ -15,12 +15,6 @@ use crate::{
 };
 pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, ValidatorError> {
     match stmt {
-        Statement::Decl {
-            name,
-            typ,
-            is_mutable,
-            value,
-        } => decl::validate_decl(name, typ, is_mutable, *value, ctx),
         Statement::Assignment { name, value } => {
             let inferred = get_type(&value, ctx)?;
             let symbol = ctx.lookup_variable_mut_with_err(&name)?;
@@ -90,12 +84,6 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
                 other: validated_other,
             })
         }
-        Statement::Exit(e) => {
-            let typ = get_type(&e, ctx)?;
-            type_checking(typ, Type::Integer)?;
-            let expr = validate_expr(e, ctx)?;
-            Ok(Ast::Exit(expr))
-        }
         Statement::While { condition, body } => {
             let condition_type = get_type(&condition, ctx)?;
             if condition_type != Type::Bool {
@@ -119,13 +107,6 @@ pub fn validate_statement(stmt: Statement, ctx: &mut Validator) -> Result<Ast, V
             Ok(Ast::Expr(expr))
         }
         Statement::Loop { body } => Ok(Ast::Loop { body: vec![] }),
-        Statement::FunctionDef { .. }
-        | Statement::EnumDecl { .. }
-        | Statement::StructDef { .. }
-        | Statement::Return(..)
-        | Statement::ForLoop { .. }
-        | Statement::UnionType { .. }
-        | Statement::Match { .. }
-        | Statement::ExternalFunctionDef { .. } => Ok(Ast::Expr(ValidatorExpr::Void)),
+        _ => todo!("This is not implemeted yet"),
     }
 }

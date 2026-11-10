@@ -239,8 +239,5 @@ pub fn parse_function_def(tokens: &mut Tokens) -> Result<Statement, ParserError>
 }
 fn param_typ(tokens: &mut Tokens, is_mutable: bool) -> Result<Type, ParserError> {
     let mut param_type = parse_type(tokens)?;
-    if matches!(param_type, Type::String(_)) && !is_mutable {
-        param_type = Type::String(crate::shared_ast::StringEnum::LiteralConstString);
-    }
     Ok(param_type)
 }

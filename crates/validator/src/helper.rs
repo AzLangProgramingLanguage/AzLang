@@ -123,7 +123,7 @@ pub fn type_checking(left: Type, right: Type) -> Result<(), ValidatorError> {
     match (left, right) {
         (Type::Any, _) => Ok(()),
         (_, Type::Any) => Ok(()),
-        (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {
+        (Type::String(StringEnum::LiteralString), Type::String(StringEnum::LiteralString)) => {
             Ok(())
         }
 
@@ -135,19 +135,15 @@ pub fn type_checking(left: Type, right: Type) -> Result<(), ValidatorError> {
         _ => Ok(()),
     }
 }
-pub fn reconcile_type(
-    typ: Rc<Type>,
-    inferred: &mut Type,
-    name: &str,
-) -> Result<(), ValidatorError> {
-    match (&*typ, &inferred) {
+pub fn reconcile_type(typ: Type, inferred: &mut Type) -> Result<(), ValidatorError> {
+    match (typ, &inferred) {
         (Type::Any, _) => Ok(()),
         (other, Type::Any) => {
             *inferred = other.clone();
             Ok(())
         }
-        (Type::String(StringEnum::LiteralConstString), Type::String(StringEnum::LiteralString)) => {
-            *inferred = Type::String(StringEnum::LiteralConstString);
+        (Type::String(StringEnum::LiteralString), Type::String(StringEnum::LiteralString)) => {
+            *inferred = Type::String(StringEnum::LiteralString);
             Ok(())
         }
         (Type::Natural, Type::Integer) => {
@@ -155,11 +151,10 @@ pub fn reconcile_type(
             Ok(())
         }
 
-        (expected, other) if *expected == **other => Ok(()),
-        other => Err(ValidatorError::DeclTypeMismatch {
-            name: name.to_string(),
-            expected: other.0.to_string(),
-            found: other.1.to_string(),
+        (expected, other) if expected == **other => Ok(()),
+        other => Err(ValidatorError::TypeMismatch {
+            expected: other.0,
+            found: (*other.1).clone(),
         }),
     }
 }

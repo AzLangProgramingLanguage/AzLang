@@ -29,31 +29,25 @@ pub fn parse_decl(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, Pa
     expect_token(tokens, Token::Assign)?;
     let value = parse_expression(tokens)?;
     match (&value, &data_typ) {
-        (Expr::String(_s), Type::String(_d)) if is_mutable => {
-            data_typ = Type::String(StringEnum::LiteralString)
-        }
-        (Expr::String(_s), Type::String(_d)) => {
-            data_typ = Type::String(StringEnum::LiteralConstString)
-        }
+        (Expr::String(_s), Type::String(_d)) => data_typ = Type::String(StringEnum::LiteralString),
         _ => {}
     }
 
     Ok(Statement::Decl {
         name: Atom::from(name),
-        typ: Rc::new(data_typ),
-        value: Box::new(value),
+        typ: data_typ,
+        value: Rc::new(Box::new(value)),
         is_mutable,
     })
 }
 
-pub fn is_primite_value_to_type(expr: &Expr, is_mutable: bool) -> Type {
+pub fn is_primite_value_to_type(expr: &Expr) -> Type {
     match expr {
         Expr::Number(_) => Type::Integer,
         Expr::Float(_) => Type::Float,
         Expr::Bool(_) => Type::Bool,
         Expr::Char(_) => Type::Char,
-        Expr::String(_) if is_mutable => Type::String(StringEnum::LiteralString),
-        Expr::String(_) => Type::String(StringEnum::LiteralConstString),
+        Expr::String(_) => Type::String(StringEnum::LiteralString),
         _ => Type::Any,
     }
 }

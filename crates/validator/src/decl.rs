@@ -15,17 +15,19 @@ use crate::{
 
 pub fn validate_decl(
     name: Atom,
-    typ: Rc<Type>,
+    typ: Type,
     is_mutable: bool,
-    value: Expr,
+    value: Rc<Box<Expr>>,
     ctx: &mut Validator,
-) -> Result<Ast, ValidatorError> {
+) -> Result<(), ValidatorError> {
     if ctx.lookup_variable(&name).is_some() {
         return Err(ValidatorError::AlreadyDecl(name.to_string()));
     }
 
     let mut inferred = get_type(&value, ctx)?;
-    reconcile_type(typ, &mut inferred, name.as_ref())?;
+    reconcile_type(typ, &mut inferred)?;
+
+    let val = validate_expr(**value.clone(), ctx)?; //TODO 
 
     ctx.declare_variable(
         name.clone(),
@@ -33,14 +35,29 @@ pub fn validate_decl(
             typ: inferred.clone(),
             is_used: false,
             is_mutable,
+            val: value,
             is_changed: false,
         },
     );
-    let val = validate_expr(value, ctx)?;
+    Ok(())
+}
 
-    Ok(Ast::Decl {
-        name: name.to_string(),
-        typ: inferred,
-        value: Box::new(val),
-    })
+pub fn validate_assignment(
+    ctx: &mut Validator,
+    name: Atom,
+    val: Box<Expr>,
+) -> Result<(), ValidatorError> {
+    let inferred = get_type(&val, ctx)?;
+    let symbol = ctx.lookup_variable_mut_with_err(&name)?;
+    symbol.is_changed = true;
+    if !symbol.is_mutable {
+        return Err(ValidatorError::AssignmentToImmutableVariable(
+            name.to_string(),
+        ));
+    }
+
+    reconcile_type(symbol.typ, inferred)?;
+
+    let val = validate_expr(*value, ctx)?;
+    Ok(())
 }

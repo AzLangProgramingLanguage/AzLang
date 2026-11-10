@@ -23,14 +23,12 @@ pub enum Type {
 pub enum StringEnum {
     DynamicString,
     LiteralString,
-    LiteralConstString,
 }
 impl Display for StringEnum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             StringEnum::DynamicString => write!(f, "Dynamic String"),
             StringEnum::LiteralString => write!(f, "String"),
-            StringEnum::LiteralConstString => write!(f, "Const string"),
         }
     }
 }
