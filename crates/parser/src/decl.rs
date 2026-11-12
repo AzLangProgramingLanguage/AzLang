@@ -36,7 +36,7 @@ pub fn parse_decl(tokens: &mut Tokens, is_mutable: bool) -> Result<Statement, Pa
     Ok(Statement::Decl {
         name: Atom::from(name),
         typ: data_typ,
-        value: Rc::new(Box::new(value)),
+        value: Box::new(value),
         is_mutable,
     })
 }

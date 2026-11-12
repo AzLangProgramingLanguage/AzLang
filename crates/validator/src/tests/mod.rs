@@ -1,4 +1,4 @@
-// mod assignment;
+mod assignment;
 // mod binary_op;
 // mod function_call;
 // mod function_def;

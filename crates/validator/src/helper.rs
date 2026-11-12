@@ -8,7 +8,7 @@ use parser::{
     shared_ast::{StringEnum, Type},
 };
 
-use crate::{Validator, ast::Ast, errors::ValidatorError, validate::validate_statement};
+use crate::{Validator, ast::Ast, errors::ValidatorError};
 pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
     match value {
         Expr::Number(_) => Ok(Type::Integer),
@@ -45,12 +45,9 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
             index: _,
             target_type,
         } => Ok(target_type.clone()),
-        Expr::VariableRef { name, symbol } => {
-            if let Some(s) = symbol {
-                return Ok(s.typ.clone());
-            }
+        Expr::VariableRef { name } => {
             if let Some(s) = ctx.lookup_variable(name) {
-                return Ok(s.typ.clone());
+                return Ok(s.typ.clone()); //Type Clone 1
             }
             if ctx.functions.contains_key(name.as_ref()) {
                 return Ok(Type::Function);
@@ -59,7 +56,7 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
         }
         Expr::StructInit { name, .. } => Err(ValidatorError::UnknownStruct(name.to_string())),
         Expr::Call { name, .. } => match &**name {
-            VariableRef { name, symbol } => {
+            VariableRef { name } => {
                 if let Some(func) = ctx.functions.get(name.as_ref()) {
                     Ok(func.return_type.clone())
                 } else {
@@ -109,16 +106,16 @@ pub fn get_type(value: &Expr, ctx: &Validator) -> Result<Type, ValidatorError> {
     }
 }
 
-pub fn validate_body<'a>(
-    body: Vec<Statement>,
-    ctx: &mut Validator,
-) -> Result<Vec<Ast>, ValidatorError> {
-    let mut result = Vec::new();
-    for expr in body {
-        result.push(validate_statement(expr, ctx)?);
-    }
-    Ok(result)
-}
+// pub fn validate_body<'a>(
+//     body: Vec<Statement>,
+//     ctx: &mut Validator,
+// ) -> Result<Vec<Ast>, ValidatorError> {
+//     let mut result = Vec::new();
+//     for expr in body {
+//         result.push(validate_statement(expr, ctx)?);
+//     }
+//     Ok(result)
+// }
 pub fn type_checking(left: Type, right: Type) -> Result<(), ValidatorError> {
     match (left, right) {
         (Type::Any, _) => Ok(()),

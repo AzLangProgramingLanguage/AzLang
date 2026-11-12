@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
 use parser::{
-    ast::{Atom, Expr, Symbol},
+    ast::{Atom, Expr},
     shared_ast::Type,
 };
 
 use crate::{
-    Validator,
+    Symbol, Validator,
     ast::Ast,
     errors::ValidatorError,
     expr::validate_expr,
@@ -17,7 +17,7 @@ pub fn validate_decl(
     name: Atom,
     typ: Type,
     is_mutable: bool,
-    value: Rc<Box<Expr>>,
+    value: Box<Expr>,
     ctx: &mut Validator,
 ) -> Result<(), ValidatorError> {
     if ctx.lookup_variable(&name).is_some() {
@@ -27,7 +27,7 @@ pub fn validate_decl(
     let mut inferred = get_type(&value, ctx)?;
     reconcile_type(typ, &mut inferred)?;
 
-    let val = validate_expr(**value.clone(), ctx)?; //TODO 
+    let val = validate_expr(*value, ctx)?;
 
     ctx.declare_variable(
         name.clone(),
@@ -35,7 +35,7 @@ pub fn validate_decl(
             typ: inferred.clone(),
             is_used: false,
             is_mutable,
-            val: value,
+            val: Rc::new(Box::new(val)),
             is_changed: false,
         },
     );
@@ -56,8 +56,8 @@ pub fn validate_assignment(
         ));
     }
 
-    reconcile_type(symbol.typ, inferred)?;
+    // reconcile_type(symbol.typ, inferred)?;
 
-    let val = validate_expr(*value, ctx)?;
+    // let val = validate_expr(*value, ctx)?;
     Ok(())
 }

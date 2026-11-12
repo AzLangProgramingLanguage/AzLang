@@ -1,11 +1,11 @@
 use std::{collections::HashMap, fmt::Display};
 
 use parser::{
-    ast::{Atom, Operation, Parameter, Symbol},
+    ast::{Atom, Operation, Parameter},
     shared_ast::Type,
 };
 
-use crate::validate::ValidatorExpr;
+use crate::Symbol;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {

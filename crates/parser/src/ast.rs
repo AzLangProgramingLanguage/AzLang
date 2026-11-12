@@ -77,7 +77,7 @@ pub enum Statement {
         name: Atom,
         typ: Type,
         is_mutable: bool,
-        value: Rc<Box<Expr>>,
+        value: Box<Expr>,
     },
     FunctionDef {
         name: Atom,
@@ -154,7 +154,6 @@ pub enum Expr {
     Float(f64),
     VariableRef {
         name: Atom,
-        symbol: Option<Symbol>,
     },
     TemplateString(Vec<TemplateChunk>),
 
@@ -186,15 +185,6 @@ impl Display for Expr {
             other => write!(f, "{other:?}"),
         }
     }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Symbol {
-    pub typ: Type,
-    pub is_mutable: bool,
-    pub is_used: bool,
-    pub is_changed: bool,
-    pub val: Rc<Box<Expr>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

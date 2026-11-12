@@ -50,9 +50,9 @@ fn test_parse_string_decl() {
         result2,
         Statement::Decl {
             name: Atom::from("y"),
-            typ: Rc::new(Type::String(StringEnum::LiteralString)),
+            typ: Type::String(StringEnum::LiteralString),
             is_mutable: true,
-            value: Box::new(Expr::String(Atom::from("Salam")))
+            value: Rc::new(Box::new(Expr::String(Atom::from("Salam"))))
         }
     );
 
@@ -60,9 +60,9 @@ fn test_parse_string_decl() {
         result,
         Statement::Decl {
             name: Atom::from("y"),
-            typ: Rc::new(Type::String(StringEnum::LiteralConstString)),
+            typ: Type::String(StringEnum::LiteralString),
             is_mutable: false,
-            value: Box::new(Expr::String(Atom::from("Salam")))
+            value: Rc::new(Box::new(Expr::String(Atom::from("Salam"))))
         }
     )
 }

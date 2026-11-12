@@ -22,7 +22,6 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
             Ok(Expr::Index {
                 target: Box::new(Expr::VariableRef {
                     name: Atom::from(s.clone()),
-                    symbol: None,
                 }),
                 index: Box::new(index),
                 target_type: Type::Any,
@@ -30,7 +29,6 @@ pub fn parse_identifier(tokens: &mut Tokens, s: String) -> Result<Expr, ParserEr
         }
         _ => Ok(Expr::VariableRef {
             name: Atom::from(s),
-            symbol: None,
         }),
     }
 }

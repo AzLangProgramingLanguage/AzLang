@@ -1,8 +1,12 @@
-use crate::Validator;
+use crate::{Symbol, Validator};
+
 #[cfg(test)]
 use crate::errors::ValidatorError;
+
+type ValidatorExpr = crate::ast::Expr;
+type ParserExpr = parser::ast::Expr;
 use parser::{
-    ast::{Atom, Expr, Symbol},
+    ast::Atom,
     shared_ast::{StringEnum, Type},
 };
 use std::{collections::HashMap, rc::Rc};
@@ -17,9 +21,9 @@ fn test_variable_decl_integer() {
     let mut validator = setup_validator();
     let result = crate::decl::validate_decl(
         Atom::from("x"),
-        Rc::new(Type::Integer),
+        Type::Integer,
         false,
-        Box::new(Expr::Number(42)),
+        Box::new(ParserExpr::Number(42)),
         &mut validator,
     );
     let mut variables: HashMap<Atom, Symbol> = HashMap::new();
@@ -30,7 +34,7 @@ fn test_variable_decl_integer() {
             is_mutable: false,
             is_used: false,
             is_changed: false,
-            val: Box::new(Expr::Number(42)),
+            val: Rc::new(Box::new(ValidatorExpr::Number(42))),
         },
     );
 
@@ -44,17 +48,17 @@ fn test_variable_decl_already_declared() {
 
     _ = crate::decl::validate_decl(
         Atom::from("x"),
-        Rc::new(Type::Integer),
+        Type::Integer,
         false,
-        Box::new(Expr::Number(42)),
+        Box::new(ParserExpr::Number(42)),
         &mut validator,
     );
 
     let result = crate::decl::validate_decl(
         Atom::from("x"),
-        Rc::new(Type::Integer),
+        Type::Integer,
         false,
-        Box::new(Expr::Number(42)),
+        Box::new(ParserExpr::Number(42)),
         &mut validator,
     );
     assert_eq!(result, Err(ValidatorError::AlreadyDecl("x".to_string())));
@@ -69,9 +73,9 @@ fn test_string_decl_literal() -> Result<(), ValidatorError> {
     assert_eq!(
         crate::decl::validate_decl(
             Atom::from("x"),
-            Rc::new(Type::Integer),
+            Type::Integer,
             false,
-            Box::new(Expr::String(Atom::from("Hello"))),
+            Box::new(ParserExpr::String(Atom::from("Hello"))),
             &mut validator,
         ),
         Err(ValidatorError::TypeMismatch {
@@ -81,9 +85,9 @@ fn test_string_decl_literal() -> Result<(), ValidatorError> {
     );
     crate::decl::validate_decl(
         Atom::from("x"),
-        Rc::new(Type::String(StringEnum::LiteralString)),
+        Type::String(StringEnum::LiteralString),
         false,
-        Box::new(Expr::String(Atom::from("Hello"))),
+        Box::new(ParserExpr::String(Atom::from("Hello"))),
         &mut validator,
     )?;
 
@@ -100,9 +104,9 @@ fn test_bool_decl() -> Result<(), ValidatorError> {
     assert!(
         crate::decl::validate_decl(
             Atom::from("x"),
-            Rc::new(Type::Bool),
+            Type::Bool,
             false,
-            Box::new(Expr::Bool(false)),
+            Box::new(ParserExpr::Bool(false)),
             &mut validator,
         )
         .is_ok()
@@ -112,6 +116,6 @@ fn test_bool_decl() -> Result<(), ValidatorError> {
         .lookup_variable(&Atom::from("x"))
         .expect("Variable doens't find");
     assert_eq!(sym.typ, Type::Bool);
-    assert_ne!(sym.val, Box::new(Expr::Bool(true)));
+    assert_ne!(sym.val, Rc::new(Box::new(ValidatorExpr::Bool(true))));
     Ok(())
 }

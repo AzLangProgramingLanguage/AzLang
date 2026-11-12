@@ -43,9 +43,9 @@ mod tests {
             result,
             Statement::Decl {
                 name: Atom::from("a"),
-                typ: Rc::new(Type::String(StringEnum::DynamicString)),
+                typ: Type::String(StringEnum::DynamicString),
                 is_mutable: false,
-                value: Box::new(Expr::Float(2.1)),
+                value: Rc::new(Box::new(Expr::Float(2.1))),
             }
         );
         Ok(())

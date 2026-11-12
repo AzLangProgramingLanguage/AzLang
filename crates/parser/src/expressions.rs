@@ -138,9 +138,9 @@ pub fn parse_single_expr(tokens: &mut Tokens) -> Result<Expr, ParserError> {
             match expr {
                 Expr::Number(i) => Ok(Expr::Number(-i)),
                 Expr::Float(f) => Ok(Expr::Float(-f)),
-                Expr::VariableRef { name, symbol } => Ok(Expr::BinaryOp {
+                Expr::VariableRef { name } => Ok(Expr::BinaryOp {
                     left: Box::new(Expr::Number(-1)),
-                    right: Box::new(Expr::VariableRef { name, symbol }),
+                    right: Box::new(Expr::VariableRef { name }),
                     op: crate::ast::Operation::Multiply,
                 }),
                 _ => Err(ParserError::UnexpectedEOF),

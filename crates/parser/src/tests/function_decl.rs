@@ -69,9 +69,9 @@ fn test_parse_function_def() {
         body,
         vec![Statement::Decl {
             name: Atom::from("x"),
-            typ: Rc::new(Type::Integer),
+            typ: Type::Integer,
             is_mutable: false,
-            value: Box::new(Expr::Number(42)),
+            value: Rc::new(Box::new(Expr::Number(42))),
         }]
     );
 }

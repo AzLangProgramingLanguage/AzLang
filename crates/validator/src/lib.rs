@@ -1,14 +1,19 @@
-use std::{collections::HashMap, vec};
+use std::{collections::HashMap, rc::Rc, vec};
 pub mod ast;
 pub mod decl;
 pub mod errors;
 pub mod expr;
 mod helper;
 mod tests;
-pub mod validate;
-use crate::{ast::Program, decl::validate_decl, errors::ValidatorError, validate::ValidatorExpr};
+// pub mod validate;
+use crate::{
+    ast::{Expr, Program},
+    decl::{validate_assignment, validate_decl},
+    errors::ValidatorError,
+    // validate::ValidatorExpr,
+};
 use parser::{
-    ast::{Atom, Parameter, Statement, Symbol},
+    ast::{Atom, Parameter, Statement},
     shared_ast::Type,
 };
 
@@ -16,6 +21,15 @@ use parser::{
 pub struct FunctionInfo {
     pub return_type: Type,
     pub parameters: Vec<Parameter>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Symbol {
+    pub typ: Type,
+    pub is_mutable: bool,
+    pub is_used: bool,
+    pub is_changed: bool,
+    pub val: Rc<Box<Expr>>,
 }
 
 #[derive(Debug)]
@@ -31,7 +45,7 @@ pub struct Validator {
     pub variables: Vec<HashMap<Atom, Symbol>>,
     pub link_files: Vec<String>,
     pub enums: HashMap<String, Vec<String>>,
-    pub constvars: HashMap<String, ValidatorExpr>,
+    // pub constvars: HashMap<String, ValidatorExpr>,
 }
 pub type ValidatedProgram<'a> = (&'a mut Validator, Program);
 impl Validator {
@@ -83,7 +97,9 @@ impl Validator {
                     params,
                     body,
                 } => {}
-                Statement::Assignment { name, value } => validate_assignment(name, value),
+                Statement::Assignment { name, value } => {
+                    validate_assignment(self, name, value)?;
+                }
                 other => {
                     todo!("{other:?} isn't implemented yet")
                 }
